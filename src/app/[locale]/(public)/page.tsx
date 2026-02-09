@@ -16,7 +16,7 @@ export default async function HomePage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const [services, t, tCommon, tHero, tSite, tWhy, tDisclaimer] = await Promise.all([
+  const [services, t, tCommon, tHero, tSite, tWhy, tDisclaimer, tServices] = await Promise.all([
     getServicesList().catch(() => []),
     getTranslations("home"),
     getTranslations("common"),
@@ -24,6 +24,7 @@ export default async function HomePage({
     getTranslations("site"),
     getTranslations("whyChoose"),
     getTranslations("disclaimer"),
+    getTranslations("services"),
   ]);
   const displayServices = services.map((s) => ({
     id: s.id,
@@ -31,6 +32,8 @@ export default async function HomePage({
     slug: s.slug,
     shortDescription: s.shortDescription,
     description: s.description,
+    priceAmount: s.priceAmount,
+    priceCurrency: s.priceCurrency,
   }));
 
   return (
@@ -58,7 +61,9 @@ export default async function HomePage({
         showViewAll={true}
         viewAllHref="/services"
         viewAllLabel={tCommon("viewAllServices")}
-        learnMoreLabel={tCommon("learnMoreLink")}
+        bookNowLabel={tServices("bookNow")}
+        detailsLabel={tServices("details")}
+        priceLabel={tServices("from")}
       />
       <WhyChooseSection
         title={tWhy("title")}

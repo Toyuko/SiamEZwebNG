@@ -43,37 +43,55 @@ export function PublicHeader() {
         <nav className="hidden items-center gap-8 md:flex">
           <Link
             href="/"
-            className="text-sm font-medium text-header-text-muted transition-colors hover:text-siam-blue"
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-siam-blue",
+              pathname === "/" ? "text-siam-blue" : "text-header-text-muted"
+            )}
           >
             {t("home")}
           </Link>
           <Link
             href="/services"
-            className="text-sm font-medium text-header-text-muted transition-colors hover:text-siam-blue"
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-siam-blue",
+              pathname === "/services" ? "text-siam-blue" : "text-header-text-muted"
+            )}
           >
             {t("services")}
           </Link>
           <Link
             href="/about"
-            className="text-sm font-medium text-header-text-muted transition-colors hover:text-siam-blue"
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-siam-blue",
+              pathname === "/about" ? "text-siam-blue" : "text-header-text-muted"
+            )}
           >
             {t("about")}
           </Link>
           <Link
             href="/gallery"
-            className="text-sm font-medium text-header-text-muted transition-colors hover:text-siam-blue"
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-siam-blue",
+              pathname === "/gallery" ? "text-siam-blue" : "text-header-text-muted"
+            )}
           >
             {t("gallery")}
           </Link>
           <Link
             href="/testimonials"
-            className="text-sm font-medium text-header-text-muted transition-colors hover:text-siam-blue"
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-siam-blue",
+              pathname === "/testimonials" ? "text-siam-blue" : "text-header-text-muted"
+            )}
           >
             {t("testimonials")}
           </Link>
           <Link
             href="/contact"
-            className="text-sm font-medium text-header-text-muted transition-colors hover:text-siam-blue"
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-siam-blue",
+              pathname === "/contact" ? "text-siam-blue" : "text-header-text-muted"
+            )}
           >
             {t("contact")}
           </Link>
@@ -122,42 +140,60 @@ export function PublicHeader() {
         <nav className="container mx-auto flex flex-col gap-1 px-4 py-4">
           <Link
             href="/"
-            className="rounded-lg px-3 py-2.5 text-sm font-medium text-header-text hover:bg-black/5 dark:hover:bg-white/10 hover:text-siam-blue"
+            className={cn(
+              "rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
+              pathname === "/" ? "text-siam-blue bg-black/5 dark:bg-white/10" : "text-header-text hover:text-siam-blue"
+            )}
             onClick={() => setOpen(false)}
           >
             {t("home")}
           </Link>
           <Link
             href="/services"
-            className="rounded-lg px-3 py-2.5 text-sm font-medium text-header-text hover:bg-black/5 dark:hover:bg-white/10 hover:text-siam-blue"
+            className={cn(
+              "rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
+              pathname === "/services" ? "text-siam-blue bg-black/5 dark:bg-white/10" : "text-header-text hover:text-siam-blue"
+            )}
             onClick={() => setOpen(false)}
           >
             {t("services")}
           </Link>
           <Link
             href="/about"
-            className="rounded-lg px-3 py-2.5 text-sm font-medium text-header-text hover:bg-black/5 dark:hover:bg-white/10 hover:text-siam-blue"
+            className={cn(
+              "rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
+              pathname === "/about" ? "text-siam-blue bg-black/5 dark:bg-white/10" : "text-header-text hover:text-siam-blue"
+            )}
             onClick={() => setOpen(false)}
           >
             {t("about")}
           </Link>
           <Link
             href="/gallery"
-            className="rounded-lg px-3 py-2.5 text-sm font-medium text-header-text hover:bg-black/5 dark:hover:bg-white/10 hover:text-siam-blue"
+            className={cn(
+              "rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
+              pathname === "/gallery" ? "text-siam-blue bg-black/5 dark:bg-white/10" : "text-header-text hover:text-siam-blue"
+            )}
             onClick={() => setOpen(false)}
           >
             {t("gallery")}
           </Link>
           <Link
             href="/testimonials"
-            className="rounded-lg px-3 py-2.5 text-sm font-medium text-header-text hover:bg-black/5 dark:hover:bg-white/10 hover:text-siam-blue"
+            className={cn(
+              "rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
+              pathname === "/testimonials" ? "text-siam-blue bg-black/5 dark:bg-white/10" : "text-header-text hover:text-siam-blue"
+            )}
             onClick={() => setOpen(false)}
           >
             {t("testimonials")}
           </Link>
           <Link
             href="/contact"
-            className="rounded-lg px-3 py-2.5 text-sm font-medium text-header-text hover:bg-black/5 dark:hover:bg-white/10 hover:text-siam-blue"
+            className={cn(
+              "rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
+              pathname === "/contact" ? "text-siam-blue bg-black/5 dark:bg-white/10" : "text-header-text hover:text-siam-blue"
+            )}
             onClick={() => setOpen(false)}
           >
             {t("contact")}

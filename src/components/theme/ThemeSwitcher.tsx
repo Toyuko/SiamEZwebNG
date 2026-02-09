@@ -13,9 +13,43 @@ const options: { value: ThemeChoice; label: string; icon: React.ElementType }[] 
   { value: "auto", label: "Auto", icon: Monitor },
 ];
 
-export function ThemeSwitcher({ className }: { className?: string }) {
+interface ThemeSwitcherProps {
+  className?: string;
+  variant?: "default" | "sidebar";
+}
+
+export function ThemeSwitcher({ className, variant = "default" }: ThemeSwitcherProps) {
   const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
+
+  if (variant === "sidebar") {
+    return (
+      <div className={cn("relative", className)}>
+        <div className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 p-1 backdrop-blur-sm">
+          {options.map((opt) => {
+            const Icon = opt.icon;
+            const active = theme === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setTheme(opt.value)}
+                className={cn(
+                  "flex items-center justify-center rounded-md p-2 text-white transition-colors",
+                  active
+                    ? "bg-white/20 text-white"
+                    : "text-white/70 hover:bg-white/10 hover:text-white"
+                )}
+                title={opt.label}
+              >
+                <Icon className="h-4 w-4" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("relative", className)}>

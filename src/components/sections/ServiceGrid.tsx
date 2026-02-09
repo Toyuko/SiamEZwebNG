@@ -9,8 +9,9 @@ import {
   ClipboardList,
   Bus,
   User,
+  type LucideIcon,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { ServiceCard } from "./ServiceCard";
 import type { ServiceSlug } from "@/config/services";
 import {
   serviceDisplayNames,
@@ -18,7 +19,7 @@ import {
   serviceSlugs,
 } from "@/config/services";
 
-const iconBySlug: Record<ServiceSlug, React.ComponentType<{ className?: string }>> = {
+const iconBySlug: Record<ServiceSlug, LucideIcon> = {
   "marriage-registration": Heart,
   "translation-services": FileText,
   "driver-license": Car,
@@ -30,17 +31,17 @@ const iconBySlug: Record<ServiceSlug, React.ComponentType<{ className?: string }
   "private-driver-service": User,
 };
 
-/** Distinct icon colors per service (bg + text Tailwind classes) */
-const iconColorBySlug: Record<ServiceSlug, { bg: string; text: string }> = {
-  "marriage-registration": { bg: "bg-rose-100 dark:bg-rose-900/30", text: "text-rose-600 dark:text-rose-400" },
-  "translation-services": { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-600 dark:text-amber-400" },
-  "driver-license": { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-600 dark:text-blue-400" },
-  "police-clearance": { bg: "bg-indigo-100 dark:bg-indigo-900/30", text: "text-indigo-600 dark:text-indigo-400" },
-  "visa-services": { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400" },
-  "construction-handyman": { bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-600 dark:text-orange-400" },
-  "vehicle-registration": { bg: "bg-violet-100 dark:bg-violet-900/30", text: "text-violet-600 dark:text-violet-400" },
-  "transportation-services": { bg: "bg-cyan-100 dark:bg-cyan-900/30", text: "text-cyan-600 dark:text-cyan-400" },
-  "private-driver-service": { bg: "bg-teal-100 dark:bg-teal-900/30", text: "text-teal-600 dark:text-teal-400" },
+// Softer pastel colors matching the design - with dark mode variants
+const iconColorBySlug: Record<ServiceSlug, { bg: string; text: string; shape: "circle" | "square" }> = {
+  "marriage-registration": { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-600 dark:text-red-400", shape: "circle" },
+  "translation-services": { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-600 dark:text-amber-400", shape: "square" },
+  "driver-license": { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-600 dark:text-blue-400", shape: "circle" },
+  "police-clearance": { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-600 dark:text-purple-400", shape: "circle" },
+  "visa-services": { bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-400", shape: "circle" },
+  "construction-handyman": { bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-600 dark:text-orange-400", shape: "circle" },
+  "vehicle-registration": { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-600 dark:text-purple-400", shape: "square" },
+  "transportation-services": { bg: "bg-cyan-100 dark:bg-cyan-900/30", text: "text-cyan-600 dark:text-cyan-400", shape: "circle" },
+  "private-driver-service": { bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-400", shape: "circle" },
 };
 
 export interface ServiceItem {
@@ -49,6 +50,8 @@ export interface ServiceItem {
   slug: string;
   shortDescription?: string | null;
   description?: string | null;
+  priceAmount?: number | null;
+  priceCurrency?: string | null;
 }
 
 interface ServiceGridProps {
@@ -59,7 +62,9 @@ interface ServiceGridProps {
   showViewAll?: boolean;
   viewAllHref?: string;
   viewAllLabel?: string;
-  learnMoreLabel?: string;
+  bookNowLabel?: string;
+  detailsLabel?: string;
+  priceLabel?: string;
   className?: string;
 }
 
@@ -71,7 +76,9 @@ export function ServiceGrid({
   showViewAll = true,
   viewAllHref = "/services",
   viewAllLabel = "View All Services →",
-  learnMoreLabel = "Learn More →",
+  bookNowLabel = "Book Now",
+  detailsLabel = "Details",
+  priceLabel,
   className = "",
 }: ServiceGridProps) {
   const list =
@@ -83,6 +90,8 @@ export function ServiceGrid({
           name: serviceDisplayNames[slug],
           slug,
           shortDescription: serviceShortDescriptions[slug],
+          priceAmount: null,
+          priceCurrency: null,
         }));
 
   const displayList = maxItems != null ? list.slice(0, maxItems) : list;
@@ -104,29 +113,29 @@ export function ServiceGrid({
             const Icon = iconBySlug[s.slug as ServiceSlug] ?? FileText;
             const colors = iconColorBySlug[s.slug as ServiceSlug] ?? iconColorBySlug["translation-services"];
             const desc =
-              s.shortDescription ?? (s as ServiceItem).description?.slice(0, 160) ?? "";
+              s.shortDescription ?? (s as ServiceItem).description?.slice(0, 150) ?? "";
+
             return (
-              <Card
+              <div
                 key={s.slug}
-                className="flex flex-col border-border shadow-sm opacity-0 animate-fade-in-scale transition-shadow hover:shadow-md"
+                className="opacity-0 animate-fade-in-scale"
                 style={{ animationDelay: `${0.05 * (i + 2)}s` }}
               >
-                <CardContent className="flex flex-1 flex-col p-6">
-                  <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl ${colors.bg} ${colors.text}`}>
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground">{s.name}</h3>
-                  <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
-                    {desc}
-                  </p>
-                  <Link
-                    href={`/services/${s.slug}`}
-                    className="mt-4 inline-flex items-center text-sm font-medium text-siam-blue hover:underline"
-                  >
-                    {learnMoreLabel}
-                  </Link>
-                </CardContent>
-              </Card>
+                <ServiceCard
+                  slug={s.slug}
+                  name={s.name}
+                  description={desc}
+                  Icon={Icon}
+                  iconBg={colors.bg}
+                  iconText={colors.text}
+                  iconShape={colors.shape}
+                  priceAmount={s.priceAmount}
+                  priceCurrency={s.priceCurrency}
+                  priceLabel={priceLabel}
+                  bookNowLabel={bookNowLabel}
+                  detailsLabel={detailsLabel}
+                />
+              </div>
             );
           })}
         </div>

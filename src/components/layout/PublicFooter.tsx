@@ -1,3 +1,19 @@
+/**
+ * ⚠️ FOOTER DESIGN IS LOCKED - DO NOT MODIFY ⚠️
+ * 
+ * This footer design is locked and must not be changed.
+ * The design specifications are:
+ * - Dark blue background (bg-siam-blue-dark) with white text
+ * - 4-column grid layout (responsive)
+ * - Columns: Branding, Contact, Quick Links, Legal
+ * - Social media: Facebook, Instagram, LinkedIn, YouTube
+ * 
+ * If you need to restore the original design:
+ * git checkout HEAD -- src/components/layout/PublicFooter.tsx
+ * 
+ * See .cursor/rules/footer-protection.mdc for full protection rules.
+ */
+
 "use client";
 
 import { Link } from "@/i18n/navigation";
@@ -81,6 +97,15 @@ export function PublicFooter() {
                 className="rounded-lg p-2 text-white/80 transition hover:bg-white/10 hover:text-white"
               >
                 <Youtube className="h-5 w-5" />
+              </a>
+              <a
+                href="https://api.whatsapp.com/send/?phone=66643438768&text&type=phone_number&app_absent=0"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp"
+                className="rounded-lg p-2 text-white/80 transition hover:bg-white/10 hover:text-white"
+              >
+                <MessageCircle className="h-5 w-5" />
               </a>
             </div>
           </div>

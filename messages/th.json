@@ -1,5 +1,6 @@
 {
   "common": {
+    "home": "หน้าแรก",
     "getStarted": "เริ่มต้น",
     "learnMore": "ดูเพิ่มเติม",
     "contactUs": "ติดต่อเรา",
@@ -42,7 +43,12 @@
     "termsOfService": "ข้อกำหนดการให้บริการ",
     "privacyPolicy": "นโยบายความเป็นส่วนตัว",
     "refundPolicy": "นโยบายการคืนเงิน",
-    "partnerProgram": "โปรแกรมพันธมิตร"
+    "partnerProgram": "โปรแกรมพันธมิตร",
+    "services": "บริการ",
+    "company": "บริษัท",
+    "location": "ที่ตั้ง",
+    "aboutUs": "เกี่ยวกับเรา",
+    "contactSupport": "ติดต่อฝ่ายสนับสนุน"
   },
   "hero": {
     "badge": "บริการมืออาชีพในไทย",
@@ -120,12 +126,34 @@
     "preferBookOnline": "ต้องการจองออนไลน์?"
   },
   "services": {
-    "title": "บริการของเรา",
-    "description": "โซลูชันครบวงจรสำหรับความต้องการด้านราชการในประเทศไทย",
+    "title": "โซลูชันมืออาชีพสำหรับชีวิตของคุณในประเทศไทย",
+    "description": "บริการด้านราชการและคอนเซียร์จ์ที่ครอบคลุมสำหรับชาวต่างชาติและธุรกิจ เรียบง่าย มีประสิทธิภาพ และเชื่อถือได้",
     "metaTitle": "บริการ",
     "metaDescription": "บริการมืออาชีพในประเทศไทย: จดทะเบียนสมรส การแปล ใบขับขี่ หนังสือรับรองความประพฤติ วีซ่า และอื่นๆ",
     "from": "เริ่มต้น",
-    "serviceMetaTitle": "บริการ"
+    "serviceMetaTitle": "บริการ",
+    "searchPlaceholder": "คุณกำลังมองหาบริการอะไร?",
+    "searchButton": "ค้นหา",
+    "bookNow": "จองเลย",
+    "details": "รายละเอียด",
+    "overview": "ภาพรวม",
+    "requirements": "ข้อกำหนด",
+    "processSteps": "ขั้นตอนการดำเนินการ",
+    "requiredDocuments": "เอกสารที่จำเป็น",
+    "serviceOverview": "ภาพรวมบริการ",
+    "forForeigner": "สำหรับชาวต่างชาติ",
+    "forThaiPartner": "สำหรับคู่สมรสไทย",
+    "bookThisService": "จองบริการนี้",
+    "requestCustomQuote": "ขอใบเสนอราคา",
+    "needHelp": "ต้องการความช่วยเหลือ?",
+    "expertConsultation": "ปรึกษาผู้เชี่ยวชาญ - โทรฟรี 15 นาทีแรก",
+    "chatOnWhatsApp": "แชทผ่าน WhatsApp",
+    "basedOnReviews": "จากรีวิว {count}+ รายการ",
+    "startingFrom": "เริ่มต้นที่",
+    "processingTime": "ระยะเวลาดำเนินการ",
+    "visaDuration": "ระยะเวลาวีซ่า",
+    "bestValue": "คุ้มค่าที่สุด",
+    "premiumService": "บริการพรีเมียม"
   },
   "serviceNames": {
     "marriage-registration": "จดทะเบียนสมรส",
@@ -232,5 +260,35 @@
   },
   "booking": {
     "book": "จอง: {name}"
+  },
+  "portal": {
+    "portalName": "พอร์ทัล SiamEZ",
+    "dashboard": "แดชบอร์ด",
+    "dashboardSubtitle": "ยินดีต้อนรับกลับ! จัดการคดีทางกฎหมายและเอกสารราชการของคุณในที่เดียว",
+    "myCases": "คดีของฉัน",
+    "invoices": "ใบแจ้งหนี้",
+    "documents": "เอกสาร",
+    "profile": "โปรไฟล์",
+    "switchTheme": "เปลี่ยนธีม",
+    "bookNewService": "จองบริการใหม่",
+    "viewCases": "ดูคดี →",
+    "viewInvoices": "ดูใบแจ้งหนี้",
+    "viewDocuments": "ดูเอกสาร",
+    "casesDescription": "คุณมี **{count} คดีที่กำลังดำเนินการ** ดูอัปเดตสถานะและอัปโหลดเอกสารที่จำเป็น",
+    "invoicesDescription": "มี**ใบแจ้งหนี้ {count} รายการ**ที่รอการชำระเงิน ชำระเงินอย่างปลอดภัยผ่านพอร์ทัลของเรา",
+    "documentsDescription": "เข้าถึง**เอกสารทางกฎหมาย {count} รายการ**และใบรับรองทั้งหมดของคุณในทุกคดีที่กำลังดำเนินการ",
+    "recentUpdates": "อัปเดตล่าสุด",
+    "viewAllActivity": "ดูกิจกรรมทั้งหมด",
+    "action": "การดำเนินการ",
+    "activityActions": {
+      "requiredsignature": "ต้องการลายเซ็น",
+      "pendingpayment": "รอการชำระเงิน",
+      "systemupdate": "อัปเดตระบบ"
+    },
+    "privacyPolicy": "นโยบายความเป็นส่วนตัว",
+    "termsOfService": "ข้อกำหนดการให้บริการ",
+    "contactSupport": "ติดต่อฝ่ายสนับสนุน",
+    "settings": "การตั้งค่า",
+    "logout": "ออกจากระบบ"
   }
 }

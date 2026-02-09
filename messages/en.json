@@ -1,5 +1,6 @@
 {
   "common": {
+    "home": "Home",
     "getStarted": "Get Started",
     "learnMore": "Learn More",
     "contactUs": "Contact Us",
@@ -42,7 +43,12 @@
     "termsOfService": "Terms of Service",
     "privacyPolicy": "Privacy Policy",
     "refundPolicy": "Refund Policy",
-    "partnerProgram": "Partner Program"
+    "partnerProgram": "Partner Program",
+    "services": "SERVICES",
+    "company": "COMPANY",
+    "location": "LOCATION",
+    "aboutUs": "About Us",
+    "contactSupport": "Contact Support"
   },
   "hero": {
     "badge": "Professional Thai Services",
@@ -120,12 +126,34 @@
     "preferBookOnline": "Prefer to book online?"
   },
   "services": {
-    "title": "Our Services",
-    "description": "Comprehensive solutions for all your administrative needs in Thailand.",
+    "title": "Professional Solutions for Your Life in Thailand",
+    "description": "Comprehensive administrative and concierge services tailored for expatriates and businesses. Simple, efficient, and reliable.",
     "metaTitle": "Services",
     "metaDescription": "Explore our professional services in Thailand: marriage registration, translations, driver's license, police clearance, visa, and more.",
     "from": "From",
-    "serviceMetaTitle": "Service"
+    "serviceMetaTitle": "Service",
+    "searchPlaceholder": "What service are you looking for?",
+    "searchButton": "Search",
+    "bookNow": "Book Now",
+    "details": "Details",
+    "overview": "Overview",
+    "requirements": "Requirements",
+    "processSteps": "Process Steps",
+    "requiredDocuments": "Required Documents",
+    "serviceOverview": "Service Overview",
+    "forForeigner": "For the Foreigner",
+    "forThaiPartner": "For the Thai Partner",
+    "bookThisService": "Book This Service",
+    "requestCustomQuote": "Request Custom Quote",
+    "needHelp": "Need Help?",
+    "expertConsultation": "Expert Consultation - Free initial 15-min call",
+    "chatOnWhatsApp": "Chat on WhatsApp",
+    "basedOnReviews": "Based on {count}+ reviews",
+    "startingFrom": "STARTING FROM",
+    "processingTime": "Processing Time",
+    "visaDuration": "Visa Duration",
+    "bestValue": "BEST VALUE",
+    "premiumService": "PREMIUM SERVICE"
   },
   "serviceNames": {
     "marriage-registration": "Marriage Registration",
@@ -232,5 +260,35 @@
   },
   "booking": {
     "book": "Book: {name}"
+  },
+  "portal": {
+    "portalName": "SiamEZ Portal",
+    "dashboard": "Dashboard",
+    "dashboardSubtitle": "Welcome back! Manage your legal cases and administrative documents in one place.",
+    "myCases": "My Cases",
+    "invoices": "Invoices",
+    "documents": "Documents",
+    "profile": "Profile",
+    "switchTheme": "Switch Theme",
+    "bookNewService": "Book a New Service",
+    "viewCases": "View cases →",
+    "viewInvoices": "View invoices",
+    "viewDocuments": "View documents",
+    "casesDescription": "You have **{count} active cases**. View status updates and upload necessary documentation.",
+    "invoicesDescription": "**{count} pending invoices** require your attention. Pay securely using our portal.",
+    "documentsDescription": "Access all your **{count} legal documents** and certificates across all your active cases.",
+    "recentUpdates": "Recent Updates",
+    "viewAllActivity": "View all activity",
+    "action": "Action",
+    "activityActions": {
+      "requiredsignature": "Required Signature",
+      "pendingpayment": "Pending Payment",
+      "systemupdate": "System Update"
+    },
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "contactSupport": "Contact Support",
+    "settings": "Settings",
+    "logout": "Logout"
   }
 }

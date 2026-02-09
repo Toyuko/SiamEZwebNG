@@ -1,0 +1,45 @@
+---
+description: Footer design is locked and must not be changed
+globs: **/PublicFooter.tsx
+alwaysApply: false
+---
+
+# Footer Design Protection
+
+## ⚠️ CRITICAL: Footer Design is LOCKED
+
+The footer design in `src/components/layout/PublicFooter.tsx` is **LOCKED** and must **NOT** be modified.
+
+### Design Specifications (DO NOT CHANGE)
+
+- **Background**: `bg-siam-blue-dark` with white text
+- **Layout**: 4-column grid (responsive: 2 cols on sm, 4 cols on lg)
+- **Columns**:
+  1. Branding: Logo, tagline, social media icons (Facebook, Instagram, LinkedIn, YouTube)
+  2. Contact: Email, Phone, LINE
+  3. Quick Links: Services, About, Gallery, Testimonials, Contact
+  4. Legal: Terms, Privacy, Refund, Partner Program
+- **Styling**: White text (`text-white`), hover effects use `siam-yellow`
+- **Copyright**: Bottom border separator with centered text
+
+### Rules
+
+1. **DO NOT** change the layout structure
+2. **DO NOT** change the color scheme (dark blue background)
+3. **DO NOT** remove or modify the 4-column grid
+4. **DO NOT** change social media icons or contact information structure
+5. **DO NOT** modify the styling classes
+
+### If Changes Are Requested
+
+If someone requests footer changes:
+1. **WARN** them that the footer design is locked
+2. **SUGGEST** they discuss with the project owner first
+3. If they insist, **RESTORE** from git: `git checkout HEAD -- src/components/layout/PublicFooter.tsx`
+
+### Restoring Original Design
+
+To restore the original footer design:
+```bash
+git checkout HEAD -- src/components/layout/PublicFooter.tsx
+```
