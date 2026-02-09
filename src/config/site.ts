@@ -8,10 +8,11 @@ export const site = {
   line: "@siamez",
   lineUrl: "https://lin.ee/AHqaAXi",
   social: {
-    facebook: "https://facebook.com/siamez",
-    instagram: "https://instagram.com/siamez",
-    linkedin: "https://linkedin.com/company/siamez",
-    youtube: "https://youtube.com/@siamez",
+    facebook: "https://www.facebook.com/siamezofficial",
+    instagram: "https://www.instagram.com/siam_ez/",
+    linkedin: "https://www.linkedin.com/company/siam-ez/",
+    youtube: "https://www.youtube.com/@siamezofficial/",
+    tiktok: "https://www.tiktok.com/@siam_ez",
   },
   legal: {
     companyName: "SiamEZ Professional Services Co., Ltd.",
