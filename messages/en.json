@@ -1,0 +1,236 @@
+{
+  "common": {
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "contactUs": "Contact Us",
+    "viewServices": "View Services",
+    "aboutUs": "About Us",
+    "viewAllServices": "View All Services →",
+    "learnMoreLink": "Learn More →",
+    "book": "Book",
+    "cancel": "Cancel",
+    "backToServices": "← Back to Services",
+    "bookThisService": "Book this service",
+    "backToServicesLink": "Back to services",
+    "submitRequest": "Submit Request",
+    "goToClientPortal": "Go to Client Portal",
+    "language": "Language"
+  },
+  "site": {
+    "name": "SiamEZ",
+    "tagline": "Making life in Thailand EZ",
+    "taglineFull": "Your trusted partner for professional services in Thailand.",
+    "description": "Professional help for your life in Thailand. From visas to relocations, our team handles the complexities so you can focus on enjoying the Land of Smiles.",
+    "companyName": "SiamEZ Professional Services Co., Ltd.",
+    "allRightsReserved": "All rights reserved.",
+    "happyClients": "Happy Clients",
+    "yearsExperience": "Years Experience",
+    "successRate": "Success Rate"
+  },
+  "nav": {
+    "home": "Home",
+    "services": "Services",
+    "about": "About",
+    "gallery": "Gallery",
+    "testimonials": "Testimonials",
+    "contact": "Contact"
+  },
+  "footer": {
+    "contact": "Contact",
+    "quickLinks": "Quick Links",
+    "legal": "Legal",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "refundPolicy": "Refund Policy",
+    "partnerProgram": "Partner Program"
+  },
+  "hero": {
+    "badge": "Professional Thai Services",
+    "headline": "Expert Thai Services",
+    "subline": "Your trusted partner for marriage registration, translations, driver's licenses, police clearance, and more"
+  },
+  "home": {
+    "servicesTitle": "Our Services",
+    "servicesSubtitle": "Comprehensive solutions for all your administrative needs in Thailand",
+    "ctaTitle": "Get In Touch",
+    "ctaSubtitle": "Ready to get started? Contact us today!"
+  },
+  "whyChoose": {
+    "title": "Why Choose SiamEZ",
+    "subtitle": "We specialize in making complex Thai administrative processes simple and stress-free. With years of experience and deep local knowledge, we're your reliable partner in navigating Thailand's bureaucracy.",
+    "fastTitle": "Fast & Efficient",
+    "fastText": "Quick turnaround times without compromising quality.",
+    "expertTitle": "Expert Guidance",
+    "expertText": "Professional support at every step of the process.",
+    "transparentTitle": "Transparent Pricing",
+    "transparentText": "Clear costs with no hidden fees or surprises.",
+    "dedicated": "100% Dedicated",
+    "fastService": "Fast Service",
+    "expertTeam": "Expert Team",
+    "proResults": "Pro Results"
+  },
+  "disclaimer": {
+    "text": "SiamEZ offers professional assistance and consultancy services as an independent company. We are not connected to or endorsed by the Thai government."
+  },
+  "about": {
+    "title": "About SiamEZ",
+    "description": "Your trusted partner for professional services in Thailand.",
+    "metaTitle": "About Us",
+    "metaDescription": "Learn about SiamEZ – your trusted partner for professional services in Thailand."
+  },
+  "gallery": {
+    "title": "Our Work Gallery",
+    "description": "See our successful projects and satisfied clients",
+    "metaTitle": "Photo Gallery",
+    "metaDescription": "Browse our work gallery – successful projects and satisfied clients.",
+    "categories": {
+      "all": "All",
+      "marriageRegistration": "Marriage Registration",
+      "driversLicense": "Driver's License",
+      "vehicleRegistration": "Vehicle Registration",
+      "translation": "Translation",
+      "officeServices": "Office Services",
+      "happyClients": "Happy Clients"
+    },
+    "lightbox": {
+      "close": "Close",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
+  "contact": {
+    "title": "Get In Touch",
+    "description": "Ready to get started? Contact us today!",
+    "metaTitle": "Contact",
+    "metaDescription": "Get in touch with SiamEZ for professional services in Thailand.",
+    "emailUs": "Email Us",
+    "callUs": "Call Us",
+    "lineOfficial": "LINE Official",
+    "bookService": "Book a Service",
+    "fullName": "Full Name *",
+    "emailAddress": "Email Address *",
+    "phoneNumber": "Phone Number",
+    "serviceRequired": "Service Required *",
+    "message": "Message",
+    "yourName": "Your name",
+    "emailPlaceholder": "you@example.com",
+    "phonePlaceholder": "+66 ...",
+    "selectService": "Select a service",
+    "howCanWeHelp": "How can we help?",
+    "preferBookOnline": "Prefer to book online?"
+  },
+  "services": {
+    "title": "Our Services",
+    "description": "Comprehensive solutions for all your administrative needs in Thailand.",
+    "metaTitle": "Services",
+    "metaDescription": "Explore our professional services in Thailand: marriage registration, translations, driver's license, police clearance, visa, and more.",
+    "from": "From",
+    "serviceMetaTitle": "Service"
+  },
+  "serviceNames": {
+    "marriage-registration": "Marriage Registration",
+    "translation-services": "Translation Services",
+    "driver-license": "Driver's License",
+    "police-clearance": "Police Clearance",
+    "visa-services": "Visa Services",
+    "construction-handyman": "Construction & Handyman",
+    "vehicle-registration": "Vehicle Registration",
+    "transportation-services": "Transportation Services",
+    "private-driver-service": "Private Driver Service"
+  },
+  "contactServiceOptions": {
+    "marriage": "Marriage Registration",
+    "translation": "Translation Services",
+    "driver": "Driver's License",
+    "police": "Police Clearance",
+    "visa": "Visa Services",
+    "construction": "Construction & Handyman",
+    "vehicle": "Vehicle Registration",
+    "transport": "Transportation Services",
+    "driver-private": "Private Driver Service",
+    "other": "Other Services"
+  },
+  "testimonials": {
+    "title": "What Our Clients Say",
+    "description": "Real experiences from satisfied customers who trusted SiamEZ with their needs",
+    "metaTitle": "Client Testimonials - SiamEZ",
+    "metaDescription": "Read what our clients have to say about their experience with SiamEZ",
+    "sectionTitle": "Client Testimonials",
+    "stats": {
+      "averageRating": "4.9",
+      "averageRatingLabel": "Average Rating",
+      "happyClients": "1000+",
+      "happyClientsLabel": "Happy Clients",
+      "satisfactionRate": "98%",
+      "satisfactionRateLabel": "Satisfaction Rate",
+      "reviews": "500+",
+      "reviewsLabel": "Reviews"
+    },
+    "testimonial1": {
+      "service": "Marriage Registration",
+      "quote": "SiamEZ made our marriage registration process incredibly smooth. They handled all the paperwork and guided us through every step. We couldn't have done it without their help!",
+      "author": "Sarah & Michael",
+      "role": "Married in Bangkok",
+      "initials": "SM"
+    },
+    "testimonial2": {
+      "service": "Translation Services",
+      "quote": "Fast, accurate, and professional translation services. I needed urgent document translation for my visa application, and they delivered within 24 hours. Highly recommended!",
+      "author": "James Davis",
+      "role": "Business Professional",
+      "initials": "JD"
+    },
+    "testimonial3": {
+      "service": "Driver's License",
+      "quote": "Converting my international license to a Thai license was much easier than I expected thanks to SiamEZ. The team was knowledgeable and helped me navigate all the requirements.",
+      "author": "Emma Wilson",
+      "role": "Expat Resident",
+      "initials": "EW"
+    },
+    "testimonial4": {
+      "service": "Visa Services",
+      "quote": "Outstanding service! They helped me extend my visa without any hassle. The staff was professional, responsive, and made sure everything was done correctly. Worth every baht!",
+      "author": "Robert Kim",
+      "role": "Long-term Resident",
+      "initials": "RK"
+    },
+    "testimonial5": {
+      "service": "Vehicle Registration",
+      "quote": "I was dreading the vehicle registration process, but SiamEZ made it stress-free. They handled everything from start to finish, and I got my registration done quickly. Excellent service!",
+      "author": "Lisa Thompson",
+      "role": "Car Owner",
+      "initials": "LT"
+    },
+    "testimonial6": {
+      "service": "Private Driver Service",
+      "quote": "Used their private driver service for a month and was very impressed. Professional, punctual, and safe drivers. Made my daily commute so much easier. Will definitely use again!",
+      "author": "Chris Martinez",
+      "role": "Business Executive",
+      "initials": "CM"
+    },
+    "testimonial7": {
+      "service": "Police Clearance",
+      "quote": "Needed a police clearance certificate for my work permit. SiamEZ handled the entire process efficiently and kept me updated throughout. Got my certificate faster than expected!",
+      "author": "Alex Nguyen",
+      "role": "Software Developer",
+      "initials": "AN"
+    },
+    "testimonial8": {
+      "service": "Construction & Handyman",
+      "quote": "Had some home repairs needed and SiamEZ connected me with skilled professionals. The work was done on time and to a high standard. Very satisfied with the quality!",
+      "author": "Patricia Brown",
+      "role": "Homeowner",
+      "initials": "PB"
+    },
+    "testimonial9": {
+      "service": "Transportation Services",
+      "quote": "Used their airport transfer service multiple times. Always on time, clean vehicles, and friendly drivers. They make traveling in Thailand so much easier. Highly recommend!",
+      "author": "David Lee",
+      "role": "Frequent Traveler",
+      "initials": "DL"
+    }
+  },
+  "booking": {
+    "book": "Book: {name}"
+  }
+}

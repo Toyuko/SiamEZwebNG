@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* SiamEZ brand – shared across themes */
+:root,
+[data-theme="light"],
+[data-theme="dark"],
+[data-theme="night"] {
+  --siam-blue: #2C54C6;
+  --siam-blue-light: #3D5FCE;
+  --siam-blue-dark: #2344B0;
+  --siam-blue-bright: #5B76E0;
+  --siam-yellow: #FFCE2D;
+  --siam-yellow-light: #FFD84D;
+  --siam-yellow-dark: #E6B828;
+}
+
+/* Light (default) */
+:root,
+[data-theme="light"] {
+  --background: #ffffff;
+  --foreground: #1f2937;
+  --muted: #6b7280;
+  --card: #ffffff;
+  --card-foreground: #1f2937;
+  --border: #e5e7eb;
+  --header-bg: #ffffff;
+  --header-border: #e5e7eb;
+  --header-text: #374151;
+  --header-text-muted: #6b7280;
+}
+
+/* Dark – neutral dark */
+[data-theme="dark"] {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --muted: #94a3b8;
+  --card: #1e293b;
+  --card-foreground: #f8fafc;
+  --border: #334155;
+  --header-bg: #0f172a;
+  --header-border: #334155;
+  --header-text: #f1f5f9;
+  --header-text-muted: #94a3b8;
+}
+
+/* Night – blue-tinted dark (Siam brand) */
+[data-theme="night"] {
+  --background: #0f2744;
+  --foreground: #e2e8f0;
+  --muted: #94a3b8;
+  --card: #1e3a5f;
+  --card-foreground: #e2e8f0;
+  --border: #2d5a87;
+  --header-bg: #0f2744;
+  --header-border: #2d5a87;
+  --header-text: #f1f5f9;
+  --header-text-muted: #94a3b8;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
