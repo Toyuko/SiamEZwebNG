@@ -13,7 +13,7 @@ export default function AdminLayout({
       <AdminSidebar />
       <div className="flex flex-1 flex-col">
         <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
-          <Link href="/admin" className="flex items-center gap-2 font-semibold text-siam-blue">
+          <Link href="/admin/dashboard" className="flex items-center gap-2 font-semibold text-siam-blue">
             <Bell className="h-5 w-5" />
             SiamEZ Admin
           </Link>

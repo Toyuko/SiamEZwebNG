@@ -9,14 +9,16 @@ import {
   BarChart3,
   Settings,
   Package,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Cases", href: "/admin/cases", icon: FolderOpen },
   { label: "Clients", href: "/admin/clients", icon: Users },
   { label: "Services", href: "/admin/services", icon: Package },
+  { label: "Invoices", href: "/admin/invoices", icon: FileText },
   { label: "Calendar", href: "/admin/calendar", icon: Calendar },
   { label: "Reports", href: "/admin/reports", icon: BarChart3 },
   { label: "Settings", href: "/admin/settings", icon: Settings },
@@ -31,7 +33,7 @@ export function AdminSidebar() {
         {nav.map((item) => {
           const isActive =
             pathname === item.href ||
-            (item.href !== "/admin" && pathname.startsWith(item.href));
+            (item.href !== "/admin/dashboard" && pathname.startsWith(item.href));
           const Icon = item.icon;
           return (
             <Link

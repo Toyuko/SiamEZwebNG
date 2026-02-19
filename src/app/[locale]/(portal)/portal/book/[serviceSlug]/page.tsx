@@ -20,7 +20,7 @@ export default async function BookServiceEntryPage({
       </p>
       <div className="mt-8 flex gap-4">
         <Button asChild size="lg">
-          <Link href={`/booking/${serviceSlug}`}>Start booking</Link>
+          <Link href={`/book/${serviceSlug}`}>Start booking</Link>
         </Button>
         <Button asChild variant="outline" size="lg">
           <Link href={`/services/${serviceSlug}`}>Back to service</Link>

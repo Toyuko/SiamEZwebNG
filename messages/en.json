@@ -1,4 +1,15 @@
 {
+  "auth": {
+    "login": "Sign in",
+    "loginSubtitle": "Sign in to your SiamEZ portal account.",
+    "register": "Create account",
+    "registerSubtitle": "Create a new SiamEZ portal account.",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "email": "Email",
+    "password": "Password",
+    "name": "Full name"
+  },
   "common": {
     "home": "Home",
     "getStarted": "Get Started",

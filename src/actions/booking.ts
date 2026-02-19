@@ -21,6 +21,7 @@ export interface SubmitBookingResult {
   success: boolean;
   caseId?: string;
   caseNumber?: string;
+  isFixed?: boolean; // true = redirect to checkout
   error?: string;
 }
 
@@ -67,7 +68,8 @@ export async function submitBooking(input: SubmitBookingInput): Promise<SubmitBo
     }
 
     const caseNumber = nextCaseNumber();
-    const status: CaseStatus = service.type === "fixed" ? "new" : "new";
+    // Fixed-price: new (proceed to checkout). Quote-based: under_review (Pending Review)
+    const status: CaseStatus = service.type === "fixed" ? "new" : "under_review";
 
     const c = await createCase({
       caseNumber,
@@ -87,7 +89,12 @@ export async function submitBooking(input: SubmitBookingInput): Promise<SubmitBo
       });
     }
 
-    return { success: true, caseId: c.id, caseNumber: c.caseNumber };
+    return {
+      success: true,
+      caseId: c.id,
+      caseNumber: c.caseNumber,
+      isFixed: service.type === "fixed",
+    };
   } catch (e) {
     console.error("submitBooking error", e);
     return { success: false, error: e instanceof Error ? e.message : "Booking failed" };

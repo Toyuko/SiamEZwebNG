@@ -74,6 +74,16 @@ const services = [
     sortOrder: 8,
   },
   {
+    slug: "basic-translation",
+    name: "Basic Translation (Fixed Price)",
+    shortDescription: "Simple document translation with fixed pricing per page.",
+    description: "Simple certified translation for standard documents. Fixed price per page - pay immediately upon booking.",
+    type: "fixed" as const,
+    priceAmount: 50000, // 500 THB in satang (smallest unit)
+    priceCurrency: "THB",
+    sortOrder: 10,
+  },
+  {
     slug: "private-driver-service",
     name: "Private Driver Service",
     shortDescription: "Professional private drivers for daily use, business trips, or special occasions with flexible packages.",
@@ -97,7 +107,7 @@ async function main() {
       },
     });
   }
-  console.log(`Seeded ${services.length} services.`);
+  console.log("Seeded", services.length, "services.");
 
   const adminEmail = process.env.SEED_ADMIN_EMAIL ?? "admin@siamez.com";
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMeInProduction!";
@@ -112,7 +122,22 @@ async function main() {
     },
     update: {},
   });
-  console.log(`Admin user ensured: ${adminEmail}`);
+  console.log("Admin user ensured:", adminEmail);
+
+  const customerEmail = process.env.SEED_CUSTOMER_EMAIL ?? "customer@example.com";
+  const customerPassword = process.env.SEED_CUSTOMER_PASSWORD ?? "Customer123!";
+  const customerHash = await bcrypt.hash(customerPassword, 10);
+  await prisma.user.upsert({
+    where: { email: customerEmail },
+    create: {
+      email: customerEmail,
+      name: "Alex Thompson",
+      role: "customer",
+      passwordHash: customerHash,
+    },
+    update: {},
+  });
+  console.log("Customer user ensured:", customerEmail);
 }
 
 main()

@@ -1,23 +1,38 @@
-import Link from "next/link";
+import { Suspense } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { getCases } from "@/actions/admin";
+import { CaseTable } from "./CaseTable";
+import { CaseFilter } from "./CaseFilter";
 
-export default function AdminCasesPage() {
+export default async function AdminCasesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const params = await searchParams;
+  const status =
+    params.status && params.status !== "all"
+      ? (params.status as "new" | "under_review" | "quoted" | "awaiting_payment" | "paid" | "in_progress" | "pending_docs" | "completed" | "cancelled")
+      : undefined;
+
+  const cases = await getCases(status ?? "all");
+
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Cases</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+        Cases
+      </h1>
       <p className="mt-1 text-gray-600 dark:text-gray-400">
         Manage all cases: status, assignments, notes, and documents.
       </p>
-      <Card className="mt-8">
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <p className="text-gray-500">No cases yet.</p>
-          <p className="mt-2 text-sm text-gray-400">
-            Cases are created when a client completes a booking.
-          </p>
-          <Button asChild variant="outline" className="mt-4">
-            <Link href="/admin">Back to dashboard</Link>
-          </Button>
+      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <CaseFilter defaultValue={params.status ?? "all"} />
+      </div>
+      <Card className="mt-4">
+        <CardContent className="p-0">
+          <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading...</div>}>
+            <CaseTable cases={cases} />
+          </Suspense>
         </CardContent>
       </Card>
     </div>

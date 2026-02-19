@@ -1,21 +1,21 @@
-import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { getServices } from "@/actions/admin";
+import { ServiceTable } from "./ServiceTable";
 
-export default function AdminServicesPage() {
+export default async function AdminServicesPage() {
+  const services = await getServices();
+
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Services</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+        Services
+      </h1>
       <p className="mt-1 text-gray-600 dark:text-gray-400">
-        Manage service catalog: pricing, form config, and visibility.
+        Manage service catalog: pricing, type (fixed or quote), and visibility.
       </p>
-      <Card className="mt-8">
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <p className="text-gray-500">No services in database.</p>
-          <p className="mt-2 text-sm text-gray-400">Run: npm run db:seed</p>
-          <Button asChild variant="outline" className="mt-4">
-            <Link href="/admin">Back to dashboard</Link>
-          </Button>
+      <Card className="mt-6">
+        <CardContent className="p-0">
+          <ServiceTable services={services} />
         </CardContent>
       </Card>
     </div>

@@ -1,4 +1,15 @@
 {
+  "auth": {
+    "login": "เข้าสู่ระบบ",
+    "loginSubtitle": "เข้าสู่ระบบบัญชีพอร์ทัล SiamEZ ของคุณ",
+    "register": "สร้างบัญชี",
+    "registerSubtitle": "สร้างบัญชีพอร์ทัล SiamEZ ใหม่",
+    "noAccount": "ยังไม่มีบัญชี?",
+    "hasAccount": "มีบัญชีอยู่แล้ว?",
+    "email": "อีเมล",
+    "password": "รหัสผ่าน",
+    "name": "ชื่อเต็ม"
+  },
   "common": {
     "home": "หน้าแรก",
     "getStarted": "เริ่มต้น",

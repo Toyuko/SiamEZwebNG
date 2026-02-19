@@ -52,7 +52,7 @@ export function ServiceCard({
         )}
         <div className="mt-6 flex gap-3">
           <Button asChild className="flex-1 bg-siam-blue text-white hover:bg-siam-blue-light">
-            <Link href={`/booking/${slug}`}>
+            <Link href={`/book/${slug}`}>
               {bookNowLabel}
             </Link>
           </Button>

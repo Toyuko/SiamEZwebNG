@@ -77,7 +77,7 @@ export function ServiceDetailSidebar({
             className="mt-6 w-full bg-siam-blue text-white hover:bg-siam-blue-light"
             size="lg"
           >
-            <Link href={`/booking/${serviceSlug}`}>
+            <Link href={`/book/${serviceSlug}`}>
               <ShoppingCart className="mr-2 h-4 w-4" />
               {t("bookThisService")}
             </Link>

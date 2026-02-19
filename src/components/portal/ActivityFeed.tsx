@@ -40,7 +40,7 @@ export function ActivityFeed({ items, maxItems = 10 }: ActivityFeedProps) {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t("recentUpdates")}</h2>
         <Link
-          href="/portal/activity"
+          href="/portal"
           className="text-sm font-medium text-siam-blue hover:underline dark:text-siam-blue-light"
         >
           {t("viewAllActivity")}

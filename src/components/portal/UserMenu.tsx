@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { ChevronDown, User, LogOut, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
+import { logout } from "@/actions/auth";
 
 interface UserMenuProps {
   userName: string;
@@ -66,28 +68,24 @@ export function UserMenu({ userName, userRole, userAvatar }: UserMenuProps) {
       {open && (
         <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
           <div className="p-2">
-            <button
-              type="button"
+            <Link
+              href="/portal/profile"
               className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+              onClick={() => setOpen(false)}
             >
               <User className="h-4 w-4" />
               {t("profile")}
-            </button>
-            <button
-              type="button"
-              className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-            >
-              <Settings className="h-4 w-4" />
-              {t("settings")}
-            </button>
+            </Link>
             <div className="my-1 h-px bg-gray-200 dark:bg-gray-700" />
-            <button
-              type="button"
-              className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-            >
-              <LogOut className="h-4 w-4" />
-              {t("logout")}
-            </button>
+            <form action={logout}>
+              <button
+                type="submit"
+                className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+              >
+                <LogOut className="h-4 w-4" />
+                {t("logout")}
+              </button>
+            </form>
           </div>
         </div>
       )}
