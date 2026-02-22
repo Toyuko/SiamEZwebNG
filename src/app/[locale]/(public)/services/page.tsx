@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
+import { getSession } from "@/lib/auth";
 import { ServicesPageClient } from "./ServicesPageClient";
 import { getServicesList } from "@/data-access/service";
 import {
@@ -37,6 +38,8 @@ export default async function ServicesPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const session = await getSession();
+  const isLoggedIn = !!session?.user;
   const [t] = await Promise.all([
     getTranslations("services"),
   ]);
@@ -71,6 +74,8 @@ export default async function ServicesPage({
       bookNowLabel={t("bookNow")}
       detailsLabel={t("details")}
       priceLabel={t("from")}
+      isLoggedIn={isLoggedIn}
+      locale={locale}
     />
   );
 }

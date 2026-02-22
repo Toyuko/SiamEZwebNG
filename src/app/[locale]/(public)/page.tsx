@@ -7,6 +7,7 @@ import { WhyChooseSection } from "@/components/sections/WhyChooseSection";
 import { CTASection } from "@/components/sections/CTASection";
 import { getServicesList } from "@/data-access/service";
 import { getTranslations } from "next-intl/server";
+import { getSession } from "@/lib/auth";
 
 export default async function HomePage({
   params,
@@ -15,6 +16,8 @@ export default async function HomePage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const session = await getSession();
+  const isLoggedIn = !!session?.user;
 
   const [services, t, tCommon, tHero, tSite, tWhy, tDisclaimer, tServices] = await Promise.all([
     getServicesList().catch(() => []),
@@ -42,7 +45,10 @@ export default async function HomePage({
         badge={tHero("badge")}
         headline={tHero("headline")}
         subline={tHero("subline")}
-        primaryCta={{ label: tCommon("getStarted"), href: "/contact" }}
+        primaryCta={{
+          label: tCommon("getStarted"),
+          href: isLoggedIn ? "/portal" : "/register",
+        }}
         secondaryCta={{ label: tCommon("learnMore"), href: "/services" }}
       />
       <StatsBar
@@ -64,6 +70,11 @@ export default async function HomePage({
         bookNowLabel={tServices("bookNow")}
         detailsLabel={tServices("details")}
         priceLabel={tServices("from")}
+        getBookHref={
+          isLoggedIn
+            ? (slug) => `/book/${slug}`
+            : (slug) => `/login?redirect=/${locale}/book/${slug}`
+        }
       />
       <WhyChooseSection
         title={tWhy("title")}

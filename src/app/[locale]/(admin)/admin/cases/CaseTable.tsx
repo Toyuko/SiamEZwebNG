@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import type { Prisma } from "@prisma/client";
+import { Button } from "@/components/ui/button";
 
 type CaseWithRelations = Prisma.CaseGetPayload<{
   include: {
@@ -11,7 +12,30 @@ type CaseWithRelations = Prisma.CaseGetPayload<{
   };
 }>;
 
-export function CaseTable({ cases }: { cases: CaseWithRelations[] }) {
+type SearchParams = { status?: string; serviceId?: string; search?: string; page?: string };
+
+function buildPageUrl(searchParams: SearchParams, p: number) {
+  const params = new URLSearchParams();
+  if (searchParams.status && searchParams.status !== "all") params.set("status", searchParams.status);
+  if (searchParams.serviceId) params.set("serviceId", searchParams.serviceId);
+  if (searchParams.search) params.set("search", searchParams.search);
+  params.set("page", String(p));
+  return `/admin/cases?${params.toString()}`;
+}
+
+export function CaseTable({
+  cases,
+  total,
+  page,
+  totalPages,
+  searchParams,
+}: {
+  cases: CaseWithRelations[];
+  total: number;
+  page: number;
+  totalPages: number;
+  searchParams: SearchParams;
+}) {
   if (cases.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -45,8 +69,8 @@ export function CaseTable({ cases }: { cases: CaseWithRelations[] }) {
             >
               <td className="px-4 py-3 font-mono text-siam-blue">{c.caseNumber}</td>
               <td className="px-4 py-3">
-                <span className="font-medium">{c.user.name ?? c.guestName ?? "—"}</span>
-                <span className="block text-xs text-gray-500">{c.user.email ?? c.guestEmail ?? ""}</span>
+                <span className="font-medium">{c.user?.name ?? c.guestName ?? "—"}</span>
+                <span className="block text-xs text-gray-500">{c.user?.email ?? c.guestEmail ?? ""}</span>
               </td>
               <td className="px-4 py-3">{c.service.name}</td>
               <td className="px-4 py-3">
@@ -76,6 +100,29 @@ export function CaseTable({ cases }: { cases: CaseWithRelations[] }) {
           ))}
         </tbody>
       </table>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t px-4 py-3">
+          <p className="text-sm text-gray-500">
+            Showing {(page - 1) * 20 + 1}–{Math.min(page * 20, total)} of {total}
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page <= 1} asChild={page > 1}>
+              {page > 1 ? (
+                <Link href={buildPageUrl(searchParams, page - 1)}>Previous</Link>
+              ) : (
+                <span>Previous</span>
+              )}
+            </Button>
+            <Button variant="outline" size="sm" disabled={page >= totalPages} asChild={page < totalPages}>
+              {page < totalPages ? (
+                <Link href={buildPageUrl(searchParams, page + 1)}>Next</Link>
+              ) : (
+                <span>Next</span>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

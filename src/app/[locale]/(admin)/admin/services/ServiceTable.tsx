@@ -3,18 +3,15 @@
 import * as React from "react";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Link } from "@/i18n/navigation";
 import type { Service } from "@prisma/client";
-import { updateService } from "@/actions/admin";
+import { updateService, deleteService } from "@/actions/admin";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
 
-function formatCurrency(cents: number | null) {
-  if (cents == null) return "—";
-  return new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", minimumFractionDigits: 0 }).format(cents / 100);
-}
-
-export function ServiceTable({ services }: { services: Service[] }) {
+export function ServiceTable({ services, onEdit }: { services: Service[]; onEdit?: (service: Service) => void }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -33,11 +30,25 @@ export function ServiceTable({ services }: { services: Service[] }) {
     });
   };
 
+  const handleActiveChange = (id: string, active: boolean) => {
+    startTransition(async () => {
+      await updateService(id, { active });
+      router.refresh();
+    });
+  };
+
+  const handleDelete = (id: string, name: string) => {
+    if (!confirm(`Delete service "${name}"? This cannot be undone.`)) return;
+    startTransition(async () => {
+      await deleteService(id);
+      router.refresh();
+    });
+  };
+
   if (services.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <p className="text-gray-500">No services in database.</p>
-        <p className="mt-2 text-sm text-gray-400">Run: npm run db:seed</p>
+        <p className="text-gray-500">No services found.</p>
       </div>
     );
   }
@@ -50,7 +61,8 @@ export function ServiceTable({ services }: { services: Service[] }) {
             <th className="px-4 py-3 font-medium">Service</th>
             <th className="px-4 py-3 font-medium">Type</th>
             <th className="px-4 py-3 font-medium">Price (THB)</th>
-            <th className="px-4 py-3 font-medium">Actions</th>
+            <th className="px-4 py-3 font-medium">Active</th>
+            <th className="px-4 py-3 font-medium w-24">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -60,6 +72,9 @@ export function ServiceTable({ services }: { services: Service[] }) {
               service={s}
               onPriceChange={(v) => handlePriceChange(s.id, v)}
               onTypeChange={(t) => handleTypeChange(s.id, t)}
+              onActiveChange={(a) => handleActiveChange(s.id, a)}
+              onDelete={() => handleDelete(s.id, s.name)}
+              onEdit={onEdit}
               disabled={pending}
             />
           ))}
@@ -73,11 +88,17 @@ function ServiceRow({
   service,
   onPriceChange,
   onTypeChange,
+  onActiveChange,
+  onDelete,
+  onEdit,
   disabled,
 }: {
   service: Service;
   onPriceChange: (v: string) => void;
   onTypeChange: (t: "fixed" | "quote") => void;
+  onActiveChange: (active: boolean) => void;
+  onDelete: () => void;
+  onEdit?: (service: Service) => void;
   disabled: boolean;
 }) {
   const [localPrice, setLocalPrice] = React.useState(
@@ -87,7 +108,15 @@ function ServiceRow({
   return (
     <tr className="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900/50">
       <td className="px-4 py-3">
-        <span className="font-medium">{service.name}</span>
+        {onEdit ? (
+          <button type="button" onClick={() => onEdit(service)} className="font-medium text-siam-blue hover:underline text-left">
+            {service.name}
+          </button>
+        ) : (
+          <Link href={`/admin/services/${service.id}/edit`} className="font-medium text-siam-blue hover:underline">
+            {service.name}
+          </Link>
+        )}
         <span className="ml-2 text-gray-500">/{service.slug}</span>
       </td>
       <td className="px-4 py-3">
@@ -118,14 +147,38 @@ function ServiceRow({
         </div>
       </td>
       <td className="px-4 py-3">
-        <Button
-          size="sm"
-          variant="outline"
+        <Select
+          defaultValue={service.active ? "1" : "0"}
+          onChange={(e) => onActiveChange(e.target.value === "1")}
           disabled={disabled}
-          onClick={() => onPriceChange(localPrice)}
+          className="w-24"
         >
-          Save
-        </Button>
+          <option value="1">Yes</option>
+          <option value="0">No</option>
+        </Select>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-1">
+          {onEdit ? (
+            <Button variant="ghost" size="icon" onClick={() => onEdit(service)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button variant="ghost" size="icon" asChild>
+              <Link href={`/admin/services/${service.id}/edit`}>
+                <Pencil className="h-4 w-4" />
+              </Link>
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onDelete}
+            disabled={disabled}
+          >
+            <Trash2 className="h-4 w-4 text-red-600" />
+          </Button>
+        </div>
       </td>
     </tr>
   );

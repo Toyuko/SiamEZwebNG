@@ -6,10 +6,10 @@ import { Select } from "@/components/ui/select";
 const STATUS_OPTIONS = [
   { value: "all", label: "All" },
   { value: "draft", label: "Draft" },
-  { value: "sent", label: "Sent" },
+  { value: "unpaid", label: "Unpaid" },
+  { value: "pending_verification", label: "Pending Verification" },
   { value: "paid", label: "Paid" },
-  { value: "overdue", label: "Overdue" },
-  { value: "cancelled", label: "Cancelled" },
+  { value: "rejected", label: "Rejected" },
 ];
 
 export function InvoiceFilter({ defaultValue }: { defaultValue?: string }) {

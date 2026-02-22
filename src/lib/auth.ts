@@ -1,10 +1,10 @@
 /**
  * Auth helpers for SiamEZ.
- * Uses iron-session for encrypted cookie-based sessions.
+ * Uses Auth.js (NextAuth v5) with database sessions.
  */
 
 import type { UserRole } from "@prisma/client";
-import { getSession as getSessionData, type SessionData } from "./session";
+import { auth } from "@/auth";
 
 export interface SessionUser {
   id: string;
@@ -19,28 +19,37 @@ export interface Session {
   expires: string;
 }
 
+/** Get current session (null if not authenticated). */
 export async function getSession(): Promise<Session | null> {
-  const data = await getSessionData();
-  if (!data) return null;
+  const s = await auth();
+  if (!s?.user?.id) return null;
+  const role = (s.user as { role?: UserRole }).role ?? "customer";
   return {
     user: {
-      id: data.userId,
-      email: data.email,
-      name: data.name,
-      role: data.role,
-      image: data.image,
+      id: s.user.id,
+      email: s.user.email ?? "",
+      name: s.user.name ?? null,
+      role,
+      image: (s.user as { image?: string | null }).image ?? s.user.image ?? null,
     },
-    expires: "", // iron-session handles expiry via cookie maxAge
+    expires: s.expires ?? "",
   };
 }
 
-export function requireAuth(): Promise<Session> {
-  return getSession().then((s) => {
-    if (!s) throw new Error("Unauthorized");
-    return s;
-  });
+/** Get current user (convenience alias). */
+export async function getCurrentUser(): Promise<SessionUser | null> {
+  const session = await getSession();
+  return session?.user ?? null;
 }
 
+/** Throws if not authenticated. Use in Server Components and Server Actions. */
+export async function requireAuth(): Promise<Session> {
+  const session = await getSession();
+  if (!session) throw new Error("Unauthorized");
+  return session;
+}
+
+/** Returns a predicate to check if session has one of the given roles. */
 export function requireRole(role: UserRole | UserRole[]): (session: Session) => boolean {
   const allowed = Array.isArray(role) ? role : [role];
   return (session) => allowed.includes(session.user.role);

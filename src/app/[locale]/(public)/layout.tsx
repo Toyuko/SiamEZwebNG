@@ -1,4 +1,4 @@
-import { PublicHeader } from "@/components/layout/PublicHeader";
+import { PublicHeaderWithAuth } from "@/components/layout/PublicHeaderWithAuth";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 
 export default function PublicLayout({
@@ -8,7 +8,7 @@ export default function PublicLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col">
-      <PublicHeader />
+      <PublicHeaderWithAuth />
       <main className="flex-1">{children}</main>
       <PublicFooter />
     </div>

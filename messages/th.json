@@ -8,7 +8,13 @@
     "hasAccount": "มีบัญชีอยู่แล้ว?",
     "email": "อีเมล",
     "password": "รหัสผ่าน",
-    "name": "ชื่อเต็ม"
+    "name": "ชื่อเต็ม",
+    "continueWithGoogle": "ดำเนินการต่อด้วย Google",
+    "continueWithFacebook": "ดำเนินการต่อด้วย Facebook",
+    "continueWithLine": "ดำเนินการต่อด้วย LINE",
+    "orContinueWithEmail": "หรือดำเนินการต่อด้วยอีเมล",
+    "signIn": "เข้าสู่ระบบ",
+    "createAccount": "สร้างบัญชี"
   },
   "common": {
     "home": "หน้าแรก",
@@ -45,7 +51,12 @@
     "about": "เกี่ยวกับเรา",
     "gallery": "แกลเลอรี่",
     "testimonials": "คำรับรอง",
-    "contact": "ติดต่อเรา"
+    "contact": "ติดต่อเรา",
+    "login": "เข้าสู่ระบบ",
+    "signUp": "สมัครสมาชิก",
+    "dashboard": "แดชบอร์ด",
+    "myCases": "เคสของฉัน",
+    "logout": "ออกจากระบบ"
   },
   "footer": {
     "contact": "ติดต่อ",

@@ -2,12 +2,32 @@ import { Link } from "@/i18n/navigation";
 import { Bell } from "lucide-react";
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
+import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Bypass: set BYPASS_ADMIN_AUTH=true to skip login for admin
+  const bypassAuth = process.env.BYPASS_ADMIN_AUTH === "true";
+
+  if (!bypassAuth) {
+    const session = await getSession();
+    const locale = await getLocale();
+
+    if (!session) {
+      redirect(`/${locale}/login?redirect=${encodeURIComponent(`/${locale}/admin`)}`);
+    }
+
+    // Block customers: only staff and admin can access /admin
+    if (session.user.role === "customer") {
+      redirect(`/${locale}/portal`);
+    }
+  }
+
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <AdminSidebar />

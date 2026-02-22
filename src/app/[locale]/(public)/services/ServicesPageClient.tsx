@@ -15,6 +15,8 @@ interface ServicesPageClientProps {
   bookNowLabel: string;
   detailsLabel: string;
   priceLabel: string;
+  isLoggedIn?: boolean;
+  locale?: string;
 }
 
 export function ServicesPageClient({
@@ -26,6 +28,8 @@ export function ServicesPageClient({
   bookNowLabel,
   detailsLabel,
   priceLabel,
+  isLoggedIn = true,
+  locale = "en",
 }: ServicesPageClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -45,6 +49,8 @@ export function ServicesPageClient({
           bookNowLabel={bookNowLabel}
           detailsLabel={detailsLabel}
           priceLabel={priceLabel}
+          isLoggedIn={isLoggedIn}
+          locale={locale}
         />
       </section>
       <WhatsAppFloat />

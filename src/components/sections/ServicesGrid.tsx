@@ -56,6 +56,10 @@ interface ServicesGridProps {
   bookNowLabel: string;
   detailsLabel: string;
   priceLabel?: string;
+  /** When false, Book Now links to login with redirect; when true, links directly to booking */
+  isLoggedIn?: boolean;
+  /** Used for redirect param when not logged in */
+  locale?: string;
 }
 
 export function ServicesGrid({
@@ -64,7 +68,11 @@ export function ServicesGrid({
   bookNowLabel,
   detailsLabel,
   priceLabel,
+  isLoggedIn = false,
+  locale = "en",
 }: ServicesGridProps) {
+  const getBookHref = (slug: string) =>
+    isLoggedIn ? `/book/${slug}` : `/login?redirect=/${locale}/book/${slug}`;
   const filteredServices = useMemo(() => {
     if (!searchQuery.trim()) {
       return services;
@@ -110,6 +118,7 @@ export function ServicesGrid({
             priceLabel={priceLabel}
             bookNowLabel={bookNowLabel}
             detailsLabel={detailsLabel}
+            getBookHref={getBookHref}
           />
         );
       })}

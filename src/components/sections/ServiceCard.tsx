@@ -17,6 +17,8 @@ interface ServiceCardProps {
   priceLabel?: string;
   bookNowLabel: string;
   detailsLabel: string;
+  /** If provided, used for the Book Now href; otherwise defaults to /book/[slug] */
+  getBookHref?: (slug: string) => string;
 }
 
 export function ServiceCard({
@@ -32,8 +34,10 @@ export function ServiceCard({
   priceLabel,
   bookNowLabel,
   detailsLabel,
+  getBookHref,
 }: ServiceCardProps) {
   const iconShapeClass = iconShape === "square" ? "rounded-xl" : "rounded-full";
+  const bookHref = getBookHref ? getBookHref(slug) : `/book/${slug}`;
 
   return (
     <Card className="flex flex-col shadow-sm transition-all duration-200 hover:shadow-lg">
@@ -52,7 +56,7 @@ export function ServiceCard({
         )}
         <div className="mt-6 flex gap-3">
           <Button asChild className="flex-1 bg-siam-blue text-white hover:bg-siam-blue-light">
-            <Link href={`/book/${slug}`}>
+            <Link href={bookHref}>
               {bookNowLabel}
             </Link>
           </Button>

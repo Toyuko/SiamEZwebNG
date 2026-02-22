@@ -1,68 +1,67 @@
 import { prisma } from "@/lib/db";
-import type { PaymentStatus, PaymentType } from "@prisma/client";
+import type { PaymentStatus, PaymentMethod } from "@prisma/client";
 
 export async function getPaymentById(id: string) {
   return prisma.payment.findUnique({
     where: { id },
-    include: { case: true },
+    include: {
+      invoice: { include: { case: { include: { service: true } } } },
+      case: true,
+      proofDocument: true,
+    },
+  });
+}
+
+export async function getPaymentsByInvoiceId(invoiceId: string) {
+  return prisma.payment.findMany({
+    where: { invoiceId },
+    include: { proofDocument: true },
+    orderBy: { submittedAt: "desc" },
   });
 }
 
 export async function getPaymentsByCaseId(caseId: string) {
   return prisma.payment.findMany({
     where: { caseId },
-    orderBy: { createdAt: "desc" },
+    include: { invoice: true, proofDocument: true },
+    orderBy: { submittedAt: "desc" },
+  });
+}
+
+export async function getPaymentsPendingReview() {
+  return prisma.payment.findMany({
+    where: { status: "submitted" },
+    include: {
+      invoice: { include: { case: { include: { service: true, user: true } }, user: true } },
+      proofDocument: true,
+    },
+    orderBy: { submittedAt: "asc" },
   });
 }
 
 export async function createPayment(data: {
+  invoiceId: string;
   caseId: string;
   amount: number;
-  type?: PaymentType;
-  status?: PaymentStatus;
   currency?: string;
-  stripePaymentIntentId?: string;
-  stripeChargeId?: string;
-  metadata?: object;
+  method: PaymentMethod;
+  proofDocumentId?: string;
 }) {
   return prisma.payment.create({
     data: {
-      caseId: data.caseId,
-      amount: data.amount,
-      type: data.type ?? "full",
-      status: data.status ?? "pending",
+      ...data,
       currency: data.currency ?? "THB",
-      stripePaymentIntentId: data.stripePaymentIntentId ?? undefined,
-      stripeChargeId: data.stripeChargeId ?? undefined,
-      metadata: data.metadata ?? undefined,
+      status: "submitted",
     },
   });
 }
 
-export async function updatePaymentStatus(
-  id: string,
-  status: PaymentStatus,
-  extras?: { stripeChargeId?: string }
-) {
+export async function updatePaymentStatus(id: string, status: PaymentStatus) {
   return prisma.payment.update({
     where: { id },
-    data: { status, ...extras },
-  });
-}
-
-export async function getPaymentByStripePaymentIntentId(stripePaymentIntentId: string) {
-  return prisma.payment.findUnique({
-    where: { stripePaymentIntentId },
-    include: { case: true },
-  });
-}
-
-export async function updatePaymentByStripeIntentId(
-  stripePaymentIntentId: string,
-  data: { status: PaymentStatus; stripeChargeId?: string }
-) {
-  return prisma.payment.update({
-    where: { stripePaymentIntentId },
-    data,
+    data: {
+      status,
+      ...(status === "approved" && { approvedAt: new Date() }),
+    },
   });
 }

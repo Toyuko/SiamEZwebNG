@@ -8,18 +8,18 @@ import type { InvoiceStatus } from "@prisma/client";
 
 const statusLabels: Record<InvoiceStatus, string> = {
   draft: "Draft",
-  sent: "Pending",
+  unpaid: "Unpaid",
+  pending_verification: "Pending Verification",
   paid: "Paid",
-  overdue: "Overdue",
-  cancelled: "Cancelled",
+  rejected: "Rejected",
 };
 
 const statusBadgeClass: Record<InvoiceStatus, string> = {
   draft: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
-  sent: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+  unpaid: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+  pending_verification: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
   paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  overdue: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-  cancelled: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400",
+  rejected: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
 };
 
 export default async function PortalInvoicesPage({
@@ -56,7 +56,8 @@ export default async function PortalInvoicesPage({
         <div className="mt-8 space-y-4">
           {invoices.map((inv) => (
             <Card key={inv.id} className="transition-shadow hover:shadow-md">
-              <CardContent className="flex flex-col gap-2 p-6 sm:flex-row sm:items-center sm:justify-between">
+              <Link href={`/portal/invoices/${inv.id}`} className="block">
+              <CardContent className="flex flex-col gap-2 p-6 sm:flex-row sm:items-center sm:justify-between transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50">
                 <div>
                   <p className="font-semibold text-gray-900 dark:text-white">
                     {inv.case.service.name}
@@ -82,6 +83,7 @@ export default async function PortalInvoicesPage({
                   </span>
                 </div>
               </CardContent>
+              </Link>
             </Card>
           ))}
         </div>

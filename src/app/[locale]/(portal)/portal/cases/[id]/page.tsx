@@ -1,6 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { requireAuth } from "@/lib/auth";
-import { getCaseById } from "@/data-access/case";
+import { getCaseByIdForUser } from "@/data-access/case";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { notFound } from "next/navigation";
@@ -30,10 +30,8 @@ export default async function PortalCaseDetailPage({
   const session = await requireAuth();
   const t = await getTranslations("portal");
 
-  const caseData = await getCaseById(id);
-  if (!caseData || caseData.userId !== session.user.id) {
-    notFound();
-  }
+  const caseData = await getCaseByIdForUser(id, session.user.id);
+  if (!caseData) notFound();
 
   return (
     <div>

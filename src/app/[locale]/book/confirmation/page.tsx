@@ -8,11 +8,13 @@ export default async function BookingConfirmationPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ caseNumber?: string }>;
+  searchParams: Promise<{ caseNumber?: string; guest?: string; email?: string }>;
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const { caseNumber } = await searchParams;
+  const { caseNumber, guest, email } = await searchParams;
+  const isGuest = guest === "1";
+  const prefillEmail = email ?? "";
 
   return (
     <div className="container mx-auto flex max-w-md flex-col items-center justify-center px-4 py-16">
@@ -31,13 +33,32 @@ export default async function BookingConfirmationPage({
           </>
         )}
       </p>
+
+      {isGuest && (
+        <div className="mt-6 w-full rounded-lg border border-siam-blue/30 bg-siam-blue/5 p-4 dark:border-siam-blue/50 dark:bg-siam-blue/10">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">
+            Create your account to track this case
+          </p>
+          <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+            Upload documents, see invoices, and manage your case in one place.
+          </p>
+          <Button asChild className="mt-3 w-full" variant="default">
+            <Link href={`/${locale}/register${prefillEmail ? `?email=${encodeURIComponent(prefillEmail)}` : ""}`}>
+              Create account
+            </Link>
+          </Button>
+        </div>
+      )}
+
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <Button asChild>
           <Link href="/">Back to home</Link>
         </Button>
-        <Button asChild variant="outline">
-          <Link href="/portal">Go to portal</Link>
-        </Button>
+        {!isGuest && (
+          <Button asChild variant="outline">
+            <Link href="/portal">Go to portal</Link>
+          </Button>
+        )}
       </div>
     </div>
   );

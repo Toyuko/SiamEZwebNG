@@ -4,7 +4,7 @@ import { z } from "zod";
 export const clientDetailsSchema = z.object({
   name: z.string().min(1, "Full name is required").max(200, "Name is too long"),
   email: z.string().min(1, "Email is required").email("Please enter a valid email"),
-  phone: z.string().max(30).optional().or(z.literal("")),
+  phone: z.string().min(1, "Phone is required").max(30, "Phone is too long"),
 });
 
 /** Document metadata (before storage - UI only for now) */

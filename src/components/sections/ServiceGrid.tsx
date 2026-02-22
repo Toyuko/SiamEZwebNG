@@ -65,6 +65,8 @@ interface ServiceGridProps {
   bookNowLabel?: string;
   detailsLabel?: string;
   priceLabel?: string;
+  /** If provided, used for Book Now hrefs (session-aware redirect for guests) */
+  getBookHref?: (slug: string) => string;
   className?: string;
 }
 
@@ -79,6 +81,7 @@ export function ServiceGrid({
   bookNowLabel = "Book Now",
   detailsLabel = "Details",
   priceLabel,
+  getBookHref,
   className = "",
 }: ServiceGridProps) {
   const list =
@@ -134,6 +137,7 @@ export function ServiceGrid({
                   priceLabel={priceLabel}
                   bookNowLabel={bookNowLabel}
                   detailsLabel={detailsLabel}
+                  getBookHref={getBookHref}
                 />
               </div>
             );

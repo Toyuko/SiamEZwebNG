@@ -38,6 +38,8 @@ model User {
   caseNotes      CaseNote[]
   documents      Document[]        @relation("DocumentUploader")
   invoices       Invoice[]         @relation("InvoiceCustomer")
+  eventsAsClient Event[]           @relation("EventClient")
+  eventsAsStaff  Event[]           @relation("EventStaff")
 }
 
 model Account {
@@ -121,22 +123,22 @@ enum CaseStatus {
 }
 
 model Case {
-  id          String     @id @default(cuid())
-  caseNumber  String     @unique @map("case_number") // e.g. SE-2026-00001
-  userId      String     @map("user_id")
-  serviceId   String     @map("service_id")
-  status      CaseStatus @default(new)
-  // Optional guest booking: store email/phone for non-logged-in
-  guestEmail  String?    @map("guest_email")
-  guestName   String?    @map("guest_name")
-  guestPhone  String?    @map("guest_phone")
-  // Snapshot of booking form answers (JSON)
-  formData    Json?      @map("form_data")
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
-  completedAt DateTime?  @map("completed_at")
+  id                   String     @id @default(cuid())
+  caseNumber           String     @unique @map("case_number") // e.g. SE-2026-00001
+  userId               String?    @map("user_id") // null for guest bookings
+  serviceId            String     @map("service_id")
+  status               CaseStatus @default(new)
+  isGuest              Boolean    @default(false) @map("is_guest")
+  guestCheckoutToken   String?    @unique @map("guest_checkout_token") // for secure guest checkout
+  guestEmail          String?    @map("guest_email")
+  guestName           String?    @map("guest_name")
+  guestPhone          String?    @map("guest_phone")
+  formData            Json?      @map("form_data")
+  createdAt           DateTime   @default(now()) @map("created_at")
+  updatedAt           DateTime   @updatedAt @map("updated_at")
+  completedAt         DateTime?  @map("completed_at")
 
-  user     User     @relation("CaseClient", fields: [userId], references: [id], onDelete: Restrict)
+  user     User?    @relation("CaseClient", fields: [userId], references: [id], onDelete: SetNull)
   service  Service  @relation(fields: [serviceId], references: [id], onDelete: Restrict)
   quotes   Quote[]
   payments Payment[]
@@ -144,6 +146,7 @@ model Case {
   staffAssignments StaffAssignment[]
   caseNotes CaseNote[]
   invoices Invoice[]
+  events   Event[]
 }
 
 // ----- Quotes -----
@@ -171,54 +174,60 @@ model Quote {
   invoices Invoice[]
 }
 
-// ----- Payments (Stripe-backed) -----
+// ----- Payments (provider-agnostic: QR, Bank, Wise, Stripe Phase 2) -----
 
-enum PaymentType {
-  full
-  deposit
-  additional
-  refund
+enum PaymentMethod {
+  qr      // Thai PromptPay / Bank QR
+  bank    // Bank transfer
+  wise    // Wise international
+  stripe  // Phase 2: online payment
 }
 
 enum PaymentStatus {
-  pending
-  succeeded
-  failed
-  cancelled
-  refunded
+  submitted   // Proof uploaded, awaiting admin review
+  approved    // Admin approved -> invoice paid
+  rejected    // Admin rejected
+  // Stripe Phase 2: pending, succeeded, failed, refunded
 }
 
 model Payment {
-  id                    String        @id @default(cuid())
-  caseId                String        @map("case_id")
-  amount                Int           // smallest unit
-  currency              String        @default("THB")
-  status                PaymentStatus @default(pending)
-  type                  PaymentType   @default(full)
-  stripePaymentIntentId String?       @unique @map("stripe_payment_intent_id")
-  stripeChargeId        String?       @map("stripe_charge_id")
-  metadata              Json?         // e.g. invoiceId, quoteId
-  createdAt             DateTime      @default(now()) @map("created_at")
-  updatedAt             DateTime      @updatedAt @map("updated_at")
+  id                    String         @id @default(cuid())
+  invoiceId             String         @map("invoice_id")
+  caseId                String         @map("case_id") // denormalized for convenience
+  amount                Int            // smallest unit
+  currency              String         @default("THB")
+  method                PaymentMethod
+  status                PaymentStatus  @default(submitted)
+  proofDocumentId       String?        @unique @map("proof_document_id")
+  submittedAt           DateTime       @default(now()) @map("submitted_at")
+  approvedAt            DateTime?      @map("approved_at")
+  stripePaymentIntentId String?        @unique @map("stripe_payment_intent_id") // Phase 2
+  stripeChargeId        String?        @map("stripe_charge_id")
+  metadata              Json?
+  createdAt             DateTime       @default(now()) @map("created_at")
+  updatedAt             DateTime       @updatedAt @map("updated_at")
 
-  case Case @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  invoice       Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  case          Case      @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  proofDocument Document? @relation("PaymentProof", fields: [proofDocumentId], references: [id], onDelete: SetNull)
 }
 
 // ----- Documents -----
 
 model Document {
-  id         String   @id @default(cuid())
-  caseId     String   @map("case_id")
-  uploadedBy String?  @map("uploaded_by") // userId or null for system
-  name       String
-  storageKey String   @map("storage_key") // Vercel Blob / S3 key or URL
-  mimeType   String?  @map("mime_type")
-  size       Int?     // bytes
-  documentType String? @map("document_type") // e.g. passport, contract
-  createdAt  DateTime @default(now()) @map("created_at")
+  id           String   @id @default(cuid())
+  caseId       String   @map("case_id")
+  uploadedBy   String?  @map("uploaded_by") // userId or null for system
+  name         String
+  storageKey   String   @map("storage_key") // Vercel Blob / S3 key or URL
+  mimeType     String?  @map("mime_type")
+  size         Int?     // bytes
+  documentType String?  @map("document_type") // e.g. passport, contract, payment_proof
+  createdAt    DateTime @default(now()) @map("created_at")
 
-  case    Case   @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  uploader User? @relation("DocumentUploader", fields: [uploadedBy], references: [id], onDelete: SetNull)
+  case           Case    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  uploader       User?   @relation("DocumentUploader", fields: [uploadedBy], references: [id], onDelete: SetNull)
+  paymentProof   Payment? @relation("PaymentProof")
 }
 
 // ----- Staff assignments -----
@@ -256,32 +265,71 @@ model CaseNote {
 // ----- Invoices -----
 
 enum InvoiceStatus {
-  draft
-  sent
-  paid
-  overdue
-  cancelled
+  draft                // Admin editing
+  unpaid               // Sent to client, awaiting payment
+  pending_verification // Proof uploaded, admin reviewing
+  paid                 // Payment approved
+  rejected             // Payment rejected
+}
+
+enum InvoicePaymentMethod {
+  qr     // Thai PromptPay / Bank QR
+  bank   // Bank transfer
+  wise   // Wise international
+  stripe // Phase 2
 }
 
 model Invoice {
-  id               String        @id @default(cuid())
-  caseId           String        @map("case_id")
-  quoteId          String?       @map("quote_id")
-  userId           String        @map("user_id") // billing contact
+  id               String               @id @default(cuid())
+  caseId           String               @map("case_id")
+  quoteId          String?              @map("quote_id")
+  userId           String?              @map("user_id") // billing contact; null for guest invoices
   amount           Int
-  currency         String        @default("THB")
-  status           InvoiceStatus @default(draft)
-  dueDate          DateTime?     @map("due_date")
-  stripeInvoiceId  String?       @map("stripe_invoice_id")
-  lineItems        Json?         @map("line_items")
-  createdAt        DateTime      @default(now()) @map("created_at")
-  updatedAt        DateTime      @updatedAt @map("updated_at")
-  sentAt           DateTime?     @map("sent_at")
-  paidAt           DateTime?     @map("paid_at")
+  currency         String               @default("THB")
+  status           InvoiceStatus        @default(draft)
+  paymentMethod    InvoicePaymentMethod? @map("payment_method") // set when client selects
+  dueDate          DateTime?            @map("due_date")
+  stripeInvoiceId  String?              @map("stripe_invoice_id") // Phase 2
+  lineItems        Json?                @map("line_items")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+  sentAt           DateTime?            @map("sent_at")
+  paidAt           DateTime?            @map("paid_at")
 
-  case   Case   @relation(fields: [caseId], references: [id], onDelete: Restrict)
-  quote  Quote? @relation(fields: [quoteId], references: [id], onDelete: SetNull)
-  user   User   @relation("InvoiceCustomer", fields: [userId], references: [id], onDelete: Restrict)
+  case     Case     @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  quote    Quote?   @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  user     User?    @relation("InvoiceCustomer", fields: [userId], references: [id], onDelete: SetNull)
+  payments Payment[]
 
   @@map("invoices")
+}
+
+// ----- Calendar Events -----
+
+enum EventType {
+  appointment
+  deadline
+  milestone
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  title       String
+  description String?   @db.Text
+  start       DateTime
+  end         DateTime
+  type        EventType @default(appointment)
+  allDay      Boolean   @default(false) @map("all_day")
+  color       String?   // optional: blue, red, emerald, amber, purple, cyan, pink, orange
+  caseId      String?   @map("case_id")
+  userId      String?   @map("user_id")   // client
+  staffId     String?   @map("staff_id")  // assigned staff
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  case  Case?  @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  user  User?  @relation("EventClient", fields: [userId], references: [id], onDelete: SetNull)
+  staff User?  @relation("EventStaff", fields: [staffId], references: [id], onDelete: SetNull)
+
+  @@map("events")
 }

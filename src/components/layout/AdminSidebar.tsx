@@ -10,16 +10,24 @@ import {
   Settings,
   Package,
   FileText,
+  CreditCard,
+  FileStack,
+  UserCog,
+  Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "Service Jobs", href: "/admin/service-jobs", icon: Briefcase },
   { label: "Cases", href: "/admin/cases", icon: FolderOpen },
   { label: "Clients", href: "/admin/clients", icon: Users },
   { label: "Services", href: "/admin/services", icon: Package },
   { label: "Invoices", href: "/admin/invoices", icon: FileText },
+  { label: "Payments", href: "/admin/payments", icon: CreditCard },
+  { label: "Documents", href: "/admin/documents", icon: FileStack },
   { label: "Calendar", href: "/admin/calendar", icon: Calendar },
+  { label: "Staff", href: "/admin/staff", icon: UserCog },
   { label: "Reports", href: "/admin/reports", icon: BarChart3 },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];

@@ -1,14 +1,13 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { createPayment, updatePaymentStatus } from "@/data-access/payment";
+import { requireAuth, getSession } from "@/lib/auth";
+import { getCaseByIdWithToken } from "@/data-access/case";
+import * as invoiceDA from "@/data-access/invoice";
+import * as paymentDA from "@/data-access/payment";
 import { getStripe } from "@/lib/stripe";
-import type { PaymentStatus, PaymentType } from "@prisma/client";
 
-export interface CreatePaymentIntentInput {
-  caseId: string;
-  invoiceId?: string;
-}
+export type PaymentMethodInput = "qr" | "bank" | "wise";
 
 export interface CreatePaymentIntentResult {
   success: boolean;
@@ -19,148 +18,191 @@ export interface CreatePaymentIntentResult {
 }
 
 /**
- * Creates a Stripe PaymentIntent for a case and records the payment in DB.
- * Amount is derived from case service (fixed-price) or latest quote/invoice.
+ * Creates Stripe PaymentIntent for checkout.
+ * Supports: (a) logged-in user who owns the case; (b) guest with valid token.
  */
-export async function createPaymentIntent(
-  input: CreatePaymentIntentInput
-): Promise<CreatePaymentIntentResult> {
+export async function createPaymentIntent(input: {
+  caseId: string;
+  invoiceId?: string;
+  guestToken?: string;
+}): Promise<CreatePaymentIntentResult> {
   try {
-    const c = await prisma.case.findUnique({
-      where: { id: input.caseId },
-      include: {
-        service: true,
-        quotes: { orderBy: { createdAt: "desc" }, take: 1 },
-        invoices: input.invoiceId
-          ? { where: { id: input.invoiceId }, take: 1 }
-          : { orderBy: { createdAt: "desc" }, take: 1 },
-      },
-    });
-    if (!c) return { success: false, error: "Case not found" };
+    const session = await getSession();
+    let invoice = null;
 
-    let amount: number;
-    if (input.invoiceId && c.invoices[0]) {
-      amount = c.invoices[0].amount;
-    } else if (c.quotes[0] && c.quotes[0].status !== "rejected") {
-      amount = c.quotes[0].amount;
-    } else if (c.service.type === "fixed" && c.service.priceAmount != null) {
-      amount = c.service.priceAmount;
-    } else {
-      return { success: false, error: "No price or quote available for this case" };
+    if (input.guestToken && typeof input.guestToken === "string") {
+      const guestCase = await getCaseByIdWithToken(input.caseId, input.guestToken);
+      if (!guestCase) return { success: false, error: "Invalid or expired checkout link" };
+      const invoices = await invoiceDA.getInvoicesByCaseId(input.caseId);
+      invoice =
+        input.invoiceId
+          ? invoices.find((i) => i.id === input.invoiceId && (i.status === "unpaid" || i.status === "draft"))
+          : invoices.find((i) => (i.status === "unpaid" || i.status === "draft"))
+        ?? null;
+    } else if (session?.user?.id) {
+      invoice = input.invoiceId
+        ? await invoiceDA.getInvoiceByIdForUser(input.invoiceId, session.user.id)
+        : (await invoiceDA.getInvoicesByCaseId(input.caseId)).find(
+            (i) => i.userId === session.user.id && (i.status === "unpaid" || i.status === "draft")
+          ) ?? null;
     }
 
-    const currency = c.service.priceCurrency ?? "THB";
+    if (!invoice) return { success: false, error: "Invoice not found" };
 
-    const stripe = getStripe();
+    let stripe: import("stripe").Stripe;
+    try {
+      stripe = getStripe();
+    } catch {
+      return { success: false, error: "Stripe is not configured" };
+    }
+
     const pi = await stripe.paymentIntents.create({
-      amount,
-      currency: currency.toLowerCase(),
-      metadata: { caseId: input.caseId, ...(input.invoiceId && { invoiceId: input.invoiceId }) },
+      amount: invoice.amount,
+      currency: invoice.currency.toLowerCase(),
+      metadata: { caseId: invoice.caseId, invoiceId: invoice.id },
       automatic_payment_methods: { enabled: true },
-    });
-
-    await createPayment({
-      caseId: input.caseId,
-      amount,
-      type: "full",
-      status: "pending",
-      currency,
-      stripePaymentIntentId: pi.id,
-      metadata: input.invoiceId ? { invoiceId: input.invoiceId } : undefined,
     });
 
     return {
       success: true,
       clientSecret: pi.client_secret ?? undefined,
-      amount,
-      currency,
+      amount: invoice.amount,
+      currency: invoice.currency,
     };
   } catch (e) {
     console.error("createPaymentIntent error", e);
     return {
       success: false,
-      error: e instanceof Error ? e.message : "Failed to create payment intent",
+      error: e instanceof Error ? e.message : "Failed to create payment",
     };
   }
 }
 
-export interface RecordPaymentInput {
-  caseId: string;
-  amount: number;
-  type?: PaymentType;
-  status?: PaymentStatus;
-  currency?: string;
-  stripePaymentIntentId?: string;
-  stripeChargeId?: string;
-  invoiceId?: string;
+export interface SubmitPaymentWithProofInput {
+  invoiceId: string;
+  method: PaymentMethodInput;
+  proofDocumentId: string;
 }
 
-export interface RecordPaymentResult {
-  success: boolean;
-  paymentId?: string;
-  error?: string;
-}
-
-export async function recordPaymentAction(input: RecordPaymentInput): Promise<RecordPaymentResult> {
-  try {
-    const caseRecord = await prisma.case.findUnique({
-      where: { id: input.caseId },
-      select: { id: true },
-    });
-    if (!caseRecord) {
-      return { success: false, error: "Case not found" };
-    }
-
-    const metadata =
-      input.invoiceId != null
-        ? { invoiceId: input.invoiceId }
-        : undefined;
-
-    const payment = await createPayment({
-      caseId: input.caseId,
-      amount: input.amount,
-      type: input.type ?? "full",
-      status: input.status ?? "pending",
-      currency: input.currency ?? "THB",
-      stripePaymentIntentId: input.stripePaymentIntentId,
-      stripeChargeId: input.stripeChargeId,
-      metadata,
-    });
-
-    return { success: true, paymentId: payment.id };
-  } catch (e) {
-    console.error("recordPayment error", e);
-    return {
-      success: false,
-      error: e instanceof Error ? e.message : "Failed to record payment",
-    };
-  }
-}
-
-export interface UpdatePaymentStatusInput {
-  paymentId: string;
-  status: PaymentStatus;
-  stripeChargeId?: string;
-}
-
-export interface UpdatePaymentStatusResult {
+export interface SubmitPaymentWithProofResult {
   success: boolean;
   error?: string;
 }
 
-export async function updatePaymentStatusAction(
-  input: UpdatePaymentStatusInput
-): Promise<UpdatePaymentStatusResult> {
+/**
+ * Client submits payment with proof (slip/screenshot).
+ * Creates Payment record, sets invoice to pending_verification.
+ */
+export async function submitPaymentWithProof(
+  input: SubmitPaymentWithProofInput
+): Promise<SubmitPaymentWithProofResult> {
   try {
-    await updatePaymentStatus(input.paymentId, input.status, {
-      stripeChargeId: input.stripeChargeId,
+    const session = await requireAuth();
+    const invoice = await invoiceDA.getInvoiceByIdForUser(input.invoiceId, session.user.id);
+    if (!invoice) return { success: false, error: "Invoice not found" };
+    if (invoice.status === "paid") return { success: false, error: "Invoice already paid" };
+    if (invoice.status === "rejected") return { success: false, error: "Invoice was rejected" };
+
+    const methodMap = { qr: "qr" as const, bank: "bank" as const, wise: "wise" as const };
+    const method = methodMap[input.method];
+
+    const doc = await prisma.document.findFirst({
+      where: {
+        id: input.proofDocumentId,
+        caseId: invoice.caseId,
+        documentType: "payment_proof",
+      },
     });
+    if (!doc) return { success: false, error: "Payment proof document not found" };
+
+    await paymentDA.createPayment({
+      invoiceId: input.invoiceId,
+      caseId: invoice.caseId,
+      amount: invoice.amount,
+      currency: invoice.currency,
+      method,
+      proofDocumentId: input.proofDocumentId,
+    });
+
+    await invoiceDA.updateInvoiceStatus(input.invoiceId, "pending_verification");
+    await invoiceDA.updateInvoicePaymentMethod(input.invoiceId, method);
+
     return { success: true };
   } catch (e) {
-    console.error("updatePaymentStatus error", e);
+    console.error("submitPaymentWithProof error", e);
     return {
       success: false,
-      error: e instanceof Error ? e.message : "Failed to update payment status",
+      error: e instanceof Error ? e.message : "Failed to submit payment",
+    };
+  }
+}
+
+export interface ApprovePaymentResult {
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Admin approves payment -> marks invoice paid, updates case status.
+ */
+export async function approvePayment(paymentId: string): Promise<ApprovePaymentResult> {
+  try {
+    const session = await requireAuth();
+    if (session.user.role !== "admin" && session.user.role !== "staff") {
+      return { success: false, error: "Unauthorized" };
+    }
+    const payment = await paymentDA.getPaymentById(paymentId);
+    if (!payment) return { success: false, error: "Payment not found" };
+    if (payment.status !== "submitted") return { success: false, error: "Payment already processed" };
+
+    await prisma.$transaction([
+      paymentDA.updatePaymentStatus(paymentId, "approved"),
+      invoiceDA.updateInvoiceStatus(payment.invoiceId, "paid"),
+      prisma.case.update({
+        where: { id: payment.caseId },
+        data: { status: "in_progress" },
+      }),
+    ]);
+
+    return { success: true };
+  } catch (e) {
+    console.error("approvePayment error", e);
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to approve payment",
+    };
+  }
+}
+
+export interface RejectPaymentResult {
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Admin rejects payment -> marks invoice rejected.
+ */
+export async function rejectPayment(paymentId: string): Promise<RejectPaymentResult> {
+  try {
+    const session = await requireAuth();
+    if (session.user.role !== "admin" && session.user.role !== "staff") {
+      return { success: false, error: "Unauthorized" };
+    }
+    const payment = await paymentDA.getPaymentById(paymentId);
+    if (!payment) return { success: false, error: "Payment not found" };
+    if (payment.status !== "submitted") return { success: false, error: "Payment already processed" };
+
+    await prisma.$transaction([
+      paymentDA.updatePaymentStatus(paymentId, "rejected"),
+      invoiceDA.updateInvoiceStatus(payment.invoiceId, "rejected"),
+    ]);
+
+    return { success: true };
+  } catch (e) {
+    console.error("rejectPayment error", e);
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to reject payment",
     };
   }
 }

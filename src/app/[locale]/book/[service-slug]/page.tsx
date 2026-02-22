@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { getServiceBySlug } from "@/data-access/service";
 import { Button } from "@/components/ui/button";
 import { BookingWizard } from "@/components/booking/BookingWizard";
+import { getSession } from "@/lib/auth";
 
 export default async function BookServicePage({
   params,
@@ -13,6 +14,7 @@ export default async function BookServicePage({
 }) {
   const { locale, "service-slug": serviceSlug } = await params;
   setRequestLocale(locale);
+  const session = await getSession();
   const [service, t, tCommon] = await Promise.all([
     getServiceBySlug(serviceSlug),
     getTranslations("booking"),
@@ -30,7 +32,13 @@ export default async function BookServicePage({
           <Link href={`/services/${serviceSlug}`}>{tCommon("cancel")}</Link>
         </Button>
       </div>
-      <BookingWizard service={service} serviceSlug={serviceSlug} />
+      <BookingWizard
+        service={service}
+        serviceSlug={serviceSlug}
+        userId={session?.user.id}
+        userEmail={session?.user.email ?? undefined}
+        userName={session?.user.name ?? undefined}
+      />
     </div>
   );
 }

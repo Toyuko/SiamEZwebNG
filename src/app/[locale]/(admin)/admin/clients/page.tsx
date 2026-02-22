@@ -1,23 +1,26 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { getClients } from "@/actions/admin";
-import { ClientTable } from "./ClientTable";
+import { ClientsPageClient } from "./ClientsPageClient";
 
-export default async function AdminClientsPage() {
-  const clients = await getClients();
+export default async function AdminClientsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string; page?: string }>;
+}) {
+  const params = await searchParams;
+  const search = params.search ?? undefined;
+  const page = Number(params.page) || 1;
+
+  const { clients, total, totalPages } = await getClients({ search, page });
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-        Clients
-      </h1>
-      <p className="mt-1 text-gray-600 dark:text-gray-400">
-        View and manage client accounts.
-      </p>
-      <Card className="mt-6">
-        <CardContent className="p-0">
-          <ClientTable clients={clients} />
-        </CardContent>
-      </Card>
+      <ClientsPageClient
+        clients={clients}
+        total={total}
+        page={page}
+        totalPages={totalPages}
+        search={search}
+      />
     </div>
   );
 }

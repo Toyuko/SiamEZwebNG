@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "@/i18n/navigation";
 import type { Service } from "@prisma/client";
 import { Button } from "@/components/ui/button";
@@ -32,9 +32,13 @@ interface DocumentMeta {
 interface BookingWizardProps {
   service: Service;
   serviceSlug: string;
+  /** Logged-in user – optional; if absent, guest checkout */
+  userId?: string | null;
+  userEmail?: string | null;
+  userName?: string | null;
 }
 
-export function BookingWizard({ service, serviceSlug }: BookingWizardProps) {
+export function BookingWizard({ service, serviceSlug, userId, userEmail, userName }: BookingWizardProps) {
   const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
@@ -45,6 +49,16 @@ export function BookingWizard({ service, serviceSlug }: BookingWizardProps) {
 
   const currentStepId = STEPS[stepIndex].id;
   const isLastStep = stepIndex === STEPS.length - 1;
+
+  useEffect(() => {
+    if (userEmail || userName) {
+      setFormData((p) => ({
+        ...p,
+        ...(userEmail && { email: userEmail }),
+        ...(userName && { name: userName }),
+      }));
+    }
+  }, [userEmail, userName]);
 
   const validateClientDetails = (): boolean => {
     const result = clientDetailsSchema.safeParse({
@@ -102,6 +116,8 @@ export function BookingWizard({ service, serviceSlug }: BookingWizardProps) {
     setDocuments((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const isGuest = !userId;
+
   async function handleSubmit() {
     if (currentStepId === "details" && !validateClientDetails()) return;
 
@@ -114,9 +130,10 @@ export function BookingWizard({ service, serviceSlug }: BookingWizardProps) {
     const result = await submitBooking({
       serviceId: service.id,
       serviceSlug,
-      isGuest: true,
-      guestEmail: (formData.email as string) || undefined,
-      guestName: (formData.name as string) || undefined,
+      isGuest,
+      userId: userId ?? undefined,
+      guestEmail: (formData.email as string) || userEmail || undefined,
+      guestName: (formData.name as string) || userName || undefined,
       guestPhone: (formData.phone as string) || undefined,
       formData: payload,
       documentIds: undefined,
@@ -125,9 +142,19 @@ export function BookingWizard({ service, serviceSlug }: BookingWizardProps) {
 
     if (result.success && result.caseId && result.caseNumber) {
       if (result.isFixed) {
-        router.push(`/checkout/${result.caseId}`);
+        const base = `/checkout/${result.caseId}`;
+        const url = isGuest && result.guestCheckoutToken
+          ? `${base}?token=${encodeURIComponent(result.guestCheckoutToken)}`
+          : base;
+        router.push(url);
       } else {
-        router.push(`/book/confirmation?caseNumber=${encodeURIComponent(result.caseNumber)}`);
+        const params = new URLSearchParams();
+        params.set("caseNumber", result.caseNumber);
+        if (isGuest) {
+          params.set("guest", "1");
+          params.set("email", (formData.email as string) ?? "");
+        }
+        router.push(`/book/confirmation?${params.toString()}`);
       }
       return;
     }
@@ -151,6 +178,8 @@ export function BookingWizard({ service, serviceSlug }: BookingWizardProps) {
             formData={formData}
             setFormData={setFormData}
             fieldErrors={fieldErrors}
+            isLoggedIn={!!userId}
+            serviceSlug={serviceSlug}
           />
         )}
         {currentStepId === "documents" && (
@@ -229,11 +258,19 @@ function ClientDetailsStep({
   formData,
   setFormData,
   fieldErrors,
+  isLoggedIn,
+  serviceSlug,
 }: {
   formData: Record<string, unknown>;
   setFormData: (d: Record<string, unknown> | ((p: Record<string, unknown>) => Record<string, unknown>)) => void;
   fieldErrors: Record<string, string>;
+  isLoggedIn: boolean;
+  serviceSlug: string;
 }) {
+  const locale = typeof window !== "undefined" ? window.location.pathname.split("/")[1] ?? "en" : "en";
+  const loginHref = `/${locale}/login?redirect=/${locale}/book/${serviceSlug}`;
+  const registerHref = `/${locale}/register?redirect=/${locale}/book/${serviceSlug}`;
+
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -284,16 +321,48 @@ function ClientDetailsStep({
         </div>
         <div>
           <label htmlFor="phone" className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Phone
+            Phone *
           </label>
           <Input
             id="phone"
             type="tel"
+            required
             placeholder="+66 00 000 0000"
             value={(formData.phone as string) ?? ""}
             onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
+            className={cn(fieldErrors.phone && "border-red-500 focus-visible:ring-red-500")}
+            aria-invalid={!!fieldErrors.phone}
           />
+          {fieldErrors.phone && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.phone}</p>
+          )}
         </div>
+
+        {!isLoggedIn && (
+          <div className="rounded-lg border border-gray-200 bg-gray-50/50 p-4 dark:border-gray-700 dark:bg-gray-800/30">
+            <p className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Want to track your case? Create an account
+            </p>
+            <p className="mb-3 text-xs text-gray-600 dark:text-gray-400">
+              Continue as guest below, or create an account to track your case, upload documents, and see invoices.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={loginHref}
+                className="text-sm font-medium text-siam-blue hover:underline"
+              >
+                Already have an account? Log in
+              </a>
+              <span className="text-gray-400">·</span>
+              <a
+                href={registerHref}
+                className="text-sm font-medium text-siam-blue hover:underline"
+              >
+                Create an account
+              </a>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

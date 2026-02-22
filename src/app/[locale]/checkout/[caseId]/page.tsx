@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { getCaseById } from "@/data-access/case";
+import { getSession } from "@/lib/auth";
+import { getCaseByIdForUser, getCaseByIdWithToken } from "@/data-access/case";
 import { createPaymentIntent } from "@/actions/payment";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { Button } from "@/components/ui/button";
@@ -11,16 +12,24 @@ export default async function CheckoutPage({
   searchParams,
 }: {
   params: Promise<{ locale: string; caseId: string }>;
-  searchParams: Promise<{ invoiceId?: string }>;
+  searchParams: Promise<{ invoiceId?: string; token?: string }>;
 }) {
   const { locale, caseId } = await params;
-  const { invoiceId } = await searchParams;
+  const { invoiceId, token } = await searchParams;
   setRequestLocale(locale);
+  const session = await getSession();
 
-  const c = await getCaseById(caseId);
+  let c = null;
+  let isGuestCheckout = false;
+  if (session?.user?.id) {
+    c = await getCaseByIdForUser(caseId, session.user.id);
+  }
+  if (!c && token && typeof token === "string") {
+    c = await getCaseByIdWithToken(caseId, token);
+    isGuestCheckout = !!c;
+  }
   if (!c) notFound();
 
-  // Don't allow checkout if already paid
   if (c.status === "paid") {
     return (
       <div className="container mx-auto max-w-md px-4 py-16">
@@ -31,13 +40,17 @@ export default async function CheckoutPage({
           Case {c.caseNumber} has already been paid.
         </p>
         <Button asChild className="mt-6">
-          <Link href="/portal">Go to portal</Link>
+          <Link href={isGuestCheckout ? "/" : "/portal"}>{isGuestCheckout ? "Back to home" : "Go to portal"}</Link>
         </Button>
       </div>
     );
   }
 
-  const result = await createPaymentIntent({ caseId, invoiceId: invoiceId ?? undefined });
+  const result = await createPaymentIntent({
+    caseId,
+    invoiceId: invoiceId ?? undefined,
+    guestToken: isGuestCheckout ? token : undefined,
+  });
   if (!result.success || !result.clientSecret) {
     return (
       <div className="container mx-auto max-w-md px-4 py-16">
