@@ -50,6 +50,7 @@ export async function createInvoice(data: {
   paymentMethod?: InvoicePaymentMethod | null;
   dueDate?: Date | null;
   lineItems?: object | null;
+  clientAddress?: string | null;
 }) {
   return prisma.invoice.create({
     data: {
@@ -60,6 +61,7 @@ export async function createInvoice(data: {
       paymentMethod: data.paymentMethod ?? undefined,
       dueDate: data.dueDate ?? undefined,
       lineItems: data.lineItems ?? undefined,
+      clientAddress: data.clientAddress ?? undefined,
     },
   });
 }
@@ -83,4 +85,9 @@ export async function updateInvoicePaymentMethod(
     where: { id },
     data: { paymentMethod },
   });
+}
+
+/** Mark invoice paid (e.g. Stripe payment_intent.succeeded). */
+export async function updateInvoicePaid(id: string) {
+  return updateInvoiceStatus(id, "paid");
 }

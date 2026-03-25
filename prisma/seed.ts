@@ -28,8 +28,10 @@ const services = [
   {
     slug: "driver-license",
     name: "Driver's License",
-    shortDescription: "Expert help obtaining or converting your Thai driver's license with minimal hassle.",
-    description: "Expert assistance with obtaining or converting your Thai driver's license. We guide you through the process at the Department of Land Transport and help with document preparation.",
+    shortDescription:
+      "Thai driver's license under 2026 DLT rules: conversion, renewal, new car/bike, IDP, FastTrack, and bilingual coordinators in Bangkok.",
+    description:
+      "Fast-track appointments, exam prep, and escorted DLT visits for conversion, renewal, new licenses, and IDP — updated for 2026 health, address, and theory requirements.",
     type: "quote" as const,
     sortOrder: 3,
   },
@@ -60,8 +62,10 @@ const services = [
   {
     slug: "vehicle-registration",
     name: "Vehicle Registration",
-    shortDescription: "Complete car and motorcycle registration services including transfers, renewals, and documentation.",
-    description: "Complete car and motorcycle registration services including transfers, renewals, and documentation at the Department of Land Transport.",
+    shortDescription:
+      "Professional car and motorcycle registration in Bangkok — 1-day process for BKK plates; DLT paperwork and renewals handled for you.",
+    description:
+      "Professional vehicle registration assistance across Thailand: ownership transfers, tax and insurance renewals, plate changes, book updates, and lost book replacement. Bangkok one-day processing for qualifying BKK-plated cars and motorcycles; other provinces quoted on inquiry. Service fees are transparent; DLT fees are separate.",
     type: "quote" as const,
     sortOrder: 7,
   },
@@ -90,6 +94,16 @@ const services = [
     description: "Professional private drivers for daily use, business trips, or special occasions. Flexible hourly, daily, or monthly packages available.",
     type: "quote" as const,
     sortOrder: 9,
+  },
+  {
+    slug: "event-planning-venue-services",
+    name: "Event Planning and Venue Services",
+    shortDescription:
+      "Event planning and venue services in partnership with The Red Door Bkk.",
+    description:
+      "We have partnered with The Red Door Bkk to bring you exceptional event planning and venue services.",
+    type: "quote" as const,
+    sortOrder: 11,
   },
 ];
 
@@ -123,6 +137,22 @@ async function main() {
     update: {},
   });
   console.log("Admin user ensured:", adminEmail);
+
+  // Common typo / brand-style email (same password as SEED_ADMIN_PASSWORD)
+  const brandAdminEmail = "siam@siamez.com";
+  if (brandAdminEmail !== adminEmail.toLowerCase()) {
+    await prisma.user.upsert({
+      where: { email: brandAdminEmail },
+      create: {
+        email: brandAdminEmail,
+        name: "Admin",
+        role: "admin",
+        passwordHash: hash,
+      },
+      update: {},
+    });
+    console.log("Admin user ensured:", brandAdminEmail);
+  }
 
   const customerEmail = process.env.SEED_CUSTOMER_EMAIL ?? "customer@example.com";
   const customerPassword = process.env.SEED_CUSTOMER_PASSWORD ?? "Customer123!";

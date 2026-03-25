@@ -1,19 +1,24 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useState, type FormEvent } from "react";
+import { signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { register } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+type FieldErrors = { email?: string[]; password?: string[]; name?: string[] };
+
 function RegisterFormInner({
   state,
   locale,
   prefillEmail,
+  pending,
 }: {
-  state: { error?: { email?: string[]; password?: string[]; name?: string[] } };
+  state: { error?: FieldErrors };
   locale: string;
   prefillEmail?: string;
+  pending: boolean;
 }) {
   const t = useTranslations("auth");
   const callbackUrl = `/${locale}/portal`;
@@ -130,7 +135,7 @@ function RegisterFormInner({
             <p className="mt-1 text-sm text-red-600">{state.error.password[0]}</p>
           )}
         </div>
-        <Button type="submit" variant="primary" className="w-full">
+        <Button type="submit" variant="primary" className="w-full" disabled={pending}>
           {t("createAccount")}
         </Button>
       </div>
@@ -139,10 +144,53 @@ function RegisterFormInner({
 }
 
 export function RegisterForm({ locale, prefillEmail }: { locale: string; prefillEmail?: string }) {
-  const [state, formAction] = useFormState(register, undefined);
+  const [state, setState] = useState<{ error?: FieldErrors }>({});
+  const [pending, setPending] = useState(false);
+  const t = useTranslations("auth");
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setState({});
+    setPending(true);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const result = await register(undefined, formData);
+
+    if ("error" in result && result.error) {
+      setState({ error: result.error });
+      setPending(false);
+      return;
+    }
+
+    if (!("ok" in result) || !result.ok) {
+      setPending(false);
+      return;
+    }
+
+    const email = String(formData.get("email") ?? "")
+      .trim()
+      .toLowerCase();
+    const password = String(formData.get("password") ?? "");
+    const signInResult = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+      callbackUrl: `/${locale}/portal`,
+    });
+
+    setPending(false);
+
+    if (signInResult?.error) {
+      setState({ error: { email: [t("signInAfterRegisterFailed")] } });
+      return;
+    }
+
+    window.location.assign(`/${locale}/portal`);
+  }
+
   return (
-    <form action={formAction} className="space-y-4">
-      <RegisterFormInner state={state ?? {}} locale={locale} prefillEmail={prefillEmail} />
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <RegisterFormInner state={state} locale={locale} prefillEmail={prefillEmail} pending={pending} />
     </form>
   );
 }

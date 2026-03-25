@@ -2,10 +2,27 @@
 
 import { prisma } from "@/lib/db";
 import { nextCaseNumber } from "@/lib/utils";
-import type { CaseStatus, InvoiceStatus, ServiceType, UserRole, EventType } from "@prisma/client";
+import { getSession } from "@/lib/auth";
+import { getPaymentSettings, savePaymentSettings, type PaymentSettings } from "@/lib/payment-settings";
+import type {
+  CaseStatus,
+  InvoiceStatus,
+  ServiceType,
+  UserRole,
+  EventType,
+  PaymentMethod,
+} from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const ITEMS_PER_PAGE = 20;
+
+async function ensureStaffAccess() {
+  const session = await getSession();
+  if (!session || (session.user.role !== "admin" && session.user.role !== "staff")) {
+    throw new Error("Unauthorized");
+  }
+}
 
 // ----- Dashboard -----
 
@@ -42,7 +59,12 @@ export async function getRecentActivity() {
     prisma.payment.findMany({
       take: 5,
       include: {
-        invoice: { include: { case: { select: { caseNumber: true } }, user: { select: { name: true } } } },
+        invoice: {
+          include: {
+            case: { select: { id: true, caseNumber: true, guestName: true, guestEmail: true } },
+            user: { select: { name: true, email: true } },
+          },
+        },
       },
       orderBy: { submittedAt: "desc" },
     }),
@@ -224,6 +246,15 @@ export async function getCases(options?: {
   return { cases, total, page, totalPages: Math.ceil(total / ITEMS_PER_PAGE) };
 }
 
+/** Recent cases for admin dropdowns (e.g. document upload). */
+export async function getCaseSelectOptions() {
+  return prisma.case.findMany({
+    select: { id: true, caseNumber: true },
+    orderBy: { createdAt: "desc" },
+    take: 500,
+  });
+}
+
 export async function getCaseById(id: string) {
   return prisma.case.findUnique({
     where: { id },
@@ -305,42 +336,146 @@ export async function getInvoiceById(id: string) {
 
 export async function createInvoice(data: {
   caseId: string;
-  userId: string;
+  userId?: string | null;
   amount: number;
   currency?: string;
   dueDate?: Date | null;
 }) {
   return prisma.invoice.create({
     data: {
-      ...data,
+      caseId: data.caseId,
+      userId: data.userId ?? undefined,
+      amount: data.amount,
       currency: data.currency ?? "THB",
       status: "draft",
+      dueDate: data.dueDate ?? undefined,
     },
   });
 }
 
 export async function updateInvoice(
   id: string,
-  data: { amount?: number; status?: InvoiceStatus; dueDate?: Date | null }
+  data: {
+    amount?: number;
+    status?: InvoiceStatus;
+    dueDate?: Date | string | null;
+    clientAddress?: string | null;
+  }
 ) {
-  return prisma.invoice.update({ where: { id }, data });
+  const dueDate =
+    data.dueDate === undefined
+      ? undefined
+      : data.dueDate === null
+        ? null
+        : typeof data.dueDate === "string"
+          ? new Date(data.dueDate)
+          : data.dueDate;
+
+  return prisma.invoice.update({
+    where: { id },
+    data: {
+      ...(data.amount !== undefined ? { amount: data.amount } : {}),
+      ...(data.status !== undefined ? { status: data.status } : {}),
+      ...(dueDate !== undefined ? { dueDate: dueDate ?? undefined } : {}),
+      ...(data.clientAddress !== undefined ? { clientAddress: data.clientAddress ?? undefined } : {}),
+    },
+  });
+}
+
+export async function deleteInvoice(id: string): Promise<{ success: boolean; error?: string }> {
+  await ensureStaffAccess();
+  try {
+    const invoice = await prisma.invoice.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!invoice) return { success: false, error: "Invoice not found" };
+
+    const paymentCount = await prisma.payment.count({ where: { invoiceId: id } });
+    if (paymentCount > 0) {
+      return { success: false, error: "Cannot delete an invoice that has payments." };
+    }
+
+    await prisma.invoice.delete({ where: { id } });
+    return { success: true };
+  } catch (e) {
+    console.error("deleteInvoice error", e);
+    return { success: false, error: e instanceof Error ? e.message : "Failed to delete invoice" };
+  }
 }
 
 // ----- Payments -----
 
-export async function getPayments(options?: { status?: string; page?: number }) {
+/** Maps UI tab or legacy `status` query to Prisma PaymentStatus. */
+function resolvePaymentStatusFilter(tab?: string, legacyStatus?: string) {
+  const t = tab ?? legacyStatus;
+  if (!t || t === "all") return undefined;
+  if (t === "pending") return "submitted" as const;
+  if (t === "paid") return "approved" as const;
+  if (t === "failed") return "rejected" as const;
+  if (t === "submitted" || t === "approved" || t === "rejected") return t;
+  return undefined;
+}
+
+export async function getPaymentStats() {
+  const [approvedSum, totalCount, pendingCount, paidCount] = await Promise.all([
+    prisma.payment.aggregate({ where: { status: "approved" }, _sum: { amount: true } }),
+    prisma.payment.count(),
+    prisma.payment.count({ where: { status: "submitted" } }),
+    prisma.payment.count({ where: { status: "approved" } }),
+  ]);
+  return {
+    totalRevenue: approvedSum._sum.amount ?? 0,
+    totalOrders: totalCount,
+    pendingPayments: pendingCount,
+    paidOrders: paidCount,
+  };
+}
+
+export async function getPayments(options?: {
+  tab?: string;
+  /** @deprecated use tab=pending|paid|failed */
+  status?: string;
+  page?: number;
+  q?: string;
+  method?: string;
+}) {
   const page = options?.page ?? 1;
   const skip = (page - 1) * ITEMS_PER_PAGE;
-  const where =
-    options?.status && options.status !== "all"
-      ? { status: options.status as "submitted" | "approved" | "rejected" }
-      : {};
+
+  const statusFilter = resolvePaymentStatusFilter(options?.tab, options?.status);
+
+  const search = options?.q?.trim();
+  const method = options?.method?.trim() || "all";
+
+  const parts: Prisma.PaymentWhereInput[] = [];
+  if (statusFilter) parts.push({ status: statusFilter });
+  if (search) {
+    parts.push({
+      invoice: { case: { caseNumber: { contains: search } } },
+    });
+  }
+  if (method === "manual") {
+    parts.push({
+      metadata: { equals: { manualEntry: true } as Prisma.InputJsonValue },
+    });
+  } else if (method !== "all") {
+    parts.push({ method: method as PaymentMethod });
+  }
+
+  const where: Prisma.PaymentWhereInput =
+    parts.length === 0 ? {} : parts.length === 1 ? parts[0]! : { AND: parts };
 
   const [payments, total] = await Promise.all([
     prisma.payment.findMany({
       where,
       include: {
-        invoice: { include: { case: { include: { service: true } }, user: true } },
+        invoice: {
+          include: {
+            case: { include: { service: true } },
+            user: true,
+          },
+        },
         proofDocument: true,
       },
       orderBy: { submittedAt: "desc" },
@@ -352,20 +487,118 @@ export async function getPayments(options?: { status?: string; page?: number }) 
   return { payments, total, page, totalPages: Math.ceil(total / ITEMS_PER_PAGE) };
 }
 
-export async function addManualPayment(data: {
-  invoiceId: string;
+export type InvoiceForManualPayment = {
+  id: string;
   caseId: string;
+  caseNumber: string;
+  serviceName: string;
   amount: number;
-  method: "qr" | "bank" | "wise" | "stripe";
-  currency?: string;
-}) {
-  return prisma.payment.create({
-    data: {
-      ...data,
-      currency: data.currency ?? "THB",
-      status: "approved",
+  currency: string;
+  status: InvoiceStatus;
+  clientName: string | null;
+  clientEmail: string | null;
+};
+
+export async function getInvoicesForManualPayment(): Promise<InvoiceForManualPayment[]> {
+  const rows = await prisma.invoice.findMany({
+    where: {
+      status: { in: ["draft", "unpaid", "pending_verification"] },
     },
+    include: {
+      case: { include: { service: true } },
+      user: true,
+    },
+    orderBy: { createdAt: "desc" },
+    take: 150,
   });
+  return rows.map((inv) => {
+    const guestName = inv.case.guestName;
+    const guestEmail = inv.case.guestEmail;
+    const userName = inv.user?.name;
+    const userEmail = inv.user?.email;
+    return {
+      id: inv.id,
+      caseId: inv.caseId,
+      caseNumber: inv.case.caseNumber,
+      serviceName: inv.case.service.name,
+      amount: inv.amount,
+      currency: inv.currency,
+      status: inv.status,
+      clientName: userName ?? guestName ?? null,
+      clientEmail: userEmail ?? guestEmail ?? null,
+    };
+  });
+}
+
+export async function recordManualPayment(
+  invoiceId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await getSession();
+    if (!session || (session.user.role !== "admin" && session.user.role !== "staff")) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const invoice = await prisma.invoice.findUnique({
+      where: { id: invoiceId },
+      include: { case: true },
+    });
+    if (!invoice) return { success: false, error: "Invoice not found" };
+    if (invoice.status === "paid") return { success: false, error: "Invoice is already paid" };
+    if (invoice.status === "rejected") {
+      return { success: false, error: "Invoice was rejected" };
+    }
+
+    const existingApproved = await prisma.payment.findFirst({
+      where: { invoiceId, status: "approved" },
+    });
+    if (existingApproved) {
+      return { success: false, error: "This invoice already has an approved payment" };
+    }
+
+    const caseRow = invoice.case;
+    const shouldAdvanceCase =
+      caseRow.status !== "completed" && caseRow.status !== "cancelled";
+
+    await prisma.$transaction([
+      prisma.payment.create({
+        data: {
+          invoiceId: invoice.id,
+          caseId: invoice.caseId,
+          amount: invoice.amount,
+          currency: invoice.currency,
+          method: "bank",
+          status: "approved",
+          approvedAt: new Date(),
+          metadata: { manualEntry: true } as Prisma.InputJsonValue,
+        },
+      }),
+      prisma.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          status: "paid",
+          paidAt: new Date(),
+          paymentMethod: "bank",
+        },
+      }),
+      ...(shouldAdvanceCase
+        ? [
+            prisma.case.update({
+              where: { id: invoice.caseId },
+              data: { status: "in_progress" },
+            }),
+          ]
+        : []),
+    ]);
+
+    return { success: true };
+  } catch (e) {
+    console.error("recordManualPayment", e);
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to record payment",
+    };
+  }
 }
 
 export async function approvePayment(id: string) {
@@ -378,14 +611,24 @@ export async function approvePayment(id: string) {
     where: { id: payment.invoiceId },
     data: { status: "paid", paidAt: new Date() },
   });
+  await prisma.case.update({
+    where: { id: payment.caseId },
+    data: { status: "in_progress" },
+  });
   return payment;
 }
 
 export async function rejectPayment(id: string) {
-  return prisma.payment.update({
+  const payment = await prisma.payment.update({
     where: { id },
     data: { status: "rejected" },
+    include: { invoice: true },
   });
+  await prisma.invoice.update({
+    where: { id: payment.invoiceId },
+    data: { status: "rejected" },
+  });
+  return payment;
 }
 
 // ----- Documents -----
@@ -419,7 +662,7 @@ export async function getDocuments(options?: {
 }
 
 export async function createDocument(data: {
-  caseId: string;
+  caseId?: string | null;
   name: string;
   storageKey: string;
   mimeType?: string | null;
@@ -427,7 +670,17 @@ export async function createDocument(data: {
   documentType?: string | null;
   uploadedBy?: string | null;
 }) {
-  return prisma.document.create({ data });
+  return prisma.document.create({
+    data: {
+      caseId: data.caseId ?? null,
+      name: data.name,
+      storageKey: data.storageKey,
+      mimeType: data.mimeType ?? undefined,
+      size: data.size ?? undefined,
+      documentType: data.documentType ?? undefined,
+      uploadedBy: data.uploadedBy ?? undefined,
+    },
+  });
 }
 
 export async function deleteDocument(id: string) {
@@ -436,6 +689,16 @@ export async function deleteDocument(id: string) {
 
 export async function reassignDocument(id: string, caseId: string) {
   return prisma.document.update({ where: { id }, data: { caseId } });
+}
+
+/** Documents with no case yet (for attaching from case detail). */
+export async function getUnassignedDocuments(limit = 150) {
+  return prisma.document.findMany({
+    where: { caseId: null },
+    select: { id: true, name: true, createdAt: true },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
 }
 
 // ----- Staff -----
@@ -607,6 +870,19 @@ export async function getServiceJobs(options?: {
     prisma.case.count({ where }),
   ]);
   return { jobs: cases, total, page, totalPages: Math.ceil(total / ITEMS_PER_PAGE) };
+}
+
+// ----- Payment settings -----
+
+export async function getAdminPaymentSettings(): Promise<PaymentSettings> {
+  await ensureStaffAccess();
+  return getPaymentSettings();
+}
+
+export async function updateAdminPaymentSettings(input: PaymentSettings) {
+  await ensureStaffAccess();
+  await savePaymentSettings(input);
+  return { success: true as const };
 }
 
 export async function createServiceJob(data: {

@@ -12,6 +12,7 @@ export const serviceSlugs = [
   "vehicle-registration",
   "transportation-services",
   "private-driver-service",
+  "event-planning-venue-services",
 ] as const;
 
 export type ServiceSlug = (typeof serviceSlugs)[number];
@@ -26,16 +27,17 @@ export const serviceDisplayNames: Record<ServiceSlug, string> = {
   "vehicle-registration": "Vehicle Registration",
   "transportation-services": "Transportation Services",
   "private-driver-service": "Private Driver Service",
+  "event-planning-venue-services": "Event Planning and Venue Services",
 };
 
 /** Short descriptions for services (siam-ez.com); used when DB has no data */
 export const serviceShortDescriptions: Record<ServiceSlug, string> = {
   "marriage-registration":
-    "Complete assistance with Thai marriage registration, documentation, and legal requirements",
+    "Legal marriage registration in Thailand made simple—document prep, Embassy & MFA liaison, and Amphur registration support",
   "translation-services":
     "Certified translations for official documents, legal paperwork, and government submissions",
   "driver-license":
-    "Expert help obtaining or converting your Thai driver's license with minimal hassle",
+    "Thai driver's license under 2026 DLT rules: conversion, renewal, new car/bike, IDP, FastTrack, and bilingual coordinators in Bangkok",
   "police-clearance":
     "Assistance with police clearance certificates and background checks for visas",
   "visa-services":
@@ -43,11 +45,13 @@ export const serviceShortDescriptions: Record<ServiceSlug, string> = {
   "construction-handyman":
     "Professional home repairs, renovations, and construction services for residential and commercial properties",
   "vehicle-registration":
-    "Complete car and motorcycle registration services including transfers, renewals, and documentation",
+    "Professional car and motorcycle registration in Bangkok — 1-day process for BKK plates; transfers, renewals, and DLT paperwork handled for you",
   "transportation-services":
     "Reliable airport transfers, city tours, and inter-city transportation with comfortable vehicles",
   "private-driver-service":
     "Professional private drivers for daily use, business trips, or special occasions with flexible packages",
+  "event-planning-venue-services":
+    "Event planning and venue services in partnership with The Red Door Bkk",
 };
 
 /** Icons per service for homepage/services grid (lucide names) */
@@ -61,4 +65,5 @@ export const serviceIcons: Record<ServiceSlug, string> = {
   "vehicle-registration": "ClipboardList",
   "transportation-services": "Taxi",
   "private-driver-service": "User",
+  "event-planning-venue-services": "PartyPopper",
 };

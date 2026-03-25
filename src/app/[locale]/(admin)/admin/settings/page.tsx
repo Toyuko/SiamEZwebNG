@@ -1,6 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getAdminPaymentSettings } from "@/actions/admin";
+import { PaymentSettingsCard } from "./PaymentSettingsCard";
 
-export default function AdminSettingsPage() {
+export default async function AdminSettingsPage() {
+  const paymentSettings = await getAdminPaymentSettings();
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
@@ -13,6 +16,7 @@ export default function AdminSettingsPage() {
           <p className="text-sm text-gray-500">Settings form placeholder.</p>
         </CardContent>
       </Card>
+      <PaymentSettingsCard initial={paymentSettings} />
     </div>
   );
 }

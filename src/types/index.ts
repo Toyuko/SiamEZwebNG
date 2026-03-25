@@ -13,7 +13,15 @@ import type {
 
 export type { PrismaUser, PrismaService, PrismaCase, PrismaQuote, PrismaPayment, PrismaDocument, PrismaInvoice, PrismaCaseNote, PrismaStaffAssignment };
 
-export type { UserRole, ServiceType, CaseStatus, QuoteStatus, PaymentType, PaymentStatus, InvoiceStatus } from "@prisma/client";
+export type {
+  UserRole,
+  ServiceType,
+  CaseStatus,
+  QuoteStatus,
+  PaymentMethod,
+  PaymentStatus,
+  InvoiceStatus,
+} from "@prisma/client";
 
 // App-level DTOs / view models
 export interface ServiceWithPrice extends PrismaService {

@@ -1,6 +1,6 @@
 /**
  * Auth helpers for SiamEZ.
- * Uses Auth.js (NextAuth v5) with database sessions.
+ * Uses Auth.js (NextAuth v5) with JWT sessions (required for credentials; OAuth still uses DB users/accounts).
  */
 
 import type { UserRole } from "@prisma/client";
@@ -46,6 +46,15 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 export async function requireAuth(): Promise<Session> {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
+  return session;
+}
+
+/** Admin or staff only; customers receive Forbidden. */
+export async function requireStaff(): Promise<Session> {
+  const session = await requireAuth();
+  if (session.user.role === "customer") {
+    throw new Error("Forbidden");
+  }
   return session;
 }
 

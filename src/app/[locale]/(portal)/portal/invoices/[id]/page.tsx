@@ -5,6 +5,7 @@ import { getInvoiceByIdForUser } from "@/data-access/invoice";
 import { InvoiceDetailClient } from "./InvoiceDetailClient";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { getPaymentSettings } from "@/lib/payment-settings";
 
 export default async function PortalInvoiceDetailPage({
   params,
@@ -15,7 +16,10 @@ export default async function PortalInvoiceDetailPage({
   setRequestLocale(locale);
   const session = await requireAuth();
 
-  const invoice = await getInvoiceByIdForUser(id, session.user.id);
+  const [invoice, paymentSettings] = await Promise.all([
+    getInvoiceByIdForUser(id, session.user.id),
+    getPaymentSettings(),
+  ]);
   if (!invoice) notFound();
 
   const reference = invoice.case.caseNumber;
@@ -51,6 +55,7 @@ export default async function PortalInvoiceDetailPage({
             canPay={canPay}
             hasPendingPayment={hasPendingPayment}
             userId={session.user.id}
+            paymentSettings={paymentSettings}
           />
         </CardContent>
       </Card>

@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { getServiceBySlug } from "@/data-access/service";
 import { Button } from "@/components/ui/button";
 import { BookingWizard } from "@/components/booking/BookingWizard";
+import { DriverLicenseBookingWizard } from "@/components/booking/DriverLicenseBookingWizard";
 import { getSession } from "@/lib/auth";
 
 export default async function BookServicePage({
@@ -32,13 +33,22 @@ export default async function BookServicePage({
           <Link href={`/services/${serviceSlug}`}>{tCommon("cancel")}</Link>
         </Button>
       </div>
-      <BookingWizard
-        service={service}
-        serviceSlug={serviceSlug}
-        userId={session?.user.id}
-        userEmail={session?.user.email ?? undefined}
-        userName={session?.user.name ?? undefined}
-      />
+      {serviceSlug === "driver-license" ? (
+        <DriverLicenseBookingWizard
+          service={service}
+          userId={session?.user.id}
+          userEmail={session?.user.email ?? undefined}
+          userName={session?.user.name ?? undefined}
+        />
+      ) : (
+        <BookingWizard
+          service={service}
+          serviceSlug={serviceSlug}
+          userId={session?.user.id}
+          userEmail={session?.user.email ?? undefined}
+          userName={session?.user.name ?? undefined}
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import type { Service } from "@prisma/client";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Stepper } from "@/components/ui/stepper";
 import { submitBooking } from "@/actions/booking";
 import { clientDetailsSchema } from "@/lib/booking-schema";
+import type { ServiceSlug } from "@/config/services";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { Upload, FileText, X } from "lucide-react";
@@ -38,8 +40,12 @@ interface BookingWizardProps {
   userName?: string | null;
 }
 
+const EVENT_VENUE_SLUG = "event-planning-venue-services" satisfies ServiceSlug;
+
 export function BookingWizard({ service, serviceSlug, userId, userEmail, userName }: BookingWizardProps) {
   const router = useRouter();
+  const tEventVenue = useTranslations("booking.eventVenue");
+  const isEventVenueBooking = serviceSlug === EVENT_VENUE_SLUG;
   const [stepIndex, setStepIndex] = useState(0);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [documents, setDocuments] = useState<DocumentMeta[]>([]);
@@ -171,7 +177,11 @@ export function BookingWizard({ service, serviceSlug, userId, userEmail, userNam
       </CardHeader>
       <CardContent className="pt-6">
         {currentStepId === "summary" && (
-          <ServiceSummaryStep service={service} />
+          <ServiceSummaryStep
+            service={service}
+            isEventVenue={isEventVenueBooking}
+            venueNote={isEventVenueBooking ? tEventVenue("summaryNote") : undefined}
+          />
         )}
         {currentStepId === "details" && (
           <ClientDetailsStep
@@ -180,6 +190,8 @@ export function BookingWizard({ service, serviceSlug, userId, userEmail, userNam
             fieldErrors={fieldErrors}
             isLoggedIn={!!userId}
             serviceSlug={serviceSlug}
+            isEventVenue={isEventVenueBooking}
+            tEventVenue={tEventVenue}
           />
         )}
         {currentStepId === "documents" && (
@@ -187,10 +199,17 @@ export function BookingWizard({ service, serviceSlug, userId, userEmail, userNam
             documents={documents}
             onFileChange={handleFileChange}
             onRemove={removeDocument}
+            extraHint={isEventVenueBooking ? tEventVenue("documentsHint") : undefined}
           />
         )}
         {currentStepId === "review" && (
-          <ReviewStep service={service} formData={formData} documents={documents} />
+          <ReviewStep
+            service={service}
+            formData={formData}
+            documents={documents}
+            isEventVenue={isEventVenueBooking}
+            tEventVenue={tEventVenue}
+          />
         )}
 
         {error && (
@@ -221,7 +240,15 @@ export function BookingWizard({ service, serviceSlug, userId, userEmail, userNam
   );
 }
 
-function ServiceSummaryStep({ service }: { service: Service }) {
+function ServiceSummaryStep({
+  service,
+  isEventVenue,
+  venueNote,
+}: {
+  service: Service;
+  isEventVenue?: boolean;
+  venueNote?: string;
+}) {
   const priceAmount = service.priceAmount;
   const priceCurrency = service.priceCurrency ?? "THB";
   const isFixed = service.type === "fixed";
@@ -238,6 +265,11 @@ function ServiceSummaryStep({ service }: { service: Service }) {
             {service.shortDescription}
           </p>
         )}
+        {isEventVenue && venueNote ? (
+          <p className="mt-3 border-t border-gray-200 pt-3 text-sm leading-relaxed text-gray-700 dark:border-gray-600 dark:text-gray-300">
+            {venueNote}
+          </p>
+        ) : null}
         <div className="mt-4 flex items-center gap-2">
           {isFixed && priceAmount != null ? (
             <span className="text-lg font-semibold text-siam-blue">
@@ -260,16 +292,23 @@ function ClientDetailsStep({
   fieldErrors,
   isLoggedIn,
   serviceSlug,
+  isEventVenue,
+  tEventVenue,
 }: {
   formData: Record<string, unknown>;
   setFormData: (d: Record<string, unknown> | ((p: Record<string, unknown>) => Record<string, unknown>)) => void;
   fieldErrors: Record<string, string>;
   isLoggedIn: boolean;
   serviceSlug: string;
+  isEventVenue: boolean;
+  tEventVenue: ReturnType<typeof useTranslations<"booking.eventVenue">>;
 }) {
   const locale = typeof window !== "undefined" ? window.location.pathname.split("/")[1] ?? "en" : "en";
   const loginHref = `/${locale}/login?redirect=/${locale}/book/${serviceSlug}`;
   const registerHref = `/${locale}/register?redirect=/${locale}/book/${serviceSlug}`;
+
+  const textareaClass =
+    "flex w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-siam-blue dark:border-gray-700 dark:bg-gray-900";
 
   return (
     <div className="space-y-6">
@@ -338,6 +377,85 @@ function ClientDetailsStep({
           )}
         </div>
 
+        {isEventVenue ? (
+          <div className="space-y-4 border-t border-gray-200 pt-6 dark:border-gray-700">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+              {tEventVenue("eventDetailsHeading")}
+            </h3>
+            <div>
+              <label
+                htmlFor="event-type"
+                className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                {tEventVenue("eventTypeLabel")}
+              </label>
+              <select
+                id="event-type"
+                className={cn(
+                  "flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-siam-blue dark:border-gray-700 dark:bg-gray-900",
+                )}
+                value={(formData.eventType as string) ?? ""}
+                onChange={(e) => setFormData((p) => ({ ...p, eventType: e.target.value }))}
+              >
+                <option value="">{tEventVenue("eventTypePlaceholder")}</option>
+                <option value="corporate">{tEventVenue("eventTypeCorporate")}</option>
+                <option value="private">{tEventVenue("eventTypePrivate")}</option>
+                <option value="vip_table">{tEventVenue("eventTypeVip")}</option>
+                <option value="other">{tEventVenue("eventTypeOther")}</option>
+              </select>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="event-date"
+                  className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  {tEventVenue("eventDateLabel")}
+                </label>
+                <Input
+                  id="event-date"
+                  type="date"
+                  value={(formData.eventDate as string) ?? ""}
+                  onChange={(e) => setFormData((p) => ({ ...p, eventDate: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="guest-count"
+                  className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  {tEventVenue("guestCountLabel")}
+                </label>
+                <Input
+                  id="guest-count"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder={tEventVenue("guestCountPlaceholder")}
+                  value={(formData.guestCount as string) ?? ""}
+                  onChange={(e) => setFormData((p) => ({ ...p, guestCount: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div>
+              <label
+                htmlFor="venue-notes"
+                className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                {tEventVenue("venueNotesLabel")}
+              </label>
+              <textarea
+                id="venue-notes"
+                rows={4}
+                placeholder={tEventVenue("venueNotesPlaceholder")}
+                value={(formData.venueNotes as string) ?? ""}
+                onChange={(e) => setFormData((p) => ({ ...p, venueNotes: e.target.value }))}
+                className={textareaClass}
+              />
+            </div>
+          </div>
+        ) : null}
+
         {!isLoggedIn && (
           <div className="rounded-lg border border-gray-200 bg-gray-50/50 p-4 dark:border-gray-700 dark:bg-gray-800/30">
             <p className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -372,10 +490,12 @@ function DocumentUploadStep({
   documents,
   onFileChange,
   onRemove,
+  extraHint,
 }: {
   documents: DocumentMeta[];
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemove: (idx: number) => void;
+  extraHint?: string;
 }) {
   return (
     <div className="space-y-6">
@@ -385,6 +505,9 @@ function DocumentUploadStep({
       <p className="text-sm text-gray-600 dark:text-gray-400">
         Upload required documents. Metadata is saved now; file storage will be added later.
       </p>
+      {extraHint ? (
+        <p className="text-sm text-gray-600 dark:text-gray-400">{extraHint}</p>
+      ) : null}
 
       <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-6 py-10 transition-colors hover:border-siam-blue hover:bg-siam-blue/5 dark:border-gray-600 dark:bg-gray-800/50 dark:hover:border-siam-blue dark:hover:bg-siam-blue/10">
         <Upload className="h-10 w-10 text-gray-400 dark:text-gray-500" />
@@ -439,18 +562,47 @@ function DocumentUploadStep({
   );
 }
 
+function eventTypeLabel(
+  t: ReturnType<typeof useTranslations<"booking.eventVenue">>,
+  value: string,
+): string {
+  switch (value) {
+    case "corporate":
+      return t("eventTypeCorporate");
+    case "private":
+      return t("eventTypePrivate");
+    case "vip_table":
+      return t("eventTypeVip");
+    case "other":
+      return t("eventTypeOther");
+    default:
+      return value || "—";
+  }
+}
+
 function ReviewStep({
   service,
   formData,
   documents,
+  isEventVenue,
+  tEventVenue,
 }: {
   service: Service;
   formData: Record<string, unknown>;
   documents: DocumentMeta[];
+  isEventVenue: boolean;
+  tEventVenue: ReturnType<typeof useTranslations<"booking.eventVenue">>;
 }) {
   const isFixed = service.type === "fixed";
   const priceAmount = service.priceAmount;
   const priceCurrency = service.priceCurrency ?? "THB";
+
+  const eventType = (formData.eventType as string) || "";
+  const eventDate = (formData.eventDate as string) || "";
+  const guestCount = (formData.guestCount as string) || "";
+  const venueNotes = (formData.venueNotes as string) || "";
+  const hasEventBrief =
+    isEventVenue && (eventType || eventDate || guestCount || venueNotes);
 
   return (
     <div className="space-y-6">
@@ -459,6 +611,40 @@ function ReviewStep({
       </h2>
 
       <div className="space-y-4">
+        {hasEventBrief ? (
+          <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              {tEventVenue("reviewEventHeading")}
+            </h3>
+            <dl className="mt-3 space-y-2 text-sm text-gray-800 dark:text-gray-200">
+              {eventType ? (
+                <div>
+                  <dt className="text-gray-500 dark:text-gray-400">{tEventVenue("reviewEventType")}</dt>
+                  <dd>{eventTypeLabel(tEventVenue, eventType)}</dd>
+                </div>
+              ) : null}
+              {eventDate ? (
+                <div>
+                  <dt className="text-gray-500 dark:text-gray-400">{tEventVenue("reviewEventDate")}</dt>
+                  <dd>{eventDate}</dd>
+                </div>
+              ) : null}
+              {guestCount ? (
+                <div>
+                  <dt className="text-gray-500 dark:text-gray-400">{tEventVenue("reviewGuestCount")}</dt>
+                  <dd>{guestCount}</dd>
+                </div>
+              ) : null}
+              {venueNotes ? (
+                <div>
+                  <dt className="text-gray-500 dark:text-gray-400">{tEventVenue("reviewVenueNotes")}</dt>
+                  <dd className="whitespace-pre-wrap">{venueNotes}</dd>
+                </div>
+              ) : null}
+            </dl>
+          </div>
+        ) : null}
+
         <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
           <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
             Service

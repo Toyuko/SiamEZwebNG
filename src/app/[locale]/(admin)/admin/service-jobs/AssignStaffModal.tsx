@@ -11,8 +11,7 @@ import type { Prisma } from "@prisma/client";
 
 type JobWithRelations = Prisma.CaseGetPayload<{
   include: {
-    caseNumber: true;
-    staffAssignments: { include: { user: true } };
+    staffAssignments: { include: { user: { select: { id: true; name: true; email: true } } } };
   };
 }>;
 

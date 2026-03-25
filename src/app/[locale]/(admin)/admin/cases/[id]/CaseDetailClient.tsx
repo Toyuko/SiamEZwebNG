@@ -24,7 +24,7 @@ const STATUS_OPTIONS: { value: CaseStatus; label: string }[] = [
 ];
 
 type CaseWithRelations = Case & {
-  user: User;
+  user: User | null;
   service: { name: string; priceAmount: number | null };
   quotes: { amount: number }[];
   staffAssignments: (StaffAssignment & { user: User })[];
@@ -88,7 +88,11 @@ export function CaseDetailClient({
     const serviceAmount = caseData.service?.priceAmount;
     const invoiceAmount = quoteAmount ?? serviceAmount ?? 10000;
     startTransition(async () => {
-      await createInvoice(caseId, caseData.userId, invoiceAmount);
+      await createInvoice({
+        caseId,
+        userId: caseData.userId,
+        amount: invoiceAmount,
+      });
       router.refresh();
     });
   };

@@ -17,9 +17,9 @@ export default async function AdminServiceJobDetailPage({
   if (!caseData) notFound();
 
   const client = caseData.user;
-  const displayName = client.name ?? caseData.guestName ?? "Unknown";
-  const displayEmail = client.email ?? caseData.guestEmail ?? "—";
-  const displayPhone = client.phone ?? caseData.guestPhone ?? "—";
+  const displayName = client?.name ?? caseData.guestName ?? "Unknown";
+  const displayEmail = client?.email ?? caseData.guestEmail ?? "—";
+  const displayPhone = client?.phone ?? caseData.guestPhone ?? "—";
 
   return (
     <div>

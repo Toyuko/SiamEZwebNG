@@ -6,7 +6,7 @@ import type { Prisma } from "@prisma/client";
 
 type InvoiceWithRelations = Prisma.InvoiceGetPayload<{
   include: {
-    case: { select: { id: true; caseNumber: true } };
+    case: { select: { id: true; caseNumber: true; guestName: true; guestEmail: true } };
     user: { select: { id: true; name: true; email: true } };
   };
 }>;
@@ -69,7 +69,7 @@ export function InvoiceTable({
             <th className="px-4 py-3 font-medium">Amount</th>
             <th className="px-4 py-3 font-medium">Status</th>
             <th className="px-4 py-3 font-medium">Due date</th>
-            <th className="px-4 py-3 font-medium"></th>
+            <th className="px-4 py-3 font-medium">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -97,12 +97,22 @@ export function InvoiceTable({
                 {inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : "—"}
               </td>
               <td className="px-4 py-3">
-                <Link
-                  href={`/admin/cases/${inv.case.id}`}
-                  className="text-siam-blue hover:underline"
-                >
-                  View case
-                </Link>
+                <div className="flex flex-wrap gap-x-3 gap-y-1">
+                  <Link href={`/admin/invoices/${inv.id}`} className="text-siam-blue hover:underline">
+                    View
+                  </Link>
+                  <a
+                    href={`/api/admin/invoices/${inv.id}/pdf`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-siam-blue hover:underline"
+                  >
+                    PDF
+                  </a>
+                  <Link href={`/admin/cases/${inv.case.id}`} className="text-siam-blue hover:underline">
+                    Case
+                  </Link>
+                </div>
               </td>
             </tr>
           ))}

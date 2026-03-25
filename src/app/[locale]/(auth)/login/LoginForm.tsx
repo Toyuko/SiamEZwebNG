@@ -1,17 +1,19 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useState, type FormEvent } from "react";
+import { signIn } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
-import { login } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 function LoginFormInner({
-  state,
+  fieldError,
   callbackUrl,
+  pending,
 }: {
-  state: { error?: { email?: string[]; password?: string[] } };
+  fieldError?: string;
   callbackUrl: string;
+  pending: boolean;
 }) {
   const t = useTranslations("auth");
 
@@ -85,11 +87,9 @@ function LoginFormInner({
             autoComplete="email"
             required
             placeholder="you@example.com"
-            className={state?.error?.email ? "border-red-500" : ""}
+            className={fieldError ? "border-red-500" : ""}
           />
-          {state?.error?.email && (
-            <p className="mt-1 text-sm text-red-600">{state.error.email[0]}</p>
-          )}
+          {fieldError && <p className="mt-1 text-sm text-red-600">{fieldError}</p>}
         </div>
         <div>
           <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -101,13 +101,10 @@ function LoginFormInner({
             type="password"
             autoComplete="current-password"
             required
-            className={state?.error?.password ? "border-red-500" : ""}
+            className={fieldError ? "border-red-500" : ""}
           />
-          {state?.error?.password && (
-            <p className="mt-1 text-sm text-red-600">{state.error.password[0]}</p>
-          )}
         </div>
-        <Button type="submit" variant="primary" className="w-full">
+        <Button type="submit" variant="primary" className="w-full" disabled={pending}>
           {t("signIn")}
         </Button>
       </div>
@@ -116,13 +113,51 @@ function LoginFormInner({
 }
 
 export function LoginForm({ redirectTo }: { redirectTo?: string }) {
-  const [state, formAction] = useFormState(login, undefined);
+  const [fieldError, setFieldError] = useState<string | undefined>();
+  const [pending, setPending] = useState(false);
+  const t = useTranslations("auth");
   const locale = useLocale();
   const callbackUrl = redirectTo ?? `/${locale}/portal`;
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setFieldError(undefined);
+    setPending(true);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const email = String(formData.get("email") ?? "")
+      .trim()
+      .toLowerCase();
+    const password = String(formData.get("password") ?? "");
+    const redirectParam = formData.get("redirect");
+    const safeRedirect =
+      redirectParam &&
+      typeof redirectParam === "string" &&
+      redirectParam.startsWith("/") &&
+      !redirectParam.startsWith("//");
+    const destination = safeRedirect ? redirectParam : `/${locale}/portal`;
+
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+      callbackUrl: destination,
+    });
+
+    setPending(false);
+
+    if (result?.error) {
+      setFieldError(t("invalidCredentials"));
+      return;
+    }
+
+    window.location.assign(destination);
+  }
+
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {redirectTo && <input type="hidden" name="redirect" value={redirectTo} />}
-      <LoginFormInner state={state ?? {}} callbackUrl={callbackUrl} />
+      <LoginFormInner fieldError={fieldError} callbackUrl={callbackUrl} pending={pending} />
     </form>
   );
 }

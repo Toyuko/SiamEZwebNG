@@ -3,8 +3,9 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getCaseById, getStaffUsers } from "@/actions/admin";
+import { getCaseById, getStaffUsers, getUnassignedDocuments } from "@/actions/admin";
 import { CaseDetailClient } from "./CaseDetailClient";
+import { AttachUnassignedDocument } from "./AttachUnassignedDocument";
 
 export default async function AdminCaseDetailPage({
   params,
@@ -12,14 +13,18 @@ export default async function AdminCaseDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [caseData, staffUsers] = await Promise.all([getCaseById(id), getStaffUsers()]);
+  const [caseData, staffUsers, unassignedDocs] = await Promise.all([
+    getCaseById(id),
+    getStaffUsers(),
+    getUnassignedDocuments(),
+  ]);
 
   if (!caseData) notFound();
 
   const client = caseData.user;
-  const displayName = client.name ?? caseData.guestName ?? "Unknown";
-  const displayEmail = client.email ?? caseData.guestEmail ?? "—";
-  const displayPhone = client.phone ?? caseData.guestPhone ?? "—";
+  const displayName = client?.name ?? caseData.guestName ?? "Unknown";
+  const displayEmail = client?.email ?? caseData.guestEmail ?? "—";
+  const displayPhone = client?.phone ?? caseData.guestPhone ?? "—";
 
   return (
     <div>
@@ -71,6 +76,7 @@ export default async function AdminCaseDetailPage({
                   ))}
                 </ul>
               )}
+              <AttachUnassignedDocument caseId={caseData.id} unassigned={unassignedDocs} />
             </CardContent>
           </Card>
 

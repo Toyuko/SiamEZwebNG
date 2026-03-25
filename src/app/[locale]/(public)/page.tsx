@@ -5,7 +5,8 @@ import { DisclaimerBanner } from "@/components/sections/DisclaimerBanner";
 import { ServiceGrid } from "@/components/sections/ServiceGrid";
 import { WhyChooseSection } from "@/components/sections/WhyChooseSection";
 import { CTASection } from "@/components/sections/CTASection";
-import { getServicesList } from "@/data-access/service";
+import { getPublicServicesList } from "@/data-access/service";
+import { serviceSlugs } from "@/config/services";
 import { getTranslations } from "next-intl/server";
 import { getSession } from "@/lib/auth";
 
@@ -20,7 +21,7 @@ export default async function HomePage({
   const isLoggedIn = !!session?.user;
 
   const [services, t, tCommon, tHero, tSite, tWhy, tDisclaimer, tServices] = await Promise.all([
-    getServicesList().catch(() => []),
+    getPublicServicesList().catch(() => []),
     getTranslations("home"),
     getTranslations("common"),
     getTranslations("hero"),
@@ -63,7 +64,7 @@ export default async function HomePage({
         services={displayServices}
         title={t("servicesTitle")}
         subtitle={t("servicesSubtitle")}
-        maxItems={9}
+        maxItems={serviceSlugs.length}
         showViewAll={true}
         viewAllHref="/services"
         viewAllLabel={tCommon("viewAllServices")}

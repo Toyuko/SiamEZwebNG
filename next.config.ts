@@ -9,7 +9,6 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "siam-ez.com", pathname: "/**" },
       { protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/**" },
-      { protocol: "https", hostname: "picsum.photos", pathname: "/**" },
     ],
   },
   experimental: {

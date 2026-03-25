@@ -155,14 +155,20 @@ export async function approvePayment(paymentId: string): Promise<ApprovePaymentR
     if (!payment) return { success: false, error: "Payment not found" };
     if (payment.status !== "submitted") return { success: false, error: "Payment already processed" };
 
-    await prisma.$transaction([
-      paymentDA.updatePaymentStatus(paymentId, "approved"),
-      invoiceDA.updateInvoiceStatus(payment.invoiceId, "paid"),
-      prisma.case.update({
+    await prisma.$transaction(async (tx) => {
+      await tx.payment.update({
+        where: { id: paymentId },
+        data: { status: "approved", approvedAt: new Date() },
+      });
+      await tx.invoice.update({
+        where: { id: payment.invoiceId },
+        data: { status: "paid", paidAt: new Date() },
+      });
+      await tx.case.update({
         where: { id: payment.caseId },
         data: { status: "in_progress" },
-      }),
-    ]);
+      });
+    });
 
     return { success: true };
   } catch (e) {
@@ -192,10 +198,16 @@ export async function rejectPayment(paymentId: string): Promise<RejectPaymentRes
     if (!payment) return { success: false, error: "Payment not found" };
     if (payment.status !== "submitted") return { success: false, error: "Payment already processed" };
 
-    await prisma.$transaction([
-      paymentDA.updatePaymentStatus(paymentId, "rejected"),
-      invoiceDA.updateInvoiceStatus(payment.invoiceId, "rejected"),
-    ]);
+    await prisma.$transaction(async (tx) => {
+      await tx.payment.update({
+        where: { id: paymentId },
+        data: { status: "rejected" },
+      });
+      await tx.invoice.update({
+        where: { id: payment.invoiceId },
+        data: { status: "rejected" },
+      });
+    });
 
     return { success: true };
   } catch (e) {

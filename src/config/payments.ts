@@ -9,17 +9,20 @@ export const paymentConfig = {
 
   /** Bank details for transfer */
   bank: {
-    name: process.env.BANK_NAME ?? "Kasikorn Bank (KBank)",
+    name: process.env.BANK_NAME ?? "Kasikorn Bank",
     branch: process.env.BANK_BRANCH ?? "Head Office",
-    accountName: process.env.BANK_ACCOUNT_NAME ?? "SiamEZ Professional Services Co., Ltd.",
-    accountNumber: process.env.BANK_ACCOUNT_NUMBER ?? "123-4-56789-0",
+    accountName: process.env.BANK_ACCOUNT_NAME ?? "T Concierge",
+    accountNumber: process.env.BANK_ACCOUNT_NUMBER ?? "2058950370",
   },
 
   /** Wise transfer instructions */
   wise: {
-    beneficiary: process.env.WISE_BENEFICIARY ?? "SiamEZ Professional Services Co., Ltd.",
+    beneficiary: process.env.WISE_BENEFICIARY ?? "T Concierge",
+    accountId: process.env.WISE_ACCOUNT_ID ?? "@touygordondouglasphanchanas",
     currency: "THB",
-    details: process.env.WISE_DETAILS ?? "Bank: Kasikorn Bank\nAccount: 123-4-56789-0\nReference: [Your invoice reference]",
+    details:
+      process.env.WISE_DETAILS ??
+      "Account ID: @touygordondouglasphanchanas\nReference: [Your invoice reference]",
     note: "Please include the invoice reference in the transfer details.",
   },
 } as const;

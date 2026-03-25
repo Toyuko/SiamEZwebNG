@@ -46,8 +46,8 @@ export async function getRecentActivityForUser(
       type: "invoice",
       title: `Invoice: ${inv.case.service.name}`,
       timestamp: formatRelativeTime(inv.createdAt),
-      action: inv.status === "sent" ? "Pending Payment" : inv.status,
-      status: inv.status === "sent" ? "pending" : inv.status === "paid" ? "completed" : "info",
+      action: inv.status === "unpaid" ? "Pending Payment" : inv.status,
+      status: inv.status === "unpaid" ? "pending" : inv.status === "paid" ? "completed" : "info",
     });
   });
 

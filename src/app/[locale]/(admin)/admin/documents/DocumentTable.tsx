@@ -14,7 +14,7 @@ type DocWithCase = {
   mimeType: string | null;
   size: number | null;
   createdAt: Date;
-  case: { id: string; caseNumber: string; user?: { name: string | null } };
+  case: { id: string; caseNumber: string; user?: { name: string | null } } | null;
 };
 
 export function DocumentTable({
@@ -69,9 +69,13 @@ export function DocumentTable({
                 <td className="px-4 py-3 font-medium">{d.name}</td>
                 <td className="px-4 py-3 text-gray-500">{d.documentType ?? "—"}</td>
                 <td className="px-4 py-3">
-                  <Link href={`/admin/cases/${d.case.id}`} className="text-siam-blue hover:underline">
-                    {d.case.caseNumber}
-                  </Link>
+                  {d.case ? (
+                    <Link href={`/admin/cases/${d.case.id}`} className="text-siam-blue hover:underline">
+                      {d.case.caseNumber}
+                    </Link>
+                  ) : (
+                    <span className="text-gray-500">—</span>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-gray-500">
                   {new Date(d.createdAt).toLocaleDateString()}

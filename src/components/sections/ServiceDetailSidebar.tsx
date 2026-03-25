@@ -18,6 +18,8 @@ interface ServiceDetailSidebarProps {
   rating?: number;
   reviewCount?: number;
   showBestValue?: boolean;
+  /** Overrides default “visa experts” help blurb (e.g. marriage registration page). */
+  helpDescription?: string;
 }
 
 export function ServiceDetailSidebar({
@@ -29,6 +31,7 @@ export function ServiceDetailSidebar({
   rating = 4.9,
   reviewCount = 150,
   showBestValue = false,
+  helpDescription,
 }: ServiceDetailSidebarProps) {
   const t = useTranslations("services");
   const whatsappUrl = `https://wa.me/${site.phone.replace(/\D/g, "")}`;
@@ -150,7 +153,7 @@ export function ServiceDetailSidebar({
           </div>
           <h3 className="mb-2 text-lg font-semibold">{t("needHelp")}</h3>
           <p className="mb-6 text-sm text-white/80">
-            Our visa experts are ready to answer your questions.
+            {helpDescription ?? "Our visa experts are ready to answer your questions."}
           </p>
           <div className="space-y-3">
             <a

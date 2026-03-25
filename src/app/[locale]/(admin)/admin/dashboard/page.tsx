@@ -105,7 +105,7 @@ export default async function AdminDashboardPage() {
                       href={`/admin/cases/${p.invoice.case.id}`}
                       className="font-medium text-siam-blue hover:underline"
                     >
-                      {formatCurrency(p.amount, p.currency)}
+                      {formatCurrency(p.amount)}
                     </Link>
                     <span className="ml-2 text-gray-500">
                       {p.invoice.case.caseNumber} · {p.invoice.user?.name ?? p.invoice.user?.email ?? p.invoice.case.guestName ?? p.invoice.case.guestEmail ?? "Client"}

@@ -1,4 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import { getInvoices } from "@/actions/admin";
 import { InvoiceTable } from "./InvoiceTable";
 import { InvoiceFilter } from "./InvoiceFilter";
@@ -28,6 +30,9 @@ export default async function AdminInvoicesPage({
             View and manage invoices.
           </p>
         </div>
+        <Button asChild>
+          <Link href="/admin/invoices/new">New invoice</Link>
+        </Button>
       </div>
       <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
         <InvoiceFilter defaultValue={params.status ?? "all"} />

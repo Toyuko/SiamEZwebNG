@@ -8,6 +8,8 @@ interface ServiceDetailHeroProps {
   breadcrumbs: Array<{ label: string; href: string }>;
   imageUrl?: string;
   showPremiumTag?: boolean;
+  /** Optional pill above the title (e.g. regulatory readiness). */
+  badge?: string;
 }
 
 export function ServiceDetailHero({
@@ -16,6 +18,7 @@ export function ServiceDetailHero({
   breadcrumbs,
   imageUrl,
   showPremiumTag = false,
+  badge,
 }: ServiceDetailHeroProps) {
   return (
     <>
@@ -66,6 +69,12 @@ export function ServiceDetailHero({
         <div className="relative z-10 py-16 sm:py-20 md:py-24 lg:py-28">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl">
+              {badge && (
+                <p className="mb-4 inline-flex rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-sm">
+                  {badge}
+                </p>
+              )}
+
               {/* Premium Badge - Angled Yellow Stripe */}
               {showPremiumTag && (
                 <div className="mb-6">

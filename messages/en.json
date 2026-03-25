@@ -14,7 +14,9 @@
     "continueWithLine": "Continue with LINE",
     "orContinueWithEmail": "Or continue with email",
     "signIn": "Sign in",
-    "createAccount": "Create account"
+    "createAccount": "Create account",
+    "invalidCredentials": "Invalid email or password.",
+    "signInAfterRegisterFailed": "Account created. Please sign in manually."
   },
   "common": {
     "home": "Home",
@@ -159,6 +161,7 @@
     "bookNow": "Book Now",
     "details": "Details",
     "overview": "Overview",
+    "mediaTab": "Photos & video",
     "requirements": "Requirements",
     "processSteps": "Process Steps",
     "requiredDocuments": "Required Documents",
@@ -175,7 +178,365 @@
     "processingTime": "Processing Time",
     "visaDuration": "Visa Duration",
     "bestValue": "BEST VALUE",
-    "premiumService": "PREMIUM SERVICE"
+    "premiumService": "PREMIUM SERVICE",
+    "marriageHelpBlurb": "Our marriage registration specialists are ready to answer your questions.",
+    "marriageRegistration": {
+      "packagesTitle": "Packages & pricing",
+      "packagesIntro": "Choose the level of support that fits your needs. All packages include expert guidance and support throughout your journey.",
+      "plusFees": "+ fees",
+      "popular": "Most popular",
+      "getStarted": "Get started",
+      "startApplication": "Start your application",
+      "inquireNow": "Inquire now",
+      "packageBasicTitle": "Basic assistance",
+      "packageBasicPrice": "฿8,500",
+      "packageFullTitle": "Full service",
+      "packageFullPrice": "฿18,500",
+      "packagePremiumTitle": "Premium / VIP wedding",
+      "packagePremiumPrice": "฿45,000",
+      "basicFeatures": [
+        "Document checklist & preparation guide",
+        "Translation referral & review",
+        "Email support",
+        "MFA submission support"
+      ],
+      "fullFeatures": [
+        "Everything in Basic",
+        "Full document preparation & translation coordination",
+        "Embassy & MFA liaison",
+        "Amphur appointment booking & accompaniment",
+        "Dedicated case manager"
+      ],
+      "premiumFeatures": [
+        "Everything in Full Service",
+        "Priority processing & expedited appointments",
+        "VIP Amphur experience",
+        "Wedding day coordination (ceremony & legal)",
+        "Certificate apostille support"
+      ],
+      "faqTitle": "Frequently asked questions",
+      "faqIntro": "Common questions about MFA legalization, document requirements, and the marriage registration process in Thailand.",
+      "faqItems": [
+        {
+          "q": "What is MFA legalization, and why do I need it for marriage registration?",
+          "a": "MFA legalization is the process of verifying and authenticating documents at the Thai Ministry of Foreign Affairs (MFA) so they are recognized for official use in Thailand and abroad. For marriage registration, your Embassy-issued Affirmation of Freedom to Marry must be legalized by the MFA before it can be accepted at the District Office. This ensures your documents meet Thai legal requirements."
+        },
+        {
+          "q": "How long does MFA legalization and the full marriage process take?",
+          "a": "MFA legalization typically takes 2–5 business days. The full process from document preparation to Amphur registration usually takes 2–4 weeks, depending on Embassy processing times and MFA availability. SiamEZ keeps you updated at every stage. Expedited options may reduce this to 1–2 weeks with our Premium package."
+        },
+        {
+          "q": "What types of documents require MFA legalization for marriage?",
+          "a": "For marriage registration, the main document requiring MFA legalization is your Embassy-issued Affirmation of Freedom to Marry. If you have divorce decrees or death certificates (when widowed), these must also be translated and legalized. The MFA authenticates personal documents for official use. Contact SiamEZ if you are unsure whether your documents need legalization."
+        },
+        {
+          "q": "How will I receive my legalized documents?",
+          "a": "We coordinate collection and handover with you—typically in person when you attend appointments, or by secure arrangement you agree with your case manager. You will know exactly when each document is ready and what to bring next."
+        },
+        {
+          "q": "Do I need to translate my documents before submission to the MFA?",
+          "a": "Yes. All non-Thai documents must be translated into Thai for MFA submission. Thai documents intended for use abroad must be translated into the required foreign language. SiamEZ provides certified translation coordination as part of our marriage registration process, ensuring your documents meet official language requirements and formatting standards."
+        },
+        {
+          "q": "Can I handle the marriage registration process myself, or should I use a service?",
+          "a": "You can submit documents to the MFA and attend the Amphur yourself, but the process is complicated and time-consuming—requiring proper formatting, certified translations, Embassy coordination, and legal knowledge. Professional assistance helps avoid costly delays and rejections while keeping you legally compliant."
+        },
+        {
+          "q": "Do both partners need to be present at the Amphur?",
+          "a": "Yes. Thai law requires both parties to appear in person at the District Office (Amphur) for marriage registration. Two witnesses (typically Thai nationals) must also be present with valid identification. SiamEZ can help arrange witnesses and accompany you on the day for a smooth experience."
+        }
+      ],
+      "independentNotice": "SiamEZ offers professional assistance and consultancy services as an independent company. We are not connected to or endorsed by the Thai government."
+    }
+  },
+  "driverLicensePage": {
+    "metaDescription": "Get your Thai driving license under 2026 DLT rules: conversion, renewal, new car/bike, and IDP. Fast-track options, exam prep, and bilingual coordinators in Bangkok.",
+    "heroBadge": "Ready under the 2026 DLT rules",
+    "subtitle": "Fast-track appointments, group packages, and exam preparation — all handled by our bilingual team. We turn DLT requirements into a clear checklist and walk you through every step.",
+    "overview": "Whether you are converting a foreign license, renewing, applying new for car or motorcycle, or need an International Driving Permit (IDP), SiamEZ coordinates schools, documents, and DLT appointments. We stay current with 2026 rules on health certificates, proof of address, and theory exam content so you avoid surprises at the office.",
+    "processingTime": "Varies by service (typically 1–3 visits)",
+    "features": [
+      {
+        "icon": "shield",
+        "title": "DLT-aligned process",
+        "description": "We follow Department of Land Transport (DLT) requirements and office-specific cut-off times."
+      },
+      {
+        "icon": "languages",
+        "title": "English + Thai support",
+        "description": "Coordinators in Bangkok with WhatsApp updates so you always know the next step."
+      },
+      {
+        "icon": "zap",
+        "title": "FastTrack & groups",
+        "description": "Optional expedited booking plus coordinated slots for families and corporate groups."
+      },
+      {
+        "icon": "eye",
+        "title": "2026 health & vision checks",
+        "description": "Guidance on medical certificates and color-blind / reaction tests used at Thai DLT offices."
+      },
+      {
+        "icon": "circle-dollar-sign",
+        "title": "Transparent packages",
+        "description": "Clear base prices and add-ons — no hidden “extra forms” after you book."
+      },
+      {
+        "icon": "graduation-cap",
+        "title": "Recognized school partners",
+        "description": "We work with DLT-recognized driving schools used to foreign applicants."
+      }
+    ],
+    "requirements": [
+      "Passport with a valid visa or extension.",
+      "Proof of Thai address (e.g. yellow house book, work permit, or embassy letter, depending on your case).",
+      "Medical certificate issued within 30 days of your appointment.",
+      "Existing license for conversion — must be in English; otherwise a translation letter is required.",
+      "Appointment scheduling: minimum three business days’ lead time; weekends are generally not available at DLT."
+    ],
+    "processSteps": [
+      {
+        "title": "Book & plan",
+        "description": "Choose service type (conversion, renewal, new, or IDP), optional add-ons, and your preferred weekday. Your coordinator confirms timing against DLT availability."
+      },
+      {
+        "title": "Document pre-check",
+        "description": "Share visa, address proof, health certificate, and license scans so we catch issues before you travel to the office."
+      },
+      {
+        "title": "Theory, video & tests",
+        "description": "Prepare with our English question bank aligned to the 2026 layout. Complete the mandatory safety video and any theory, vision, color, and practical steps your case requires."
+      },
+      {
+        "title": "DLT visit & license",
+        "description": "We escort you through the appointment. You receive a temporary license where applicable, then the permanent card on the DLT timeline."
+      }
+    ],
+    "documentsForeigner": [
+      "Passport with valid visa or extension",
+      "Proof of Thai address (yellow book, work permit, or embassy letter as applicable)",
+      "Medical certificate from a licensed provider (within 30 days)",
+      "Original foreign driver’s license for conversion (English or certified translation)",
+      "Passport-style photos as required by the DLT office"
+    ],
+    "galleryTitle": "Success stories",
+    "galleryDescription": "Short promo clip from our Thai license service, plus photos of real customers who got their licenses with SiamEZ.",
+    "galleryVideoAriaLabel": "SiamEZ Thai driving license service — promotional video",
+    "galleryImageAlts": [
+      "Three happy customers holding their new Thai driver's licenses and a SiamEZ flyer in front of a government building.",
+      "A customer at the SiamEZ service counter for Thai license assistance.",
+      "A customer smiling and holding a new Thai driver's license in front of a licensing office.",
+      "Two customers holding their newly obtained Thai driver's licenses in front of a licensing office."
+    ],
+    "trustTitle": "Trusted by expats & digital nomads",
+    "trustLead": "We focus on Bangkok offices and keep communication in one thread — from first question to licensed.",
+    "trustPoints": [
+      "Coordinators on the ground in Bangkok",
+      "English + Thai support via WhatsApp",
+      "Updated for 2026 color-blind, reaction, and health checks",
+      "Fixed package lines — optional add-ons only when you need them"
+    ],
+    "packagesTitle": "Packages & indicative pricing",
+    "packagesIntro": "Final totals depend on your license type and add-ons. Your coordinator confirms everything in writing before payment.",
+    "packageRows": [
+      { "name": "Conversion (foreign license)", "price": "Bike 4,500 THB · Car 6,000 THB" },
+      { "name": "Renewal", "price": "Bike 3,500 THB · Car 4,500 THB" },
+      { "name": "Apply new", "price": "Bike 3,500 THB · Car 5,000 THB · Both 7,500 THB" },
+      { "name": "International Driving Permit (IDP)", "price": "3,500 THB" }
+    ],
+    "addonsTitle": "Optional add-ons",
+    "addonsIntro": "Prices update your package total in real time when selected.",
+    "addonRows": [
+      { "name": "FastTrack booking", "price": "+1,500 THB" },
+      { "name": "Translation letter", "price": "+2,500 THB" },
+      { "name": "Address certificate assistance", "price": "+2,500 THB" }
+    ],
+    "schedulingTitle": "Scheduling note",
+    "schedulingBody": "Allow at least three business days before your preferred date. Weekends are usually unavailable. If you process car and motorcycle together, expect a longer appointment block.",
+    "paymentTitle": "Payment after confirmation",
+    "paymentBody": "Once your coordinator confirms the package total, you can pay by bank transfer to Kasikorn Bank (KBank) or PromptPay. Upload your transfer slip through our booking flow or send it on WhatsApp — we match it to your file before the DLT visit.",
+    "bankLabel": "Kasikorn Bank (KBank)",
+    "accountNameLabel": "Account name",
+    "accountName": "T Concierge",
+    "accountNumberLabel": "Account number",
+    "accountNumber": "2058950370",
+    "promptPayNote": "PromptPay QR and exact amount are shared with your booking confirmation.",
+    "resourcesTitle": "Resources & what happens next",
+    "resources": [
+      {
+        "title": "Track & trace",
+        "body": "After booking, your coordinator sends a reference ID. Use it to see status and the next expected step."
+      },
+      {
+        "title": "Practice exam (2026 layout)",
+        "body": "Timed mock exams in English, sign and hazard questions, and explanations matched to current DLT theory style."
+      },
+      {
+        "title": "1-hour mandatory video",
+        "body": "DLT requires a safety video session. We schedule it at an approved school or share the latest official link for your city."
+      },
+      {
+        "title": "2026 rules snapshot",
+        "body": "Stronger checks on health certificates, proof of address, and theory content for foreign applicants — we adjust your checklist as DLT guidance changes."
+      }
+    ],
+    "resourcesCta": "Start your booking",
+    "disclaimer": "SiamEZ offers professional assistance as an independent company. We are not connected to or endorsed by the Thai government or the DLT.",
+    "bookingEmailNote": "Booking requests and receipts are handled through our team and {email}.",
+    "legacyWizardIntro": "The same step-by-step experience is also available as",
+    "legacyWizardLinkText": "the original Thai license booking page",
+    "legacyWizardOutro": "— packages and add-ons match what you see here."
+  },
+  "eventPlanningVenuePage": {
+    "metaDescription": "Bespoke event planning and exclusive venue hire in Bangkok. SiamEZ × The Red Door Bkk — corporate events, private celebrations, and VIP table bookings in a premier speakeasy setting.",
+    "heroTitle": "Bespoke Event Planning & Exclusive Venue Hire",
+    "heroBadge": "SiamEZ × The Red Door Bkk",
+    "subtitle": "Elevate your celebrations at Bangkok's premier speakeasy. SiamEZ and The Red Door Bkk bring you curated experiences in an atmosphere unlike any other.",
+    "overview": "From corporate gatherings to private celebrations and exclusive VIP experiences, we combine professional coordination with an intimate venue in the heart of Bangkok. Tell us your vision — we handle the details so you can enjoy the moment.",
+    "processingTime": "We typically reply within 2–5 business days (complex events may take longer)",
+    "features": [
+      {
+        "icon": "briefcase",
+        "title": "Corporate events",
+        "description": "Product launches, team offsites, and client entertaining in a distinguished setting with full event support."
+      },
+      {
+        "icon": "party-popper",
+        "title": "Private celebrations",
+        "description": "Birthdays, anniversaries, and intimate gatherings. We handle every detail so you can enjoy the moment."
+      },
+      {
+        "icon": "armchair",
+        "title": "VIP table bookings",
+        "description": "Reserve your exclusive space for a night out — ideal for groups seeking premium service and ambiance."
+      }
+    ],
+    "requirements": [
+      "Event type (corporate, celebration, VIP evening, or other)",
+      "Preferred date(s) or timeframe and approximate guest count",
+      "Budget range and any must-haves (catering, AV, branding, entertainment)",
+      "Contact name, email, and WhatsApp or phone for follow-up",
+      "Any accessibility, dietary, or run-of-show notes we should know early"
+    ],
+    "processSteps": [
+      {
+        "title": "Share your event details",
+        "description": "Reach out with your occasion, dates, headcount, and priorities — we confirm feasibility and next steps."
+      },
+      {
+        "title": "Curated proposal",
+        "description": "Receive a tailored plan and indicative pricing from SiamEZ, with venue and production elements coordinated through The Red Door Bkk where applicable."
+      },
+      {
+        "title": "Refine & confirm",
+        "description": "We adjust the brief, vendors, and timeline until you are happy to lock the date and scope."
+      },
+      {
+        "title": "Your event",
+        "description": "Professional on-site coordination from setup through wrap-up so you and your guests can focus on the experience."
+      }
+    ],
+    "documentsForeigner": [
+      "Brief description of the event and desired atmosphere",
+      "Preferred date(s) and backup options if flexible",
+      "Estimated headcount and format (seated dinner, standing reception, presentation, etc.)",
+      "Company or brand name (for corporate events)",
+      "Catering, bar, AV, entertainment, or décor requirements",
+      "Billing contact and any internal approval process we should respect"
+    ],
+    "collaborationTitle": "A collaboration of excellence",
+    "collaborationBody": "SiamEZ brings decades of professional management and event coordination expertise. The Red Door Bkk offers an intimate speakeasy space in the heart of Bangkok. Together, we create unforgettable moments — from corporate gatherings to private celebrations and exclusive VIP experiences.",
+    "collaborationTagline": "SiamEZ — management & planning × The Red Door Bkk — the space",
+    "venueTitle": "The venue",
+    "venueBody": "Step behind The Red Door into a world of refined speakeasy charm. Low lighting, rich textures, and an air of exclusivity set the stage for memorable events. Whether you're hosting a dozen guests or a hundred, the space adapts to your vision.\n\nLocated in Bangkok, The Red Door Bkk combines classic cocktail culture with modern event capabilities — an ideal canvas for SiamEZ's professional planning and coordination.",
+    "instagramCta": "More photos on Instagram",
+    "instagramHandle": "@thereddoorbkk",
+    "instagramUrl": "https://www.instagram.com/thereddoorbkk/",
+    "inquireCta": "Inquire now",
+    "galleryTabLabel": "Venue gallery",
+    "galleryTitle": "The Red Door Bkk — venue gallery",
+    "galleryIntro": "A glimpse of the speakeasy atmosphere and event spaces we partner with. For the latest photos and reels, follow The Red Door Bkk on Instagram.",
+    "galleryInstagramCta": "More photos on Instagram @thereddoorbkk",
+    "galleryAttribution": "Images reflect our venue partner, The Red Door Bkk. Follow @thereddoorbkk on Instagram for the latest photos and updates.",
+    "galleryImageAlts": [
+      "The Red Door Bkk — venue interior",
+      "The Red Door Bkk — bar and cocktails",
+      "The Red Door Bkk — event atmosphere",
+      "The Red Door Bkk — seating and décor",
+      "The Red Door Bkk — evening ambiance",
+      "The Red Door Bkk — private event setup",
+      "The Red Door Bkk — speakeasy details",
+      "The Red Door Bkk — Bangkok venue"
+    ],
+    "footerTagline": "SiamEZ × The Red Door Bkk"
+  },
+  "driverLicenseWizard": {
+    "wizardTitle": "Thai license booking wizard",
+    "wizardLead": "Choose your license type, optional add-ons, preferred weekday, then share contact details and your transfer slip.",
+    "emailRouted": "Requests go to {email}",
+    "stepService": "Service",
+    "stepAddons": "Add-ons",
+    "stepDate": "Date",
+    "stepPayment": "Payment",
+    "stepLabel": "Step {current} of {total}",
+    "selectServiceTitle": "Select your service",
+    "selectServiceHint": "Choose the service type, then select Bike, Car, or Both where applicable.",
+    "categoryConversion": "Conversion (foreign license)",
+    "categoryRenewal": "Renewal",
+    "categoryApplyNew": "Apply new",
+    "categoryIdp": "International Driving Permit (IDP)",
+    "categoryPriceConversion": "Bike 4,500 / Car 6,000 / Both 10,500 THB",
+    "categoryPriceRenewal": "Bike 3,500 / Car 4,500 / Both 8,000 THB",
+    "categoryPriceApplyNew": "Bike 3,500 / Car 5,000 / Both 7,500 THB",
+    "categoryPriceIdp": "3,500 THB",
+    "vehicleTitle": "Car or bike",
+    "vehicleBike": "Bike — single license",
+    "vehicleCar": "Car — single license",
+    "vehicleBoth": "Both (car & bike)",
+    "selectServiceError": "Please select a service and vehicle type (IDP has no vehicle choice).",
+    "addonsTitle": "Add-ons & modifiers",
+    "addonsIntro": "Optional services — your total updates when you select add-ons.",
+    "addonFastTrack": "FastTrack booking",
+    "addonFastTrackPrice": "+1,500 THB",
+    "addonTranslation": "Translation letter",
+    "addonTranslationPrice": "+2,500 THB",
+    "addonAddress": "Address certificate assistance",
+    "addonAddressPrice": "+2,500 THB",
+    "summaryBase": "Base service",
+    "summaryAddons": "Add-ons",
+    "summaryTotal": "Total",
+    "skipAddonsNote": "You can proceed without add-ons.",
+    "dateTitle": "Choose your date",
+    "dateHint": "Pick a weekday at least three days from today. Weekends are not available. Car and bike together may need a longer slot.",
+    "dateLabel": "Appointment date",
+    "dateErrorRequired": "Please select an appointment date.",
+    "dateErrorWeekend": "Appointments are weekdays only.",
+    "dateErrorTooSoon": "Choose a date on or after the first allowed weekday (three-day lead time).",
+    "paymentTitle": "Payment & receipt",
+    "paymentLead": "Review your total, transfer via Kasikorn Bank or PromptPay, then upload your slip.",
+    "amountToPay": "Amount to pay",
+    "fullName": "Full name",
+    "phoneWhatsapp": "Phone / WhatsApp",
+    "email": "Email address",
+    "notesOptional": "Notes (optional)",
+    "uploadReceipt": "Upload receipt",
+    "receiptHint": "PDF, JPG, or PNG up to 10 MB.",
+    "receiptRequired": "Please upload at least one payment receipt.",
+    "confirmNote": "By confirming, you send your booking and receipt to our team at {email}.",
+    "bankHeading": "Kasikorn Bank (KBank)",
+    "accountNameLabel": "Account name",
+    "accountName": "T Concierge",
+    "accountNumberLabel": "Account number",
+    "accountNumber": "2058950370",
+    "promptPayNote": "PromptPay QR and exact amount: your coordinator will confirm after we review your booking.",
+    "next": "Next",
+    "back": "Back",
+    "confirmSubmit": "Confirm & upload receipt",
+    "submitting": "Submitting…",
+    "guestAccountTitle": "Track your case",
+    "guestAccountBody": "Continue as guest below, or create an account to follow your case and documents.",
+    "guestLogin": "Log in",
+    "guestRegister": "Create an account"
   },
   "serviceNames": {
     "marriage-registration": "Marriage Registration",
@@ -186,7 +547,8 @@
     "construction-handyman": "Construction & Handyman",
     "vehicle-registration": "Vehicle Registration",
     "transportation-services": "Transportation Services",
-    "private-driver-service": "Private Driver Service"
+    "private-driver-service": "Private Driver Service",
+    "event-planning-venue-services": "Event Planning and Venue Services"
   },
   "contactServiceOptions": {
     "marriage": "Marriage Registration",
@@ -198,6 +560,7 @@
     "vehicle": "Vehicle Registration",
     "transport": "Transportation Services",
     "driver-private": "Private Driver Service",
+    "event-planning": "Event Planning and Venue Services",
     "other": "Other Services"
   },
   "testimonials": {
@@ -281,7 +644,28 @@
     }
   },
   "booking": {
-    "book": "Book: {name}"
+    "book": "Book: {name}",
+    "eventVenue": {
+      "summaryNote": "Partner venue: The Red Door Bkk — speakeasy event space in Bangkok. We’ll follow up with a tailored quote after review.",
+      "eventDetailsHeading": "Event details",
+      "eventTypeLabel": "Type of occasion",
+      "eventTypePlaceholder": "Select…",
+      "eventTypeCorporate": "Corporate event",
+      "eventTypePrivate": "Private celebration",
+      "eventTypeVip": "VIP table / night out",
+      "eventTypeOther": "Other",
+      "eventDateLabel": "Preferred event date",
+      "guestCountLabel": "Approx. number of guests",
+      "guestCountPlaceholder": "e.g. 24",
+      "venueNotesLabel": "Vision & requirements",
+      "venueNotesPlaceholder": "Catering, AV, branding, entertainment, accessibility, or run-of-show notes…",
+      "documentsHint": "Optional: mood board, floor plan, brand guidelines, or other references (PDF / images).",
+      "reviewEventHeading": "Event brief",
+      "reviewEventType": "Occasion",
+      "reviewEventDate": "Preferred date",
+      "reviewGuestCount": "Guests",
+      "reviewVenueNotes": "Notes"
+    }
   },
   "portal": {
     "portalName": "SiamEZ Portal",

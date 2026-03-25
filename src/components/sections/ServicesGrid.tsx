@@ -13,6 +13,7 @@ import {
   ClipboardList,
   Bus,
   User,
+  PartyPopper,
   type LucideIcon,
 } from "lucide-react";
 
@@ -26,6 +27,7 @@ const iconBySlug: Record<ServiceSlug, LucideIcon> = {
   "vehicle-registration": ClipboardList,
   "transportation-services": Bus,
   "private-driver-service": User,
+  "event-planning-venue-services": PartyPopper,
 };
 
 // Softer pastel colors matching the design - with dark mode variants
@@ -39,6 +41,7 @@ const iconColorBySlug: Record<ServiceSlug, { bg: string; text: string; shape: "c
   "vehicle-registration": { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-600 dark:text-purple-400", shape: "square" },
   "transportation-services": { bg: "bg-cyan-100 dark:bg-cyan-900/30", text: "text-cyan-600 dark:text-cyan-400", shape: "circle" },
   "private-driver-service": { bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-400", shape: "circle" },
+  "event-planning-venue-services": { bg: "bg-rose-100 dark:bg-rose-900/30", text: "text-rose-600 dark:text-rose-400", shape: "circle" },
 };
 
 export type DisplayService = {

@@ -5,30 +5,34 @@ import { prisma } from "@/lib/db";
 /**
  * POST /api/documents
  * Upload document metadata (file must be uploaded to storage separately).
- * Body: { caseId, name, storageKey, uploadedBy?, mimeType?, size?, documentType? }
+ * Body: { caseId?, name, storageKey, uploadedBy?, mimeType?, size?, documentType? }
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { caseId, name, storageKey, uploadedBy, mimeType, size, documentType } = body;
 
-    if (!caseId || !name || !storageKey) {
+    if (!name || !storageKey) {
       return NextResponse.json(
-        { error: "caseId, name, and storageKey required" },
+        { error: "name and storageKey required" },
         { status: 400 }
       );
     }
 
-    const caseRecord = await prisma.case.findUnique({
-      where: { id: caseId },
-      select: { id: true },
-    });
-    if (!caseRecord) {
-      return NextResponse.json({ error: "Case not found" }, { status: 404 });
+    const resolvedCaseId =
+      typeof caseId === "string" && caseId.trim() !== "" ? caseId.trim() : null;
+    if (resolvedCaseId) {
+      const caseRecord = await prisma.case.findUnique({
+        where: { id: resolvedCaseId },
+        select: { id: true },
+      });
+      if (!caseRecord) {
+        return NextResponse.json({ error: "Case not found" }, { status: 404 });
+      }
     }
 
     const doc = await createDocument({
-      caseId,
+      caseId: resolvedCaseId,
       name,
       storageKey,
       uploadedBy: uploadedBy ?? undefined,

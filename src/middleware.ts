@@ -46,7 +46,7 @@ export default async function middleware(request: NextRequest) {
   // Admin gate: /admin/* – require auth (role check in layout)
   // Bypass: set BYPASS_ADMIN_AUTH=true to skip login for admin
   if (
-    !process.env.BYPASS_ADMIN_AUTH &&
+    process.env.BYPASS_ADMIN_AUTH !== "true" &&
     isAdminRoute(pathname) &&
     !hasSession
   ) {

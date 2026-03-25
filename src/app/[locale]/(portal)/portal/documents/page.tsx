@@ -55,7 +55,9 @@ export default async function PortalDocumentsPage({
                 <div className="flex-1">
                   <p className="font-semibold text-gray-900 dark:text-white">{doc.name}</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {doc.case.service.name} • {doc.case.caseNumber}
+                    {doc.case
+                      ? `${doc.case.service.name} • ${doc.case.caseNumber}`
+                      : "Not linked to a case"}
                   </p>
                   <p className="mt-1 text-xs text-gray-500">
                     {new Date(doc.createdAt).toLocaleDateString()}

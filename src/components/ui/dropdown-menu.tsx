@@ -57,12 +57,18 @@ export function DropdownMenuTrigger({
     setOpen(!open);
   };
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void; className?: string }>, {
-      onClick: handleClick,
-      "aria-expanded": open,
-      "aria-haspopup": "menu",
-      className: cn((children as React.ReactElement).props?.className, className),
-    });
+    return React.cloneElement(
+      children as React.ReactElement<Record<string, unknown>>,
+      {
+        onClick: handleClick,
+        "aria-expanded": open,
+        "aria-haspopup": "menu",
+        className: cn(
+          (children as React.ReactElement<{ className?: string }>).props?.className,
+          className
+        ),
+      } as Record<string, unknown>
+    );
   }
   return (
     <button
@@ -146,20 +152,19 @@ export function DropdownMenuItem({
     setOpen(false);
   };
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(
-      children as React.ReactElement<{ onClick?: () => void; className?: string }>,
-      {
-        onClick: (e: React.MouseEvent) => {
-          handleClick();
-          (children as React.ReactElement).props?.onClick?.(e);
-        },
-        className: cn(
-          "flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none hover:bg-siam-blue/10 hover:text-siam-blue focus:bg-siam-blue/10 focus:text-siam-blue",
-          (children as React.ReactElement).props?.className,
-          className
-        ),
-      }
-    );
+    const child = children as React.ReactElement<Record<string, unknown>>;
+    return React.cloneElement(child, {
+      onClick: (e: React.MouseEvent) => {
+        handleClick();
+        const orig = child.props?.onClick;
+        if (typeof orig === "function") (orig as (ev: React.MouseEvent) => void)(e);
+      },
+      className: cn(
+        "flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none hover:bg-siam-blue/10 hover:text-siam-blue focus:bg-siam-blue/10 focus:text-siam-blue",
+        (child.props as { className?: string })?.className,
+        className
+      ),
+    } as Record<string, unknown>);
   }
   return (
     <div

@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { InvoiceQRCode } from "@/components/payments/InvoiceQRCode";
-import { qrProvider, bankProvider, wiseProvider } from "@/lib/payments/providers/ManualProvider";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { submitPaymentWithProof } from "@/actions/payment";
 import { uploadDocumentMetadataAction } from "@/actions/document";
 import { CreditCard, Building2, Globe, Upload, Loader2 } from "lucide-react";
+import type { PaymentSettings } from "@/lib/payment-settings";
 
 type InvoiceWithRelations = {
   id: string;
@@ -25,6 +25,7 @@ interface InvoiceDetailClientProps {
   canPay: boolean;
   hasPendingPayment: boolean;
   userId: string;
+  paymentSettings: PaymentSettings;
 }
 
 export function InvoiceDetailClient({
@@ -33,6 +34,7 @@ export function InvoiceDetailClient({
   canPay,
   hasPendingPayment,
   userId,
+  paymentSettings,
 }: InvoiceDetailClientProps) {
   const router = useRouter();
   const [selectedMethod, setSelectedMethod] = useState<"qr" | "bank" | "wise" | null>(null);
@@ -40,9 +42,32 @@ export function InvoiceDetailClient({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const qrInstructions = qrProvider.getInstructions(invoice.amount, invoice.currency, reference);
-  const bankInstructions = bankProvider.getInstructions(invoice.amount, invoice.currency, reference);
-  const wiseInstructions = wiseProvider.getInstructions(invoice.amount, invoice.currency, reference);
+  const qrInstructions = {
+    label: "Thai QR Code (PromptPay / Bank App)",
+  };
+  const bankInstructions = {
+    label: "Bank Transfer",
+    details: {
+      Bank: paymentSettings.bankName,
+      Branch: paymentSettings.bankBranch,
+      "Account Name": paymentSettings.bankAccountName,
+      "Account Number": paymentSettings.bankAccountNumber,
+      Amount: `${(invoice.amount / 100).toFixed(2)} ${invoice.currency}`,
+      Reference: reference,
+    },
+  };
+  const wiseInstructions = {
+    label: "Wise (International Transfer)",
+    details: {
+      Beneficiary: paymentSettings.wiseBeneficiary,
+      "Account ID": paymentSettings.wiseAccountId,
+      Currency: paymentSettings.wiseCurrency,
+      Amount: `${(invoice.amount / 100).toFixed(2)} ${invoice.currency}`,
+      Reference: reference,
+      Details: paymentSettings.wiseDetails.replace("[Your invoice reference]", reference),
+      Note: paymentSettings.wiseNote,
+    },
+  };
 
   const handleSubmitProof = async () => {
     if (!selectedMethod || !proofFile || !canPay || hasPendingPayment) return;
@@ -147,6 +172,7 @@ export function InvoiceDetailClient({
                 <InvoiceQRCode
                   amountCents={invoice.amount}
                   reference={reference}
+                  promptPayId={paymentSettings.promptPayId}
                   size={220}
                   className="rounded-lg border border-gray-200 bg-white p-2"
                 />

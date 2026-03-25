@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { getServiceBySlug } from "@/data-access/service";
@@ -6,19 +7,66 @@ import { ServiceDetailHero } from "@/components/sections/ServiceDetailHero";
 import { ServiceDetailTabs } from "@/components/sections/ServiceDetailTabs";
 import { ServiceDetailSidebar } from "@/components/sections/ServiceDetailSidebar";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, Clock, Shield, FileText, Car, Plane, Wrench, ClipboardList, Bus, User, Award, Zap, CheckCircle } from "lucide-react";
+import { CheckCircle2, Clock, Shield, FileText, Car, Plane, Wrench, ClipboardList, Bus, User, Award, Zap, CheckCircle, Landmark, CalendarCheck } from "lucide-react";
 import { serviceDisplayNames, serviceShortDescriptions, serviceSlugs } from "@/config/services";
 import type { ServiceSlug } from "@/config/services";
+import { MarriageRegistrationSections } from "@/components/sections/MarriageRegistrationSections";
+import { DriverLicenseExtras } from "@/components/sections/DriverLicenseExtras";
+import { buildDriverLicenseServiceContent } from "@/lib/driver-license-service";
+import { buildEventPlanningServiceContent } from "@/lib/event-planning-service";
+import { EventPlanningVenueSections } from "@/components/sections/EventPlanningVenueSections";
+import { RedDoorVenueGallery } from "@/components/sections/RedDoorVenueGallery";
+
+type ServiceDetailContent = {
+  subtitle: string;
+  overview: string;
+  features: Array<{ icon: React.ComponentType<{ className?: string }>; title: string; description: string }>;
+  requirements: string[];
+  processSteps: Array<{ title: string; description: string }>;
+  documents: {
+    foreigner: string[];
+    thaiPartner?: string[];
+  };
+  processingTime?: string;
+  visaDuration?: string;
+  pricingSections?: Array<{
+    title: string;
+    rows: Array<{ label: string; price: string }>;
+    vehicleRequirements?: string;
+    footnote?: string;
+  }>;
+  additionalServicesTable?: Array<{ service: string; price: string; notes: string }>;
+  legalDisclaimer?: string;
+  galleryVideoSrc?: string;
+  galleryVideoAriaLabel?: string;
+  galleryImages?: Array<{ src: string; alt: string; width: number; height: number }>;
+  galleryTitle?: string;
+  galleryDescription?: string;
+};
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string; slug: string }>;
 }) {
-  const { slug } = await params;
+  const { slug, locale } = await params;
   const service = await getServiceBySlug(slug).catch(() => null);
   const t = await getTranslations("services");
-  
+
+  if (slug === "driver-license") {
+    const tDl = await getTranslations({ locale, namespace: "driverLicensePage" });
+    const title = service?.name ?? serviceDisplayNames["driver-license"];
+    return { title, description: tDl("metaDescription") };
+  }
+
+  if (slug === "event-planning-venue-services") {
+    const tEv = await getTranslations({ locale, namespace: "eventPlanningVenuePage" });
+    return {
+      title: tEv("heroTitle"),
+      description: tEv("metaDescription"),
+    };
+  }
+
   // Fallback to config if database unavailable
   if (!service) {
     const displayName = serviceDisplayNames[slug as ServiceSlug];
@@ -28,7 +76,7 @@ export async function generateMetadata({
       description: serviceShortDescriptions[slug as ServiceSlug] || "",
     };
   }
-  
+
   return {
     title: service.name,
     description: service.shortDescription ?? service.description.slice(0, 160),
@@ -36,75 +84,78 @@ export async function generateMetadata({
 }
 
 // Service-specific content (can be moved to database or config files later)
-const getServiceContent = (slug: string) => {
-  const content: Record<string, {
-    subtitle: string;
-    overview: string;
-    features: Array<{ icon: React.ComponentType<{ className?: string }>; title: string; description: string }>;
-    requirements: string[];
-    processSteps: Array<{ title: string; description: string }>;
-    documents: {
-      foreigner: string[];
-      thaiPartner?: string[];
-    };
-    processingTime?: string;
-    visaDuration?: string;
-  }> = {
+const getServiceContent = (slug: string): ServiceDetailContent => {
+  const content: Record<string, ServiceDetailContent> = {
     "marriage-registration": {
-      subtitle: "A comprehensive guide and professional assistance to obtaining your marriage visa in Thailand with ease and full legal compliance.",
-      overview: "Navigating the legal landscape of marriage registration and visa applications in Thailand can be daunting. SiamEZ offers a seamless, end-to-end solution that handles everything from document translation and legalization at the Ministry of Foreign Affairs to the final submission at the District Office (Amphur) and the Immigration Bureau.",
+      subtitle:
+        "Navigate Thai bureaucracy with confidence—from document preparation to district office registration—so you can focus on what matters most.",
+      overview:
+        "Thai marriage registration for foreigners involves multiple government agencies, certified translations, and strict documentation. SiamEZ acts as your legal concierge: we handle logistics so you avoid costly delays and rejections. Trusted by couples worldwide, we specialize in international marriages in Thailand, helping ensure your union is recognized in the Kingdom and abroad.",
       features: [
         {
-          icon: Shield,
-          title: "100% Legal Guarantee",
-          description: "All processes follow official Thai laws and regulations.",
+          icon: FileText,
+          title: "Document preparation",
+          description:
+            "Expert translation and certification of passports, affirmations, and supporting documents for Embassy, MFA, and Amphur submission.",
         },
         {
-          icon: Clock,
-          title: "Fast Tracking",
-          description: "Expedited handling for urgent marriage registrations.",
+          icon: Landmark,
+          title: "Embassy & MFA liaison",
+          description:
+            "We coordinate with your Embassy and the Thai Ministry of Foreign Affairs to secure attestations and MFA legalization.",
+        },
+        {
+          icon: CalendarCheck,
+          title: "Appointment & registration",
+          description:
+            "We help schedule your Amphur appointment and accompany you for a smooth registration experience.",
         },
       ],
       requirements: [
-        "Both parties must be at least 17 years old (or of legal age in their home country).",
-        "Neither party should be insane or adjudged incompetent.",
-        "For Visa: Proof of 400,000 THB in a Thai bank account OR a monthly income of at least 40,000 THB.",
-        "Valid Passport and Affirmation of Freedom to Marry from your Embassy.",
+        "Both parties must meet Thai legal requirements to marry (including minimum age and legal capacity).",
+        "Thai law requires both partners to appear in person at the District Office (Amphur) for registration.",
+        "Two witnesses (typically Thai nationals) with valid ID must be present; we can help arrange witnesses and accompany you on the day.",
+        "Your Embassy-issued Affirmation of Freedom to Marry must be translated into Thai and legalized by the MFA before Amphur registration.",
+        "If previously married or widowed, certified divorce or death certificates with official Thai translation are required where applicable.",
+        "Need a marriage visa (Non-O) after registration? Ask us—timing and financial rules differ from the registration process itself.",
       ],
       processSteps: [
         {
-          title: "Step 1: Affirmation of Freedom to Marry",
-          description: "Obtain the document from your respective embassy in Bangkok. We provide assistance with scheduling and form preparation.",
+          title: "Document preparation & translation",
+          description:
+            "Gather passports, birth certificates, and any divorce or death certificates. Certified Thai translations are prepared for submission.",
         },
         {
-          title: "Step 2: Translation & Legalization",
-          description: "We translate your documents into Thai and have them legalized by the Ministry of Foreign Affairs (MFA).",
+          title: "Embassy affirmation (freedom to marry)",
+          description:
+            "Your Embassy issues an Affirmation of Freedom to Marry certifying you are legally eligible—required by Thai law before MFA and Amphur steps.",
         },
         {
-          title: "Step 3: Registration at Amphur",
-          description: "Official marriage registration at the local district office. We provide witnesses and translation services during the ceremony.",
+          title: "MFA authentication",
+          description:
+            "The Ministry of Foreign Affairs authenticates your Embassy-issued documents. Processing typically takes 2–5 business days.",
         },
         {
-          title: "Step 4: Marriage Visa (Non-O)",
-          description: "Filing for the initial 90-day visa followed by the 1-year extension based on marriage at Thai Immigration.",
+          title: "District Office (Amphur) registration",
+          description:
+            "Final registration at the Amphur with both parties in person. You receive your official Thai marriage certificate.",
         },
       ],
       documents: {
         foreigner: [
-          "Original Passport",
-          "Affirmation of Freedom to Marry",
-          "Work Permit (if applicable)",
-          "Financial Proof (400k THB / 40k Salary)",
+          "Valid passport—original plus copy of the biographical page",
+          "Affirmation of Freedom to Marry from your Embassy or Consulate in Thailand",
+          "Divorce decree (if applicable)—certified copy with official Thai translation",
+          "Death certificate of former spouse (if widowed)—certified copy with official Thai translation",
+          "MFA-stamped / legalized documents as required before Amphur registration",
         ],
         thaiPartner: [
-          "Thai ID Card",
-          "House Registration (Tabien Baan)",
-          "Divorce Certificate (if applicable)",
-          "Change of Name Certificate (if any)",
+          "Thai National ID card",
+          "House registration (Tabien Baan)—original copy 1 as required by the office",
+          "Two witnesses (Thai nationals with valid ID) must attend the Amphur—we can help arrange",
         ],
       },
-      processingTime: "3 - 5 Weeks",
-      visaDuration: "12 Months (Non-O)",
+      processingTime: "MFA ~2–5 business days; full journey often 2–4 weeks (expedited options with Premium)",
     },
     "translation-services": {
       subtitle: "Certified translations for official documents, legal paperwork, and government submissions with accuracy and speed.",
@@ -154,56 +205,6 @@ const getServiceContent = (slug: string) => {
         ],
       },
       processingTime: "2 - 5 Business Days",
-    },
-    "driver-license": {
-      subtitle: "Expert assistance obtaining or converting your Thai driver's license with minimal hassle and maximum convenience.",
-      overview: "Navigating the Thai driver's license process can be complex, especially for foreigners. SiamEZ simplifies the entire process, from document preparation to the final license issuance. Whether you're converting an international license or obtaining a new Thai license, we handle all the paperwork and guide you through each step.",
-      features: [
-        {
-          icon: Shield,
-          title: "Full Compliance",
-          description: "All processes follow Thai Department of Land Transport regulations.",
-        },
-        {
-          icon: Clock,
-          title: "Efficient Process",
-          description: "Streamlined procedures to get your license faster.",
-        },
-      ],
-      requirements: [
-        "Valid passport with non-immigrant visa",
-        "Medical certificate from a Thai hospital",
-        "Residence certificate from Immigration or Embassy",
-        "Original driver's license from home country (for conversion)",
-      ],
-      processSteps: [
-        {
-          title: "Step 1: Document Preparation",
-          description: "We help you gather and prepare all required documents including medical certificate and residence certificate.",
-        },
-        {
-          title: "Step 2: Application Submission",
-          description: "Submit your application at the Department of Land Transport (DLT) office with our assistance.",
-        },
-        {
-          title: "Step 3: Theory Test & Practical Test",
-          description: "Complete the written theory test and practical driving test. We provide study materials and guidance.",
-        },
-        {
-          title: "Step 4: License Issuance",
-          description: "Receive your Thai driver's license. Temporary license is issued immediately, permanent license follows.",
-        },
-      ],
-      documents: {
-        foreigner: [
-          "Valid Passport with Non-Immigrant Visa",
-          "Medical Certificate (from Thai hospital)",
-          "Residence Certificate",
-          "Original Home Country License (for conversion)",
-          "Passport-sized Photos",
-        ],
-      },
-      processingTime: "1 - 2 Weeks",
     },
     "police-clearance": {
       subtitle: "Professional assistance obtaining police clearance certificates and background checks required for visas and work permits.",
@@ -357,56 +358,134 @@ const getServiceContent = (slug: string) => {
       processingTime: "Varies by Project",
     },
     "vehicle-registration": {
-      subtitle: "Complete car and motorcycle registration services including transfers, renewals, and documentation assistance.",
-      overview: "Vehicle registration in Thailand involves multiple steps and documentation. SiamEZ simplifies the process for both new registrations and transfers. We handle all paperwork, coordinate with the Department of Land Transport, and ensure your vehicle is properly registered and road-legal.",
+      subtitle:
+        "Professional car and motorcycle registration in Bangkok — one-day process for qualifying BKK-plated vehicles.",
+      overview:
+        "SiamEZ provides professional vehicle registration assistance across Thailand. Whether you need to transfer ownership, renew your tax and insurance, change plates, or update your registration book, our team handles the paperwork and DLT (Department of Land Transport) process so you can focus on what matters.\n\nWe specialize in Bangkok one-day processing for both cars and motorcycles. For BKK-plated vehicles, we can often complete your registration within a single working day. Vehicles from other provinces may require additional time, and our team will provide a clear timeline when you inquire.\n\nWhat we handle: ownership transfers; tax and insurance renewals; plate changes; color or engine updates in the book; lost book replacement; and documentation for modified vehicles. Contact us with your specific situation — we will advise on the process and cost.\n\nPricing is transparent and listed below. Contact us via LINE, email, or phone to get started, ask about other provinces, or submit documents for online inspection.",
       features: [
         {
-          icon: Shield,
-          title: "Full Compliance",
-          description: "All registrations comply with Department of Land Transport regulations.",
+          icon: Car,
+          title: "Bangkok one-day processing",
+          description:
+            "For BKK plates, we can often complete registration in one working day when the vehicle meets requirements.",
         },
         {
-          icon: Clock,
-          title: "Efficient Service",
-          description: "Streamlined process to get your vehicle registered quickly.",
+          icon: Shield,
+          title: "DLT paperwork handled",
+          description:
+            "We manage forms, submissions, and coordination with the Department of Land Transport on your behalf.",
+        },
+        {
+          icon: FileText,
+          title: "Online document inspection",
+          description:
+            "Submit your documents for review before you visit so we can confirm everything is in order.",
         },
       ],
       requirements: [
-        "Vehicle ownership documents",
-        "Valid identification (passport for foreigners)",
-        "Residence certificate",
-        "Insurance certificate",
-        "Previous registration (for transfers)",
+        "Cars: vehicle must be original, with no modifications, and no excessive black smoke.",
+        "Motorcycles: vehicle must be original, with no loud or illegal exhaust.",
+        "Cases with missing documents or non-standard modifications may require staff inspection — we will advise after review.",
       ],
       processSteps: [
         {
-          title: "Step 1: Document Verification",
-          description: "We verify all required documents and ensure everything is in order.",
+          title: "Contact us",
+          description:
+            "Reach us on LINE, email, or phone. You can submit documents for online inspection; we separate our service fees from DLT (government) fees.",
         },
         {
-          title: "Step 2: Application Preparation",
-          description: "Complete all necessary forms and prepare the registration application.",
+          title: "Timeline and preparation",
+          description:
+            "We confirm whether Bangkok one-day processing applies (typically BKK plates) or a longer timeline for other provinces.",
         },
         {
-          title: "Step 3: DLT Submission",
-          description: "Submit your application at the Department of Land Transport office.",
+          title: "DLT and submissions",
+          description:
+            "We prepare your file and handle the Department of Land Transport process as agreed.",
         },
         {
-          title: "Step 4: Registration Completion",
-          description: "Receive your vehicle registration and license plates.",
+          title: "Registration complete",
+          description:
+            "You receive updated registration, plates, or renewals as applicable, with clear next steps for tax and insurance where needed.",
         },
       ],
       documents: {
         foreigner: [
-          "Vehicle Purchase Documents",
-          "Valid Passport",
-          "Residence Certificate",
-          "Insurance Certificate",
-          "Previous Registration (if transferring)",
-          "Power of Attorney (if applicable)",
+          "Vehicle ownership or purchase documents (as applicable)",
+          "Valid passport or ID",
+          "Proof of address or residence where required by DLT",
+          "Compulsory motor insurance (Por Ror Bor) and prior registration book for transfers or renewals",
+          "Invoice from a registered dealer (required for engine changes)",
+          "Existing plates, tax stickers, and any prior DLT correspondence",
+          "Power of attorney if another person will act on your behalf",
         ],
       },
-      processingTime: "3 - 7 Business Days",
+      processingTime: "Bangkok (BKK plates): often 1 business day; other provinces: timeline on inquiry",
+      pricingSections: [
+        {
+          title: "Car registration — service fees (Bangkok process)",
+          rows: [
+            { label: "BKK plate", price: "3,500 THB" },
+            { label: "Other province plate", price: "+1,500 THB" },
+            { label: "Swap plate", price: "1,500 THB" },
+          ],
+          vehicleRequirements: "Must be original, no modifications, no black smoke.",
+          footnote: "* Not including DLT fees.",
+        },
+        {
+          title: "Motorcycle registration — service fees (Bangkok process)",
+          rows: [
+            { label: "BKK plate", price: "2,000 THB" },
+            { label: "Different province", price: "+1,000 THB" },
+            { label: "Renew tax / insurance (under 5 years)", price: "700 THB" },
+            { label: "Renew tax / insurance (over 5 years)", price: "1,200 THB" },
+          ],
+          vehicleRequirements: "Must be original, no loud exhaust.",
+          footnote: "* Not including DLT fees.",
+        },
+      ],
+      additionalServicesTable: [
+        { service: "Change color", price: "1,000 THB", notes: "—" },
+        { service: "Change engine", price: "1,000 THB", notes: "Requires invoice" },
+        { service: "Lost book (green / blue)", price: "1,500 THB", notes: "Must be owner" },
+        { service: "Exhaust over 95 dB", price: "1,500 – 2,500 THB", notes: "—" },
+        { service: "Missing documents", price: "—", notes: "Staff inspection required" },
+      ],
+      legalDisclaimer:
+        "SiamEZ offers professional assistance and consultancy services as an independent company. We are not connected to or endorsed by the Thai government.",
+      galleryVideoSrc: "/images/services/vehicle-registration/registration-video.mp4",
+      galleryImages: [
+        {
+          src: "/images/services/vehicle-registration/registration-honda-click.png",
+          alt: "Customer with Thai vehicle tax sticker for year 2570 next to a white Honda Click motorcycle",
+          width: 619,
+          height: 1024,
+        },
+        {
+          src: "/images/services/vehicle-registration/registration-honda-crv.png",
+          alt: "Customer holding vehicle registration document next to a gray Honda CR-V with hood open",
+          width: 1024,
+          height: 768,
+        },
+        {
+          src: "/images/services/vehicle-registration/registration-kawasaki-ninja.png",
+          alt: "Customer with green registration card next to a lime green Kawasaki Ninja motorcycle",
+          width: 1024,
+          height: 768,
+        },
+        {
+          src: "/images/services/vehicle-registration/registration-minivan.png",
+          alt: "Customer holding blue Thai vehicle registration booklet in front of a silver minivan",
+          width: 768,
+          height: 1024,
+        },
+        {
+          src: "/images/services/vehicle-registration/registration-bmw.png",
+          alt: "Customer with vehicle registration document next to a dark BMW SUV",
+          width: 768,
+          height: 1024,
+        },
+      ],
     },
     "transportation-services": {
       subtitle: "Reliable airport transfers, city tours, and inter-city transportation with comfortable, well-maintained vehicles.",
@@ -570,28 +649,40 @@ export default async function ServiceDetailPage({
     notFound();
   }
   
-  const [service, t, tCommon] = await Promise.all([
+  const [service, t, tCommon, tDriverLicense, tEventPlanning] = await Promise.all([
     getServiceBySlug(slug).catch(() => null),
     getTranslations("services"),
     getTranslations("common"),
+    slug === "driver-license"
+      ? getTranslations({ locale, namespace: "driverLicensePage" })
+      : Promise.resolve(null),
+    slug === "event-planning-venue-services"
+      ? getTranslations({ locale, namespace: "eventPlanningVenuePage" })
+      : Promise.resolve(null),
   ]);
 
-  const content = getServiceContent(slug);
+  const content: ServiceDetailContent = tEventPlanning
+    ? buildEventPlanningServiceContent(tEventPlanning)
+    : tDriverLicense
+      ? buildDriverLicenseServiceContent(tDriverLicense)
+      : getServiceContent(slug);
   const displayName = serviceDisplayNames[slug as ServiceSlug] || service?.name || slug;
-  
+
   // Create fallback service object if database unavailable
-  // Set default price for marriage registration to match design (15,000 THB)
-  // formatCurrency divides by 100, so 1500000 satang = 15,000 THB
-  const defaultPrice = slug === "marriage-registration" ? 1500000 : null;
-  
-  const serviceData = service || {
-    name: displayName,
-    shortDescription: serviceShortDescriptions[slug as ServiceSlug] || null,
-    description: content.overview,
-    priceAmount: defaultPrice,
-    priceCurrency: "THB" as const,
-    slug,
-  };
+  // Basic package from siam-ez.com; formatCurrency divides by 100 (satang)
+  const defaultPrice =
+    slug === "marriage-registration" ? 850000 : slug === "driver-license" ? 350000 : null;
+
+  const serviceData = service
+    ? { ...service, priceAmount: service.priceAmount ?? defaultPrice }
+    : {
+        name: displayName,
+        shortDescription: serviceShortDescriptions[slug as ServiceSlug] || null,
+        description: content.overview,
+        priceAmount: defaultPrice,
+        priceCurrency: "THB" as const,
+        slug,
+      };
 
   // Breadcrumbs
   const breadcrumbs = [
@@ -600,13 +691,86 @@ export default async function ServiceDetailPage({
     { label: displayName, href: `/services/${slug}` },
   ];
 
+  const vehicleRegistrationMediaTab =
+    content.galleryVideoSrc || (content.galleryImages && content.galleryImages.length > 0) ? (
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            {content.galleryTitle ?? "Recent registrations"}
+          </h2>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            {content.galleryDescription ??
+              (content.galleryVideoSrc
+                ? "Short clip from our Bangkok registration work, plus photos of real customers we have helped with car and motorcycle registration."
+                : "Photos from real customers we have helped with car and motorcycle registration in Bangkok.")}
+          </p>
+        </div>
+        {content.galleryVideoSrc ? (
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-black shadow-sm dark:border-gray-700">
+            <video
+              className="aspect-video w-full max-h-[70vh] object-contain"
+              controls
+              playsInline
+              preload="metadata"
+              aria-label={
+                content.galleryVideoAriaLabel ??
+                "SiamEZ vehicle registration services — recent registrations video"
+              }
+            >
+              <source src={content.galleryVideoSrc} type="video/mp4" />
+            </video>
+          </div>
+        ) : null}
+        {(content.galleryImages?.length ?? 0) > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {(content.galleryImages ?? []).map((img, idx) => (
+              <figure
+                key={`${img.src}-${idx}`}
+                className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50 shadow-sm dark:border-gray-700 dark:bg-gray-800/50"
+              >
+                <Image
+                  src={img.src}
+                  alt={img.alt}
+                  width={img.width}
+                  height={img.height}
+                  sizes="(min-width: 640px) 50vw, 100vw"
+                  className="h-auto w-full object-cover"
+                />
+              </figure>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    ) : undefined;
+
+  const serviceMediaTab =
+    slug === "event-planning-venue-services" ? <RedDoorVenueGallery /> : vehicleRegistrationMediaTab;
+
+  const resolvedMediaTabLabel =
+    slug === "event-planning-venue-services" && tEventPlanning
+      ? tEventPlanning("galleryTabLabel")
+      : vehicleRegistrationMediaTab
+        ? t("mediaTab")
+        : undefined;
+
   return (
     <>
       <ServiceDetailHero
-        title={serviceData.name}
+        title={
+          slug === "event-planning-venue-services" && tEventPlanning
+            ? tEventPlanning("heroTitle")
+            : serviceData.name
+        }
         subtitle={content.subtitle}
         breadcrumbs={breadcrumbs}
         showPremiumTag={slug === "marriage-registration"}
+        badge={
+          tDriverLicense
+            ? tDriverLicense("heroBadge")
+            : tEventPlanning
+              ? tEventPlanning("heroBadge")
+              : undefined
+        }
       />
 
       <div className="bg-white dark:bg-gray-900">
@@ -614,11 +778,21 @@ export default async function ServiceDetailPage({
           {/* Main Content */}
           <div className="lg:col-span-2">
             <ServiceDetailTabs
+              tabLabels={{
+                overview: t("overview"),
+                requirements: t("requirements"),
+                process: t("processSteps"),
+                documents: t("requiredDocuments"),
+              }}
+              media={serviceMediaTab}
+              mediaTabLabel={resolvedMediaTabLabel}
               overview={
                 <div className="space-y-8">
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Service Overview</h2>
-                    <p className="mt-4 text-base leading-relaxed text-gray-700 dark:text-gray-300">{content.overview}</p>
+                    <p className="mt-4 whitespace-pre-line text-base leading-relaxed text-gray-700 dark:text-gray-300">
+                      {content.overview}
+                    </p>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     {content.features.map((feature, idx) => {
@@ -640,6 +814,79 @@ export default async function ServiceDetailPage({
                       );
                     })}
                   </div>
+                  {slug === "driver-license" ? <DriverLicenseExtras /> : null}
+                  {slug === "event-planning-venue-services" ? (
+                    <EventPlanningVenueSections locale={locale} />
+                  ) : null}
+                  {content.pricingSections && content.pricingSections.length > 0 ? (
+                    <div className="space-y-10 border-t border-gray-200 pt-10 dark:border-gray-700">
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Service fees</h2>
+                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                          Transparent service rates. DLT government fees are separate.
+                        </p>
+                      </div>
+                      {content.pricingSections.map((section, sIdx) => (
+                        <div key={sIdx}>
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{section.title}</h3>
+                          <ul className="mt-4 divide-y divide-gray-200 rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
+                            {section.rows.map((row, rIdx) => (
+                              <li
+                                key={rIdx}
+                                className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                              >
+                                <span className="text-gray-700 dark:text-gray-300">{row.label}</span>
+                                <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                                  {row.price}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                          {section.vehicleRequirements ? (
+                            <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                              <span className="font-medium text-gray-800 dark:text-gray-200">Vehicle requirements: </span>
+                              {section.vehicleRequirements}
+                            </p>
+                          ) : null}
+                          {section.footnote ? (
+                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">{section.footnote}</p>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                  {content.additionalServicesTable && content.additionalServicesTable.length > 0 ? (
+                    <div className="space-y-4 border-t border-gray-200 pt-10 dark:border-gray-700">
+                      <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Additional services</h2>
+                      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                        <table className="w-full min-w-[280px] text-left text-sm">
+                          <thead className="bg-gray-50 dark:bg-gray-800/80">
+                            <tr>
+                              <th className="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100">Service</th>
+                              <th className="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100">Price</th>
+                              <th className="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100">Notes</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                            {content.additionalServicesTable.map((row, i) => (
+                              <tr key={i} className="bg-white dark:bg-gray-900/40">
+                                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{row.service}</td>
+                                <td className="px-4 py-3 font-medium tabular-nums text-gray-900 dark:text-gray-100">
+                                  {row.price}
+                                </td>
+                                <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{row.notes}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : null}
+                  {content.legalDisclaimer ? (
+                    <p className="border-t border-gray-200 pt-8 text-sm italic text-gray-500 dark:border-gray-700 dark:text-gray-500">
+                      {content.legalDisclaimer}
+                    </p>
+                  ) : null}
                 </div>
               }
               requirements={
@@ -723,6 +970,8 @@ export default async function ServiceDetailPage({
                 </div>
               }
             />
+
+            {slug === "marriage-registration" ? <MarriageRegistrationSections /> : null}
           </div>
 
           {/* Sidebar */}
@@ -734,6 +983,7 @@ export default async function ServiceDetailPage({
               visaDuration={content.visaDuration}
               serviceSlug={serviceData.slug}
               showBestValue={slug === "marriage-registration"}
+              helpDescription={slug === "marriage-registration" ? t("marriageHelpBlurb") : undefined}
             />
           </div>
         </div>

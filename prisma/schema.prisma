@@ -216,7 +216,7 @@ model Payment {
 
 model Document {
   id           String   @id @default(cuid())
-  caseId       String   @map("case_id")
+  caseId       String?  @map("case_id") // null = not yet linked to a case
   uploadedBy   String?  @map("uploaded_by") // userId or null for system
   name         String
   storageKey   String   @map("storage_key") // Vercel Blob / S3 key or URL
@@ -225,7 +225,7 @@ model Document {
   documentType String?  @map("document_type") // e.g. passport, contract, payment_proof
   createdAt    DateTime @default(now()) @map("created_at")
 
-  case           Case    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  case           Case?   @relation(fields: [caseId], references: [id], onDelete: SetNull)
   uploader       User?   @relation("DocumentUploader", fields: [uploadedBy], references: [id], onDelete: SetNull)
   paymentProof   Payment? @relation("PaymentProof")
 }
@@ -291,6 +291,8 @@ model Invoice {
   dueDate          DateTime?            @map("due_date")
   stripeInvoiceId  String?              @map("stripe_invoice_id") // Phase 2
   lineItems        Json?                @map("line_items")
+  attachedPdfUrl   String?              @map("attached_pdf_url") // admin-uploaded or external PDF (blob URL)
+  clientAddress    String?              @map("client_address")
   createdAt        DateTime             @default(now()) @map("created_at")
   updatedAt        DateTime             @updatedAt @map("updated_at")
   sentAt           DateTime?            @map("sent_at")
@@ -332,4 +334,15 @@ model Event {
   staff User?  @relation("EventStaff", fields: [staffId], references: [id], onDelete: SetNull)
 
   @@map("events")
+}
+
+// ----- App settings -----
+
+model AppSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
 }

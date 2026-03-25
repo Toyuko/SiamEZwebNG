@@ -46,12 +46,23 @@ export async function createPayment(data: {
   currency?: string;
   method: PaymentMethod;
   proofDocumentId?: string;
+  stripePaymentIntentId?: string | null;
+  stripeChargeId?: string | null;
+  metadata?: object | null;
+  status?: PaymentStatus;
 }) {
   return prisma.payment.create({
     data: {
-      ...data,
+      invoiceId: data.invoiceId,
+      caseId: data.caseId,
+      amount: data.amount,
       currency: data.currency ?? "THB",
-      status: "submitted",
+      method: data.method,
+      proofDocumentId: data.proofDocumentId,
+      stripePaymentIntentId: data.stripePaymentIntentId ?? undefined,
+      stripeChargeId: data.stripeChargeId ?? undefined,
+      metadata: data.metadata ?? undefined,
+      status: data.status ?? "submitted",
     },
   });
 }
@@ -62,6 +73,28 @@ export async function updatePaymentStatus(id: string, status: PaymentStatus) {
     data: {
       status,
       ...(status === "approved" && { approvedAt: new Date() }),
+    },
+  });
+}
+
+export async function getPaymentByStripePaymentIntentId(stripePaymentIntentId: string) {
+  return prisma.payment.findUnique({
+    where: { stripePaymentIntentId },
+  });
+}
+
+/** Maps Stripe intent outcomes to internal payment statuses. */
+export async function updatePaymentByStripeIntentId(
+  stripePaymentIntentId: string,
+  data: { status: "succeeded" | "failed"; stripeChargeId?: string | null }
+) {
+  const internalStatus: PaymentStatus = data.status === "succeeded" ? "approved" : "rejected";
+  return prisma.payment.update({
+    where: { stripePaymentIntentId },
+    data: {
+      status: internalStatus,
+      stripeChargeId: data.stripeChargeId ?? undefined,
+      ...(internalStatus === "approved" && { approvedAt: new Date() }),
     },
   });
 }

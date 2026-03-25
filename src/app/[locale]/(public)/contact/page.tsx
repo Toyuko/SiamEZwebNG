@@ -122,6 +122,7 @@ export default async function ContactPage({
                   <option value="vehicle">{tOptions("vehicle")}</option>
                   <option value="transport">{tOptions("transport")}</option>
                   <option value="driver-private">{tOptions("driver-private")}</option>
+                  <option value="event-planning">{tOptions("event-planning")}</option>
                   <option value="other">{tOptions("other")}</option>
                 </select>
               </div>

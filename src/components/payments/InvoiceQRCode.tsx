@@ -5,6 +5,7 @@ import QRCode from "qrcode";
 interface InvoiceQRCodeProps {
   amountCents: number;
   reference: string;
+  promptPayId?: string;
   size?: number;
   className?: string;
 }
@@ -12,13 +13,14 @@ interface InvoiceQRCodeProps {
 export async function InvoiceQRCode({
   amountCents,
   reference,
+  promptPayId,
   size = 256,
   className,
 }: InvoiceQRCodeProps) {
   const payload = generatePromptPayQRPayload(
     amountCents,
     reference,
-    paymentConfig.promptPayId
+    promptPayId ?? paymentConfig.promptPayId
   );
   const dataUrl = await QRCode.toDataURL(payload, {
     width: size,

@@ -24,7 +24,7 @@ export async function getDocumentsByUserId(userId: string) {
 }
 
 export async function createDocument(data: {
-  caseId: string;
+  caseId?: string | null;
   name: string;
   storageKey: string;
   uploadedBy?: string;
@@ -34,7 +34,7 @@ export async function createDocument(data: {
 }) {
   return prisma.document.create({
     data: {
-      caseId: data.caseId,
+      caseId: data.caseId ?? null,
       name: data.name,
       storageKey: data.storageKey,
       uploadedBy: data.uploadedBy ?? undefined,

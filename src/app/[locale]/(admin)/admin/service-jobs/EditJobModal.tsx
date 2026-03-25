@@ -12,9 +12,9 @@ import type { Prisma } from "@prisma/client";
 
 type JobWithRelations = Prisma.CaseGetPayload<{
   include: {
-    user: true;
-    service: true;
-    staffAssignments: { include: { user: true } };
+    user: { select: { id: true; name: true; email: true; phone: true } };
+    service: { select: { id: true; name: true; slug: true } };
+    staffAssignments: { include: { user: { select: { id: true; name: true; email: true } } } };
     invoices: { select: { id: true; amount: true }; orderBy: { createdAt: "desc" }; take: 1 };
   };
 }>;

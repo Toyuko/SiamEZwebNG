@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 /**
  * POST /api/payments
  * Record a payment for a case.
- * Body: { caseId, amount, type?, status?, currency?, stripePaymentIntentId?, stripeChargeId?, invoiceId? }
+ * Body: { caseId, invoiceId, amount, currency?, stripePaymentIntentId?, stripeChargeId? }
  */
 export async function POST(request: NextRequest) {
   try {
@@ -13,17 +13,15 @@ export async function POST(request: NextRequest) {
     const {
       caseId,
       amount,
-      type = "full",
-      status = "pending",
       currency = "THB",
       stripePaymentIntentId,
       stripeChargeId,
       invoiceId,
     } = body;
 
-    if (!caseId || amount == null) {
+    if (!caseId || amount == null || !invoiceId) {
       return NextResponse.json(
-        { error: "caseId and amount required" },
+        { error: "caseId, invoiceId, and amount required" },
         { status: 400 }
       );
     }
@@ -40,10 +38,10 @@ export async function POST(request: NextRequest) {
 
     const payment = await createPayment({
       caseId,
+      invoiceId,
       amount: Number(amount),
-      type,
-      status,
       currency,
+      method: "stripe",
       stripePaymentIntentId: stripePaymentIntentId ?? undefined,
       stripeChargeId: stripeChargeId ?? undefined,
       metadata,

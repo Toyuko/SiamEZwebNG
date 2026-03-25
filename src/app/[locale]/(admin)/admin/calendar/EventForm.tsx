@@ -19,6 +19,7 @@ export function EventForm({
   defaultStart,
   defaultEnd,
   defaultValues,
+  defaultAllDay,
   cases,
   staff,
 }: {

@@ -29,8 +29,8 @@ export default async function PortalDashboardPage({
     (c) =>
       !["cancelled", "completed"].includes(c.status)
   ).length;
-  const pendingInvoicesCount = invoices.filter(
-    (i) => i.status === "sent" || i.status === "overdue"
+  const pendingInvoicesCount = invoices.filter((i) =>
+    ["unpaid", "pending_verification", "draft"].includes(i.status)
   ).length;
   const documentsCount = documents.length;
 
