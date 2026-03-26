@@ -99,6 +99,13 @@ export default async function middleware(request: NextRequest) {
     }
   }
 
+  // Keep non-protected API routes out of locale middleware.
+  // Without this, next-intl can rewrite `/api/*` into `/:locale/api/*`,
+  // which breaks endpoints like `/api/auth/login` for mobile clients.
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   // Booking gate: /book/* – allow guests; /checkout/* – allow guests with valid token (verified in page)
   // Only portal requires auth for booking-related routes
 
