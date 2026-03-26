@@ -38,7 +38,6 @@ function textOrDash(v: string | null | undefined) {
 async function readThaiQrDataUrl(configured: string | null) {
   const candidates = [
     configured,
-    "/Users/Microsoft/.cursor/projects/Users-Microsoft-Documents-Github-SiamEZwebNG/assets/image-8906ad3c-704d-4006-a582-941b6aa2e1ad.png",
     path.join(process.cwd(), "public", "images", "payments", "thai-qr-payment.png"),
   ].filter(Boolean) as string[];
 
