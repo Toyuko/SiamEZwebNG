@@ -5,7 +5,7 @@ Production-grade, mobile-first services booking platform for SiamEZ (Thailand: v
 ## Tech stack
 
 - **Next.js 15** (App Router), TypeScript, Tailwind CSS
-- **MySQL** + **Prisma** ORM
+- **PostgreSQL** + **Prisma** ORM
 - **Stripe** (payments)
 - **Vercel** (hosting)
 - Auth: email/password + roles (admin, staff, customer)
@@ -19,7 +19,7 @@ Production-grade, mobile-first services booking platform for SiamEZ (Thailand: v
 
 2. **Environment**
    - Copy `.env.example` to `.env.local`
-   - Set `DATABASE_URL` (MySQL). Optional for first run: Stripe and NextAuth vars.
+   - Set `DATABASE_URL` (PostgreSQL/Neon). Optional for first run: Stripe and NextAuth vars.
 
 3. **Database**
    ```bash
@@ -41,7 +41,7 @@ Production-grade, mobile-first services booking platform for SiamEZ (Thailand: v
 - `docs/ARCHITECTURE.md` – Folder structure and data flow
 - `docs/BOOKING_FLOW.md` – Booking wizard and case creation
 - `docs/CASE_MANAGEMENT.md` – Case lifecycle, quotes, payments, documents
-- `prisma/schema.prisma` – MySQL schema (User, Service, Case, Quote, Payment, Document, StaffAssignment, CaseNote, Invoice)
+- `prisma/schema.prisma` – PostgreSQL schema (User, Service, Case, Quote, Payment, Document, StaffAssignment, CaseNote, Invoice)
 - `src/app/(public)/` – Marketing: Home, Services, About, Contact, Success Stories
 - `src/app/(portal)/` – Customer portal: dashboard, cases, profile, invoices, documents
 - `src/app/(admin)/` – Admin dashboard: cases, clients, services, calendar, reports
