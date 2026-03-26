@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createPayment } from "@/data-access/payment";
-import { prisma } from "@/lib/db";
+import { NextRequest } from "next/server";
+import { getApiUser } from "@/lib/auth/getApiUser";
+import { submitUserPayment } from "@/lib/domain/payments";
+import { ok, fail } from "@/lib/api-response";
+import type { PaymentMethod } from "@prisma/client";
 
 /**
  * POST /api/payments
@@ -9,50 +11,36 @@ import { prisma } from "@/lib/db";
  */
 export async function POST(request: NextRequest) {
   try {
+    const { userId } = await getApiUser(request);
     const body = await request.json();
     const {
-      caseId,
-      amount,
-      currency = "THB",
+      method = "stripe",
       stripePaymentIntentId,
       stripeChargeId,
       invoiceId,
+      proofDocumentId,
     } = body;
 
-    if (!caseId || amount == null || !invoiceId) {
-      return NextResponse.json(
-        { error: "caseId, invoiceId, and amount required" },
-        { status: 400 }
-      );
+    if (!invoiceId) {
+      return fail("invoiceId is required", 400);
+    }
+    const validMethods: PaymentMethod[] = ["qr", "bank", "wise", "stripe"];
+    if (!validMethods.includes(method)) {
+      return fail("Invalid payment method", 400);
     }
 
-    const caseRecord = await prisma.case.findUnique({
-      where: { id: caseId },
-      select: { id: true },
-    });
-    if (!caseRecord) {
-      return NextResponse.json({ error: "Case not found" }, { status: 404 });
-    }
-
-    const metadata = invoiceId != null ? { invoiceId } : undefined;
-
-    const payment = await createPayment({
-      caseId,
+    const payment = await submitUserPayment({
+      userId,
       invoiceId,
-      amount: Number(amount),
-      currency,
-      method: "stripe",
+      method: method as PaymentMethod,
+      proofDocumentId: proofDocumentId ?? undefined,
       stripePaymentIntentId: stripePaymentIntentId ?? undefined,
       stripeChargeId: stripeChargeId ?? undefined,
-      metadata,
     });
 
-    return NextResponse.json({ success: true, paymentId: payment.id });
+    return ok(payment, 201);
   } catch (e) {
-    console.error("POST /api/payments error", e);
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Failed to record payment" },
-      { status: 500 }
-    );
+    const message = e instanceof Error ? e.message : "Failed to record payment";
+    return fail(message, message === "Unauthorized" ? 401 : 500);
   }
 }

@@ -6,6 +6,7 @@ import { getCaseByIdWithToken } from "@/data-access/case";
 import * as invoiceDA from "@/data-access/invoice";
 import * as paymentDA from "@/data-access/payment";
 import { getStripe } from "@/lib/stripe";
+import { submitUserPayment } from "@/lib/domain/payments";
 
 export type PaymentMethodInput = "qr" | "bank" | "wise";
 
@@ -98,34 +99,13 @@ export async function submitPaymentWithProof(
 ): Promise<SubmitPaymentWithProofResult> {
   try {
     const session = await requireAuth();
-    const invoice = await invoiceDA.getInvoiceByIdForUser(input.invoiceId, session.user.id);
-    if (!invoice) return { success: false, error: "Invoice not found" };
-    if (invoice.status === "paid") return { success: false, error: "Invoice already paid" };
-    if (invoice.status === "rejected") return { success: false, error: "Invoice was rejected" };
-
     const methodMap = { qr: "qr" as const, bank: "bank" as const, wise: "wise" as const };
-    const method = methodMap[input.method];
-
-    const doc = await prisma.document.findFirst({
-      where: {
-        id: input.proofDocumentId,
-        caseId: invoice.caseId,
-        documentType: "payment_proof",
-      },
-    });
-    if (!doc) return { success: false, error: "Payment proof document not found" };
-
-    await paymentDA.createPayment({
+    await submitUserPayment({
+      userId: session.user.id,
       invoiceId: input.invoiceId,
-      caseId: invoice.caseId,
-      amount: invoice.amount,
-      currency: invoice.currency,
-      method,
+      method: methodMap[input.method],
       proofDocumentId: input.proofDocumentId,
     });
-
-    await invoiceDA.updateInvoiceStatus(input.invoiceId, "pending_verification");
-    await invoiceDA.updateInvoicePaymentMethod(input.invoiceId, method);
 
     return { success: true };
   } catch (e) {

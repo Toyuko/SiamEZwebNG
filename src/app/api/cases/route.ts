@@ -3,6 +3,9 @@ import { createCase } from "@/data-access/case";
 import { nextCaseNumber } from "@/lib/utils";
 import { prisma } from "@/lib/db";
 import type { CaseStatus } from "@prisma/client";
+import { getApiUser } from "@/lib/auth/getApiUser";
+import { getUserCases } from "@/lib/domain/cases";
+import { ok, fail } from "@/lib/api-response";
 
 /**
  * POST /api/cases
@@ -55,5 +58,16 @@ export async function POST(request: NextRequest) {
       { error: e instanceof Error ? e.message : "Failed to create case" },
       { status: 500 }
     );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { userId } = await getApiUser(request);
+    const cases = await getUserCases(userId);
+    return ok(cases);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Failed to fetch cases";
+    return fail(message, message === "Unauthorized" ? 401 : 500);
   }
 }

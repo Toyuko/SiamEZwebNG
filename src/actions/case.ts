@@ -2,12 +2,10 @@
 
 import { prisma } from "@/lib/db";
 import type { CaseStatus } from "@prisma/client";
+import { updateCaseStatus as updateCaseStatusDomain } from "@/lib/domain/cases";
 
 export async function updateCaseStatus(caseId: string, status: CaseStatus) {
-  return prisma.case.update({
-    where: { id: caseId },
-    data: { status },
-  });
+  return updateCaseStatusDomain(caseId, status);
 }
 
 export async function assignStaff(caseId: string, userId: string, role: string = "support") {

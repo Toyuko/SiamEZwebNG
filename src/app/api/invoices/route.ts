@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createInvoice } from "@/data-access/invoice";
 import { prisma } from "@/lib/db";
+import { getApiUser } from "@/lib/auth/getApiUser";
+import { getUserInvoices } from "@/lib/domain/invoices";
+import { ok, fail } from "@/lib/api-response";
 
 /**
  * POST /api/invoices
@@ -48,5 +51,16 @@ export async function POST(request: NextRequest) {
       { error: e instanceof Error ? e.message : "Failed to create invoice" },
       { status: 500 }
     );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { userId } = await getApiUser(request);
+    const invoices = await getUserInvoices(userId);
+    return ok(invoices);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Failed to fetch invoices";
+    return fail(message, message === "Unauthorized" ? 401 : 500);
   }
 }

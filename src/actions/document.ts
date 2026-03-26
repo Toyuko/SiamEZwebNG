@@ -1,16 +1,13 @@
 "use server";
 
-import { put } from "@vercel/blob";
-import { createDocument } from "@/data-access/document";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import {
+  createDocumentMetadata as createDocumentMetadataDomain,
+  uploadAndCreateDocument,
+} from "@/lib/domain/documents";
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // match next.config serverActions.bodySizeLimit
-
-function safeFileSegment(name: string) {
-  const base = name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 180);
-  return base || "file";
-}
 
 export interface UploadDocumentMetadataInput {
   caseId: string;
@@ -36,15 +33,7 @@ export async function uploadDocumentMetadataAction(
   input: UploadDocumentMetadataInput
 ): Promise<UploadDocumentMetadataResult> {
   try {
-    const caseRecord = await prisma.case.findUnique({
-      where: { id: input.caseId },
-      select: { id: true },
-    });
-    if (!caseRecord) {
-      return { success: false, error: "Case not found" };
-    }
-
-    const doc = await createDocument({
+    const doc = await createDocumentMetadataDomain({
       caseId: input.caseId,
       name: input.name,
       storageKey: input.storageKey,
@@ -111,28 +100,11 @@ export async function adminUploadDocumentAction(
     }
   }
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return {
-      success: false,
-      error: "File storage is not configured (set BLOB_READ_WRITE_TOKEN).",
-    };
-  }
-
   try {
-    const storageFolder = caseId ?? "unassigned";
-    const pathname = `documents/${storageFolder}/${Date.now()}-${safeFileSegment(file.name)}`;
-    const blob = await put(pathname, file, {
-      access: "public",
-      addRandomSuffix: true,
-    });
-
-    const doc = await createDocument({
+    const doc = await uploadAndCreateDocument({
+      file,
       caseId: caseId ?? null,
-      name: file.name,
-      storageKey: blob.url,
       uploadedBy,
-      mimeType: file.type || undefined,
-      size: file.size,
       documentType,
     });
 
