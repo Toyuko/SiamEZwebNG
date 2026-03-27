@@ -26,6 +26,10 @@ model User {
   name           String?
   phone          String?
   image          String?
+  timezone       String?
+  preferredLocale String?  @map("preferred_locale")
+  notificationPreferences Json? @map("notification_preferences")
+  lastLoginAt    DateTime? @map("last_login_at")
   role           UserRole  @default(customer)
   active         Boolean   @default(true)
   createdAt      DateTime  @default(now()) @map("created_at")

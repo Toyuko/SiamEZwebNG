@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown, User, LogOut, Settings } from "lucide-react";
+import { ChevronDown, User, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
@@ -74,7 +74,7 @@ export function UserMenu({ userName, userRole, userAvatar }: UserMenuProps) {
               onClick={() => setOpen(false)}
             >
               <User className="h-4 w-4" />
-              {t("profile")}
+              {t("settings")}
             </Link>
             <div className="my-1 h-px bg-gray-200 dark:bg-gray-700" />
             <form action={logout}>

@@ -109,6 +109,8 @@ export const {
           where: { id: userId },
         });
         session.user.id = userId;
+        if (dbUser?.name != null) session.user.name = dbUser.name;
+        if (dbUser?.email) session.user.email = dbUser.email;
         (session.user as { role?: string }).role =
           dbUser?.role ?? (typeof token.role === "string" ? token.role : "customer");
         (session.user as { image?: string | null }).image =
@@ -118,6 +120,14 @@ export const {
     },
   },
   events: {
+    async signIn({ user }) {
+      if (user?.id) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() },
+        });
+      }
+    },
     async createUser({ user }) {
       // New OAuth user: ensure role = customer (default in schema, but explicit here)
       await prisma.user.update({
