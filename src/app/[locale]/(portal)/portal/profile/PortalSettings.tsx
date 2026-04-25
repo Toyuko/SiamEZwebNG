@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -10,6 +11,9 @@ import {
   Palette,
   Database,
   ExternalLink,
+  Wallet,
+  IdCard,
+  LifeBuoy,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,9 +26,27 @@ import type { NotificationPreferences } from "@/lib/notification-preferences";
 import {
   changePassword,
   deactivateAccount,
+  logoutAllDevices,
   updateNotificationSettings,
   updatePortalProfile,
 } from "@/actions/portal-settings";
+
+type InvoiceSummary = {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  createdAt: string;
+};
+
+type PaymentSummary = {
+  id: string;
+  amount: number;
+  currency: string;
+  method: string;
+  status: string;
+  createdAt: string;
+};
 
 export type PortalSettingsUser = {
   name: string | null;
@@ -36,6 +58,8 @@ export type PortalSettingsUser = {
   lastLoginAt: string | null;
   notificationPreferences: NotificationPreferences;
   linkedProviders: string[];
+  invoices: InvoiceSummary[];
+  payments: PaymentSummary[];
 };
 
 const TIMEZONES = [
@@ -53,7 +77,7 @@ const PROVIDER_LABELS: Record<string, string> = {
   line: "LINE",
 };
 
-type TabId = "profile" | "security" | "notifications" | "appearance" | "privacy";
+type TabId = "profile" | "security" | "notifications" | "appearance" | "privacy" | "payments" | "myInfo" | "support";
 
 interface PortalSettingsProps {
   user: PortalSettingsUser;
@@ -71,10 +95,15 @@ function formatFieldErrors(error: unknown): string | null {
   return null;
 }
 
+function formatMoney(amount: number, currency: string) {
+  return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(amount / 100);
+}
+
 export function PortalSettings({ user: initial, hasPassword }: PortalSettingsProps) {
   const t = useTranslations("portal.accountSettings");
   const router = useRouter();
   const [tab, setTab] = useState<TabId>("profile");
+  const [pushEnabled, setPushEnabled] = useState(initial.notificationPreferences.pushEnabled);
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
@@ -84,6 +113,9 @@ export function PortalSettings({ user: initial, hasPassword }: PortalSettingsPro
         { id: "profile" as const, label: t("tabProfile"), icon: User },
         { id: "security" as const, label: t("tabSecurity"), icon: Shield },
         { id: "notifications" as const, label: t("tabNotifications"), icon: Bell },
+        { id: "payments" as const, label: "Payments", icon: Wallet },
+        { id: "myInfo" as const, label: "My information", icon: IdCard },
+        { id: "support" as const, label: "Support", icon: LifeBuoy },
         { id: "appearance" as const, label: t("tabAppearance"), icon: Palette },
         { id: "privacy" as const, label: t("tabPrivacy"), icon: Database },
       ] as const,
@@ -194,6 +226,27 @@ export function PortalSettings({ user: initial, hasPassword }: PortalSettingsPro
                 defaultValue={initial.phone ?? ""}
                 autoComplete="tel"
                 placeholder={t("phonePlaceholder")}
+              />
+            </div>
+            <div>
+              <Label htmlFor="passportInfo">Passport info</Label>
+              <Input
+                id="passportInfo"
+                name="passportInfo"
+                className="mt-1"
+                defaultValue={initial.notificationPreferences.passportInfo ?? ""}
+                autoComplete="off"
+                placeholder="Passport number and issuing country"
+              />
+            </div>
+            <div>
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
+                name="address"
+                className="mt-1"
+                defaultValue={initial.notificationPreferences.address ?? ""}
+                autoComplete="street-address"
               />
             </div>
             <div>
@@ -336,6 +389,31 @@ export function PortalSettings({ user: initial, hasPassword }: PortalSettingsPro
             )}
 
             <p className="text-xs text-gray-500 dark:text-gray-400">{t("securityTip")}</p>
+            <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Logout all devices</h2>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                End the current session. Multi-device logout requires token-versioned auth and will be added next.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-4 border-siam-blue text-siam-blue"
+                disabled={pending}
+                onClick={() => {
+                  clearMessage();
+                  startTransition(async () => {
+                    const r = await logoutAllDevices();
+                    if (r && "ok" in r && r.ok) {
+                      router.refresh();
+                    } else if (r && "error" in r) {
+                      setMessage({ kind: "err", text: typeof r.error === "string" ? r.error : t("genericError") });
+                    }
+                  });
+                }}
+              >
+                {pending ? t("saving") : "Logout now"}
+              </Button>
+            </section>
           </div>
         )}
 
@@ -362,8 +440,24 @@ export function PortalSettings({ user: initial, hasPassword }: PortalSettingsPro
             <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-600">
               <input
                 type="checkbox"
+                name="pushEnabled"
+                checked={pushEnabled}
+                onChange={(e) => setPushEnabled(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-siam-blue focus:ring-siam-blue"
+              />
+              <span>
+                <span className="font-medium text-gray-900 dark:text-white">Push notifications</span>
+                <span className="block text-xs text-gray-500 dark:text-gray-400">
+                  Master switch for case, payment, and document alerts.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-600">
+              <input
+                type="checkbox"
                 name="emailCaseUpdates"
                 defaultChecked={initial.notificationPreferences.emailCaseUpdates}
+                disabled={!pushEnabled}
                 className="mt-1 h-4 w-4 rounded border-gray-300 text-siam-blue focus:ring-siam-blue"
               />
               <span>
@@ -376,6 +470,7 @@ export function PortalSettings({ user: initial, hasPassword }: PortalSettingsPro
                 type="checkbox"
                 name="emailInvoiceReminders"
                 defaultChecked={initial.notificationPreferences.emailInvoiceReminders}
+                disabled={!pushEnabled}
                 className="mt-1 h-4 w-4 rounded border-gray-300 text-siam-blue focus:ring-siam-blue"
               />
               <span>
@@ -388,6 +483,7 @@ export function PortalSettings({ user: initial, hasPassword }: PortalSettingsPro
                 type="checkbox"
                 name="emailDocumentAlerts"
                 defaultChecked={initial.notificationPreferences.emailDocumentAlerts}
+                disabled={!pushEnabled}
                 className="mt-1 h-4 w-4 rounded border-gray-300 text-siam-blue focus:ring-siam-blue"
               />
               <span>
@@ -411,6 +507,131 @@ export function PortalSettings({ user: initial, hasPassword }: PortalSettingsPro
               {pending ? t("saving") : t("saveNotifications")}
             </Button>
           </form>
+        )}
+
+        {tab === "payments" && (
+          <div className="space-y-6">
+            <section>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Payment methods</h2>
+              <ul className="mt-3 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                <li>Thai QR (PromptPay)</li>
+                <li>Bank transfer</li>
+                <li>Wise</li>
+              </ul>
+            </section>
+            <section>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Payment history</h2>
+              <div className="mt-3 space-y-2">
+                {initial.payments.length === 0 ? (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">No payments yet.</p>
+                ) : (
+                  initial.payments.map((payment) => (
+                    <div key={payment.id} className="rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700">
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {formatMoney(payment.amount, payment.currency)} - {payment.method.toUpperCase()}
+                      </div>
+                      <div className="text-gray-600 dark:text-gray-400">
+                        {payment.status} -{" "}
+                        {new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(payment.createdAt))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
+            <section>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Invoice history</h2>
+              <div className="mt-3 space-y-2">
+                {initial.invoices.length === 0 ? (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">No invoices yet.</p>
+                ) : (
+                  initial.invoices.map((invoice) => (
+                    <div key={invoice.id} className="rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700">
+                      <div className="font-medium text-gray-900 dark:text-white">{formatMoney(invoice.amount, invoice.currency)}</div>
+                      <div className="text-gray-600 dark:text-gray-400">
+                        {invoice.status} -{" "}
+                        {new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(invoice.createdAt))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {tab === "myInfo" && (
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              clearMessage();
+              const fd = new FormData(e.currentTarget);
+              fd.append("preferredLocale", initial.preferredLocale === "th" ? "th" : "en");
+              fd.append("image", initial.image ?? "");
+              fd.append("timezone", initial.timezone ?? "");
+              startTransition(async () => {
+                const r = await updatePortalProfile(null, fd);
+                if (r && "ok" in r && r.ok) {
+                  setMessage({ kind: "ok", text: "Information saved." });
+                  router.refresh();
+                } else if (r && "error" in r) {
+                  setMessage({ kind: "err", text: formatFieldErrors(r.error) ?? t("genericError") });
+                }
+              });
+            }}
+          >
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">My information</h2>
+            <div>
+              <Label htmlFor="myInfoName">Name</Label>
+              <Input id="myInfoName" name="name" className="mt-1" defaultValue={initial.name ?? ""} required />
+            </div>
+            <div>
+              <Label htmlFor="myInfoPhone">Phone</Label>
+              <Input id="myInfoPhone" name="phone" className="mt-1" defaultValue={initial.phone ?? ""} />
+            </div>
+            <div>
+              <Label htmlFor="myInfoPassport">Passport info</Label>
+              <Input
+                id="myInfoPassport"
+                name="passportInfo"
+                className="mt-1"
+                defaultValue={initial.notificationPreferences.passportInfo ?? ""}
+              />
+            </div>
+            <div>
+              <Label htmlFor="myInfoAddress">Address</Label>
+              <Input
+                id="myInfoAddress"
+                name="address"
+                className="mt-1"
+                defaultValue={initial.notificationPreferences.address ?? ""}
+              />
+            </div>
+            <Button type="submit" disabled={pending} className="bg-siam-blue hover:bg-siam-blue/90">
+              {pending ? t("saving") : "Save information"}
+            </Button>
+          </form>
+        )}
+
+        {tab === "support" && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Support</h2>
+            <Link href="/contact" className="block rounded-lg border border-gray-200 p-3 text-sm hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
+              Contact support
+            </Link>
+            <a
+              href="https://wa.me/66859047812"
+              target="_blank"
+              rel="noreferrer"
+              className="block rounded-lg border border-gray-200 p-3 text-sm hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50"
+            >
+              WhatsApp chat
+            </a>
+            <Link href="/services" className="block rounded-lg border border-gray-200 p-3 text-sm hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
+              FAQ
+            </Link>
+          </div>
         )}
 
         {tab === "appearance" && (

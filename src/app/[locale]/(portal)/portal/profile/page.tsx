@@ -19,6 +19,29 @@ export default async function PortalProfilePage({
     where: { id: session.user.id },
     include: {
       accounts: { select: { provider: true } },
+      invoices: {
+        select: {
+          id: true,
+          amount: true,
+          currency: true,
+          status: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+      },
+      payments: {
+        select: {
+          id: true,
+          amount: true,
+          currency: true,
+          method: true,
+          status: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+      },
     },
   });
 
@@ -44,6 +67,21 @@ export default async function PortalProfilePage({
           lastLoginAt: dbUser.lastLoginAt ? dbUser.lastLoginAt.toISOString() : null,
           notificationPreferences: parseNotificationPreferences(dbUser.notificationPreferences),
           linkedProviders: dbUser.accounts.map((a) => a.provider),
+          invoices: dbUser.invoices.map((invoice) => ({
+            id: invoice.id,
+            amount: invoice.amount,
+            currency: invoice.currency,
+            status: invoice.status,
+            createdAt: invoice.createdAt.toISOString(),
+          })),
+          payments: dbUser.payments.map((payment) => ({
+            id: payment.id,
+            amount: payment.amount,
+            currency: payment.currency,
+            method: payment.method,
+            status: payment.status,
+            createdAt: payment.createdAt.toISOString(),
+          })),
         }}
       />
     </div>

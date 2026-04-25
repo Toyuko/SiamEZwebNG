@@ -4,7 +4,7 @@ import * as bcrypt from "bcryptjs";
 import { z } from "zod";
 import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/db";
-import { notificationPreferencesSchema } from "@/lib/notification-preferences";
+import { notificationPreferencesSchema, parseNotificationPreferences } from "@/lib/notification-preferences";
 import { getLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 
@@ -14,6 +14,8 @@ const profileSchema = z.object({
   image: z.string().max(2048),
   timezone: z.string().max(64),
   preferredLocale: z.enum(["en", "th"]),
+  passportInfo: z.string().max(200),
+  address: z.string().max(500),
 });
 
 const passwordSchema = z.object({
@@ -46,17 +48,25 @@ export async function updatePortalProfile(_prev: unknown, formData: FormData) {
     image: String(formData.get("image") ?? ""),
     timezone: String(formData.get("timezone") ?? ""),
     preferredLocale: formData.get("preferredLocale"),
+    passportInfo: String(formData.get("passportInfo") ?? ""),
+    address: String(formData.get("address") ?? ""),
   });
 
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  const { name, phone, image, timezone, preferredLocale } = parsed.data;
+  const { name, phone, image, timezone, preferredLocale, passportInfo, address } = parsed.data;
   const imageUrl = normalizeImageUrl(image);
   if (image?.trim() && !imageUrl) {
     return { error: "Invalid profile image URL." };
   }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { notificationPreferences: true },
+  });
+  const currentPrefs = parseNotificationPreferences(user?.notificationPreferences);
 
   await prisma.user.update({
     where: { id: session.user.id },
@@ -66,6 +76,11 @@ export async function updatePortalProfile(_prev: unknown, formData: FormData) {
       image: imageUrl,
       timezone: normalizeOptional(timezone),
       preferredLocale,
+      notificationPreferences: {
+        ...currentPrefs,
+        passportInfo: passportInfo.trim(),
+        address: address.trim(),
+      },
     },
   });
 
@@ -76,11 +91,21 @@ export async function updateNotificationSettings(_prev: unknown, formData: FormD
   const session = await auth();
   if (!session?.user?.id) return { error: "Not signed in." };
 
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { notificationPreferences: true },
+  });
+  const currentPrefs = parseNotificationPreferences(user?.notificationPreferences);
+
+  const pushEnabled = formData.get("pushEnabled") === "on";
   const raw = {
-    emailCaseUpdates: formData.get("emailCaseUpdates") === "on",
-    emailInvoiceReminders: formData.get("emailInvoiceReminders") === "on",
-    emailDocumentAlerts: formData.get("emailDocumentAlerts") === "on",
+    pushEnabled,
+    emailCaseUpdates: pushEnabled ? formData.get("emailCaseUpdates") === "on" : false,
+    emailInvoiceReminders: pushEnabled ? formData.get("emailInvoiceReminders") === "on" : false,
+    emailDocumentAlerts: pushEnabled ? formData.get("emailDocumentAlerts") === "on" : false,
     emailMarketing: formData.get("emailMarketing") === "on",
+    passportInfo: currentPrefs.passportInfo,
+    address: currentPrefs.address,
   };
 
   const parsed = notificationPreferencesSchema.safeParse(raw);
@@ -93,6 +118,15 @@ export async function updateNotificationSettings(_prev: unknown, formData: FormD
     data: { notificationPreferences: parsed.data },
   });
 
+  return { ok: true as const };
+}
+
+export async function logoutAllDevices() {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Not signed in." };
+
+  // JWT sessions are stateless in this app, so we can only sign out current device.
+  await signOut({ redirect: false });
   return { ok: true as const };
 }
 
