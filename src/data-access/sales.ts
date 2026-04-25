@@ -17,31 +17,41 @@ export type SalesFilters = {
 };
 
 export async function getSalesFilterBounds() {
-  const [minPrice, maxPrice, minYear, maxYear] = await Promise.all([
-    prisma.salesVehicle.aggregate({
-      where: { published: true, status: { in: ["available", "reserved"] } },
-      _min: { priceAmount: true },
-    }),
-    prisma.salesVehicle.aggregate({
-      where: { published: true, status: { in: ["available", "reserved"] } },
-      _max: { priceAmount: true },
-    }),
-    prisma.salesVehicle.aggregate({
-      where: { published: true, status: { in: ["available", "reserved"] } },
-      _min: { year: true },
-    }),
-    prisma.salesVehicle.aggregate({
-      where: { published: true, status: { in: ["available", "reserved"] } },
-      _max: { year: true },
-    }),
-  ]);
+  try {
+    const [minPrice, maxPrice, minYear, maxYear] = await Promise.all([
+      prisma.salesVehicle.aggregate({
+        where: { published: true, status: { in: ["available", "reserved"] } },
+        _min: { priceAmount: true },
+      }),
+      prisma.salesVehicle.aggregate({
+        where: { published: true, status: { in: ["available", "reserved"] } },
+        _max: { priceAmount: true },
+      }),
+      prisma.salesVehicle.aggregate({
+        where: { published: true, status: { in: ["available", "reserved"] } },
+        _min: { year: true },
+      }),
+      prisma.salesVehicle.aggregate({
+        where: { published: true, status: { in: ["available", "reserved"] } },
+        _max: { year: true },
+      }),
+    ]);
 
-  return {
-    minPrice: minPrice._min.priceAmount ?? 0,
-    maxPrice: maxPrice._max.priceAmount ?? 5000000,
-    minYear: minYear._min.year ?? 1990,
-    maxYear: maxYear._max.year ?? new Date().getFullYear(),
-  };
+    return {
+      minPrice: minPrice._min.priceAmount ?? 0,
+      maxPrice: maxPrice._max.priceAmount ?? 5000000,
+      minYear: minYear._min.year ?? 1990,
+      maxYear: maxYear._max.year ?? new Date().getFullYear(),
+    };
+  } catch (error) {
+    console.warn("Sales filter bounds unavailable, falling back to defaults:", error);
+    return {
+      minPrice: 0,
+      maxPrice: 5000000,
+      minYear: 1990,
+      maxYear: new Date().getFullYear(),
+    };
+  }
 }
 
 export async function getPublicSalesVehicles(filters: SalesFilters) {
@@ -91,33 +101,54 @@ export async function getPublicSalesVehicles(filters: SalesFilters) {
             ? [{ year: "asc" as const }, { createdAt: "desc" as const }]
             : [{ createdAt: "desc" as const }];
 
-  const [items, total] = await Promise.all([
-    prisma.salesVehicle.findMany({
-      where,
-      orderBy,
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
-    prisma.salesVehicle.count({ where }),
-  ]);
+  try {
+    const [items, total] = await Promise.all([
+      prisma.salesVehicle.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.salesVehicle.count({ where }),
+    ]);
 
-  return {
-    items,
-    page,
-    pageSize,
-    total,
-    totalPages: Math.max(1, Math.ceil(total / pageSize)),
-  };
+    return {
+      items,
+      page,
+      pageSize,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    };
+  } catch (error) {
+    console.warn("Public sales inventory unavailable, returning empty list:", error);
+    return {
+      items: [],
+      page: 1,
+      pageSize,
+      total: 0,
+      totalPages: 1,
+    };
+  }
 }
 
 export async function getPublicSalesVehicleById(id: string) {
-  return prisma.salesVehicle.findFirst({
-    where: { id, published: true },
-  });
+  try {
+    return await prisma.salesVehicle.findFirst({
+      where: { id, published: true },
+    });
+  } catch (error) {
+    console.warn("Sales vehicle detail unavailable:", error);
+    return null;
+  }
 }
 
 export async function getAdminSalesVehicles() {
-  return prisma.salesVehicle.findMany({
-    orderBy: [{ createdAt: "desc" }],
-  });
+  try {
+    return await prisma.salesVehicle.findMany({
+      orderBy: [{ createdAt: "desc" }],
+    });
+  } catch (error) {
+    console.warn("Admin sales list unavailable, returning empty list:", error);
+    return [];
+  }
 }
