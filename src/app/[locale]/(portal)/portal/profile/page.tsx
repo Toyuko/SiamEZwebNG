@@ -30,24 +30,30 @@ export default async function PortalProfilePage({
         orderBy: { createdAt: "desc" },
         take: 6,
       },
-      payments: {
-        select: {
-          id: true,
-          amount: true,
-          currency: true,
-          method: true,
-          status: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: "desc" },
-        take: 6,
-      },
     },
   });
 
   if (!dbUser) {
     throw new Error("User not found");
   }
+
+  const payments = await prisma.payment.findMany({
+    where: {
+      invoice: {
+        userId: session.user.id,
+      },
+    },
+    select: {
+      id: true,
+      amount: true,
+      currency: true,
+      method: true,
+      status: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+    take: 6,
+  });
 
   const hasPassword = !!dbUser.passwordHash;
 
@@ -74,7 +80,7 @@ export default async function PortalProfilePage({
             status: invoice.status,
             createdAt: invoice.createdAt.toISOString(),
           })),
-          payments: dbUser.payments.map((payment) => ({
+          payments: payments.map((payment) => ({
             id: payment.id,
             amount: payment.amount,
             currency: payment.currency,
