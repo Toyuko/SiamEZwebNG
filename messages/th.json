@@ -50,6 +50,7 @@
   "nav": {
     "home": "หน้าแรก",
     "services": "บริการ",
+    "sales": "ซื้อขายรถ",
     "about": "เกี่ยวกับเรา",
     "gallery": "แกลเลอรี่",
     "testimonials": "คำรับรอง",
@@ -59,6 +60,127 @@
     "dashboard": "แดชบอร์ด",
     "myCases": "เคสของฉัน",
     "logout": "ออกจากระบบ"
+  },
+  "adminNav": {
+    "dashboard": "แดชบอร์ด",
+    "serviceJobs": "งานบริการ",
+    "cases": "เคส",
+    "clients": "ลูกค้า",
+    "services": "บริการ",
+    "sales": "ซื้อขายรถ",
+    "invoices": "ใบแจ้งหนี้",
+    "paymentsOrders": "การชำระเงินและออเดอร์",
+    "documents": "เอกสาร",
+    "calendar": "ปฏิทิน",
+    "staff": "พนักงาน",
+    "reports": "รายงาน",
+    "settings": "ตั้งค่า"
+  },
+  "sales": {
+    "inventoryTitle": "คลังรถสำหรับขาย",
+    "inventoryDescription": "ค้นหารถยนต์และมอเตอร์ไซค์ที่พร้อมขายจากผู้ขายที่เชื่อถือได้ของ SiamEZ",
+    "searchPlaceholder": "ค้นหายี่ห้อหรือรุ่น",
+    "category": {
+      "cars": "รถยนต์",
+      "motorcycles": "มอเตอร์ไซค์"
+    },
+    "sort": {
+      "latest": "ล่าสุด",
+      "priceLowHigh": "ราคา: ต่ำไปสูง",
+      "priceHighLow": "ราคา: สูงไปต่ำ",
+      "yearNewOld": "ปี: ใหม่ไปเก่า",
+      "yearOldNew": "ปี: เก่าไปใหม่"
+    },
+    "resetFilters": "ล้างตัวกรอง",
+    "priceRange": "ช่วงราคา",
+    "yearRange": "ช่วงปี",
+    "emptyState": "ไม่พบรถที่ตรงกับตัวกรองปัจจุบัน",
+    "pagination": {
+      "previous": "ก่อนหน้า",
+      "next": "ถัดไป",
+      "pageInfo": "หน้า {page} จาก {totalPages}"
+    },
+    "backToInventory": "กลับไปหน้ารายการรถ",
+    "categoryLabel": "หมวดหมู่",
+    "specifications": "สเปก",
+    "contactWhatsapp": "ติดต่อผ่าน WhatsApp"
+  },
+  "salesAdmin": {
+    "title": "แดชบอร์ดซื้อขายรถ",
+    "subtitle": "จัดการรายการรถหน้าเว็บไซต์และซิงก์สถานะสต็อกได้ทันที",
+    "addListing": "เพิ่มรายการใหม่",
+    "empty": "ยังไม่มีรายการรถ เพิ่มรายการแรกของคุณได้เลย",
+    "confirmDelete": "ลบรายการ \"{label}\" ใช่หรือไม่?",
+    "table": {
+      "listing": "รายการ",
+      "category": "หมวดหมู่",
+      "price": "ราคา",
+      "yearMileage": "ปี / ระยะทาง",
+      "status": "สถานะ",
+      "actions": "การจัดการ"
+    },
+    "status": {
+      "available": "พร้อมขาย",
+      "reserved": "จองแล้ว",
+      "sold": "ขายแล้ว"
+    },
+    "category": {
+      "car": "รถยนต์",
+      "motorcycle": "มอเตอร์ไซค์"
+    }
+  },
+  "salesAdminForm": {
+    "createTitle": "เพิ่มรายการใหม่",
+    "editTitle": "แก้ไขรายการ",
+    "step": "ขั้นตอน {current} จาก {total}",
+    "yes": "ใช่",
+    "no": "ไม่ใช่",
+    "next": "ถัดไป",
+    "back": "ย้อนกลับ",
+    "cancel": "ยกเลิก",
+    "save": "บันทึกรายการ",
+    "saving": "กำลังบันทึก...",
+    "uploading": "กำลังอัปโหลด...",
+    "hero": "ภาพหลัก",
+    "setHero": "ตั้งเป็นภาพหลัก",
+    "remove": "ลบ",
+    "reorderHint": "ลากและวางรูปเพื่อจัดลำดับแกลเลอรี่",
+    "uploadHint": "รูปภาพจะถูกอัปโหลดผ่าน Blob upload API ที่มีอยู่",
+    "addSpec": "เพิ่มสเปก",
+    "specKeyPlaceholder": "คีย์ (เช่น เกียร์)",
+    "specValuePlaceholder": "ค่า (เช่น อัตโนมัติ)",
+    "fields": {
+      "title": "ชื่อรายการ",
+      "make": "ยี่ห้อ",
+      "model": "รุ่น",
+      "year": "ปี",
+      "mileage": "ระยะทาง (กม.)",
+      "price": "ราคา (หน่วยย่อย)",
+      "category": "หมวดหมู่",
+      "status": "สถานะ",
+      "published": "แสดงบนหน้าเว็บไซต์",
+      "images": "อัปโหลดรูปภาพ",
+      "description": "รายละเอียด",
+      "specifications": "สเปก"
+    },
+    "category": {
+      "car": "รถยนต์",
+      "motorcycle": "มอเตอร์ไซค์"
+    },
+    "status": {
+      "available": "พร้อมขาย",
+      "reserved": "จองแล้ว",
+      "sold": "ขายแล้ว"
+    },
+    "errors": {
+      "uploadFailed": "อัปโหลดรูปภาพไม่สำเร็จ",
+      "step1Required": "กรอกยี่ห้อ รุ่น และชื่อรายการให้ครบถ้วน",
+      "priceInvalid": "ราคาต้องมากกว่า 0",
+      "yearInvalid": "ปีไม่ถูกต้อง",
+      "imageRequired": "กรุณาอัปโหลดอย่างน้อย 1 รูป",
+      "heroRequired": "กรุณาเลือกภาพหลัก",
+      "descriptionShort": "รายละเอียดต้องมีอย่างน้อย 20 ตัวอักษร"
+    }
   },
   "footer": {
     "contact": "ติดต่อ",

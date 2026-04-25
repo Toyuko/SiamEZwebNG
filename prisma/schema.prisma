@@ -44,6 +44,7 @@ model User {
   invoices       Invoice[]         @relation("InvoiceCustomer")
   eventsAsClient Event[]           @relation("EventClient")
   eventsAsStaff  Event[]           @relation("EventStaff")
+  salesVehiclesCreated SalesVehicle[]
 }
 
 model Account {
@@ -349,4 +350,43 @@ model AppSetting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("app_settings")
+}
+
+enum VehicleCategory {
+  car
+  motorcycle
+}
+
+enum SalesListingStatus {
+  available
+  reserved
+  sold
+}
+
+model SalesVehicle {
+  id               String             @id @default(cuid())
+  slug             String             @unique
+  title            String
+  make             String
+  model            String
+  year             Int
+  mileageKm        Int                @map("mileage_km")
+  priceAmount      Int                @map("price_amount")
+  priceCurrency    String             @default("THB") @map("price_currency")
+  category         VehicleCategory
+  status           SalesListingStatus @default(available)
+  heroImageUrl     String             @map("hero_image_url")
+  imageUrls        Json               @map("image_urls")
+  description      String             @db.Text
+  specifications   Json?
+  published        Boolean            @default(true)
+  createdById      String?            @map("created_by_id")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([category, status, published])
+  @@index([make, model, year])
+  @@map("sales_vehicles")
 }

@@ -14,26 +14,30 @@ import {
   FileStack,
   UserCog,
   Briefcase,
+  Car,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 const nav = [
-  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Service Jobs", href: "/admin/service-jobs", icon: Briefcase },
-  { label: "Cases", href: "/admin/cases", icon: FolderOpen },
-  { label: "Clients", href: "/admin/clients", icon: Users },
-  { label: "Services", href: "/admin/services", icon: Package },
-  { label: "Invoices", href: "/admin/invoices", icon: FileText },
-  { label: "Payments & Orders", href: "/admin/payments", icon: CreditCard },
-  { label: "Documents", href: "/admin/documents", icon: FileStack },
-  { label: "Calendar", href: "/admin/calendar", icon: Calendar },
-  { label: "Staff", href: "/admin/staff", icon: UserCog },
-  { label: "Reports", href: "/admin/reports", icon: BarChart3 },
-  { label: "Settings", href: "/admin/settings", icon: Settings },
+  { label: "dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "serviceJobs", href: "/admin/service-jobs", icon: Briefcase },
+  { label: "cases", href: "/admin/cases", icon: FolderOpen },
+  { label: "clients", href: "/admin/clients", icon: Users },
+  { label: "services", href: "/admin/services", icon: Package },
+  { label: "sales", href: "/admin/sales", icon: Car },
+  { label: "invoices", href: "/admin/invoices", icon: FileText },
+  { label: "paymentsOrders", href: "/admin/payments", icon: CreditCard },
+  { label: "documents", href: "/admin/documents", icon: FileStack },
+  { label: "calendar", href: "/admin/calendar", icon: Calendar },
+  { label: "staff", href: "/admin/staff", icon: UserCog },
+  { label: "reports", href: "/admin/reports", icon: BarChart3 },
+  { label: "settings", href: "/admin/settings", icon: Settings },
 ];
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const t = useTranslations("adminNav");
 
   return (
     <aside className="w-56 shrink-0 border-r border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
@@ -55,7 +59,7 @@ export function AdminSidebar() {
               )}
             >
               <Icon className="h-5 w-5" />
-              {item.label}
+              {t(item.label)}
             </Link>
           );
         })}

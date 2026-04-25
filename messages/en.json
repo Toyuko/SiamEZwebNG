@@ -50,6 +50,7 @@
   "nav": {
     "home": "Home",
     "services": "Services",
+    "sales": "Sales",
     "about": "About",
     "gallery": "Gallery",
     "testimonials": "Testimonials",
@@ -59,6 +60,127 @@
     "dashboard": "Dashboard",
     "myCases": "My Cases",
     "logout": "Logout"
+  },
+  "adminNav": {
+    "dashboard": "Dashboard",
+    "serviceJobs": "Service Jobs",
+    "cases": "Cases",
+    "clients": "Clients",
+    "services": "Services",
+    "sales": "Sales",
+    "invoices": "Invoices",
+    "paymentsOrders": "Payments & Orders",
+    "documents": "Documents",
+    "calendar": "Calendar",
+    "staff": "Staff",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "sales": {
+    "inventoryTitle": "Sales Inventory",
+    "inventoryDescription": "Browse available cars and motorcycles from SiamEZ trusted sellers.",
+    "searchPlaceholder": "Search make or model",
+    "category": {
+      "cars": "Cars",
+      "motorcycles": "Motorcycles"
+    },
+    "sort": {
+      "latest": "Latest",
+      "priceLowHigh": "Price: Low to High",
+      "priceHighLow": "Price: High to Low",
+      "yearNewOld": "Year: New to Old",
+      "yearOldNew": "Year: Old to New"
+    },
+    "resetFilters": "Reset filters",
+    "priceRange": "Price range",
+    "yearRange": "Year range",
+    "emptyState": "No vehicles match your current filters.",
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "pageInfo": "Page {page} of {totalPages}"
+    },
+    "backToInventory": "Back to inventory",
+    "categoryLabel": "Category",
+    "specifications": "Specifications",
+    "contactWhatsapp": "Contact via WhatsApp"
+  },
+  "salesAdmin": {
+    "title": "Sales Dashboard",
+    "subtitle": "Manage public vehicle listings and synchronize inventory status instantly.",
+    "addListing": "Add New Listing",
+    "empty": "No listings yet. Add your first vehicle.",
+    "confirmDelete": "Delete \"{label}\" listing?",
+    "table": {
+      "listing": "Listing",
+      "category": "Category",
+      "price": "Price",
+      "yearMileage": "Year / Mileage",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "available": "Available",
+      "reserved": "Reserved",
+      "sold": "Sold"
+    },
+    "category": {
+      "car": "Car",
+      "motorcycle": "Motorcycle"
+    }
+  },
+  "salesAdminForm": {
+    "createTitle": "Add New Listing",
+    "editTitle": "Edit listing",
+    "step": "Step {current} of {total}",
+    "yes": "Yes",
+    "no": "No",
+    "next": "Next",
+    "back": "Back",
+    "cancel": "Cancel",
+    "save": "Save listing",
+    "saving": "Saving...",
+    "uploading": "Uploading...",
+    "hero": "Hero",
+    "setHero": "Set hero",
+    "remove": "Remove",
+    "reorderHint": "Drag and drop images to reorder the gallery.",
+    "uploadHint": "Images are uploaded to the existing Blob upload API endpoint.",
+    "addSpec": "Add spec",
+    "specKeyPlaceholder": "Key (e.g. transmission)",
+    "specValuePlaceholder": "Value (e.g. automatic)",
+    "fields": {
+      "title": "Listing title",
+      "make": "Make",
+      "model": "Model",
+      "year": "Year",
+      "mileage": "Mileage (km)",
+      "price": "Price (smallest unit)",
+      "category": "Category",
+      "status": "Status",
+      "published": "Visible on public page",
+      "images": "Upload images",
+      "description": "Description",
+      "specifications": "Specifications"
+    },
+    "category": {
+      "car": "Car",
+      "motorcycle": "Motorcycle"
+    },
+    "status": {
+      "available": "Available",
+      "reserved": "Reserved",
+      "sold": "Sold"
+    },
+    "errors": {
+      "uploadFailed": "Image upload failed",
+      "step1Required": "Please fill in make, model, and title.",
+      "priceInvalid": "Price must be greater than 0.",
+      "yearInvalid": "Year is invalid.",
+      "imageRequired": "Upload at least one image.",
+      "heroRequired": "Select a hero image.",
+      "descriptionShort": "Description must be at least 20 characters."
+    }
   },
   "footer": {
     "contact": "Contact",
