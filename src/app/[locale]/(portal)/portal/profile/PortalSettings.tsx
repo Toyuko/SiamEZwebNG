@@ -28,6 +28,7 @@ import {
   deactivateAccount,
   logoutAllDevices,
   updateNotificationSettings,
+  updatePaymentMethods,
   updatePortalProfile,
 } from "@/actions/portal-settings";
 
@@ -513,11 +514,60 @@ export function PortalSettings({ user: initial, hasPassword }: PortalSettingsPro
           <div className="space-y-6">
             <section>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Payment methods</h2>
-              <ul className="mt-3 space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                <li>Thai QR (PromptPay)</li>
-                <li>Bank transfer</li>
-                <li>Wise</li>
-              </ul>
+              <form
+                className="mt-3 space-y-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  clearMessage();
+                  const fd = new FormData(e.currentTarget);
+                  startTransition(async () => {
+                    const r = await updatePaymentMethods(null, fd);
+                    if (r && "ok" in r && r.ok) {
+                      setMessage({ kind: "ok", text: "Payment methods saved." });
+                      router.refresh();
+                    } else if (r && "error" in r) {
+                      setMessage({ kind: "err", text: formatFieldErrors(r.error) ?? t("genericError") });
+                    }
+                  });
+                }}
+              >
+                <div>
+                  <Label htmlFor="bankName">Bank name</Label>
+                  <Input
+                    id="bankName"
+                    name="bankName"
+                    className="mt-1"
+                    defaultValue={initial.notificationPreferences.bankName ?? ""}
+                    placeholder="Kasikorn Bank"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="bankAccountName">Account name</Label>
+                  <Input
+                    id="bankAccountName"
+                    name="bankAccountName"
+                    className="mt-1"
+                    defaultValue={initial.notificationPreferences.bankAccountName ?? ""}
+                    placeholder="Your full account name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="bankAccountNumber">Account number</Label>
+                  <Input
+                    id="bankAccountNumber"
+                    name="bankAccountNumber"
+                    className="mt-1"
+                    defaultValue={initial.notificationPreferences.bankAccountNumber ?? ""}
+                    placeholder="XXX-X-XXXXX-X"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Supported payment channels: Thai QR (PromptPay), Bank transfer, Wise.
+                </p>
+                <Button type="submit" disabled={pending} className="bg-siam-blue hover:bg-siam-blue/90">
+                  {pending ? t("saving") : "Save payment methods"}
+                </Button>
+              </form>
             </section>
             <section>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Payment history</h2>

@@ -23,6 +23,12 @@ const passwordSchema = z.object({
   newPassword: z.string().min(8, "Password must be at least 8 characters"),
 });
 
+const paymentMethodSchema = z.object({
+  bankName: z.string().max(120),
+  bankAccountName: z.string().max(120),
+  bankAccountNumber: z.string().max(40),
+});
+
 function normalizeOptional(s: string | undefined): string | null {
   const t = s?.trim();
   return t ? t : null;
@@ -127,6 +133,40 @@ export async function logoutAllDevices() {
 
   // JWT sessions are stateless in this app, so we can only sign out current device.
   await signOut({ redirect: false });
+  return { ok: true as const };
+}
+
+export async function updatePaymentMethods(_prev: unknown, formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Not signed in." };
+
+  const parsed = paymentMethodSchema.safeParse({
+    bankName: String(formData.get("bankName") ?? ""),
+    bankAccountName: String(formData.get("bankAccountName") ?? ""),
+    bankAccountNumber: String(formData.get("bankAccountNumber") ?? ""),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.flatten().fieldErrors };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { notificationPreferences: true },
+  });
+  const currentPrefs = parseNotificationPreferences(user?.notificationPreferences);
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: {
+      notificationPreferences: {
+        ...currentPrefs,
+        bankName: parsed.data.bankName.trim(),
+        bankAccountName: parsed.data.bankAccountName.trim(),
+        bankAccountNumber: parsed.data.bankAccountNumber.trim(),
+      },
+    },
+  });
+
   return { ok: true as const };
 }
 
