@@ -28,13 +28,18 @@ type Listing = {
   specifications: unknown;
 };
 
-function normalizeCurrency(currency: string) {
+function normalizeCurrency(currency: unknown) {
+  if (typeof currency !== "string") return "THB";
   const normalized = currency.trim().toUpperCase();
   return /^[A-Z]{3}$/.test(normalized) ? normalized : "THB";
 }
 
-function formatPrice(amount: number, currency: string) {
-  const safeAmount = Number.isFinite(amount) ? amount : 0;
+function toSafeNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function formatPrice(amount: unknown, currency: unknown) {
+  const safeAmount = toSafeNumber(amount);
   const safeCurrency = normalizeCurrency(currency);
   try {
     return new Intl.NumberFormat("en-US", {
@@ -158,13 +163,15 @@ export function SalesDashboardClient({ initialListings }: { initialListings: Lis
                     className="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900/40"
                   >
                     <td className="px-4 py-3">
-                      <p className="font-medium text-gray-900 dark:text-gray-100">{listing.make} {listing.model}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                        {String(listing.make ?? "")} {String(listing.model ?? "")}
+                      </p>
                       <p className="text-xs text-gray-500">{listing.title}</p>
                     </td>
                     <td className="px-4 py-3 capitalize">{t(`category.${listing.category}`)}</td>
                     <td className="px-4 py-3">{formatPrice(listing.priceAmount, listing.priceCurrency)}</td>
                     <td className="px-4 py-3">
-                      {listing.year} / {listing.mileageKm.toLocaleString()} km
+                      {toSafeNumber(listing.year)} / {toSafeNumber(listing.mileageKm).toLocaleString()} km
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -188,7 +195,11 @@ export function SalesDashboardClient({ initialListings }: { initialListings: Lis
                         <Button variant="ghost" size="icon" onClick={() => openEdit(listing)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(listing.id, `${listing.make} ${listing.model}`)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(listing.id, `${String(listing.make ?? "")} ${String(listing.model ?? "")}`)}
+                        >
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
