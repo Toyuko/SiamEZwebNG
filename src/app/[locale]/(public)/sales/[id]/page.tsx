@@ -118,25 +118,40 @@ export default async function SalesVehicleDetailPage({
             <div className="space-y-2">
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("contactMethodsTitle")}</p>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <Button asChild className="w-full">
+                <Button
+                  asChild
+                  className="w-full bg-emerald-600 text-white hover:bg-emerald-500 focus-visible:ring-emerald-600"
+                >
                   <a href={ctaUrl} target="_blank" rel="noopener noreferrer">
                     <MessageCircle className="h-4 w-4" />
                     {t("contactWhatsapp")}
                   </a>
                 </Button>
-                <Button asChild variant="outline" className="w-full">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full border-emerald-400 text-emerald-400 hover:bg-emerald-500/10 focus-visible:ring-emerald-500"
+                >
                   <a href={lineUrl} target="_blank" rel="noopener noreferrer">
                     <MessageCircle className="h-4 w-4" />
                     {t("contactLine")}
                   </a>
                 </Button>
-                <Button asChild variant="outline" className="w-full">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full border-sky-400 text-sky-400 hover:bg-sky-500/10 focus-visible:ring-sky-500"
+                >
                   <a href={phoneUrl}>
                     <Phone className="h-4 w-4" />
                     {t("contactCall")}
                   </a>
                 </Button>
-                <Button asChild variant="outline" className="w-full">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full border-amber-400 text-amber-400 hover:bg-amber-500/10 focus-visible:ring-amber-500"
+                >
                   <a href={emailUrl}>
                     <Mail className="h-4 w-4" />
                     {t("contactEmail")}
