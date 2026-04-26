@@ -208,38 +208,97 @@ export function SalesListingFormModal({
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <Label htmlFor="sales-title">{t("fields.title")}</Label>
-            <Input id="sales-title" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.currentTarget.value }))} />
+            <Input
+              id="sales-title"
+              value={form.title}
+              onChange={(e) => {
+                const value = e.currentTarget.value;
+                setForm((p) => ({ ...p, title: value }));
+              }}
+            />
           </div>
           <div>
             <Label htmlFor="sales-make">{t("fields.make")}</Label>
-            <Input id="sales-make" value={form.make} onChange={(e) => setForm((p) => ({ ...p, make: e.currentTarget.value }))} />
+            <Input
+              id="sales-make"
+              value={form.make}
+              onChange={(e) => {
+                const value = e.currentTarget.value;
+                setForm((p) => ({ ...p, make: value }));
+              }}
+            />
           </div>
           <div>
             <Label htmlFor="sales-model">{t("fields.model")}</Label>
-            <Input id="sales-model" value={form.model} onChange={(e) => setForm((p) => ({ ...p, model: e.currentTarget.value }))} />
+            <Input
+              id="sales-model"
+              value={form.model}
+              onChange={(e) => {
+                const value = e.currentTarget.value;
+                setForm((p) => ({ ...p, model: value }));
+              }}
+            />
           </div>
           <div>
             <Label htmlFor="sales-year">{t("fields.year")}</Label>
-            <Input id="sales-year" type="number" value={form.year} onChange={(e) => setForm((p) => ({ ...p, year: Number(e.currentTarget.value) || p.year }))} />
+            <Input
+              id="sales-year"
+              type="number"
+              value={form.year}
+              onChange={(e) => {
+                const value = Number(e.currentTarget.value);
+                setForm((p) => ({ ...p, year: value || p.year }));
+              }}
+            />
           </div>
           <div>
             <Label htmlFor="sales-mileage">{t("fields.mileage")}</Label>
-            <Input id="sales-mileage" type="number" value={form.mileageKm} onChange={(e) => setForm((p) => ({ ...p, mileageKm: Math.max(0, Number(e.currentTarget.value) || 0) }))} />
+            <Input
+              id="sales-mileage"
+              type="number"
+              value={form.mileageKm}
+              onChange={(e) => {
+                const value = Number(e.currentTarget.value);
+                setForm((p) => ({ ...p, mileageKm: Math.max(0, value || 0) }));
+              }}
+            />
           </div>
           <div>
             <Label htmlFor="sales-price">{t("fields.price")}</Label>
-            <Input id="sales-price" type="number" value={form.priceAmount} onChange={(e) => setForm((p) => ({ ...p, priceAmount: Math.max(0, Number(e.currentTarget.value) || 0) }))} />
+            <Input
+              id="sales-price"
+              type="number"
+              value={form.priceAmount}
+              onChange={(e) => {
+                const value = Number(e.currentTarget.value);
+                setForm((p) => ({ ...p, priceAmount: Math.max(0, value || 0) }));
+              }}
+            />
           </div>
           <div>
             <Label htmlFor="sales-category">{t("fields.category")}</Label>
-            <Select id="sales-category" value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.currentTarget.value as SalesListingInput["category"] }))}>
+            <Select
+              id="sales-category"
+              value={form.category}
+              onChange={(e) => {
+                const value = e.currentTarget.value as SalesListingInput["category"];
+                setForm((p) => ({ ...p, category: value }));
+              }}
+            >
               <option value="car">{t("category.car")}</option>
               <option value="motorcycle">{t("category.motorcycle")}</option>
             </Select>
           </div>
           <div>
             <Label htmlFor="sales-status">{t("fields.status")}</Label>
-            <Select id="sales-status" value={form.status} onChange={(e) => setForm((p) => ({ ...p, status: e.currentTarget.value as SalesListingInput["status"] }))}>
+            <Select
+              id="sales-status"
+              value={form.status}
+              onChange={(e) => {
+                const value = e.currentTarget.value as SalesListingInput["status"];
+                setForm((p) => ({ ...p, status: value }));
+              }}
+            >
               <option value="available">{t("status.available")}</option>
               <option value="reserved">{t("status.reserved")}</option>
               <option value="sold">{t("status.sold")}</option>
@@ -247,7 +306,14 @@ export function SalesListingFormModal({
           </div>
           <div>
             <Label htmlFor="sales-published">{t("fields.published")}</Label>
-            <Select id="sales-published" value={form.published ? "1" : "0"} onChange={(e) => setForm((p) => ({ ...p, published: e.currentTarget.value === "1" }))}>
+            <Select
+              id="sales-published"
+              value={form.published ? "1" : "0"}
+              onChange={(e) => {
+                const value = e.currentTarget.value;
+                setForm((p) => ({ ...p, published: value === "1" }));
+              }}
+            >
               <option value="1">{t("yes")}</option>
               <option value="0">{t("no")}</option>
             </Select>
@@ -313,7 +379,10 @@ export function SalesListingFormModal({
               id="sales-desc"
               rows={5}
               value={form.description}
-              onChange={(e) => setForm((p) => ({ ...p, description: e.currentTarget.value }))}
+              onChange={(e) => {
+                const value = e.currentTarget.value;
+                setForm((p) => ({ ...p, description: value }));
+              }}
               className="mt-1 flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
             />
           </div>
