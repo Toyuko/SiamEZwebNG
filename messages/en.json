@@ -103,7 +103,11 @@
     "backToInventory": "Back to inventory",
     "categoryLabel": "Category",
     "specifications": "Specifications",
-    "contactWhatsapp": "Contact via WhatsApp"
+    "contactMethodsTitle": "Contact seller",
+    "contactWhatsapp": "Contact via WhatsApp",
+    "contactLine": "Chat on LINE",
+    "contactCall": "Call now",
+    "contactEmail": "Email us"
   },
   "salesAdmin": {
     "title": "Sales Dashboard",

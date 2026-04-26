@@ -103,7 +103,11 @@
     "backToInventory": "กลับไปหน้ารายการรถ",
     "categoryLabel": "หมวดหมู่",
     "specifications": "สเปก",
-    "contactWhatsapp": "ติดต่อผ่าน WhatsApp"
+    "contactMethodsTitle": "ช่องทางติดต่อผู้ขาย",
+    "contactWhatsapp": "ติดต่อผ่าน WhatsApp",
+    "contactLine": "แชทผ่าน LINE",
+    "contactCall": "โทรเลย",
+    "contactEmail": "ส่งอีเมลหาเรา"
   },
   "salesAdmin": {
     "title": "แดชบอร์ดซื้อขายรถ",

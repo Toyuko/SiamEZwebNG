@@ -5,6 +5,8 @@ import { getPublicSalesVehicleById } from "@/data-access/sales";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+import { site } from "@/config/site";
+import { Mail, MessageCircle, Phone } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +17,7 @@ function formatPrice(amount: number, currency: string) {
 }
 
 function buildWhatsAppUrl(message: string) {
-  const phone = "66643438768";
+  const phone = site.phone.replace(/\D/g, "");
   return `https://api.whatsapp.com/send/?phone=${phone}&text=${encodeURIComponent(message)}&type=phone_number&app_absent=0`;
 }
 
@@ -45,6 +47,13 @@ export default async function SalesVehicleDetailPage({
   const ctaUrl = buildWhatsAppUrl(
     `Hi SiamEZ, I am interested in ${vehicle.year} ${vehicle.make} ${vehicle.model} (${vehicle.id}). Please share details.`
   );
+  const lineUrl = site.lineUrl;
+  const phoneUrl = `tel:${site.phone.replace(/\s/g, "")}`;
+  const emailUrl = `mailto:${site.email}?subject=${encodeURIComponent(
+    `Inquiry: ${vehicle.year} ${vehicle.make} ${vehicle.model}`
+  )}&body=${encodeURIComponent(
+    `Hi SiamEZ,%0D%0A%0D%0AI am interested in ${vehicle.year} ${vehicle.make} ${vehicle.model} (${vehicle.id}). Please share details.`
+  )}`;
   const specifications =
     vehicle.specifications && typeof vehicle.specifications === "object"
       ? (vehicle.specifications as Record<string, string>)
@@ -106,11 +115,35 @@ export default async function SalesVehicleDetailPage({
                 ))}
               </div>
             ) : null}
-            <Button asChild className="w-full">
-              <a href={ctaUrl} target="_blank" rel="noopener noreferrer">
-                {t("contactWhatsapp")}
-              </a>
-            </Button>
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("contactMethodsTitle")}</p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <Button asChild className="w-full">
+                  <a href={ctaUrl} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="h-4 w-4" />
+                    {t("contactWhatsapp")}
+                  </a>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <a href={lineUrl} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="h-4 w-4" />
+                    {t("contactLine")}
+                  </a>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <a href={phoneUrl}>
+                    <Phone className="h-4 w-4" />
+                    {t("contactCall")}
+                  </a>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <a href={emailUrl}>
+                    <Mail className="h-4 w-4" />
+                    {t("contactEmail")}
+                  </a>
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
