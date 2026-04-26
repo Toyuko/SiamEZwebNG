@@ -28,10 +28,24 @@ type Listing = {
   specifications: unknown;
 };
 
+function normalizeCurrency(currency: string) {
+  const normalized = currency.trim().toUpperCase();
+  return /^[A-Z]{3}$/.test(normalized) ? normalized : "THB";
+}
+
 function formatPrice(amount: number, currency: string) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(
-    amount / 100
-  );
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
+  const safeCurrency = normalizeCurrency(currency);
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: safeCurrency,
+      maximumFractionDigits: 0,
+    }).format(safeAmount / 100);
+  } catch {
+    // Never let malformed row data crash the admin dashboard.
+    return `${(safeAmount / 100).toLocaleString("en-US")} ${safeCurrency}`;
+  }
 }
 
 function statusClasses(status: Listing["status"]) {
