@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
+import { getSession } from "@/lib/auth";
+
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 /**
  * POST /api/upload
@@ -8,13 +11,27 @@ import { put } from "@vercel/blob";
  */
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const file = formData.get("file") as File | null;
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    const session = await getSession();
+    if (!session || (session.user.role !== "admin" && session.user.role !== "staff")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const pathname = `payment-proofs/${Date.now()}-${file.name}`;
+    const formData = await request.formData();
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size <= 0) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json({ error: "File too large (max 10 MB)" }, { status: 400 });
+    }
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      return NextResponse.json(
+        { error: "BLOB_READ_WRITE_TOKEN is not configured on the server" },
+        { status: 500 }
+      );
+    }
+
+    const pathname = `sales-listings/${Date.now()}-${file.name}`;
     const blob = await put(pathname, file, {
       access: "public",
       addRandomSuffix: true,

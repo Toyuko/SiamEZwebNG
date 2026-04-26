@@ -110,7 +110,8 @@ export function SalesListingFormModal({
         body.append("file", file);
         const res = await fetch("/api/upload", { method: "POST", body });
         if (!res.ok) {
-          throw new Error(t("errors.uploadFailed"));
+          const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(payload?.error || t("errors.uploadFailed"));
         }
         const json = (await res.json()) as { url?: string };
         if (json.url) uploadedUrls.push(json.url);
