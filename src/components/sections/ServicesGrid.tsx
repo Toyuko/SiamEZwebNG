@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { ServiceCard } from "./ServiceCard";
 import type { ServiceSlug } from "@/config/services";
+import { serviceThumbnailImages } from "@/config/services";
 import {
   Heart,
   FileText,
@@ -49,6 +50,7 @@ export type DisplayService = {
   name: string;
   shortDescription: string | null;
   description: string | null;
+  thumbnailImage?: string | null;
   priceAmount: number | null;
   priceCurrency: string | null;
 };
@@ -105,6 +107,8 @@ export function ServicesGrid({
         const Icon = iconBySlug[service.slug as ServiceSlug] ?? FileText;
         const colors = iconColorBySlug[service.slug as ServiceSlug] ?? iconColorBySlug["translation-services"];
         const desc = service.shortDescription ?? (service.description && service.description.slice(0, 150)) ?? "";
+        const thumbnailImage =
+          service.thumbnailImage ?? serviceThumbnailImages[service.slug as ServiceSlug] ?? null;
 
         return (
           <ServiceCard
@@ -112,6 +116,7 @@ export function ServicesGrid({
             slug={service.slug}
             name={service.name}
             description={desc}
+            thumbnailImage={thumbnailImage}
             Icon={Icon}
             iconBg={colors.bg}
             iconText={colors.text}

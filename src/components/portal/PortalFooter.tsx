@@ -14,10 +14,10 @@ export function PortalFooter() {
           © {new Date().getFullYear()} {tSite("companyName")}. {tSite("allRightsReserved")}
         </p>
         <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-          <Link href="/privacy-policy" className="hover:text-siam-blue dark:hover:text-siam-blue-light">
+          <Link href="/privacy" className="hover:text-siam-blue dark:hover:text-siam-blue-light">
             {t("privacyPolicy")}
           </Link>
-          <Link href="/terms-of-service" className="hover:text-siam-blue dark:hover:text-siam-blue-light">
+          <Link href="/terms" className="hover:text-siam-blue dark:hover:text-siam-blue-light">
             {t("termsOfService")}
           </Link>
           <Link href="/contact" className="hover:text-siam-blue dark:hover:text-siam-blue-light">

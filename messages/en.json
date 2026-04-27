@@ -273,7 +273,10 @@
     "phonePlaceholder": "+66 ...",
     "selectService": "Select a service",
     "howCanWeHelp": "How can we help?",
-    "preferBookOnline": "Prefer to book online?"
+    "preferBookOnline": "Prefer to book online?",
+    "submitting": "Submitting...",
+    "submitSuccess": "Thanks! Your request has been submitted successfully.",
+    "submitFailed": "We could not submit your request right now. Please try again."
   },
   "services": {
     "title": "Professional Solutions for Your Life in Thailand",

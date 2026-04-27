@@ -110,7 +110,7 @@ export function PhotoGallery() {
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 animate-fade-in"
           role="dialog"
           aria-modal="true"
-          aria-label={tLightbox("close")}
+          aria-label="Image gallery lightbox"
         >
           <button
             type="button"
