@@ -21,6 +21,13 @@ function buildWhatsAppUrl(message: string) {
   return `https://api.whatsapp.com/send/?phone=${phone}&text=${encodeURIComponent(message)}&type=phone_number&app_absent=0`;
 }
 
+function formatDescription(description: string) {
+  return description
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
 export default async function SalesVehicleDetailPage({
   params,
 }: {
@@ -58,6 +65,7 @@ export default async function SalesVehicleDetailPage({
     vehicle.specifications && typeof vehicle.specifications === "object"
       ? (vehicle.specifications as Record<string, string>)
       : {};
+  const descriptionLines = formatDescription(vehicle.description);
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
@@ -103,7 +111,17 @@ export default async function SalesVehicleDetailPage({
                 <p className="font-semibold capitalize">{vehicle.category}</p>
               </div>
             </div>
-            <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">{vehicle.description}</p>
+            <div className="space-y-2 rounded-lg bg-gray-50 p-3 text-sm leading-relaxed text-gray-700 dark:bg-gray-800/60 dark:text-gray-300">
+              {descriptionLines.length > 0 ? (
+                descriptionLines.map((line, index) => (
+                  <p key={`${line}-${index}`} className="break-words">
+                    {line}
+                  </p>
+                ))
+              ) : (
+                <p className="break-words">{vehicle.description}</p>
+              )}
+            </div>
             {Object.keys(specifications).length > 0 ? (
               <div className="space-y-2 rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700">
                 <p className="font-semibold">{t("specifications")}</p>
