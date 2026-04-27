@@ -45,14 +45,14 @@ export function HeroSection({
               alt=""
               fill
               sizes="100vw"
-              className="object-cover"
+              className="object-cover contrast-110 saturate-125 brightness-95"
               priority={index === 0}
             />
           </div>
         ))}
         {/* Keep the brand blue look while allowing subtle imagery to show through */}
-        <div className="absolute inset-0 bg-siam-blue/70" />
-        <div className="absolute inset-0 bg-gradient-to-br from-siam-blue/85 via-siam-blue-light/75 to-siam-blue/85" />
+        <div className="absolute inset-0 bg-siam-blue/50" />
+        <div className="absolute inset-0 bg-gradient-to-br from-siam-blue/62 via-siam-blue-light/50 to-siam-blue/62" />
       </div>
 
       <div className="container relative mx-auto px-4 py-12 sm:py-16 md:py-20 lg:py-24">
