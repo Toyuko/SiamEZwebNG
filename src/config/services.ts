@@ -67,3 +67,17 @@ export const serviceIcons: Record<ServiceSlug, string> = {
   "private-driver-service": "User",
   "event-planning-venue-services": "PartyPopper",
 };
+
+/** Thumbnail images for service cards on public pages */
+export const serviceThumbnailImages: Record<ServiceSlug, string> = {
+  "marriage-registration": "/images/gallery/siamez-023.jpg",
+  "translation-services": "/images/gallery/siamez-011.jpg",
+  "driver-license": "/images/gallery/siamez-010.jpg",
+  "police-clearance": "/images/gallery/siamez-024.jpg",
+  "visa-services": "/images/gallery/siamez-031.jpg",
+  "construction-handyman": "/images/gallery/siamez-040.jpg",
+  "vehicle-registration": "/images/gallery/siamez-033.jpg",
+  "transportation-services": "/images/gallery/siamez-060.jpg",
+  "private-driver-service": "/images/gallery/siamez-066.jpg",
+  "event-planning-venue-services": "/images/gallery/siamez-081.jpg",
+};

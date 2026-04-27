@@ -32,10 +32,20 @@ function toSlug(input: string) {
 
 async function ensureStaffAccess() {
   const session = await getSession();
-  if (!session || (session.user.role !== "admin" && session.user.role !== "staff")) {
+  if (!session) {
     throw new Error("Unauthorized");
   }
-  return session.user.id;
+  return session;
+}
+
+function canManageListing(
+  session: Awaited<ReturnType<typeof ensureStaffAccess>>,
+  createdById: string | null
+) {
+  if (session.user.role === "admin" || session.user.role === "staff") {
+    return true;
+  }
+  return createdById === session.user.id;
 }
 
 async function ensureUniqueSlug(base: string, excludeId?: string) {
@@ -53,7 +63,7 @@ async function ensureUniqueSlug(base: string, excludeId?: string) {
 }
 
 export async function createSalesListing(input: z.infer<typeof listingSchema>) {
-  const createdById = await ensureStaffAccess();
+  const session = await ensureStaffAccess();
   const parsed = listingSchema.parse(input);
   const slug = await ensureUniqueSlug(toSlug(`${parsed.make}-${parsed.model}-${parsed.year}`));
 
@@ -61,13 +71,21 @@ export async function createSalesListing(input: z.infer<typeof listingSchema>) {
     data: {
       ...parsed,
       slug,
-      createdById,
+      createdById: session.user.id,
     },
   });
 }
 
 export async function updateSalesListing(id: string, input: z.infer<typeof listingSchema>) {
-  await ensureStaffAccess();
+  const session = await ensureStaffAccess();
+  const listing = await prisma.salesVehicle.findUnique({
+    where: { id },
+    select: { createdById: true },
+  });
+  if (!listing || !canManageListing(session, listing.createdById)) {
+    throw new Error("Unauthorized");
+  }
+
   const parsed = listingSchema.parse(input);
   const slug = await ensureUniqueSlug(toSlug(`${parsed.make}-${parsed.model}-${parsed.year}`), id);
 
@@ -81,7 +99,15 @@ export async function updateSalesListing(id: string, input: z.infer<typeof listi
 }
 
 export async function deleteSalesListing(id: string) {
-  await ensureStaffAccess();
+  const session = await ensureStaffAccess();
+  const listing = await prisma.salesVehicle.findUnique({
+    where: { id },
+    select: { createdById: true },
+  });
+  if (!listing || !canManageListing(session, listing.createdById)) {
+    throw new Error("Unauthorized");
+  }
+
   return prisma.salesVehicle.delete({
     where: { id },
   });

@@ -1,4 +1,5 @@
 import { Link } from "@/i18n/navigation";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
@@ -8,6 +9,7 @@ interface ServiceCardProps {
   slug: string;
   name: string;
   description: string;
+  thumbnailImage?: string | null;
   Icon: LucideIcon;
   iconBg: string;
   iconText: string;
@@ -25,6 +27,7 @@ export function ServiceCard({
   slug,
   name,
   description,
+  thumbnailImage,
   Icon,
   iconBg,
   iconText,
@@ -40,7 +43,18 @@ export function ServiceCard({
   const bookHref = getBookHref ? getBookHref(slug) : `/book/${slug}`;
 
   return (
-    <Card className="flex flex-col shadow-sm transition-all duration-200 hover:shadow-lg">
+    <Card className="flex h-full flex-col overflow-hidden shadow-sm transition-all duration-200 hover:shadow-lg">
+      {thumbnailImage ? (
+        <div className="relative h-40 w-full">
+          <Image
+            src={thumbnailImage}
+            alt={name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+        </div>
+      ) : null}
       <CardContent className="flex flex-1 flex-col p-6">
         <div className={`mb-4 flex h-14 w-14 items-center justify-center ${iconShapeClass} ${iconBg} ${iconText} shadow-sm`}>
           <Icon className="h-7 w-7" />

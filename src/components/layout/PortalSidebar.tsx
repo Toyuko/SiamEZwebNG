@@ -1,7 +1,7 @@
 "use client";
 
 import { Link, usePathname } from "@/i18n/navigation";
-import { LayoutDashboard, FolderOpen, FileText, Settings, CreditCard, Moon } from "lucide-react";
+import { LayoutDashboard, FolderOpen, FileText, Settings, CreditCard, Moon, Car } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
@@ -10,6 +10,7 @@ import { LanguageSwitcher } from "@/components/portal/LanguageSwitcher";
 const nav = [
   { labelKey: "dashboard", href: "/portal", icon: LayoutDashboard },
   { labelKey: "myCases", href: "/portal/cases", icon: FolderOpen },
+  { labelKey: "mySales", href: "/portal/sales", icon: Car },
   { labelKey: "invoices", href: "/portal/invoices", icon: CreditCard },
   { labelKey: "documents", href: "/portal/documents", icon: FileText },
   { labelKey: "settings", href: "/portal/profile", icon: Settings },

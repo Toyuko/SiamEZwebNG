@@ -18,6 +18,7 @@ import {
   serviceDisplayNames,
   serviceShortDescriptions,
   serviceSlugs,
+  serviceThumbnailImages,
 } from "@/config/services";
 
 const iconBySlug: Record<ServiceSlug, LucideIcon> = {
@@ -53,6 +54,7 @@ export interface ServiceItem {
   slug: string;
   shortDescription?: string | null;
   description?: string | null;
+  thumbnailImage?: string | null;
   priceAmount?: number | null;
   priceCurrency?: string | null;
 }
@@ -96,6 +98,7 @@ export function ServiceGrid({
           name: serviceDisplayNames[slug],
           slug,
           shortDescription: serviceShortDescriptions[slug],
+          thumbnailImage: serviceThumbnailImages[slug],
           priceAmount: null,
           priceCurrency: null,
         }));
@@ -120,6 +123,8 @@ export function ServiceGrid({
             const colors = iconColorBySlug[s.slug as ServiceSlug] ?? iconColorBySlug["translation-services"];
             const desc =
               s.shortDescription ?? (s as ServiceItem).description?.slice(0, 150) ?? "";
+            const thumbnailImage =
+              s.thumbnailImage ?? serviceThumbnailImages[s.slug as ServiceSlug] ?? null;
 
             return (
               <div
@@ -131,6 +136,7 @@ export function ServiceGrid({
                   slug={s.slug}
                   name={s.name}
                   description={desc}
+                  thumbnailImage={thumbnailImage}
                   Icon={Icon}
                   iconBg={colors.bg}
                   iconText={colors.text}

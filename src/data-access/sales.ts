@@ -152,3 +152,15 @@ export async function getAdminSalesVehicles() {
     return [];
   }
 }
+
+export async function getSalesVehiclesByOwner(userId: string) {
+  try {
+    return await prisma.salesVehicle.findMany({
+      where: { createdById: userId },
+      orderBy: [{ createdAt: "desc" }],
+    });
+  } catch (error) {
+    console.warn("User sales list unavailable, returning empty list:", error);
+    return [];
+  }
+}

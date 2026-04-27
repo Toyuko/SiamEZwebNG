@@ -3,6 +3,12 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { site } from "@/config/site";
 
+const heroSlideshowImages = [
+  "/images/gallery/siamez-011.jpg",
+  "/images/gallery/siamez-023.jpg",
+  "/images/gallery/siamez-032.jpg",
+];
+
 interface HeroSectionProps {
   /** Optional overrides; defaults to site tagline and standard headline */
   badge?: string;
@@ -27,6 +33,28 @@ export function HeroSection({
     <section
       className={`relative overflow-hidden bg-gradient-to-br from-siam-blue via-siam-blue-light/90 to-siam-blue text-white ${className}`}
     >
+      <div className="pointer-events-none absolute inset-0">
+        {heroSlideshowImages.map((src, index) => (
+          <div
+            key={src}
+            className="hero-slide absolute inset-0"
+            style={{ animationDelay: `${index * 5}s` }}
+          >
+            <Image
+              src={src}
+              alt=""
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority={index === 0}
+            />
+          </div>
+        ))}
+        {/* Keep the brand blue look while allowing subtle imagery to show through */}
+        <div className="absolute inset-0 bg-siam-blue/70" />
+        <div className="absolute inset-0 bg-gradient-to-br from-siam-blue/85 via-siam-blue-light/75 to-siam-blue/85" />
+      </div>
+
       <div className="container relative mx-auto px-4 py-12 sm:py-16 md:py-20 lg:py-24">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-xl lg:max-w-2xl">

@@ -46,10 +46,10 @@ function formatPrice(amount: unknown, currency: unknown) {
       style: "currency",
       currency: safeCurrency,
       maximumFractionDigits: 0,
-    }).format(safeAmount / 100);
+    }).format(safeAmount);
   } catch {
     // Never let malformed row data crash the admin dashboard.
-    return `${(safeAmount / 100).toLocaleString("en-US")} ${safeCurrency}`;
+    return `${safeAmount.toLocaleString("en-US")} ${safeCurrency}`;
   }
 }
 

@@ -65,6 +65,29 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
+@keyframes heroCrossfade {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 1;
+  }
+  38% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-slide {
+  opacity: 0;
+  animation: heroCrossfade 15s linear infinite;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
