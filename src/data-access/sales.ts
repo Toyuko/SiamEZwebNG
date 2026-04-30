@@ -38,10 +38,17 @@ const salesVehicleLegacySelect = {
   updatedAt: true,
 } as const;
 
-function isMissingVideoUrlsColumnError(error: unknown) {
+function isMissingSalesMediaColumnError(error: unknown) {
   if (!(error instanceof Error)) return false;
   const message = error.message.toLowerCase();
-  return message.includes("video_urls") || message.includes("videourls");
+  return (
+    message.includes("video_urls") ||
+    message.includes("videourls") ||
+    message.includes("hero_media_type") ||
+    message.includes("heromediatype") ||
+    message.includes("hero_video_url") ||
+    message.includes("herovideourl")
+  );
 }
 
 export async function getSalesFilterBounds() {
@@ -148,8 +155,8 @@ export async function getPublicSalesVehicles(filters: SalesFilters) {
       totalPages: Math.max(1, Math.ceil(total / pageSize)),
     };
   } catch (error) {
-    if (isMissingVideoUrlsColumnError(error)) {
-      console.warn("sales_vehicles.video_urls missing; using fallback query without videoUrls");
+    if (isMissingSalesMediaColumnError(error)) {
+      console.warn("sales media columns missing; using fallback query without video columns");
       const [items, total] = await Promise.all([
         prisma.salesVehicle.findMany({
           where,
@@ -161,7 +168,12 @@ export async function getPublicSalesVehicles(filters: SalesFilters) {
         prisma.salesVehicle.count({ where }),
       ]);
       return {
-        items: items.map((item) => ({ ...item, videoUrls: [] })),
+        items: items.map((item) => ({
+          ...item,
+          heroMediaType: "image",
+          heroVideoUrl: null,
+          videoUrls: [],
+        })),
         page,
         pageSize,
         total,
@@ -185,13 +197,15 @@ export async function getPublicSalesVehicleById(id: string) {
       where: { id, published: true },
     });
   } catch (error) {
-    if (isMissingVideoUrlsColumnError(error)) {
-      console.warn("sales_vehicles.video_urls missing; using fallback detail query without videoUrls");
+    if (isMissingSalesMediaColumnError(error)) {
+      console.warn("sales media columns missing; using fallback detail query without video columns");
       const listing = await prisma.salesVehicle.findFirst({
         where: { id, published: true },
         select: salesVehicleLegacySelect,
       });
-      return listing ? { ...listing, videoUrls: [] } : null;
+      return listing
+        ? { ...listing, heroMediaType: "image", heroVideoUrl: null, videoUrls: [] }
+        : null;
     }
     console.warn("Sales vehicle detail unavailable:", error);
     return null;
@@ -204,13 +218,18 @@ export async function getAdminSalesVehicles() {
       orderBy: [{ createdAt: "desc" }],
     });
   } catch (error) {
-    if (isMissingVideoUrlsColumnError(error)) {
-      console.warn("sales_vehicles.video_urls missing; using fallback admin query without videoUrls");
+    if (isMissingSalesMediaColumnError(error)) {
+      console.warn("sales media columns missing; using fallback admin query without video columns");
       const items = await prisma.salesVehicle.findMany({
         orderBy: [{ createdAt: "desc" }],
         select: salesVehicleLegacySelect,
       });
-      return items.map((item) => ({ ...item, videoUrls: [] }));
+      return items.map((item) => ({
+        ...item,
+        heroMediaType: "image",
+        heroVideoUrl: null,
+        videoUrls: [],
+      }));
     }
     console.warn("Admin sales list unavailable, returning empty list:", error);
     return [];
@@ -224,14 +243,19 @@ export async function getSalesVehiclesByOwner(userId: string) {
       orderBy: [{ createdAt: "desc" }],
     });
   } catch (error) {
-    if (isMissingVideoUrlsColumnError(error)) {
-      console.warn("sales_vehicles.video_urls missing; using fallback owner query without videoUrls");
+    if (isMissingSalesMediaColumnError(error)) {
+      console.warn("sales media columns missing; using fallback owner query without video columns");
       const items = await prisma.salesVehicle.findMany({
         where: { createdById: userId },
         orderBy: [{ createdAt: "desc" }],
         select: salesVehicleLegacySelect,
       });
-      return items.map((item) => ({ ...item, videoUrls: [] }));
+      return items.map((item) => ({
+        ...item,
+        heroMediaType: "image",
+        heroVideoUrl: null,
+        videoUrls: [],
+      }));
     }
     console.warn("User sales list unavailable, returning empty list:", error);
     return [];

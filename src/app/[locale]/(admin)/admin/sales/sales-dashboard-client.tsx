@@ -21,7 +21,9 @@ type Listing = {
   category: "car" | "motorcycle";
   status: "available" | "reserved" | "sold";
   published: boolean;
+  heroMediaType?: "image" | "video";
   heroImageUrl: string;
+  heroVideoUrl?: string | null;
   imageUrls: unknown;
   videoUrls: unknown;
   description: string;
@@ -71,7 +73,9 @@ function normalizeForForm(listing: Listing): SalesListingInput {
     priceCurrency: listing.priceCurrency,
     category: listing.category,
     status: listing.status,
+    heroMediaType: listing.heroMediaType === "video" ? "video" : "image",
     heroImageUrl: listing.heroImageUrl,
+    heroVideoUrl: typeof listing.heroVideoUrl === "string" ? listing.heroVideoUrl : null,
     imageUrls: Array.isArray(listing.imageUrls)
       ? listing.imageUrls.filter((url): url is string => typeof url === "string")
       : [listing.heroImageUrl],

@@ -19,7 +19,9 @@ export type SalesListingInput = {
   priceCurrency: string;
   category: "car" | "motorcycle";
   status: "available" | "reserved" | "sold";
+  heroMediaType: "image" | "video";
   heroImageUrl: string;
+  heroVideoUrl: string | null;
   imageUrls: string[];
   videoUrls: string[];
   description: string;
@@ -37,7 +39,9 @@ const EMPTY_FORM: SalesListingInput = {
   priceCurrency: "THB",
   category: "car",
   status: "available",
+  heroMediaType: "image",
   heroImageUrl: "",
+  heroVideoUrl: null,
   imageUrls: [],
   videoUrls: [],
   description: "",
@@ -129,7 +133,9 @@ export function SalesListingFormModal({
         return {
           ...prev,
           imageUrls: merged,
+          heroMediaType: prev.heroImageUrl || prev.heroVideoUrl ? prev.heroMediaType : "image",
           heroImageUrl: prev.heroImageUrl || merged[0] || "",
+          heroVideoUrl: prev.heroImageUrl || prev.heroVideoUrl ? prev.heroVideoUrl : null,
         };
       });
     } catch (error) {
@@ -159,6 +165,8 @@ export function SalesListingFormModal({
       setForm((prev) => ({
         ...prev,
         videoUrls: Array.from(new Set([...prev.videoUrls, ...uploadedUrls])),
+        heroMediaType: prev.heroImageUrl || prev.heroVideoUrl ? prev.heroMediaType : "video",
+        heroVideoUrl: prev.heroImageUrl || prev.heroVideoUrl ? prev.heroVideoUrl : uploadedUrls[0] ?? null,
       }));
     } catch (error) {
       setFormError(error instanceof Error ? error.message : t("errors.uploadFailed"));
@@ -175,8 +183,12 @@ export function SalesListingFormModal({
       return "";
     }
     if (step === 2) {
-      if (form.imageUrls.length === 0) return t("errors.imageRequired");
-      if (!form.heroImageUrl) return t("errors.heroRequired");
+      if (form.imageUrls.length === 0 && form.videoUrls.length === 0) return t("errors.mediaRequired");
+      if (form.heroMediaType === "video") {
+        if (!form.heroVideoUrl) return t("errors.heroRequired");
+      } else if (!form.heroImageUrl) {
+        return t("errors.heroRequired");
+      }
       return "";
     }
     if (step === 3) {
@@ -197,14 +209,34 @@ export function SalesListingFormModal({
     const err = validateStep();
     setFormError(err);
     if (err) return;
+    const normalizedImageUrls = Array.from(new Set(form.imageUrls));
+    const normalizedVideoUrls = Array.from(new Set(form.videoUrls.map((url) => url.trim()).filter(Boolean)));
+    const heroMediaType =
+      (form.heroMediaType === "video" && form.heroVideoUrl && normalizedVideoUrls.includes(form.heroVideoUrl)) ||
+      (normalizedImageUrls.length === 0 && normalizedVideoUrls.length > 0)
+        ? "video"
+        : "image";
+    const heroVideoUrl =
+      heroMediaType === "video"
+        ? form.heroVideoUrl && normalizedVideoUrls.includes(form.heroVideoUrl)
+          ? form.heroVideoUrl
+          : normalizedVideoUrls[0] ?? null
+        : null;
+    const heroImageUrl =
+      heroMediaType === "image"
+        ? form.heroImageUrl || normalizedImageUrls[0] || ""
+        : normalizedImageUrls[0] || form.heroImageUrl || heroVideoUrl || "";
     onSubmit({
       ...form,
       title: form.title.trim(),
       make: form.make.trim(),
       model: form.model.trim(),
       description: form.description.trim(),
-      imageUrls: Array.from(new Set(form.imageUrls)),
-      videoUrls: Array.from(new Set(form.videoUrls.map((url) => url.trim()).filter(Boolean))),
+      heroMediaType,
+      heroImageUrl,
+      heroVideoUrl,
+      imageUrls: normalizedImageUrls,
+      videoUrls: normalizedVideoUrls,
       priceCurrency: form.priceCurrency.trim().toUpperCase() || "THB",
     });
   };
@@ -219,7 +251,7 @@ export function SalesListingFormModal({
       return {
         ...prev,
         imageUrls: next,
-        heroImageUrl: prev.heroImageUrl || next[0] || "",
+        heroImageUrl: prev.heroImageUrl && next.includes(prev.heroImageUrl) ? prev.heroImageUrl : next[0] || "",
       };
     });
   };
@@ -236,10 +268,34 @@ export function SalesListingFormModal({
       return {
         ...prev,
         imageUrls: merged,
+        heroMediaType: prev.heroImageUrl || prev.heroVideoUrl ? prev.heroMediaType : "image",
         heroImageUrl: prev.heroImageUrl || merged[0] || "",
+        heroVideoUrl: prev.heroImageUrl || prev.heroVideoUrl ? prev.heroVideoUrl : null,
       };
     });
     setImageUrlDraft("");
+  };
+
+  const pickFallbackHero = (nextImages: string[], nextVideos: string[]) => {
+    if (nextImages.length > 0) {
+      return {
+        heroMediaType: "image" as const,
+        heroImageUrl: nextImages[0],
+        heroVideoUrl: null,
+      };
+    }
+    if (nextVideos.length > 0) {
+      return {
+        heroMediaType: "video" as const,
+        heroImageUrl: "",
+        heroVideoUrl: nextVideos[0],
+      };
+    }
+    return {
+      heroMediaType: "image" as const,
+      heroImageUrl: "",
+      heroVideoUrl: null,
+    };
   };
 
   const getVideoEmbedUrl = (url: string) => {
@@ -267,6 +323,107 @@ export function SalesListingFormModal({
 
     return null;
   };
+
+  const renderVideoUrlEditor = (inputId: string) => (
+    <div>
+      <Label htmlFor={inputId}>{t("fields.videos")}</Label>
+      <textarea
+        id={inputId}
+        rows={4}
+        value={form.videoUrls.join("\n")}
+        onChange={(e) => {
+          const urls = e.currentTarget.value
+            .split(/\r?\n/)
+            .map((url) => url.trim())
+            .filter(Boolean);
+          setForm((p) => ({
+            ...p,
+            heroMediaType: !p.heroImageUrl && !p.heroVideoUrl && urls[0] ? "video" : p.heroMediaType,
+            heroVideoUrl: !p.heroImageUrl && !p.heroVideoUrl && urls[0] ? urls[0] : p.heroVideoUrl,
+            videoUrls: urls,
+          }));
+        }}
+        placeholder={t("videoUrlsPlaceholder")}
+        className="mt-1 flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
+      />
+      <p className="mt-1 text-xs text-gray-500">{t("videoHint")}</p>
+      {form.videoUrls.length > 0 ? (
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {form.videoUrls.map((videoUrl) => {
+            const embedUrl = getVideoEmbedUrl(videoUrl);
+            const isDirectVideo = /\.(mp4|webm|ogg)(\?.*)?$/i.test(videoUrl);
+            return (
+              <div key={videoUrl} className="space-y-2 rounded-lg border border-gray-200 p-2 dark:border-gray-700">
+                {embedUrl ? (
+                  <div className="relative aspect-video overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+                    <iframe
+                      src={embedUrl}
+                      title={`Preview ${videoUrl}`}
+                      className="h-full w-full"
+                      loading="lazy"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                  </div>
+                ) : isDirectVideo ? (
+                  <video
+                    controls
+                    preload="metadata"
+                    className="w-full rounded-md border border-gray-200 bg-black dark:border-gray-700"
+                  >
+                    <source src={videoUrl} />
+                  </video>
+                ) : (
+                  <a
+                    href={videoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block rounded-md border border-dashed border-gray-300 px-3 py-2 text-xs text-siam-blue hover:underline dark:border-gray-700"
+                  >
+                    {videoUrl}
+                  </a>
+                )}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-xs text-gray-500">{videoUrl}</span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={form.heroMediaType === "video" && form.heroVideoUrl === videoUrl ? "default" : "outline"}
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        heroMediaType: "video",
+                        heroVideoUrl: videoUrl,
+                      }))
+                    }
+                  >
+                    {form.heroMediaType === "video" && form.heroVideoUrl === videoUrl ? t("hero") : t("setHero")}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() =>
+                      setForm((prev) => {
+                        const nextVideos = prev.videoUrls.filter((url) => url !== videoUrl);
+                        return {
+                          ...prev,
+                          ...pickFallbackHero(prev.imageUrls, nextVideos),
+                          videoUrls: nextVideos,
+                        };
+                      })
+                    }
+                  >
+                    {t("remove")}
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
 
   return (
     <Modal open={open} onClose={onClose} title={initialData ? t("editTitle") : t("createTitle")} className="max-w-3xl">
@@ -438,6 +595,7 @@ export function SalesListingFormModal({
             />
             <p className="mt-1 text-xs text-gray-500">{t("uploadVideoHint")}</p>
           </div>
+          {renderVideoUrlEditor("sales-video-urls-step-2")}
           {form.imageUrls.length > 0 ? (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {form.imageUrls.map((url, idx) => (
@@ -471,22 +629,27 @@ export function SalesListingFormModal({
                   </div>
                   <span className="block truncate text-gray-500">{url}</span>
                   <div className="flex items-center gap-1">
-                    <Button type="button" size="sm" variant={form.heroImageUrl === url ? "default" : "outline"} onClick={() => setForm((p) => ({ ...p, heroImageUrl: url }))}>
-                      {form.heroImageUrl === url ? t("hero") : t("setHero")}
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={form.heroMediaType === "image" && form.heroImageUrl === url ? "default" : "outline"}
+                      onClick={() => setForm((p) => ({ ...p, heroMediaType: "image", heroImageUrl: url, heroVideoUrl: null }))}
+                    >
+                      {form.heroMediaType === "image" && form.heroImageUrl === url ? t("hero") : t("setHero")}
                     </Button>
                     <Button
                       type="button"
                       size="sm"
                       variant="ghost"
                       onClick={() =>
-                        setForm((p) => ({
-                          ...p,
-                          imageUrls: p.imageUrls.filter((_, index) => index !== idx),
-                          heroImageUrl:
-                            p.heroImageUrl === url
-                              ? p.imageUrls.find((_, index) => index !== idx) ?? ""
-                              : p.heroImageUrl,
-                        }))
+                        setForm((p) => {
+                          const nextImages = p.imageUrls.filter((_, index) => index !== idx);
+                          return {
+                            ...p,
+                            ...pickFallbackHero(nextImages, p.videoUrls),
+                            imageUrls: nextImages,
+                          };
+                        })
                       }
                     >
                       {t("remove")}
@@ -515,81 +678,7 @@ export function SalesListingFormModal({
               className="mt-1 flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
             />
           </div>
-          <div>
-            <Label htmlFor="sales-video-urls">{t("fields.videos")}</Label>
-            <textarea
-              id="sales-video-urls"
-              rows={4}
-              value={form.videoUrls.join("\n")}
-              onChange={(e) => {
-                const urls = e.currentTarget.value
-                  .split(/\r?\n/)
-                  .map((url) => url.trim())
-                  .filter(Boolean);
-                setForm((p) => ({ ...p, videoUrls: urls }));
-              }}
-              placeholder={t("videoUrlsPlaceholder")}
-              className="mt-1 flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
-            />
-            <p className="mt-1 text-xs text-gray-500">{t("videoHint")}</p>
-            {form.videoUrls.length > 0 ? (
-              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {form.videoUrls.map((videoUrl) => {
-                  const embedUrl = getVideoEmbedUrl(videoUrl);
-                  const isDirectVideo = /\.(mp4|webm|ogg)(\?.*)?$/i.test(videoUrl);
-                  return (
-                    <div key={videoUrl} className="space-y-2 rounded-lg border border-gray-200 p-2 dark:border-gray-700">
-                      {embedUrl ? (
-                        <div className="relative aspect-video overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-                          <iframe
-                            src={embedUrl}
-                            title={`Preview ${videoUrl}`}
-                            className="h-full w-full"
-                            loading="lazy"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            allowFullScreen
-                          />
-                        </div>
-                      ) : isDirectVideo ? (
-                        <video
-                          controls
-                          preload="metadata"
-                          className="w-full rounded-md border border-gray-200 bg-black dark:border-gray-700"
-                        >
-                          <source src={videoUrl} />
-                        </video>
-                      ) : (
-                        <a
-                          href={videoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block rounded-md border border-dashed border-gray-300 px-3 py-2 text-xs text-siam-blue hover:underline dark:border-gray-700"
-                        >
-                          {videoUrl}
-                        </a>
-                      )}
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="truncate text-xs text-gray-500">{videoUrl}</span>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={() =>
-                            setForm((prev) => ({
-                              ...prev,
-                              videoUrls: prev.videoUrls.filter((url) => url !== videoUrl),
-                            }))
-                          }
-                        >
-                          {t("remove")}
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : null}
-          </div>
+          {renderVideoUrlEditor("sales-video-urls-step-3")}
           <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
             <p className="mb-2 text-sm font-medium">{t("fields.specifications")}</p>
             <div className="grid gap-2 sm:grid-cols-3">

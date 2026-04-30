@@ -8,9 +8,10 @@ import { useTranslations } from "next-intl";
 interface SalesVehicleImageGalleryProps {
   images: string[];
   title: string;
+  showPrimary?: boolean;
 }
 
-export function SalesVehicleImageGallery({ images, title }: SalesVehicleImageGalleryProps) {
+export function SalesVehicleImageGallery({ images, title, showPrimary = true }: SalesVehicleImageGalleryProps) {
   const tLightbox = useTranslations("gallery.lightbox");
   const galleryImages = useMemo(() => images.filter((imageUrl) => imageUrl.length > 0), [images]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -58,17 +59,19 @@ export function SalesVehicleImageGallery({ images, title }: SalesVehicleImageGal
 
   return (
     <>
-      <button
-        type="button"
-        className="group relative block aspect-[16/10] w-full cursor-zoom-in overflow-hidden rounded-xl border border-gray-200 text-left focus:outline-none focus:ring-2 focus:ring-siam-blue dark:border-gray-700"
-        onClick={() => openLightbox(0)}
-        aria-label={`${title} image 1`}
-      >
-        <Image src={galleryImages[0]} alt={title} fill sizes="(max-width: 1024px) 100vw, 66vw" className="object-cover" />
-        <span className="pointer-events-none absolute right-3 top-3 rounded-full bg-black/50 p-2 text-white/90 opacity-0 transition-opacity group-hover:opacity-100">
-          <Search className="h-4 w-4" />
-        </span>
-      </button>
+      {showPrimary ? (
+        <button
+          type="button"
+          className="group relative block aspect-[16/10] w-full cursor-zoom-in overflow-hidden rounded-xl border border-gray-200 text-left focus:outline-none focus:ring-2 focus:ring-siam-blue dark:border-gray-700"
+          onClick={() => openLightbox(0)}
+          aria-label={`${title} image 1`}
+        >
+          <Image src={galleryImages[0]} alt={title} fill sizes="(max-width: 1024px) 100vw, 66vw" className="object-cover" />
+          <span className="pointer-events-none absolute right-3 top-3 rounded-full bg-black/50 p-2 text-white/90 opacity-0 transition-opacity group-hover:opacity-100">
+            <Search className="h-4 w-4" />
+          </span>
+        </button>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         {galleryImages.map((url, index) => (

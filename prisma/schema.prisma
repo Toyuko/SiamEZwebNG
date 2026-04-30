@@ -363,6 +363,11 @@ enum SalesListingStatus {
   sold
 }
 
+enum SalesHeroMediaType {
+  image
+  video
+}
+
 model SalesVehicle {
   id               String             @id @default(cuid())
   slug             String             @unique
@@ -375,7 +380,9 @@ model SalesVehicle {
   priceCurrency    String             @default("THB") @map("price_currency")
   category         VehicleCategory
   status           SalesListingStatus @default(available)
+  heroMediaType    SalesHeroMediaType @default(image) @map("hero_media_type")
   heroImageUrl     String             @map("hero_image_url")
+  heroVideoUrl     String?            @map("hero_video_url")
   imageUrls        Json               @map("image_urls")
   videoUrls        Json?              @map("video_urls")
   description      String             @db.Text

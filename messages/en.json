@@ -191,6 +191,7 @@
       "step1Required": "Please fill in make, model, and title.",
       "priceInvalid": "Price must be greater than 0.",
       "yearInvalid": "Year is invalid.",
+      "mediaRequired": "Add at least one image or video.",
       "imageRequired": "Upload at least one image.",
       "heroRequired": "Select a hero image.",
       "descriptionShort": "Description must be at least 20 characters."

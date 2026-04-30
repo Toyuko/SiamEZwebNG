@@ -4,23 +4,51 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { z } from "zod";
 
-const listingSchema = z.object({
-  title: z.string().min(3),
-  make: z.string().min(1),
-  model: z.string().min(1),
-  year: z.number().int().min(1950).max(new Date().getFullYear() + 1),
-  mileageKm: z.number().int().min(0),
-  priceAmount: z.number().int().min(1),
-  priceCurrency: z.string().min(3).max(3).default("THB"),
-  category: z.enum(["car", "motorcycle"]),
-  status: z.enum(["available", "reserved", "sold"]),
-  heroImageUrl: z.string().url(),
-  imageUrls: z.array(z.string().url()).min(1),
-  videoUrls: z.array(z.string().url()).optional().default([]),
-  description: z.string().min(20),
-  specifications: z.record(z.string(), z.string()).optional(),
-  published: z.boolean().default(true),
-});
+const listingSchema = z
+  .object({
+    title: z.string().min(3),
+    make: z.string().min(1),
+    model: z.string().min(1),
+    year: z.number().int().min(1950).max(new Date().getFullYear() + 1),
+    mileageKm: z.number().int().min(0),
+    priceAmount: z.number().int().min(1),
+    priceCurrency: z.string().min(3).max(3).default("THB"),
+    category: z.enum(["car", "motorcycle"]),
+    status: z.enum(["available", "reserved", "sold"]),
+    heroMediaType: z.enum(["image", "video"]).default("image"),
+    heroImageUrl: z.string().url(),
+    heroVideoUrl: z.string().url().nullable().optional().default(null),
+    imageUrls: z.array(z.string().url()).default([]),
+    videoUrls: z.array(z.string().url()).optional().default([]),
+    description: z.string().min(20),
+    specifications: z.record(z.string(), z.string()).optional(),
+    published: z.boolean().default(true),
+  })
+  .superRefine((value, ctx) => {
+    if (value.imageUrls.length === 0 && value.videoUrls.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "At least one image or video is required",
+        path: ["imageUrls"],
+      });
+    }
+
+    if (value.heroMediaType === "video" && !value.heroVideoUrl) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "heroVideoUrl is required when heroMediaType is video",
+        path: ["heroVideoUrl"],
+      });
+    }
+
+    if (value.heroMediaType === "image" && !value.heroImageUrl) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "heroImageUrl is required when heroMediaType is image",
+        path: ["heroImageUrl"],
+      });
+    }
+  });
 
 function toSlug(input: string) {
   return input

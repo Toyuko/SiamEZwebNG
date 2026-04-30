@@ -95,6 +95,11 @@ export default async function SalesVehicleDetailPage({
   const videoUrls = Array.isArray(vehicle.videoUrls)
     ? vehicle.videoUrls.filter((url): url is string => typeof url === "string")
     : [];
+  const heroMediaType = vehicle.heroMediaType === "video" ? "video" : "image";
+  const heroVideoUrl =
+    heroMediaType === "video" && typeof vehicle.heroVideoUrl === "string" ? vehicle.heroVideoUrl : null;
+  const heroEmbedUrl = heroVideoUrl ? getVideoEmbedUrl(heroVideoUrl) : null;
+  const heroIsDirectVideo = heroVideoUrl ? /\.(mp4|webm|ogg)(\?.*)?$/i.test(heroVideoUrl) : false;
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
@@ -104,7 +109,38 @@ export default async function SalesVehicleDetailPage({
 
       <div className="mt-4 grid gap-6 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <SalesVehicleImageGallery images={images} title={`${vehicle.year} ${vehicle.make} ${vehicle.model}`} />
+          {heroMediaType === "video" && heroVideoUrl ? (
+            heroEmbedUrl ? (
+              <div className="relative aspect-video overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
+                <iframe
+                  src={heroEmbedUrl}
+                  title={`${vehicle.make} ${vehicle.model} hero video`}
+                  className="h-full w-full"
+                  loading="lazy"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+            ) : heroIsDirectVideo ? (
+              <video controls preload="metadata" className="w-full rounded-xl border border-gray-200 bg-black dark:border-gray-700">
+                <source src={heroVideoUrl} />
+              </video>
+            ) : (
+              <a
+                href={heroVideoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl border border-dashed border-gray-300 p-3 text-sm text-siam-blue hover:underline dark:border-gray-700"
+              >
+                {heroVideoUrl}
+              </a>
+            )
+          ) : null}
+          <SalesVehicleImageGallery
+            images={images}
+            title={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+            showPrimary={heroMediaType !== "video"}
+          />
           {videoUrls.length > 0 ? (
             <div className="space-y-3">
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("videos")}</p>
