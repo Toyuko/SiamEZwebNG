@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
-import { getSession } from "@/lib/auth";
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
@@ -11,11 +10,6 @@ const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session || (session.user.role !== "admin" && session.user.role !== "staff")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const formData = await request.formData();
     const file = formData.get("file");
     if (!(file instanceof File) || file.size <= 0) {
