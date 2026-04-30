@@ -51,6 +51,8 @@ function isMissingSalesMediaColumnError(error: unknown) {
   );
 }
 
+const SALES_FALLBACK_HERO_MEDIA_TYPE = "image" as const;
+
 export async function getSalesFilterBounds() {
   try {
     const [minPrice, maxPrice, minYear, maxYear] = await Promise.all([
@@ -170,7 +172,7 @@ export async function getPublicSalesVehicles(filters: SalesFilters) {
       return {
         items: items.map((item) => ({
           ...item,
-          heroMediaType: "image",
+          heroMediaType: SALES_FALLBACK_HERO_MEDIA_TYPE,
           heroVideoUrl: null,
           videoUrls: [],
         })),
@@ -204,7 +206,12 @@ export async function getPublicSalesVehicleById(id: string) {
         select: salesVehicleLegacySelect,
       });
       return listing
-        ? { ...listing, heroMediaType: "image", heroVideoUrl: null, videoUrls: [] }
+        ? {
+            ...listing,
+            heroMediaType: SALES_FALLBACK_HERO_MEDIA_TYPE,
+            heroVideoUrl: null,
+            videoUrls: [],
+          }
         : null;
     }
     console.warn("Sales vehicle detail unavailable:", error);
@@ -226,7 +233,7 @@ export async function getAdminSalesVehicles() {
       });
       return items.map((item) => ({
         ...item,
-        heroMediaType: "image",
+        heroMediaType: SALES_FALLBACK_HERO_MEDIA_TYPE,
         heroVideoUrl: null,
         videoUrls: [],
       }));
@@ -252,7 +259,7 @@ export async function getSalesVehiclesByOwner(userId: string) {
       });
       return items.map((item) => ({
         ...item,
-        heroMediaType: "image",
+        heroMediaType: SALES_FALLBACK_HERO_MEDIA_TYPE,
         heroVideoUrl: null,
         videoUrls: [],
       }));
