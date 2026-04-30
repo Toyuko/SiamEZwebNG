@@ -53,6 +53,10 @@ function isMissingSalesMediaColumnError(error: unknown) {
 
 const SALES_FALLBACK_HERO_MEDIA_TYPE = "image" as const;
 
+function normalizeHeroMediaType(value: unknown): "image" | "video" | undefined {
+  return value === "video" || value === "image" ? value : undefined;
+}
+
 export async function getSalesFilterBounds() {
   try {
     const [minPrice, maxPrice, minYear, maxYear] = await Promise.all([
@@ -221,9 +225,13 @@ export async function getPublicSalesVehicleById(id: string) {
 
 export async function getAdminSalesVehicles() {
   try {
-    return await prisma.salesVehicle.findMany({
+    const items = await prisma.salesVehicle.findMany({
       orderBy: [{ createdAt: "desc" }],
     });
+    return items.map((item) => ({
+      ...item,
+      heroMediaType: normalizeHeroMediaType(item.heroMediaType),
+    }));
   } catch (error) {
     if (isMissingSalesMediaColumnError(error)) {
       console.warn("sales media columns missing; using fallback admin query without video columns");
@@ -245,10 +253,14 @@ export async function getAdminSalesVehicles() {
 
 export async function getSalesVehiclesByOwner(userId: string) {
   try {
-    return await prisma.salesVehicle.findMany({
+    const items = await prisma.salesVehicle.findMany({
       where: { createdById: userId },
       orderBy: [{ createdAt: "desc" }],
     });
+    return items.map((item) => ({
+      ...item,
+      heroMediaType: normalizeHeroMediaType(item.heroMediaType),
+    }));
   } catch (error) {
     if (isMissingSalesMediaColumnError(error)) {
       console.warn("sales media columns missing; using fallback owner query without video columns");
