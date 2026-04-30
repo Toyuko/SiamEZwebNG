@@ -30,7 +30,7 @@ function LoginFormInner({
         <div className="space-y-3">
           {providers.google && (
             <a
-              href={`/api/auth/signin/google?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+              href={`/api/auth/signin?provider=google&callbackUrl=${encodeURIComponent(callbackUrl)}`}
               className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -56,7 +56,7 @@ function LoginFormInner({
           )}
           {providers.facebook && (
             <a
-              href={`/api/auth/signin/facebook?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+              href={`/api/auth/signin?provider=facebook&callbackUrl=${encodeURIComponent(callbackUrl)}`}
               className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-[#1877F2] px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-[#166FE5] dark:border-gray-600 dark:hover:bg-[#166FE5]"
             >
               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -67,7 +67,7 @@ function LoginFormInner({
           )}
           {providers.line && (
             <a
-              href={`/api/auth/signin/line?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+              href={`/api/auth/signin?provider=line&callbackUrl=${encodeURIComponent(callbackUrl)}`}
               className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#00B900] bg-[#00B900] px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-[#009900] dark:border-[#00B900] dark:hover:bg-[#009900]"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
