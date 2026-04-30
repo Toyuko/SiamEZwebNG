@@ -16,6 +16,34 @@ export type SalesFilters = {
   pageSize?: number;
 };
 
+const salesVehicleLegacySelect = {
+  id: true,
+  slug: true,
+  title: true,
+  make: true,
+  model: true,
+  year: true,
+  mileageKm: true,
+  priceAmount: true,
+  priceCurrency: true,
+  category: true,
+  status: true,
+  heroImageUrl: true,
+  imageUrls: true,
+  description: true,
+  specifications: true,
+  published: true,
+  createdById: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
+function isMissingVideoUrlsColumnError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return message.includes("video_urls") || message.includes("videourls");
+}
+
 export async function getSalesFilterBounds() {
   try {
     const [minPrice, maxPrice, minYear, maxYear] = await Promise.all([
@@ -120,6 +148,26 @@ export async function getPublicSalesVehicles(filters: SalesFilters) {
       totalPages: Math.max(1, Math.ceil(total / pageSize)),
     };
   } catch (error) {
+    if (isMissingVideoUrlsColumnError(error)) {
+      console.warn("sales_vehicles.video_urls missing; using fallback query without videoUrls");
+      const [items, total] = await Promise.all([
+        prisma.salesVehicle.findMany({
+          where,
+          orderBy,
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          select: salesVehicleLegacySelect,
+        }),
+        prisma.salesVehicle.count({ where }),
+      ]);
+      return {
+        items: items.map((item) => ({ ...item, videoUrls: [] })),
+        page,
+        pageSize,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / pageSize)),
+      };
+    }
     console.warn("Public sales inventory unavailable, returning empty list:", error);
     return {
       items: [],
@@ -137,6 +185,14 @@ export async function getPublicSalesVehicleById(id: string) {
       where: { id, published: true },
     });
   } catch (error) {
+    if (isMissingVideoUrlsColumnError(error)) {
+      console.warn("sales_vehicles.video_urls missing; using fallback detail query without videoUrls");
+      const listing = await prisma.salesVehicle.findFirst({
+        where: { id, published: true },
+        select: salesVehicleLegacySelect,
+      });
+      return listing ? { ...listing, videoUrls: [] } : null;
+    }
     console.warn("Sales vehicle detail unavailable:", error);
     return null;
   }
@@ -148,6 +204,14 @@ export async function getAdminSalesVehicles() {
       orderBy: [{ createdAt: "desc" }],
     });
   } catch (error) {
+    if (isMissingVideoUrlsColumnError(error)) {
+      console.warn("sales_vehicles.video_urls missing; using fallback admin query without videoUrls");
+      const items = await prisma.salesVehicle.findMany({
+        orderBy: [{ createdAt: "desc" }],
+        select: salesVehicleLegacySelect,
+      });
+      return items.map((item) => ({ ...item, videoUrls: [] }));
+    }
     console.warn("Admin sales list unavailable, returning empty list:", error);
     return [];
   }
@@ -160,6 +224,15 @@ export async function getSalesVehiclesByOwner(userId: string) {
       orderBy: [{ createdAt: "desc" }],
     });
   } catch (error) {
+    if (isMissingVideoUrlsColumnError(error)) {
+      console.warn("sales_vehicles.video_urls missing; using fallback owner query without videoUrls");
+      const items = await prisma.salesVehicle.findMany({
+        where: { createdById: userId },
+        orderBy: [{ createdAt: "desc" }],
+        select: salesVehicleLegacySelect,
+      });
+      return items.map((item) => ({ ...item, videoUrls: [] }));
+    }
     console.warn("User sales list unavailable, returning empty list:", error);
     return [];
   }
