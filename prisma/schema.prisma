@@ -377,6 +377,7 @@ model SalesVehicle {
   status           SalesListingStatus @default(available)
   heroImageUrl     String             @map("hero_image_url")
   imageUrls        Json               @map("image_urls")
+  videoUrls        Json?              @map("video_urls")
   description      String             @db.Text
   specifications   Json?
   published        Boolean            @default(true)

@@ -16,6 +16,7 @@ const listingSchema = z.object({
   status: z.enum(["available", "reserved", "sold"]),
   heroImageUrl: z.string().url(),
   imageUrls: z.array(z.string().url()).min(1),
+  videoUrls: z.array(z.string().url()).optional().default([]),
   description: z.string().min(20),
   specifications: z.record(z.string(), z.string()).optional(),
   published: z.boolean().default(true),

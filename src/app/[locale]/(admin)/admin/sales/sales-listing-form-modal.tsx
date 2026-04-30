@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,7 @@ export type SalesListingInput = {
   status: "available" | "reserved" | "sold";
   heroImageUrl: string;
   imageUrls: string[];
+  videoUrls: string[];
   description: string;
   specifications: Record<string, string>;
   published: boolean;
@@ -37,6 +39,7 @@ const EMPTY_FORM: SalesListingInput = {
   status: "available",
   heroImageUrl: "",
   imageUrls: [],
+  videoUrls: [],
   description: "",
   specifications: {},
   published: true,
@@ -63,6 +66,8 @@ export function SalesListingFormModal({
   const [specDraftKey, setSpecDraftKey] = useState("");
   const [specDraftValue, setSpecDraftValue] = useState("");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [imageUrlDraft, setImageUrlDraft] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -70,6 +75,9 @@ export function SalesListingFormModal({
     setFormError("");
     setSpecDraftKey("");
     setSpecDraftValue("");
+    setDragIndex(null);
+    setDragOverIndex(null);
+    setImageUrlDraft("");
     setForm(initialData ?? EMPTY_FORM);
   }, [open, initialData]);
 
@@ -99,7 +107,7 @@ export function SalesListingFormModal({
     });
   };
 
-  const handleFileUpload = async (files: FileList | null) => {
+  const handleImageUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setUploading(true);
     setFormError("");
@@ -124,6 +132,34 @@ export function SalesListingFormModal({
           heroImageUrl: prev.heroImageUrl || merged[0] || "",
         };
       });
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : t("errors.uploadFailed"));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleVideoUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    setFormError("");
+    try {
+      const uploadedUrls: string[] = [];
+      for (const file of Array.from(files)) {
+        const body = new FormData();
+        body.append("file", file);
+        const res = await fetch("/api/upload", { method: "POST", body });
+        if (!res.ok) {
+          const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(payload?.error || t("errors.uploadFailed"));
+        }
+        const json = (await res.json()) as { url?: string };
+        if (json.url) uploadedUrls.push(json.url);
+      }
+      setForm((prev) => ({
+        ...prev,
+        videoUrls: Array.from(new Set([...prev.videoUrls, ...uploadedUrls])),
+      }));
     } catch (error) {
       setFormError(error instanceof Error ? error.message : t("errors.uploadFailed"));
     } finally {
@@ -168,6 +204,7 @@ export function SalesListingFormModal({
       model: form.model.trim(),
       description: form.description.trim(),
       imageUrls: Array.from(new Set(form.imageUrls)),
+      videoUrls: Array.from(new Set(form.videoUrls.map((url) => url.trim()).filter(Boolean))),
       priceCurrency: form.priceCurrency.trim().toUpperCase() || "THB",
     });
   };
@@ -185,6 +222,50 @@ export function SalesListingFormModal({
         heroImageUrl: prev.heroImageUrl || next[0] || "",
       };
     });
+  };
+
+  const addImageUrlsFromDraft = () => {
+    const draftUrls = imageUrlDraft
+      .split(/\r?\n/)
+      .map((url) => url.trim())
+      .filter(Boolean);
+    if (draftUrls.length === 0) return;
+
+    setForm((prev) => {
+      const merged = Array.from(new Set([...prev.imageUrls, ...draftUrls]));
+      return {
+        ...prev,
+        imageUrls: merged,
+        heroImageUrl: prev.heroImageUrl || merged[0] || "",
+      };
+    });
+    setImageUrlDraft("");
+  };
+
+  const getVideoEmbedUrl = (url: string) => {
+    try {
+      const parsed = new URL(url);
+      const host = parsed.hostname.toLowerCase();
+
+      if (host.includes("youtube.com")) {
+        const videoId = parsed.searchParams.get("v");
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+      }
+
+      if (host === "youtu.be") {
+        const videoId = parsed.pathname.replace("/", "");
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+      }
+
+      if (host.includes("vimeo.com")) {
+        const match = parsed.pathname.match(/\/(\d+)/);
+        return match?.[1] ? `https://player.vimeo.com/video/${match[1]}` : null;
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
   };
 
   return (
@@ -326,25 +407,69 @@ export function SalesListingFormModal({
         <div className="space-y-4">
           <div>
             <Label htmlFor="sales-images">{t("fields.images")}</Label>
-            <Input id="sales-images" type="file" multiple accept="image/*" onChange={(e) => handleFileUpload(e.currentTarget.files)} />
+            <Input id="sales-images" type="file" multiple accept="image/*" onChange={(e) => handleImageUpload(e.currentTarget.files)} />
             <p className="mt-1 text-xs text-gray-500">{t("uploadHint")}</p>
           </div>
+          <div>
+            <Label htmlFor="sales-image-urls">{t("fields.imageUrls")}</Label>
+            <textarea
+              id="sales-image-urls"
+              rows={3}
+              value={imageUrlDraft}
+              onChange={(e) => setImageUrlDraft(e.currentTarget.value)}
+              placeholder={t("imageUrlsPlaceholder")}
+              className="mt-1 flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
+            />
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <p className="text-xs text-gray-500">{t("imageUrlHint")}</p>
+              <Button type="button" variant="outline" onClick={addImageUrlsFromDraft} disabled={!imageUrlDraft.trim()}>
+                {t("addImageUrls")}
+              </Button>
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="sales-videos-upload">{t("fields.uploadVideos")}</Label>
+            <Input
+              id="sales-videos-upload"
+              type="file"
+              multiple
+              accept="video/*"
+              onChange={(e) => handleVideoUpload(e.currentTarget.files)}
+            />
+            <p className="mt-1 text-xs text-gray-500">{t("uploadVideoHint")}</p>
+          </div>
           {form.imageUrls.length > 0 ? (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {form.imageUrls.map((url, idx) => (
                 <div
                   key={`${url}-${idx}`}
                   draggable
                   onDragStart={() => setDragIndex(idx)}
-                  onDragOver={(e) => e.preventDefault()}
+                  onDragEnd={() => {
+                    setDragIndex(null);
+                    setDragOverIndex(null);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOverIndex(idx);
+                  }}
+                  onDragLeave={() => setDragOverIndex((prev) => (prev === idx ? null : prev))}
                   onDrop={() => {
                     if (dragIndex == null) return;
                     moveImage(dragIndex, idx);
                     setDragIndex(null);
+                    setDragOverIndex(null);
                   }}
-                  className="flex items-center justify-between rounded-lg border border-gray-200 p-2 text-xs dark:border-gray-700"
+                  className={`space-y-2 rounded-lg border p-2 text-xs transition ${
+                    dragOverIndex === idx
+                      ? "border-siam-blue bg-siam-blue/5 dark:border-siam-blue-light dark:bg-siam-blue-light/10"
+                      : "border-gray-200 dark:border-gray-700"
+                  } ${dragIndex === idx ? "cursor-grabbing opacity-70" : "cursor-grab"}`}
                 >
-                  <span className="truncate">{url}</span>
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-md border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+                    <Image src={url} alt={`Preview ${idx + 1}`} fill className="object-cover" sizes="(max-width: 640px) 100vw, 50vw" />
+                  </div>
+                  <span className="block truncate text-gray-500">{url}</span>
                   <div className="flex items-center gap-1">
                     <Button type="button" size="sm" variant={form.heroImageUrl === url ? "default" : "outline"} onClick={() => setForm((p) => ({ ...p, heroImageUrl: url }))}>
                       {form.heroImageUrl === url ? t("hero") : t("setHero")}
@@ -356,8 +481,11 @@ export function SalesListingFormModal({
                       onClick={() =>
                         setForm((p) => ({
                           ...p,
-                          imageUrls: p.imageUrls.filter((imageUrl) => imageUrl !== url),
-                          heroImageUrl: p.heroImageUrl === url ? p.imageUrls.find((imageUrl) => imageUrl !== url) ?? "" : p.heroImageUrl,
+                          imageUrls: p.imageUrls.filter((_, index) => index !== idx),
+                          heroImageUrl:
+                            p.heroImageUrl === url
+                              ? p.imageUrls.find((_, index) => index !== idx) ?? ""
+                              : p.heroImageUrl,
                         }))
                       }
                     >
@@ -386,6 +514,81 @@ export function SalesListingFormModal({
               }}
               className="mt-1 flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
             />
+          </div>
+          <div>
+            <Label htmlFor="sales-video-urls">{t("fields.videos")}</Label>
+            <textarea
+              id="sales-video-urls"
+              rows={4}
+              value={form.videoUrls.join("\n")}
+              onChange={(e) => {
+                const urls = e.currentTarget.value
+                  .split(/\r?\n/)
+                  .map((url) => url.trim())
+                  .filter(Boolean);
+                setForm((p) => ({ ...p, videoUrls: urls }));
+              }}
+              placeholder={t("videoUrlsPlaceholder")}
+              className="mt-1 flex w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
+            />
+            <p className="mt-1 text-xs text-gray-500">{t("videoHint")}</p>
+            {form.videoUrls.length > 0 ? (
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {form.videoUrls.map((videoUrl) => {
+                  const embedUrl = getVideoEmbedUrl(videoUrl);
+                  const isDirectVideo = /\.(mp4|webm|ogg)(\?.*)?$/i.test(videoUrl);
+                  return (
+                    <div key={videoUrl} className="space-y-2 rounded-lg border border-gray-200 p-2 dark:border-gray-700">
+                      {embedUrl ? (
+                        <div className="relative aspect-video overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+                          <iframe
+                            src={embedUrl}
+                            title={`Preview ${videoUrl}`}
+                            className="h-full w-full"
+                            loading="lazy"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                          />
+                        </div>
+                      ) : isDirectVideo ? (
+                        <video
+                          controls
+                          preload="metadata"
+                          className="w-full rounded-md border border-gray-200 bg-black dark:border-gray-700"
+                        >
+                          <source src={videoUrl} />
+                        </video>
+                      ) : (
+                        <a
+                          href={videoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block rounded-md border border-dashed border-gray-300 px-3 py-2 text-xs text-siam-blue hover:underline dark:border-gray-700"
+                        >
+                          {videoUrl}
+                        </a>
+                      )}
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-xs text-gray-500">{videoUrl}</span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() =>
+                            setForm((prev) => ({
+                              ...prev,
+                              videoUrls: prev.videoUrls.filter((url) => url !== videoUrl),
+                            }))
+                          }
+                        >
+                          {t("remove")}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
           </div>
           <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
             <p className="mb-2 text-sm font-medium">{t("fields.specifications")}</p>

@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getPublicSalesVehicleById } from "@/data-access/sales";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { site } from "@/config/site";
 import { Mail, MessageCircle, Phone } from "lucide-react";
+import { SalesVehicleImageGallery } from "@/components/sales/SalesVehicleImageGallery";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +26,32 @@ function formatDescription(description: string) {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
+}
+
+function getVideoEmbedUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+
+    if (host.includes("youtube.com")) {
+      const videoId = parsed.searchParams.get("v");
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+    }
+
+    if (host === "youtu.be") {
+      const videoId = parsed.pathname.replace("/", "");
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+    }
+
+    if (host.includes("vimeo.com")) {
+      const match = parsed.pathname.match(/\/(\d+)/);
+      return match?.[1] ? `https://player.vimeo.com/video/${match[1]}` : null;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
 }
 
 export default async function SalesVehicleDetailPage({
@@ -66,6 +92,9 @@ export default async function SalesVehicleDetailPage({
       ? (vehicle.specifications as Record<string, string>)
       : {};
   const descriptionLines = formatDescription(vehicle.description);
+  const videoUrls = Array.isArray(vehicle.videoUrls)
+    ? vehicle.videoUrls.filter((url): url is string => typeof url === "string")
+    : [];
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
@@ -75,22 +104,58 @@ export default async function SalesVehicleDetailPage({
 
       <div className="mt-4 grid gap-6 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
-            <Image
-              src={vehicle.heroImageUrl}
-              alt={`${vehicle.make} ${vehicle.model}`}
-              fill
-              sizes="(max-width: 1024px) 100vw, 66vw"
-              className="object-cover"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-            {images.map((url) => (
-              <div key={url} className="relative aspect-[4/3] overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-                <Image src={url} alt={`${vehicle.make} ${vehicle.model} gallery`} fill className="object-cover" sizes="33vw" />
+          <SalesVehicleImageGallery images={images} title={`${vehicle.year} ${vehicle.make} ${vehicle.model}`} />
+          {videoUrls.length > 0 ? (
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("videos")}</p>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {videoUrls.map((videoUrl) => {
+                  const embedUrl = getVideoEmbedUrl(videoUrl);
+                  const isDirectVideo = /\.(mp4|webm|ogg)(\?.*)?$/i.test(videoUrl);
+
+                  if (embedUrl) {
+                    return (
+                      <div key={videoUrl} className="relative aspect-video overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                        <iframe
+                          src={embedUrl}
+                          title={`${vehicle.make} ${vehicle.model} video`}
+                          className="h-full w-full"
+                          loading="lazy"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        />
+                      </div>
+                    );
+                  }
+
+                  if (isDirectVideo) {
+                    return (
+                      <video
+                        key={videoUrl}
+                        controls
+                        preload="metadata"
+                        className="w-full rounded-lg border border-gray-200 bg-black dark:border-gray-700"
+                      >
+                        <source src={videoUrl} />
+                      </video>
+                    );
+                  }
+
+                  return (
+                    <a
+                      key={videoUrl}
+                      href={videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-lg border border-dashed border-gray-300 p-3 text-sm text-siam-blue hover:underline dark:border-gray-700"
+                    >
+                      {videoUrl}
+                    </a>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            </div>
+          ) : null}
         </div>
 
         <Card className="h-fit">

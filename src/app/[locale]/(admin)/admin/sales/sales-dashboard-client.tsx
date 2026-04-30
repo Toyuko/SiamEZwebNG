@@ -23,6 +23,7 @@ type Listing = {
   published: boolean;
   heroImageUrl: string;
   imageUrls: unknown;
+  videoUrls: unknown;
   description: string;
   title: string;
   specifications: unknown;
@@ -74,6 +75,9 @@ function normalizeForForm(listing: Listing): SalesListingInput {
     imageUrls: Array.isArray(listing.imageUrls)
       ? listing.imageUrls.filter((url): url is string => typeof url === "string")
       : [listing.heroImageUrl],
+    videoUrls: Array.isArray(listing.videoUrls)
+      ? listing.videoUrls.filter((url): url is string => typeof url === "string")
+      : [],
     description: listing.description,
     specifications:
       listing.specifications && typeof listing.specifications === "object" ? (listing.specifications as Record<string, string>) : {},

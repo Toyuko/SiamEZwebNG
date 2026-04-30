@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
+const MAX_VIDEO_UPLOAD_BYTES = 100 * 1024 * 1024;
 
 /**
  * POST /api/upload
@@ -15,8 +16,23 @@ export async function POST(request: NextRequest) {
     if (!(file instanceof File) || file.size <= 0) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
-    if (file.size > MAX_UPLOAD_BYTES) {
-      return NextResponse.json({ error: "File too large (max 10 MB)" }, { status: 400 });
+
+    const mimeType = file.type.toLowerCase();
+    const isImage = mimeType.startsWith("image/");
+    const isVideo = mimeType.startsWith("video/");
+    if (!isImage && !isVideo) {
+      return NextResponse.json(
+        { error: "Unsupported file type. Please upload an image or video file." },
+        { status: 400 }
+      );
+    }
+
+    const maxSize = isVideo ? MAX_VIDEO_UPLOAD_BYTES : MAX_IMAGE_UPLOAD_BYTES;
+    if (file.size > maxSize) {
+      return NextResponse.json(
+        { error: isVideo ? "Video too large (max 100 MB)" : "Image too large (max 10 MB)" },
+        { status: 400 }
+      );
     }
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
       return NextResponse.json(
