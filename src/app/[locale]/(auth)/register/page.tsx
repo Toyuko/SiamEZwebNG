@@ -14,9 +14,12 @@ export default async function RegisterPage({
   const { email } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("auth");
+  const enableFacebook = process.env.AUTH_ENABLE_FACEBOOK === "true";
   const providers = {
     google: Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET),
-    facebook: Boolean(process.env.AUTH_FACEBOOK_ID && process.env.AUTH_FACEBOOK_SECRET),
+    facebook: Boolean(
+      enableFacebook && process.env.AUTH_FACEBOOK_ID && process.env.AUTH_FACEBOOK_SECRET
+    ),
     line: Boolean(process.env.AUTH_LINE_ID && process.env.AUTH_LINE_SECRET),
   };
 
