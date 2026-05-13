@@ -75,6 +75,21 @@ export const {
             clientId: process.env.AUTH_FACEBOOK_ID,
             clientSecret: process.env.AUTH_FACEBOOK_SECRET,
             allowDangerousEmailAccountLinking: true,
+            // Default Auth.js Facebook scope is only "email"; Meta expects public_profile with email.
+            authorization: {
+              params: { scope: "public_profile email" },
+            },
+            profile(profile) {
+              const id = String(profile.id);
+              return {
+                id,
+                name: profile.name ?? undefined,
+                email:
+                  profile.email ??
+                  `facebook-${id}@users.noreply.siamez.vercel.app`,
+                image: profile.picture?.data?.url,
+              };
+            },
           }),
         ]
       : []),
