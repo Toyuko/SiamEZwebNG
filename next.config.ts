@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "siam-ez.com", pathname: "/**" },
       { protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/**" },
       { protocol: "https", hostname: "dealers.virtualyard.com.au", pathname: "/**" },
+      { protocol: "https", hostname: "virtualyard.com.au", pathname: "/**" },
     ],
   },
   experimental: {

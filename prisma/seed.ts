@@ -11,6 +11,19 @@ import {
   benelliTrk502xListingDescription,
   benelliTrk502xSpecifications,
 } from "./benelli-trk-502x-listing";
+import {
+  KAWASAKI_NINJA_ZX636R_2003_IMAGE_URLS,
+  KAWASAKI_NINJA_ZX636R_2003_SLUG,
+  kawasakiNinjaZx636r2003Description,
+  kawasakiNinjaZx636r2003Specifications,
+} from "./kawasaki-ninja-zx636r-2003-listing";
+import {
+  DUCATI_PANIGALE_R_2015_IMAGE_URLS,
+  DUCATI_PANIGALE_R_2015_SLUG,
+  ducatiPanigaleR2015Description,
+  ducatiPanigaleR2015Specifications,
+} from "./ducati-panigale-r-2015-listing";
+import { SUNSET_SCOOTERS_BATCH_LISTINGS } from "./sunset-scooters-batch-listings";
 
 const prisma = new PrismaClient();
 
@@ -239,6 +252,166 @@ async function main() {
       },
     });
     console.log("Sales listing upserted:", BENELLI_TRK_502X_SLUG, `(${BENELLI_TRK_502X_IMAGE_URLS.length} photos)`);
+  }
+
+  const kawasakiHeroUrl = KAWASAKI_NINJA_ZX636R_2003_IMAGE_URLS[0];
+  if (!kawasakiHeroUrl) {
+    console.warn("Kawasaki Ninja ZX-636R seed skipped: no image URLs.");
+  } else {
+    await prisma.salesVehicle.upsert({
+      where: { slug: KAWASAKI_NINJA_ZX636R_2003_SLUG },
+      create: {
+        slug: KAWASAKI_NINJA_ZX636R_2003_SLUG,
+        title: "2003 Kawasaki Ninja ZX-636R",
+        make: "Kawasaki",
+        model: "Ninja ZX-636R",
+        year: 2003,
+        mileageKm: 41_000,
+        priceAmount: 109_000,
+        priceCurrency: "THB",
+        category: "motorcycle",
+        status: "available",
+        heroMediaType: "image",
+        heroImageUrl: kawasakiHeroUrl,
+        heroVideoUrl: null,
+        imageUrls: KAWASAKI_NINJA_ZX636R_2003_IMAGE_URLS,
+        videoUrls: [],
+        description: kawasakiNinjaZx636r2003Description,
+        specifications: kawasakiNinjaZx636r2003Specifications,
+        published: true,
+        createdById: adminForListings?.id ?? null,
+      },
+      update: {
+        title: "2003 Kawasaki Ninja ZX-636R",
+        make: "Kawasaki",
+        model: "Ninja ZX-636R",
+        year: 2003,
+        mileageKm: 41_000,
+        priceAmount: 109_000,
+        priceCurrency: "THB",
+        category: "motorcycle",
+        status: "available",
+        heroMediaType: "image",
+        heroImageUrl: kawasakiHeroUrl,
+        heroVideoUrl: null,
+        imageUrls: KAWASAKI_NINJA_ZX636R_2003_IMAGE_URLS,
+        videoUrls: [],
+        description: kawasakiNinjaZx636r2003Description,
+        specifications: kawasakiNinjaZx636r2003Specifications,
+        published: true,
+      },
+    });
+    console.log(
+      "Sales listing upserted:",
+      KAWASAKI_NINJA_ZX636R_2003_SLUG,
+      `(${KAWASAKI_NINJA_ZX636R_2003_IMAGE_URLS.length} photos)`
+    );
+  }
+
+  const ducatiHeroUrl = DUCATI_PANIGALE_R_2015_IMAGE_URLS[0];
+  if (!ducatiHeroUrl) {
+    console.warn("Ducati Panigale R seed skipped: no image URLs.");
+  } else {
+    await prisma.salesVehicle.upsert({
+      where: { slug: DUCATI_PANIGALE_R_2015_SLUG },
+      create: {
+        slug: DUCATI_PANIGALE_R_2015_SLUG,
+        title: "2015 Ducati Panigale R",
+        make: "Ducati",
+        model: "Panigale R",
+        year: 2015,
+        mileageKm: 17_200,
+        priceAmount: 450_000,
+        priceCurrency: "THB",
+        category: "motorcycle",
+        status: "available",
+        heroMediaType: "image",
+        heroImageUrl: ducatiHeroUrl,
+        heroVideoUrl: null,
+        imageUrls: DUCATI_PANIGALE_R_2015_IMAGE_URLS,
+        videoUrls: [],
+        description: ducatiPanigaleR2015Description,
+        specifications: ducatiPanigaleR2015Specifications,
+        published: true,
+        createdById: adminForListings?.id ?? null,
+      },
+      update: {
+        title: "2015 Ducati Panigale R",
+        make: "Ducati",
+        model: "Panigale R",
+        year: 2015,
+        mileageKm: 17_200,
+        priceAmount: 450_000,
+        priceCurrency: "THB",
+        category: "motorcycle",
+        status: "available",
+        heroMediaType: "image",
+        heroImageUrl: ducatiHeroUrl,
+        heroVideoUrl: null,
+        imageUrls: DUCATI_PANIGALE_R_2015_IMAGE_URLS,
+        videoUrls: [],
+        description: ducatiPanigaleR2015Description,
+        specifications: ducatiPanigaleR2015Specifications,
+        published: true,
+      },
+    });
+    console.log(
+      "Sales listing upserted:",
+      DUCATI_PANIGALE_R_2015_SLUG,
+      `(${DUCATI_PANIGALE_R_2015_IMAGE_URLS.length} photos)`
+    );
+  }
+
+  for (const listing of SUNSET_SCOOTERS_BATCH_LISTINGS) {
+    const hero = listing.imageUrls[0];
+    if (!hero) {
+      console.warn("Sunset batch listing skipped (no images):", listing.slug);
+      continue;
+    }
+    await prisma.salesVehicle.upsert({
+      where: { slug: listing.slug },
+      create: {
+        slug: listing.slug,
+        title: listing.title,
+        make: listing.make,
+        model: listing.model,
+        year: listing.year,
+        mileageKm: listing.mileageKm,
+        priceAmount: listing.priceAmount,
+        priceCurrency: "THB",
+        category: "motorcycle",
+        status: "available",
+        heroMediaType: "image",
+        heroImageUrl: hero,
+        heroVideoUrl: null,
+        imageUrls: listing.imageUrls,
+        videoUrls: [],
+        description: listing.description,
+        specifications: listing.specifications,
+        published: true,
+        createdById: adminForListings?.id ?? null,
+      },
+      update: {
+        title: listing.title,
+        make: listing.make,
+        model: listing.model,
+        year: listing.year,
+        mileageKm: listing.mileageKm,
+        priceAmount: listing.priceAmount,
+        priceCurrency: "THB",
+        category: "motorcycle",
+        status: "available",
+        heroMediaType: "image",
+        heroImageUrl: hero,
+        heroVideoUrl: null,
+        imageUrls: listing.imageUrls,
+        videoUrls: [],
+        description: listing.description,
+        specifications: listing.specifications,
+        published: true,
+      },
+    });
+    console.log("Sales listing upserted:", listing.slug, `(${listing.imageUrls.length} photos)`);
   }
 }
 

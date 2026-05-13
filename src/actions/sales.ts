@@ -4,6 +4,25 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { z } from "zod";
 
+/** Absolute http(s) URL or site-root path (e.g. /sales/…/photo.jpg). */
+const vehicleImageSrcSchema = z
+  .string()
+  .min(2)
+  .refine(
+    (val) => {
+      if (val.startsWith("/")) {
+        return val.length > 1 && !val.includes("..");
+      }
+      try {
+        new URL(val);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    { message: "Image URL must be absolute http(s) or a root-relative path" }
+  );
+
 const listingSchema = z
   .object({
     title: z.string().min(3),
@@ -16,9 +35,9 @@ const listingSchema = z
     category: z.enum(["car", "motorcycle"]),
     status: z.enum(["available", "reserved", "sold"]),
     heroMediaType: z.enum(["image", "video"]).default("image"),
-    heroImageUrl: z.string().url(),
+    heroImageUrl: vehicleImageSrcSchema,
     heroVideoUrl: z.string().url().nullable().optional().default(null),
-    imageUrls: z.array(z.string().url()).default([]),
+    imageUrls: z.array(vehicleImageSrcSchema).default([]),
     videoUrls: z.array(z.string().url()).optional().default([]),
     description: z.string().min(20),
     specifications: z.record(z.string(), z.string()).optional(),
