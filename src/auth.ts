@@ -75,9 +75,10 @@ export const {
             clientId: process.env.AUTH_FACEBOOK_ID,
             clientSecret: process.env.AUTH_FACEBOOK_SECRET,
             allowDangerousEmailAccountLinking: true,
-            // Default Auth.js Facebook scope is only "email"; Meta expects public_profile with email.
+            // Some Meta app configurations reject "email" scope in development.
+            // Request only public_profile and rely on fallback email when needed.
             authorization: {
-              params: { scope: "public_profile email" },
+              params: { scope: "public_profile" },
             },
             profile(profile) {
               const id = String(profile.id);
