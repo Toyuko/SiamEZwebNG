@@ -75,9 +75,9 @@ export const serviceIcons: Record<ServiceSlug, string> = {
 
 /** Thumbnail images for service cards on public pages */
 export const serviceThumbnailImages: Record<ServiceSlug, string> = {
-  "marriage-registration": "/images/gallery/siamez-023.jpg",
-  "translation-services": "/images/gallery/siamez-011.jpg",
-  "driver-license": "/images/gallery/siamez-010.jpg",
+  "marriage-registration": "/images/services/marriage-registration-poster.png",
+  "translation-services": "/images/services/translation-services-poster.png",
+  "driver-license": "/images/services/driver-license-poster.png",
   "police-clearance": "/images/gallery/siamez-024.jpg",
   "visa-services": "/images/gallery/siamez-031.jpg",
   "construction-handyman": "/images/gallery/siamez-040.jpg",
