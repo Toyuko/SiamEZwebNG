@@ -11,7 +11,7 @@ import { Stepper } from "@/components/ui/stepper";
 import { submitBooking } from "@/actions/booking";
 import { clientDetailsSchema } from "@/lib/booking-schema";
 import { cn } from "@/lib/utils";
-import { FileText, Upload, X } from "lucide-react";
+import { FileText, Store, Upload, X } from "lucide-react";
 
 const SERVICE_SLUG = "car-motorbike-finder-selling-service";
 
@@ -67,6 +67,7 @@ export function CarMotorbikeFinderBookingWizard({
   const [location, setLocation] = useState("");
   const [notes, setNotes] = useState("");
   const [documents, setDocuments] = useState<DocumentMeta[]>([]);
+  const [interestedInSalesListing, setInterestedInSalesListing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -83,6 +84,9 @@ export function CarMotorbikeFinderBookingWizard({
   const isLastStep = stepIndex === STEP_IDS.length - 1;
   const loginHref = `/${locale}/login?redirect=/${locale}/book/${SERVICE_SLUG}`;
   const registerHref = `/${locale}/register?redirect=/${locale}/book/${SERVICE_SLUG}`;
+  const portalSalesRedirectPath = `/${locale}/portal/sales`;
+  const loginSalesHref = `/${locale}/login?redirect=${encodeURIComponent(portalSalesRedirectPath)}`;
+  const registerSalesHref = `/${locale}/register?redirect=${encodeURIComponent(portalSalesRedirectPath)}`;
 
   const isBuyFlow = requestType === "buy" || requestType === "both";
   const isSellFlow = requestType === "sell" || requestType === "both";
@@ -182,6 +186,7 @@ export function CarMotorbikeFinderBookingWizard({
       vehicleFinder: {
         requestType,
         vehicleTypes,
+        interestedInSalesListing,
         timeline: timeline.trim() || undefined,
         buy: isBuyFlow
           ? {
@@ -495,6 +500,47 @@ export function CarMotorbikeFinderBookingWizard({
               ) : null}
             </div>
 
+            <div className="rounded-lg border border-siam-blue/20 bg-siam-blue/[0.03] p-4 dark:border-siam-blue/30 dark:bg-siam-blue/5">
+              <div className="flex gap-3">
+                <Store className="mt-0.5 h-5 w-5 shrink-0 text-siam-blue dark:text-siam-blue-light" aria-hidden />
+                <div className="min-w-0 space-y-3">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{t("salesPlatformTitle")}</p>
+                    <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{t("salesPlatformBody")}</p>
+                  </div>
+                  <label className="flex cursor-pointer items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={interestedInSalesListing}
+                      onChange={(e) => setInterestedInSalesListing(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-siam-blue focus:ring-siam-blue"
+                    />
+                    <span className="text-sm text-gray-800 dark:text-gray-200">{t("salesPlatformCheckbox")}</span>
+                  </label>
+                  {interestedInSalesListing ? (
+                    isGuest ? (
+                      <div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">{t("salesPlatformGuestActions")}</p>
+                        <div className="mt-2 flex flex-wrap gap-2 text-sm">
+                          <a href={loginSalesHref} className="font-medium text-siam-blue hover:underline">
+                            {t("salesPlatformSignIn")}
+                          </a>
+                          <span className="text-gray-400">·</span>
+                          <a href={registerSalesHref} className="font-medium text-siam-blue hover:underline">
+                            {t("salesPlatformCreateAccount")}
+                          </a>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button asChild variant="outline" size="sm" className="mt-1 w-full sm:w-auto">
+                        <Link href="/portal/sales">{t("salesPlatformGoToMySales")}</Link>
+                      </Button>
+                    )
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
             {isGuest ? (
               <div className="rounded-lg border border-gray-200 bg-gray-50/50 p-4 dark:border-gray-700 dark:bg-gray-800/30">
                 <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{t("guestAccountTitle")}</p>
@@ -538,6 +584,12 @@ export function CarMotorbikeFinderBookingWizard({
                 <p className="text-sm text-gray-700 dark:text-gray-300">
                   <span className="font-medium">{t("timeline")}: </span>
                   {timeline}
+                </p>
+              ) : null}
+              {interestedInSalesListing ? (
+                <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                  <span className="font-medium">{t("reviewSalesPlatform")}: </span>
+                  {t("reviewSalesPlatformYes")}
                 </p>
               ) : null}
             </div>

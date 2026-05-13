@@ -2,6 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { LoginForm } from "./LoginForm";
 import { Link } from "@/i18n/navigation";
+import { safeRedirectQueryParam } from "@/lib/auth-redirect";
 
 export default async function LoginPage({
   params,
@@ -11,7 +12,9 @@ export default async function LoginPage({
   searchParams: Promise<{ redirect?: string }>;
 }) {
   const { locale } = await params;
-  const { redirect: redirectTo } = await searchParams;
+  const { redirect: redirectRaw } = await searchParams;
+  const redirectTo = safeRedirectQueryParam(redirectRaw);
+  const registerHref = redirectTo ? `/register?redirect=${encodeURIComponent(redirectTo)}` : "/register";
   setRequestLocale(locale);
   const t = await getTranslations("auth");
   const enableFacebook = process.env.AUTH_ENABLE_FACEBOOK === "true";
@@ -35,7 +38,7 @@ export default async function LoginPage({
       <LoginForm redirectTo={redirectTo} providers={providers} />
       <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
         {t("noAccount")}{" "}
-        <Link href="/register" className="font-medium text-siam-blue hover:underline">
+        <Link href={registerHref} className="font-medium text-siam-blue hover:underline">
           {t("register")}
         </Link>
       </p>

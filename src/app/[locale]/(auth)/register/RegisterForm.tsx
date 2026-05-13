@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { register } from "@/actions/auth";
+import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -11,15 +12,15 @@ type FieldErrors = { email?: string[]; password?: string[]; name?: string[] };
 
 function RegisterFormInner({
   state,
-  locale,
   prefillEmail,
   pending,
   providers,
+  callbackUrl,
 }: {
   state: { error?: FieldErrors };
-  locale: string;
   prefillEmail?: string;
   pending: boolean;
+  callbackUrl: string;
   providers: {
     google: boolean;
     facebook: boolean;
@@ -27,7 +28,6 @@ function RegisterFormInner({
   };
 }) {
   const t = useTranslations("auth");
-  const callbackUrl = `/${locale}/portal`;
   const hasSocialProviders = providers.google || providers.facebook || providers.line;
 
   return (
@@ -156,10 +156,13 @@ function RegisterFormInner({
 export function RegisterForm({
   locale,
   prefillEmail,
+  redirectTo,
   providers,
 }: {
   locale: string;
   prefillEmail?: string;
+  /** Relative path after sign-up (e.g. /en/portal/sales). */
+  redirectTo?: string;
   providers: {
     google: boolean;
     facebook: boolean;
@@ -169,6 +172,7 @@ export function RegisterForm({
   const [state, setState] = useState<{ error?: FieldErrors }>({});
   const [pending, setPending] = useState(false);
   const t = useTranslations("auth");
+  const callbackUrl = resolvePostAuthRedirect(locale, redirectTo);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -197,7 +201,7 @@ export function RegisterForm({
       email,
       password,
       redirect: false,
-      callbackUrl: `/${locale}/portal`,
+      callbackUrl,
     });
 
     setPending(false);
@@ -207,16 +211,16 @@ export function RegisterForm({
       return;
     }
 
-    window.location.assign(`/${locale}/portal`);
+    window.location.assign(callbackUrl);
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <RegisterFormInner
         state={state}
-        locale={locale}
         prefillEmail={prefillEmail}
         pending={pending}
+        callbackUrl={callbackUrl}
         providers={providers}
       />
     </form>

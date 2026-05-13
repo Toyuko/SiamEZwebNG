@@ -2,16 +2,19 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { RegisterForm } from "./RegisterForm";
 import { Link } from "@/i18n/navigation";
+import { safeRedirectQueryParam } from "@/lib/auth-redirect";
 
 export default async function RegisterPage({
   params,
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ email?: string }>;
+  searchParams: Promise<{ email?: string; redirect?: string }>;
 }) {
   const { locale } = await params;
-  const { email } = await searchParams;
+  const { email, redirect: redirectRaw } = await searchParams;
+  const redirectTo = safeRedirectQueryParam(redirectRaw);
+  const loginHref = redirectTo ? `/login?redirect=${encodeURIComponent(redirectTo)}` : "/login";
   setRequestLocale(locale);
   const t = await getTranslations("auth");
   const enableFacebook = process.env.AUTH_ENABLE_FACEBOOK === "true";
@@ -32,10 +35,15 @@ export default async function RegisterPage({
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("register")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("registerSubtitle")}</p>
       </div>
-      <RegisterForm locale={locale} prefillEmail={email ?? undefined} providers={providers} />
+      <RegisterForm
+        locale={locale}
+        prefillEmail={email ?? undefined}
+        redirectTo={redirectTo}
+        providers={providers}
+      />
       <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
         {t("hasAccount")}{" "}
-        <Link href="/login" className="font-medium text-siam-blue hover:underline">
+        <Link href={loginHref} className="font-medium text-siam-blue hover:underline">
           {t("login")}
         </Link>
       </p>
