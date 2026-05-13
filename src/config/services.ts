@@ -90,19 +90,20 @@ export const serviceThumbnailImages: Record<ServiceSlug, string> = {
 };
 
 /**
- * Tailwind `object-position` classes for service card images (used with `object-cover`).
- * Values are full `object-*` classes so posters can use arbitrary focal points for faces.
+ * CSS `object-position` values for service card images (`object-cover` via Next/Image).
+ * Using plain strings + inline `style` avoids Tailwind missing arbitrary `object-*` classes.
+ * Vertical % nudges the focal band (faces sit below large headers on portrait posters).
  */
 export const serviceThumbnailObjectPosition: Partial<Record<ServiceSlug, string>> = {
-  "marriage-registration": "object-top",
-  "translation-services": "object-top",
-  "driver-license": "object-top",
-  "police-clearance": "object-top",
-  "visa-services": "object-[center_28%]",
-  "construction-handyman": "object-top",
-  "car-motorbike-finder-selling-service": "object-[center_27%]",
-  "vehicle-registration": "object-[center_26%]",
-  "transportation-services": "object-[center_24%]",
-  "private-driver-service": "object-[center_25%]",
-  "event-planning-venue-services": "object-left-bottom",
+  "marriage-registration": "center 18%",
+  "translation-services": "center 20%",
+  "driver-license": "center 17%",
+  "police-clearance": "center 20%",
+  "visa-services": "center 30%",
+  "construction-handyman": "center 16%",
+  "car-motorbike-finder-selling-service": "center 16%",
+  "vehicle-registration": "center 22%",
+  "transportation-services": "center 20%",
+  "private-driver-service": "center 14%",
+  "event-planning-venue-services": "18% 78%",
 };

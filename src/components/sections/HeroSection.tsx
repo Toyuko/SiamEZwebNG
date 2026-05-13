@@ -3,10 +3,20 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { site } from "@/config/site";
 
+/** Must stay in sync with `.hero-slide` animation duration in `globals.css` (15s). */
+const HERO_SLIDESHOW_DURATION_S = 15;
+
 const heroSlideshowImages = [
-  "/images/gallery/siamez-011.jpg",
-  "/images/gallery/siamez-023.jpg",
-  "/images/gallery/siamez-032.jpg",
+  "/images/gallery/hero-home/hero-01.png",
+  "/images/gallery/hero-home/hero-02.png",
+  "/images/gallery/hero-home/hero-03.png",
+  "/images/gallery/hero-home/hero-04.png",
+  "/images/gallery/hero-home/hero-05.png",
+  "/images/gallery/hero-home/hero-06.png",
+  "/images/gallery/hero-home/hero-07.png",
+  "/images/gallery/hero-home/hero-08.png",
+  "/images/gallery/hero-home/hero-09.png",
+  "/images/gallery/hero-home/hero-10.png",
 ];
 
 interface HeroSectionProps {
@@ -38,7 +48,9 @@ export function HeroSection({
           <div
             key={src}
             className="hero-slide absolute inset-0"
-            style={{ animationDelay: `${index * 5}s` }}
+            style={{
+              animationDelay: `${(index * HERO_SLIDESHOW_DURATION_S) / heroSlideshowImages.length}s`,
+            }}
           >
             <Image
               src={src}
