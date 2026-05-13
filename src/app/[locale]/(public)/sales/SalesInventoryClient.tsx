@@ -99,6 +99,19 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
         </p>
       </div>
 
+      <div className="mb-6 rounded-xl border border-siam-blue/25 bg-siam-blue/[0.06] p-4 dark:bg-siam-blue/10">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{t("finderPromoTitle")}</h2>
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{t("finderPromoBody")}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button asChild size="sm" className="bg-siam-blue text-white hover:bg-siam-blue-light">
+            <Link href="/book/car-motorbike-finder-selling-service">{t("finderBookFinder")}</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm" className="border-siam-blue text-siam-blue hover:bg-siam-blue/10">
+            <Link href="/services/car-motorbike-finder-selling-service">{t("finderServiceDetails")}</Link>
+          </Button>
+        </div>
+      </div>
+
       <Card>
         <CardContent className="space-y-4 p-4 md:p-6">
           <div className="grid gap-3 md:grid-cols-4">
@@ -258,7 +271,18 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
       </div>
 
       {vehicles.length === 0 ? (
-        <div className="mt-8 rounded-lg border border-dashed border-gray-300 p-8 text-center text-gray-500 dark:border-gray-700">{t("emptyState")}</div>
+        <div className="mt-8 space-y-4 rounded-lg border border-dashed border-gray-300 p-8 text-center dark:border-gray-700">
+          <p className="font-medium text-gray-900 dark:text-gray-100">{t("emptyStateFinderTitle")}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{t("emptyStateFinderBody")}</p>
+          <div className="flex flex-wrap justify-center gap-2 pt-2">
+            <Button asChild size="sm" className="bg-siam-blue text-white hover:bg-siam-blue-light">
+              <Link href="/book/car-motorbike-finder-selling-service">{t("finderBookFinder")}</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/services/car-motorbike-finder-selling-service">{t("finderServiceDetails")}</Link>
+            </Button>
+          </div>
+        </div>
       ) : null}
 
       {pagination.totalPages > 1 ? (

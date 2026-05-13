@@ -278,6 +278,18 @@ export default async function SalesVehicleDetailPage({
                 </Button>
               </div>
             </div>
+            <div className="rounded-lg border border-siam-blue/25 bg-siam-blue/[0.06] p-4 dark:bg-siam-blue/10">
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("finderDetailTitle")}</p>
+              <p className="mt-1 text-xs leading-relaxed text-gray-600 dark:text-gray-400">{t("finderDetailBody")}</p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <Button asChild variant="outline" size="sm" className="w-full border-siam-blue text-siam-blue sm:w-auto">
+                  <Link href="/services/car-motorbike-finder-selling-service">{t("finderServiceDetails")}</Link>
+                </Button>
+                <Button asChild size="sm" className="w-full bg-siam-blue text-white hover:bg-siam-blue-light sm:w-auto">
+                  <Link href="/book/car-motorbike-finder-selling-service">{t("finderBookFinder")}</Link>
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

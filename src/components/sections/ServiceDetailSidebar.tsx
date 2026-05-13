@@ -3,11 +3,13 @@
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ShoppingCart, Phone, MessageCircle, Star, HelpCircle, CheckCircle2 } from "lucide-react";
+import { ShoppingCart, Phone, MessageCircle, Star, HelpCircle, CheckCircle2, Car } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { site } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
+
+const VEHICLE_FINDER_SLUG = "car-motorbike-finder-selling-service";
 
 interface ServiceDetailSidebarProps {
   priceAmount: number | null;
@@ -34,6 +36,7 @@ export function ServiceDetailSidebar({
   helpDescription,
 }: ServiceDetailSidebarProps) {
   const t = useTranslations("services");
+  const tSales = useTranslations("sales");
   const whatsappUrl = `https://wa.me/${site.phone.replace(/\D/g, "")}`;
 
   return (
@@ -85,6 +88,19 @@ export function ServiceDetailSidebar({
               {t("bookThisService")}
             </Link>
           </Button>
+          {serviceSlug === VEHICLE_FINDER_SLUG ? (
+            <Button
+              asChild
+              variant="outline"
+              className="mt-3 w-full border-siam-blue text-siam-blue hover:bg-siam-blue/10 dark:border-siam-blue dark:text-siam-blue-light dark:hover:bg-siam-blue/20"
+              size="lg"
+            >
+              <Link href="/sales">
+                <Car className="mr-2 h-4 w-4" />
+                {tSales("finderBrowseInventory")}
+              </Link>
+            </Button>
+          ) : null}
           <Button
             asChild
             variant="outline"
