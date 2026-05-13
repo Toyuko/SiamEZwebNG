@@ -2,6 +2,7 @@ import {
   serviceSlugs,
   serviceDisplayNames,
   serviceShortDescriptions,
+  type ServiceSlug,
 } from "@/config/services";
 import { prisma } from "@/lib/db";
 
@@ -83,6 +84,53 @@ export async function getServiceBySlug(slug: string) {
   } catch (error) {
     // If database is not available, return null to allow fallback to config
     console.warn("Database unavailable, falling back to config:", error);
+    return null;
+  }
+}
+
+/**
+ * For booking and other flows that require a real `Service` row (with `id`).
+ * If the slug is canonical (see `serviceSlugs`) but missing from the DB — e.g.
+ * after adding a new service in code before re-seeding — upsert from config.
+ */
+export async function getOrEnsureServiceBySlug(slug: string) {
+  const existing = await getServiceBySlug(slug);
+  if (existing) {
+    return existing;
+  }
+
+  if (!serviceSlugs.includes(slug as ServiceSlug)) {
+    return null;
+  }
+
+  const canonical = slug as ServiceSlug;
+  const name = serviceDisplayNames[canonical];
+  const shortDesc = serviceShortDescriptions[canonical];
+  const description = shortDesc;
+  const sortOrder = serviceSlugs.indexOf(canonical);
+
+  try {
+    return await prisma.service.upsert({
+      where: { slug },
+      create: {
+        slug,
+        name,
+        shortDescription: shortDesc,
+        description,
+        type: "quote",
+        sortOrder,
+        active: true,
+        priceCurrency: "THB",
+      },
+      update: {
+        name,
+        shortDescription: shortDesc,
+        description,
+        active: true,
+      },
+    });
+  } catch (error) {
+    console.warn("getOrEnsureServiceBySlug failed:", error);
     return null;
   }
 }

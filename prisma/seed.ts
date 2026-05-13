@@ -60,6 +60,16 @@ const services = [
     sortOrder: 6,
   },
   {
+    slug: "car-motorbike-finder-selling-service",
+    name: "Car & Motorbike Finding and Selling Service",
+    shortDescription:
+      "Buy or sell cars and motorcycles in Thailand with full negotiation, paperwork, and registration support from start to finish.",
+    description:
+      "SiamEZ Auto & Bike Finder helps you buy or sell cars, motorcycles, vans, and big bikes in Thailand. We handle sourcing, negotiation, paperwork, and registration with transparent support for locals and expats.",
+    type: "quote" as const,
+    sortOrder: 7,
+  },
+  {
     slug: "vehicle-registration",
     name: "Vehicle Registration",
     shortDescription:
@@ -67,7 +77,7 @@ const services = [
     description:
       "Professional vehicle registration assistance across Thailand: ownership transfers, tax and insurance renewals, plate changes, book updates, and lost book replacement. Bangkok one-day processing for qualifying BKK-plated cars and motorcycles; other provinces quoted on inquiry. Service fees are transparent; DLT fees are separate.",
     type: "quote" as const,
-    sortOrder: 7,
+    sortOrder: 8,
   },
   {
     slug: "transportation-services",
@@ -75,7 +85,15 @@ const services = [
     shortDescription: "Reliable airport transfers, city tours, and inter-city transportation with comfortable vehicles.",
     description: "Reliable airport transfers, city tours, and inter-city transportation with comfortable vehicles. Book for a single trip or regular transfers.",
     type: "quote" as const,
-    sortOrder: 8,
+    sortOrder: 9,
+  },
+  {
+    slug: "private-driver-service",
+    name: "Private Driver Service",
+    shortDescription: "Professional private drivers for daily use, business trips, or special occasions with flexible packages.",
+    description: "Professional private drivers for daily use, business trips, or special occasions. Flexible hourly, daily, or monthly packages available.",
+    type: "quote" as const,
+    sortOrder: 10,
   },
   {
     slug: "basic-translation",
@@ -85,15 +103,7 @@ const services = [
     type: "fixed" as const,
     priceAmount: 50000, // 500 THB in satang (smallest unit)
     priceCurrency: "THB",
-    sortOrder: 10,
-  },
-  {
-    slug: "private-driver-service",
-    name: "Private Driver Service",
-    shortDescription: "Professional private drivers for daily use, business trips, or special occasions with flexible packages.",
-    description: "Professional private drivers for daily use, business trips, or special occasions. Flexible hourly, daily, or monthly packages available.",
-    type: "quote" as const,
-    sortOrder: 9,
+    sortOrder: 11,
   },
   {
     slug: "event-planning-venue-services",
@@ -103,7 +113,7 @@ const services = [
     description:
       "We have partnered with The Red Door Bkk to bring you exceptional event planning and venue services.",
     type: "quote" as const,
-    sortOrder: 11,
+    sortOrder: 12,
   },
 ];
 

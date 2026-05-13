@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { getServiceBySlug } from "@/data-access/service";
+import { getOrEnsureServiceBySlug } from "@/data-access/service";
 import { Button } from "@/components/ui/button";
 import { BookingWizard } from "@/components/booking/BookingWizard";
 import { DriverLicenseBookingWizard } from "@/components/booking/DriverLicenseBookingWizard";
@@ -18,7 +18,7 @@ export default async function BookServicePage({
   setRequestLocale(locale);
   const session = await getSession();
   const [service, t, tCommon] = await Promise.all([
-    getServiceBySlug(serviceSlug),
+    getOrEnsureServiceBySlug(serviceSlug),
     getTranslations("booking"),
     getTranslations("common"),
   ]);

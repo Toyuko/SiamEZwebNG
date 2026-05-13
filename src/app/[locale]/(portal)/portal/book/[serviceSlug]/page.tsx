@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/navigation";
-import { getServiceBySlug } from "@/data-access/service";
+import { getOrEnsureServiceBySlug } from "@/data-access/service";
 import { Button } from "@/components/ui/button";
 
 export default async function BookServiceEntryPage({
@@ -9,7 +9,7 @@ export default async function BookServiceEntryPage({
   params: Promise<{ serviceSlug: string }>;
 }) {
   const { serviceSlug } = await params;
-  const service = await getServiceBySlug(serviceSlug);
+  const service = await getOrEnsureServiceBySlug(serviceSlug);
   if (!service) notFound();
 
   return (
