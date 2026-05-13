@@ -5,6 +5,12 @@
 
 import { PrismaClient } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
+import {
+  BENELLI_TRK_502X_IMAGE_URLS,
+  BENELLI_TRK_502X_SLUG,
+  benelliTrk502xListingDescription,
+  benelliTrk502xSpecifications,
+} from "./benelli-trk-502x-listing";
 
 const prisma = new PrismaClient();
 
@@ -178,6 +184,62 @@ async function main() {
     update: {},
   });
   console.log("Customer user ensured:", customerEmail);
+
+  const adminForListings = await prisma.user.findFirst({
+    where: { role: "admin" },
+    orderBy: { createdAt: "asc" },
+    select: { id: true },
+  });
+
+  const heroUrl = BENELLI_TRK_502X_IMAGE_URLS[0];
+  if (!heroUrl) {
+    console.warn("Benelli TRK 502X seed skipped: no image URLs.");
+  } else {
+    await prisma.salesVehicle.upsert({
+      where: { slug: BENELLI_TRK_502X_SLUG },
+      create: {
+        slug: BENELLI_TRK_502X_SLUG,
+        title: "2022 Benelli TRK 502X ABS",
+        make: "Benelli",
+        model: "TRK 502X ABS",
+        year: 2022,
+        mileageKm: 6898,
+        priceAmount: 149_800,
+        priceCurrency: "THB",
+        category: "motorcycle",
+        status: "available",
+        heroMediaType: "image",
+        heroImageUrl: heroUrl,
+        heroVideoUrl: null,
+        imageUrls: BENELLI_TRK_502X_IMAGE_URLS,
+        videoUrls: [],
+        description: benelliTrk502xListingDescription,
+        specifications: benelliTrk502xSpecifications,
+        published: true,
+        createdById: adminForListings?.id ?? null,
+      },
+      update: {
+        title: "2022 Benelli TRK 502X ABS",
+        make: "Benelli",
+        model: "TRK 502X ABS",
+        year: 2022,
+        mileageKm: 6898,
+        priceAmount: 149_800,
+        priceCurrency: "THB",
+        category: "motorcycle",
+        status: "available",
+        heroMediaType: "image",
+        heroImageUrl: heroUrl,
+        heroVideoUrl: null,
+        imageUrls: BENELLI_TRK_502X_IMAGE_URLS,
+        videoUrls: [],
+        description: benelliTrk502xListingDescription,
+        specifications: benelliTrk502xSpecifications,
+        published: true,
+      },
+    });
+    console.log("Sales listing upserted:", BENELLI_TRK_502X_SLUG, `(${BENELLI_TRK_502X_IMAGE_URLS.length} photos)`);
+  }
 }
 
 main()
