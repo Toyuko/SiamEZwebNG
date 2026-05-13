@@ -90,20 +90,15 @@ export const serviceThumbnailImages: Record<ServiceSlug, string> = {
 };
 
 /**
- * CSS `object-position` values for service card images (`object-cover` via Next/Image).
- * Using plain strings + inline `style` avoids Tailwind missing arbitrary `object-*` classes.
- * Vertical % nudges the focal band (faces sit below large headers on portrait posters).
+ * CSS `object-position` for `object-cover` thumbnails. Only list slugs that need a
+ * non-default crop (e.g. portrait posters); all others use browser default (center).
  */
 export const serviceThumbnailObjectPosition: Partial<Record<ServiceSlug, string>> = {
   "marriage-registration": "center 18%",
   "translation-services": "center 20%",
   "driver-license": "center 17%",
-  "police-clearance": "center 20%",
-  "visa-services": "center 30%",
   "construction-handyman": "center 16%",
   "car-motorbike-finder-selling-service": "center 16%",
-  "vehicle-registration": "center 22%",
-  "transportation-services": "center 20%",
   "private-driver-service": "center 14%",
   "event-planning-venue-services": "18% 78%",
 };

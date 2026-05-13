@@ -51,7 +51,7 @@ export function ServiceCard({
   return (
     <Card className="flex h-full flex-col overflow-hidden shadow-sm transition-all duration-200 hover:shadow-lg">
       {thumbnailImage ? (
-        <div className="relative h-44 w-full sm:h-52">
+        <div className="relative h-40 w-full">
           <Image
             src={thumbnailImage}
             alt={name}
