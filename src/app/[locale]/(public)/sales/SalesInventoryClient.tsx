@@ -70,14 +70,25 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
     );
   }, [filters, bounds]);
 
-  const setParam = (key: string, value: string | number | undefined) => {
-    const params = new URLSearchParams(window.location.search);
-    if (value === undefined || value === "" || value === "all") {
-      params.delete(key);
-    } else {
-      params.set(key, String(value));
+  /** Apply several query changes in one navigation (sequential setParam calls would read stale `location` and drop prior updates). */
+  const patchSearchParams = (updates: Record<string, string | number | undefined>) => {
+    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+    for (const [key, raw] of Object.entries(updates)) {
+      if (raw === undefined || raw === "" || raw === "all") {
+        params.delete(key);
+        continue;
+      }
+      if (key === "page") {
+        const n = typeof raw === "number" ? raw : Number(raw);
+        if (Number.isFinite(n) && n <= 1) {
+          params.delete("page");
+          continue;
+        }
+      }
+      params.set(key, String(raw));
     }
-    router.push(`${pathname}${params.toString() ? `?${params.toString()}` : ""}`);
+    const qs = params.toString();
+    router.push(`${pathname}${qs ? `?${qs}` : ""}`);
   };
 
   const goToPage = (nextPage: number) => {
@@ -121,8 +132,10 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
                 placeholder={t("searchPlaceholder")}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    setParam("search", (e.currentTarget as HTMLInputElement).value.trim());
-                    setParam("page", 1);
+                    patchSearchParams({
+                      search: (e.currentTarget as HTMLInputElement).value.trim(),
+                      page: 1,
+                    });
                   }
                 }}
               />
@@ -131,8 +144,7 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
               <Select
                 value={filters.sort}
                 onChange={(e) => {
-                  setParam("sort", e.currentTarget.value);
-                  setParam("page", 1);
+                  patchSearchParams({ sort: e.currentTarget.value, page: 1 });
                 }}
               >
                 <option value="latest">{t("sort.latest")}</option>
@@ -148,8 +160,10 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
                 variant={filters.category === "car" ? "default" : "outline"}
                 className="w-full"
                 onClick={() => {
-                  setParam("category", filters.category === "car" ? "all" : "car");
-                  setParam("page", 1);
+                  patchSearchParams({
+                    category: filters.category === "car" ? "all" : "car",
+                    page: 1,
+                  });
                 }}
               >
                 {t("category.cars")}
@@ -159,8 +173,10 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
                 variant={filters.category === "motorcycle" ? "default" : "outline"}
                 className="w-full"
                 onClick={() => {
-                  setParam("category", filters.category === "motorcycle" ? "all" : "motorcycle");
-                  setParam("page", 1);
+                  patchSearchParams({
+                    category: filters.category === "motorcycle" ? "all" : "motorcycle",
+                    page: 1,
+                  });
                 }}
               >
                 {t("category.motorcycles")}
@@ -189,8 +205,7 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
                   max={bounds.maxPrice}
                   value={filters.minPrice}
                   onChange={(e) => {
-                    setParam("minPrice", Number(e.currentTarget.value));
-                    setParam("page", 1);
+                    patchSearchParams({ minPrice: Number(e.currentTarget.value), page: 1 });
                   }}
                 />
                 <Input
@@ -199,8 +214,7 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
                   max={bounds.maxPrice}
                   value={filters.maxPrice}
                   onChange={(e) => {
-                    setParam("maxPrice", Number(e.currentTarget.value));
-                    setParam("page", 1);
+                    patchSearchParams({ maxPrice: Number(e.currentTarget.value), page: 1 });
                   }}
                 />
               </div>
@@ -220,8 +234,7 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
                   max={bounds.maxYear}
                   value={filters.minYear}
                   onChange={(e) => {
-                    setParam("minYear", Number(e.currentTarget.value));
-                    setParam("page", 1);
+                    patchSearchParams({ minYear: Number(e.currentTarget.value), page: 1 });
                   }}
                 />
                 <Input
@@ -230,8 +243,7 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
                   max={bounds.maxYear}
                   value={filters.maxYear}
                   onChange={(e) => {
-                    setParam("maxYear", Number(e.currentTarget.value));
-                    setParam("page", 1);
+                    patchSearchParams({ maxYear: Number(e.currentTarget.value), page: 1 });
                   }}
                 />
               </div>

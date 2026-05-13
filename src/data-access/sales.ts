@@ -107,9 +107,9 @@ export async function getPublicSalesVehicles(filters: SalesFilters) {
     ...(search
       ? {
           OR: [
-            { title: { contains: search } },
-            { make: { contains: search } },
-            { model: { contains: search } },
+            { title: { contains: search, mode: "insensitive" as const } },
+            { make: { contains: search, mode: "insensitive" as const } },
+            { model: { contains: search, mode: "insensitive" as const } },
           ],
         }
       : {}),
