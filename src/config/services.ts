@@ -78,13 +78,31 @@ export const serviceThumbnailImages: Record<ServiceSlug, string> = {
   "marriage-registration": "/images/services/marriage-registration-poster.png",
   "translation-services": "/images/services/translation-services-poster.png",
   "driver-license": "/images/services/driver-license-poster.png",
-  "police-clearance": "/images/gallery/siamez-024.jpg",
-  "visa-services": "/images/gallery/siamez-031.jpg",
-  "construction-handyman": "/images/gallery/siamez-040.jpg",
+  "police-clearance": "/images/services/police-clearance-poster.png",
+  "visa-services": "/images/services/visa-services-poster.png",
+  "construction-handyman": "/images/services/construction-handyman-poster.png",
   "car-motorbike-finder-selling-service":
     "/images/services/car-motorbike-finder-selling-poster.png",
-  "vehicle-registration": "/images/gallery/siamez-033.jpg",
-  "transportation-services": "/images/gallery/siamez-060.jpg",
-  "private-driver-service": "/images/gallery/siamez-066.jpg",
-  "event-planning-venue-services": "/images/gallery/siamez-081.jpg",
+  "vehicle-registration": "/images/services/vehicle-registration-poster.png",
+  "transportation-services": "/images/services/transportation-services-poster.png",
+  "private-driver-service": "/images/services/private-driver-service-poster.png",
+  "event-planning-venue-services": "/images/services/event-planning-venue-services-poster.png",
+};
+
+/**
+ * Tailwind `object-position` classes for service card images (used with `object-cover`).
+ * Values are full `object-*` classes so posters can use arbitrary focal points for faces.
+ */
+export const serviceThumbnailObjectPosition: Partial<Record<ServiceSlug, string>> = {
+  "marriage-registration": "object-top",
+  "translation-services": "object-top",
+  "driver-license": "object-top",
+  "police-clearance": "object-top",
+  "visa-services": "object-[center_28%]",
+  "construction-handyman": "object-top",
+  "car-motorbike-finder-selling-service": "object-[center_27%]",
+  "vehicle-registration": "object-[center_26%]",
+  "transportation-services": "object-[center_24%]",
+  "private-driver-service": "object-[center_25%]",
+  "event-planning-venue-services": "object-left-bottom",
 };

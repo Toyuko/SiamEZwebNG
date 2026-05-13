@@ -1,9 +1,14 @@
 import { Link } from "@/i18n/navigation";
 import Image from "next/image";
+import { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/utils";
-import { LucideIcon } from "lucide-react";
+import { cn, formatCurrency } from "@/lib/utils";
+import { serviceThumbnailObjectPosition, type ServiceSlug } from "@/config/services";
+
+function serviceCardThumbnailObjectClass(slug: string): string {
+  return serviceThumbnailObjectPosition[slug as ServiceSlug] ?? "object-center";
+}
 
 interface ServiceCardProps {
   slug: string;
@@ -41,6 +46,7 @@ export function ServiceCard({
 }: ServiceCardProps) {
   const iconShapeClass = iconShape === "square" ? "rounded-xl" : "rounded-full";
   const bookHref = getBookHref ? getBookHref(slug) : `/book/${slug}`;
+  const objectPositionClass = serviceCardThumbnailObjectClass(slug);
 
   return (
     <Card className="flex h-full flex-col overflow-hidden shadow-sm transition-all duration-200 hover:shadow-lg">
@@ -50,7 +56,7 @@ export function ServiceCard({
             src={thumbnailImage}
             alt={name}
             fill
-            className="object-cover"
+            className={cn("object-cover", objectPositionClass)}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         </div>
