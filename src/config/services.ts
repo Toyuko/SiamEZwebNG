@@ -9,6 +9,7 @@ export const serviceSlugs = [
   "police-clearance",
   "visa-services",
   "construction-handyman",
+  "car-motorbike-finder-selling-service",
   "vehicle-registration",
   "transportation-services",
   "private-driver-service",
@@ -24,6 +25,7 @@ export const serviceDisplayNames: Record<ServiceSlug, string> = {
   "police-clearance": "Police Clearance",
   "visa-services": "Visa Services",
   "construction-handyman": "Construction & Handyman",
+  "car-motorbike-finder-selling-service": "Car & Motorbike Finding and Selling Service",
   "vehicle-registration": "Vehicle Registration",
   "transportation-services": "Transportation Services",
   "private-driver-service": "Private Driver Service",
@@ -44,6 +46,8 @@ export const serviceShortDescriptions: Record<ServiceSlug, string> = {
     "Professional guidance on visa applications, extensions, and immigration matters",
   "construction-handyman":
     "Professional home repairs, renovations, and construction services for residential and commercial properties",
+  "car-motorbike-finder-selling-service":
+    "Buy or sell cars and motorcycles in Thailand with full negotiation, paperwork, and registration support from start to finish",
   "vehicle-registration":
     "Professional car and motorcycle registration in Bangkok — 1-day process for BKK plates; transfers, renewals, and DLT paperwork handled for you",
   "transportation-services":
@@ -62,6 +66,7 @@ export const serviceIcons: Record<ServiceSlug, string> = {
   "police-clearance": "Shield",
   "visa-services": "Plane",
   "construction-handyman": "Wrench",
+  "car-motorbike-finder-selling-service": "Handshake",
   "vehicle-registration": "ClipboardList",
   "transportation-services": "Taxi",
   "private-driver-service": "User",
@@ -76,6 +81,8 @@ export const serviceThumbnailImages: Record<ServiceSlug, string> = {
   "police-clearance": "/images/gallery/siamez-024.jpg",
   "visa-services": "/images/gallery/siamez-031.jpg",
   "construction-handyman": "/images/gallery/siamez-040.jpg",
+  "car-motorbike-finder-selling-service":
+    "/images/services/car-motorbike-finder-selling-poster.png",
   "vehicle-registration": "/images/gallery/siamez-033.jpg",
   "transportation-services": "/images/gallery/siamez-060.jpg",
   "private-driver-service": "/images/gallery/siamez-066.jpg",

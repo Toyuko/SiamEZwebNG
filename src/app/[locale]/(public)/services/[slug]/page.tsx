@@ -7,7 +7,7 @@ import { ServiceDetailHero } from "@/components/sections/ServiceDetailHero";
 import { ServiceDetailTabs } from "@/components/sections/ServiceDetailTabs";
 import { ServiceDetailSidebar } from "@/components/sections/ServiceDetailSidebar";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, Clock, Shield, FileText, Car, Plane, Wrench, ClipboardList, Bus, User, Award, Zap, CheckCircle, Landmark, CalendarCheck } from "lucide-react";
+import { CheckCircle2, Clock, Shield, FileText, Car, Plane, Wrench, Handshake, ClipboardList, Bus, User, Award, Zap, CheckCircle, Landmark, CalendarCheck } from "lucide-react";
 import { serviceDisplayNames, serviceShortDescriptions, serviceSlugs } from "@/config/services";
 import type { ServiceSlug } from "@/config/services";
 import { MarriageRegistrationSections } from "@/components/sections/MarriageRegistrationSections";
@@ -356,6 +356,163 @@ const getServiceContent = (slug: string): ServiceDetailContent => {
         ],
       },
       processingTime: "Varies by Project",
+    },
+    "car-motorbike-finder-selling-service": {
+      subtitle:
+        "Buy or sell your car or motorcycle in Thailand with one trusted team handling the full journey from search to handover.",
+      overview:
+        "At SiamEZ Auto & Bike Finder, we make buying and selling vehicles in Thailand simple, fast, and stress-free. Whether you are upgrading, relocating, or want a hassle-free deal, we handle everything from matching and negotiation to paperwork and registration.\n\nFor buyers, we help you find the right car, motorcycle, van, or big bike based on your budget and needs. For sellers, we position your vehicle, screen serious buyers, and push for a fast sale at the best possible price.\n\nOur team has supported locals and expats for over 10 years. With transparent communication and start-to-finish support, you can move forward confidently without dealing with confusing steps alone.",
+      features: [
+        {
+          icon: Car,
+          title: "Find your dream vehicle",
+          description:
+            "We source cars, motorcycles, vans, and big bikes that match your goals, budget, and preferred specs.",
+        },
+        {
+          icon: Handshake,
+          title: "Best-price negotiation",
+          description:
+            "We negotiate on your behalf to secure better value when buying and stronger returns when selling.",
+        },
+        {
+          icon: FileText,
+          title: "Paperwork and registration handled",
+          description:
+            "Transfer documents, registrations, and process steps are managed for you from start to finish.",
+        },
+      ],
+      requirements: [
+        "Tell us whether you want to buy or sell (or both), and your timeline.",
+        "For buyers: share budget, preferred vehicle type, brand/model, and must-have features.",
+        "For sellers: share your vehicle details, photos, ownership documents, and target price.",
+        "Provide valid contact details (phone/LINE/WhatsApp) for fast updates and offers.",
+        "Be ready for vehicle inspection or appointment scheduling when needed.",
+      ],
+      processSteps: [
+        {
+          title: "Share your buy/sell brief",
+          description:
+            "Contact us with your requirements via phone, LINE, or website so we can map the right approach.",
+        },
+        {
+          title: "Market matching and negotiation",
+          description:
+            "We shortlist suitable options or qualified buyers, then negotiate to get the best practical deal for you.",
+        },
+        {
+          title: "Verification and paperwork",
+          description:
+            "Our team coordinates key checks, transfer documents, and registration requirements to reduce risk and delays.",
+        },
+        {
+          title: "Handover and completion",
+          description:
+            "We support final payment and handover steps, keeping the process smooth and transparent until complete.",
+        },
+      ],
+      documents: {
+        foreigner: [
+          "Valid passport or Thai ID (for identity verification)",
+          "Phone number and preferred contact channel (LINE/WhatsApp)",
+          "Buyer brief (budget, type, and requirements) or seller brief (vehicle details and asking price)",
+          "Vehicle ownership documents for sellers (registration book and related records)",
+          "Additional transfer documents as required by the specific transaction",
+        ],
+      },
+      processingTime:
+        "Varies by vehicle availability and buyer/seller readiness; we prioritize fast, stress-free turnaround",
+      legalDisclaimer:
+        "SiamEZ provides independent vehicle sourcing and selling assistance services. We are not connected to or endorsed by any government authority.",
+      galleryImages: [
+        {
+          src: "/images/services/car-motorbike-finder-selling-poster.png",
+          alt: "SiamEZ Auto and Bike Finder and Selling Service promotional poster",
+          width: 682,
+          height: 1024,
+        },
+        {
+          src: "/images/services/car-motorbike-finder-selling/other-bikes-cars-01.jpg",
+          alt: "SiamEZ car and motorbike service customer vehicle showcase",
+          width: 2048,
+          height: 1536,
+        },
+        {
+          src: "/images/services/car-motorbike-finder-selling/other-bikes-cars-02.jpg",
+          alt: "SiamEZ matched motorcycle and customer delivery photo",
+          width: 1108,
+          height: 1477,
+        },
+        {
+          src: "/images/services/car-motorbike-finder-selling/other-bikes-cars-03.jpg",
+          alt: "SiamEZ bike finding and handover success photo",
+          width: 1536,
+          height: 2048,
+        },
+        {
+          src: "/images/services/car-motorbike-finder-selling/other-bikes-cars-04.jpg",
+          alt: "SiamEZ car and bike sourcing support in Thailand",
+          width: 1477,
+          height: 1108,
+        },
+        {
+          src: "/images/services/car-motorbike-finder-selling/royal-enfield-01.jpg",
+          alt: "Royal Enfield bike support case by SiamEZ",
+          width: 720,
+          height: 540,
+        },
+        {
+          src: "/images/services/car-motorbike-finder-selling/royal-enfield-02.jpg",
+          alt: "Royal Enfield customer handover with SiamEZ assistance",
+          width: 960,
+          height: 1280,
+        },
+        {
+          src: "/images/services/car-motorbike-finder-selling/royal-enfield-03.jpg",
+          alt: "Royal Enfield buy or sell service result from SiamEZ",
+          width: 1536,
+          height: 2048,
+        },
+        {
+          src: "/images/services/car-motorbike-finder-selling/triputh-01.jpg",
+          alt: "Triputh vehicle matching and selling service photo by SiamEZ",
+          width: 1108,
+          height: 1477,
+        },
+        {
+          src: "/images/services/car-motorbike-finder-selling/triputh-02.jpg",
+          alt: "Triputh motorcycle and car finding support by SiamEZ",
+          width: 2048,
+          height: 1536,
+        },
+        {
+          src: "/images/services/car-motorbike-finder-selling/new-bike-01.png",
+          alt: "Black street motorcycle listing supported by SiamEZ",
+          width: 960,
+          height: 720,
+        },
+        {
+          src: "/images/services/car-motorbike-finder-selling/new-bike-02.png",
+          alt: "Honda street motorcycle front side photo for buy or sell service",
+          width: 960,
+          height: 720,
+        },
+        {
+          src: "/images/services/car-motorbike-finder-selling/new-bike-03.png",
+          alt: "Motorbike side profile prepared for SiamEZ sales support",
+          width: 960,
+          height: 720,
+        },
+        {
+          src: "/images/services/car-motorbike-finder-selling/new-bike-04.png",
+          alt: "Motorcycle front angle image for SiamEZ vehicle finder service",
+          width: 960,
+          height: 720,
+        },
+      ],
+      galleryTitle: "SiamEZ Auto & Bike Finder service",
+      galleryDescription:
+        "Cars, motorcycles, vans, and big bikes — buy or sell with full support from negotiation to paperwork.",
     },
     "vehicle-registration": {
       subtitle:
