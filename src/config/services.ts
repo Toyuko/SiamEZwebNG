@@ -94,11 +94,6 @@ export const serviceThumbnailImages: Record<ServiceSlug, string> = {
  * non-default crop (e.g. portrait posters); all others use browser default (center).
  */
 export const serviceThumbnailObjectPosition: Partial<Record<ServiceSlug, string>> = {
-  "marriage-registration": "center 18%",
-  "translation-services": "center 20%",
-  "driver-license": "center 17%",
-  "construction-handyman": "center 16%",
   "car-motorbike-finder-selling-service": "center 16%",
-  "private-driver-service": "center 14%",
   "event-planning-venue-services": "18% 78%",
 };
