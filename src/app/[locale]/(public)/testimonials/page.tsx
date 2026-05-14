@@ -2,6 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { PageHero } from "@/components/sections/PageHero";
 import { TestimonialsClientSection } from "@/components/testimonials/TestimonialsClientSection";
+import { FACEBOOK_TESTIMONIALS } from "@/content/facebook-testimonials";
 import { GOOGLE_BUSINESS_REVIEWS } from "@/content/google-testimonials";
 import { SOCIAL_TESTIMONIALS } from "@/content/social-testimonials";
 import {
@@ -54,7 +55,7 @@ export default async function TestimonialsPage({
     googleReviewToDisplay(item, t("reviewerRole.google"))
   );
 
-  const socialDisplay = SOCIAL_TESTIMONIALS.map((item) =>
+  const socialDisplay = [...SOCIAL_TESTIMONIALS, ...FACEBOOK_TESTIMONIALS].map((item) =>
     socialToDisplay(
       item,
       item.platform === "youtube" ? t("reviewerRole.youtube") : t("reviewerRole.facebook")
@@ -81,6 +82,7 @@ export default async function TestimonialsPage({
       youtube: t("platform.youtube"),
     },
     watchVideoReview: t("watchVideoReview"),
+    watchOnYoutube: t("watchOnYoutube"),
     emptyCategory: t("emptyCategory"),
   };
 

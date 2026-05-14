@@ -76,22 +76,4 @@ export const SOCIAL_TESTIMONIALS: SocialTestimonial[] = [
     videoLink: "https://youtube.com/shorts/sC2o5t_HV84",
     stars: 5,
   },
-  {
-    id: "facebook-user-registration",
-    platform: "facebook",
-    service: "Vehicle registration",
-    author: "Facebook User Review",
-    quote:
-      "Excellent service handling my registration and name transfer in Bangkok. Saved me a whole day of standing in lines at the Land of Transport office.",
-    stars: 5,
-  },
-  {
-    id: "facebook-bkk-scooter",
-    platform: "facebook",
-    service: "Inspection & renewal",
-    author: "BKK Scooter Owner",
-    quote:
-      "They handled my vehicle inspection, emission test, and insurance renewal flawlessly. Staff speaks great English and kept me updated.",
-    stars: 5,
-  },
 ];
