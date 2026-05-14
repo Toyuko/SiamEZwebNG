@@ -782,6 +782,25 @@
     "metaTitle": "Client Testimonials - SiamEZ",
     "metaDescription": "Read what our clients have to say about their experience with SiamEZ",
     "sectionTitle": "Client Testimonials",
+    "filters": {
+      "all": "All Reviews",
+      "google": "Google",
+      "facebook": "Facebook",
+      "youtube": "YouTube"
+    },
+    "filterAriaLabel": "Filter testimonials by source",
+    "platform": {
+      "google": "Google",
+      "facebook": "Facebook",
+      "youtube": "YouTube"
+    },
+    "watchVideoReview": "Watch Video Review",
+    "emptyCategory": "No reviews in this category.",
+    "reviewerRole": {
+      "google": "Google review",
+      "youtube": "YouTube",
+      "facebook": "Facebook"
+    },
     "stats": {
       "averageRating": "4.9",
       "averageRatingLabel": "Average Rating",

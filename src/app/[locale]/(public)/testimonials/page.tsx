@@ -1,7 +1,14 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { PageHero } from "@/components/sections/PageHero";
-import { Card, CardContent } from "@/components/ui/card";
+import { TestimonialsClientSection } from "@/components/testimonials/TestimonialsClientSection";
+import { GOOGLE_BUSINESS_REVIEWS } from "@/content/google-testimonials";
+import { SOCIAL_TESTIMONIALS } from "@/content/social-testimonials";
+import {
+  googleReviewToDisplay,
+  socialToDisplay,
+  type DisplayTestimonial,
+} from "@/lib/testimonial-display";
 
 export async function generateMetadata({
   params,
@@ -32,80 +39,50 @@ export default async function TestimonialsPage({
     { value: t("stats.reviews"), label: t("stats.reviewsLabel") },
   ];
 
-  const testimonials = [
-    {
-      service: t("testimonial1.service"),
-      quote: t("testimonial1.quote"),
-      author: t("testimonial1.author"),
-      role: t("testimonial1.role"),
-      initials: t("testimonial1.initials"),
-      stars: 5,
-    },
-    {
-      service: t("testimonial2.service"),
-      quote: t("testimonial2.quote"),
-      author: t("testimonial2.author"),
-      role: t("testimonial2.role"),
-      initials: t("testimonial2.initials"),
-      stars: 5,
-    },
-    {
-      service: t("testimonial3.service"),
-      quote: t("testimonial3.quote"),
-      author: t("testimonial3.author"),
-      role: t("testimonial3.role"),
-      initials: t("testimonial3.initials"),
-      stars: 4,
-    },
-    {
-      service: t("testimonial4.service"),
-      quote: t("testimonial4.quote"),
-      author: t("testimonial4.author"),
-      role: t("testimonial4.role"),
-      initials: t("testimonial4.initials"),
-      stars: 5,
-    },
-    {
-      service: t("testimonial5.service"),
-      quote: t("testimonial5.quote"),
-      author: t("testimonial5.author"),
-      role: t("testimonial5.role"),
-      initials: t("testimonial5.initials"),
-      stars: 5,
-    },
-    {
-      service: t("testimonial6.service"),
-      quote: t("testimonial6.quote"),
-      author: t("testimonial6.author"),
-      role: t("testimonial6.role"),
-      initials: t("testimonial6.initials"),
-      stars: 5,
-    },
-    {
-      service: t("testimonial7.service"),
-      quote: t("testimonial7.quote"),
-      author: t("testimonial7.author"),
-      role: t("testimonial7.role"),
-      initials: t("testimonial7.initials"),
-      stars: 5,
-    },
-    {
-      service: t("testimonial8.service"),
-      quote: t("testimonial8.quote"),
-      author: t("testimonial8.author"),
-      role: t("testimonial8.role"),
-      initials: t("testimonial8.initials"),
-      stars: 4,
-    },
-    {
-      service: t("testimonial9.service"),
-      quote: t("testimonial9.quote"),
-      author: t("testimonial9.author"),
-      role: t("testimonial9.role"),
-      initials: t("testimonial9.initials"),
-      stars: 5,
-    },
+  const legacyTestimonials: DisplayTestimonial[] = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => ({
+    id: `site-${n}`,
+    platform: "google",
+    service: t(`testimonial${n}.service`),
+    quote: t(`testimonial${n}.quote`),
+    author: t(`testimonial${n}.author`),
+    role: t(`testimonial${n}.role`),
+    initials: t(`testimonial${n}.initials`),
+    stars: n === 3 || n === 8 ? 4 : 5,
+  }));
+
+  const googleUgcDisplay = GOOGLE_BUSINESS_REVIEWS.map((item) =>
+    googleReviewToDisplay(item, t("reviewerRole.google"))
+  );
+
+  const socialDisplay = SOCIAL_TESTIMONIALS.map((item) =>
+    socialToDisplay(
+      item,
+      item.platform === "youtube" ? t("reviewerRole.youtube") : t("reviewerRole.facebook")
+    )
+  );
+
+  const testimonials: DisplayTestimonial[] = [
+    ...legacyTestimonials,
+    ...googleUgcDisplay,
+    ...socialDisplay,
   ];
+
+  const sectionLabels = {
+    filterAriaLabel: t("filterAriaLabel"),
+    filters: {
+      all: t("filters.all"),
+      google: t("filters.google"),
+      facebook: t("filters.facebook"),
+      youtube: t("filters.youtube"),
+    },
+    platformNames: {
+      google: t("platform.google"),
+      facebook: t("platform.facebook"),
+      youtube: t("platform.youtube"),
+    },
+    watchVideoReview: t("watchVideoReview"),
+    emptyCategory: t("emptyCategory"),
+  };
 
   return (
     <>
@@ -134,38 +111,14 @@ export default async function TestimonialsPage({
           </div>
         </div>
       </section>
-      {/* Testimonials Section */}
       <section className="container mx-auto px-4 py-12 sm:py-16">
         <h2 className="mb-8 text-center text-2xl font-bold text-foreground sm:text-3xl">
           {t("sectionTitle")}
         </h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {testimonials.map((testimonial, i) => (
-            <Card key={i} className="border-border shadow-sm">
-              <CardContent className="p-6">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-siam-blue">
-                  {testimonial.service}
-                </div>
-                <div className="flex gap-1 text-siam-yellow">
-                  {"★".repeat(testimonial.stars)}
-                  {testimonial.stars < 5 && "☆".repeat(5 - testimonial.stars)}
-                </div>
-                <blockquote className="mt-4 text-foreground">
-                  &ldquo;{testimonial.quote}&rdquo;
-                </blockquote>
-                <div className="mt-4 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-siam-blue text-sm font-semibold text-white">
-                    {testimonial.initials}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">{testimonial.author}</p>
-                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <TestimonialsClientSection
+          testimonials={testimonials}
+          labels={sectionLabels}
+        />
       </section>
     </>
   );

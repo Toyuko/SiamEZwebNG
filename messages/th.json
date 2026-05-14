@@ -782,6 +782,25 @@
     "metaTitle": "คำรับรองจากลูกค้า - SiamEZ",
     "metaDescription": "อ่านสิ่งที่ลูกค้าของเราพูดเกี่ยวกับประสบการณ์กับ SiamEZ",
     "sectionTitle": "คำรับรองจากลูกค้า",
+    "filters": {
+      "all": "รีวิวทั้งหมด",
+      "google": "Google",
+      "facebook": "Facebook",
+      "youtube": "YouTube"
+    },
+    "filterAriaLabel": "กรองคำรับรองตามแหล่งที่มา",
+    "platform": {
+      "google": "Google",
+      "facebook": "Facebook",
+      "youtube": "YouTube"
+    },
+    "watchVideoReview": "ดูวิดีโอรีวิว",
+    "emptyCategory": "ยังไม่มีรีวิวในหมวดนี้",
+    "reviewerRole": {
+      "google": "รีวิว Google",
+      "youtube": "YouTube",
+      "facebook": "Facebook"
+    },
     "stats": {
       "averageRating": "4.9",
       "averageRatingLabel": "คะแนนเฉลี่ย",
