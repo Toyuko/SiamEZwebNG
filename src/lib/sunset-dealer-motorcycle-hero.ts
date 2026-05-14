@@ -41,8 +41,9 @@ function findExistingSunsetSlugHeroPublicPath(slug: string): string | null {
 
 /**
  * Public hero URL for Sunset Scooters dealer motorcycles: optional per-slug file under
- * `public/images/sales/sunset-heroes/{slug}.{png|jpg|...}`, otherwise a gallery frame that
- * is less likely to match the storefront cover (see pickSunsetMotorcycleHeroFromSortedGallery).
+ * `public/images/sales/sunset-heroes/{slug}.{png|jpg|...}` wins for curated covers.
+ * Otherwise use the stored `heroImageUrl` from the listing (admin "Set hero" / API).
+ * The gallery heuristic runs only when `heroImageUrl` is missing (legacy / bad rows).
  */
 export function resolveSunsetDealerMotorcycleHeroUrl(input: {
   slug: string;
@@ -52,9 +53,12 @@ export function resolveSunsetDealerMotorcycleHeroUrl(input: {
   const fromSlug = findExistingSunsetSlugHeroPublicPath(input.slug);
   if (fromSlug) return fromSlug;
 
+  const hero = typeof input.heroImageUrl === "string" ? input.heroImageUrl.trim() : "";
+  if (hero) {
+    return hero;
+  }
+
   const gallery = normalizeImageUrlList(input.imageUrls);
-  const fromGallery = pickSunsetMotorcycleHeroFromSortedGallery(
-    gallery.length > 0 ? gallery : [input.heroImageUrl]
-  );
-  return fromGallery ?? input.heroImageUrl;
+  const fromGallery = pickSunsetMotorcycleHeroFromSortedGallery(gallery.length > 0 ? gallery : []);
+  return fromGallery ?? "";
 }
