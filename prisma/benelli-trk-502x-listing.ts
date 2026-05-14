@@ -1,4 +1,3 @@
-/* eslint-disable max-len -- VirtualYard photo URLs */
 /**
  * Public inventory data mirrored from the seller listing page for seeding.
  * Image URLs are served from the dealer platform (VirtualYard) as embedded on the
@@ -56,17 +55,13 @@ export const BENELLI_TRK_502X_IMAGE_URLS: string[] = [
   "https://virtualyard.com.au/photos/LFhb8atg9IkPQQt_qcu6q-Qkw-8LIgc0IZPnkyxKSOHw7Uj1yscDXRAS6vfpLlNgvYySBUS-Gq8uigGVDN21xNk-tJ5zhF9OyleS4zjvYOM.jpg",
 ];
 
-const SOURCE_LISTING_URL =
-  "https://sunsetscootersthailand.shop/buy/2022-benelli-trk-502x-abs-/6fuAYcpaHnnEAvaNhHChPA";
-
 export const BENELLI_TRK_502X_SLUG = "2022-benelli-trk-502x-abs";
 
 export const benelliTrk502xListingDescription = [
   "2022 Benelli TRK 502X ABS — adventure-style twin with ABS, manual gearbox, and unleaded fuel.",
-  "Advertised odometer reading on the source listing: 6,898 km. Condition on the source listing: Excellent.",
-  "Advertised price on the source listing: THB 149,800 excluding government charges — confirm drive-away cost, registration, and fees with the seller before you commit.",
-  "The original seller page also mentions nationwide delivery (they quote a flat delivery fee), trade-ins, and paperwork support; treat these as seller claims to verify at viewing.",
-  `Source public listing (for your reference only): ${SOURCE_LISTING_URL}`,
+  "Advertised odometer: 6,898 km. Condition (advertised): Excellent.",
+  "Advertised price: THB 149,800 excluding government charges — confirm drive-away cost, registration, and fees before you commit.",
+  "Delivery, trade-ins, and paperwork support may be available; confirm details at viewing.",
   "SiamEZ can help with inspection, negotiation, transfer, and registration through our Auto & Bike Finder service — contact us if you want this bike checked or purchased with support.",
 ].join("\n\n");
 
@@ -80,6 +75,5 @@ export const benelliTrk502xSpecifications: Record<string, string> = {
   Year: "2022",
   "Odometer (advertised)": "6,898 km",
   "Condition (advertised)": "Excellent",
-  "Price note": "THB 149,800 excluding government charges (per source listing)",
-  "Source listing": SOURCE_LISTING_URL,
+  "Price note": "THB 149,800 excluding government charges",
 };

@@ -37,7 +37,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/bs_SHxTusuSaGcXQaFb43YOxYfkus8np97XaBJrYVkajflyDjo2sTNXgBEpNoCHPU_1X1X3KS13Mxkd2_kyfLfJ-oaXEEwyP5gcUmOcGOAE.jpg',
       'https://virtualyard.com.au/photos/bs_SHxTusuSaGcXQaFb43YOxYfkus8np97XaBJrYVkbOisDwhnXPACk1zPFZF2SMG7PF3GaHeQwF5XjDqtKQ14pjo4ITCak49wvrx27MX2Y.jpg',
     ],
-    description: `2015 BMW R9T — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 14,987 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 349,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2015-bmw-r9t-/uwm3IT-24NXmjkbtbBB6Zg\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2015 BMW R9T — SiamEZ public inventory.\n\nAdvertised odometer: 14,987 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 349,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'BMW',
       'Model': 'R9T',
@@ -46,8 +46,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2015-bmw-r9t-/uwm3IT-24NXmjkbtbBB6Zg',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -107,7 +106,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/WVAPILsIdted_fOT3QKmJtDlQflM9p14wZuRikLlg53mG-WMbz9Ebaluun-t3OwsE1oaPkKgyADYMUNExbUqv-3NdqMVpylSYniOd70kPII.jpg',
       'https://virtualyard.com.au/photos/WVAPILsIdted_fOT3QKmJtDlQflM9p14wZuRikLlg53y1_TX5iKe0u7kLjHvz63Oo0PWsYUjyjSK1uXHSRU04iWKaRHE9t8IY4Gp4J4uz18.jpg',
     ],
-    description: `2022 CFMOTO 250NK — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 24,123 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 49,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2022-cfmoto-250nk-/dO0c0J960Hs-SNZx4iscNQ\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2022 CFMOTO 250NK — SiamEZ public inventory.\n\nAdvertised odometer: 24,123 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 49,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'CFMOTO',
       'Model': '250NK',
@@ -116,8 +115,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2022-cfmoto-250nk-/dO0c0J960Hs-SNZx4iscNQ',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -179,7 +177,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/NzWNINTIRuCikcVj8iQgUbO5gY9aDS7KOBjson6YcprjWI-h73vzS7zehN3TKbsBBLR8lob05OOUi2j5eQhXdvqOYUylwFnfMyZjuQP7GKw.jpg',
       'https://virtualyard.com.au/photos/NzWNINTIRuCikcVj8iQgUbO5gY9aDS7KOBjson6YcprtG2o9YDxJ7oe26VduKWU4aDJ-vIYOQ5dHIm8NQGGFOiPUDPOlWU7nvTUXrKzFvNA.jpg',
     ],
-    description: `2015 Ducati MONSTER 821 — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 27,125 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 168,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2015-ducati-monster-821-/kYIiM2psZRN4XAHEwCNIJQ\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2015 Ducati MONSTER 821 — SiamEZ public inventory.\n\nAdvertised odometer: 27,125 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 168,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Ducati',
       'Model': 'MONSTER 821',
@@ -188,8 +186,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2015-ducati-monster-821-/kYIiM2psZRN4XAHEwCNIJQ',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -257,7 +254,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/EEf4X4s14ocb2NFWtxhStZyvfGm7r44OubHimW1G32rowWcVmlDEjaUvcXqhYo0Ok42iWrpnqZJ5CwWVSQ-hEYi-MGd628Lgbl2OYwwC2FI.jpg',
       'https://virtualyard.com.au/photos/EEf4X4s14ocb2NFWtxhStZyvfGm7r44OubHimW1G32ryL24a3K0hjgJOoPC7PwPcfxoj5OFgmPTggbNStAl_rabYNRw3GOOy3Ne4HY2wcGg.jpg',
     ],
-    description: `2017 Ducati MULTISTRADA 1200 ABS — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 40,464 km. Transmission: Manual. Condition (advertised): Good.\n\nAdvertised price: THB 299,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2017-ducati-multistrada-1200-abs-/nVOut4RW3--KolVwG7XJqQ\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2017 Ducati MULTISTRADA 1200 ABS — SiamEZ public inventory.\n\nAdvertised odometer: 40,464 km. Transmission: Manual. Condition (advertised): Good.\n\nAdvertised price: THB 299,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Ducati',
       'Model': 'MULTISTRADA 1200 ABS',
@@ -266,8 +263,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Good',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2017-ducati-multistrada-1200-abs-/nVOut4RW3--KolVwG7XJqQ',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -333,7 +329,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/C541jdfEZaMT5BC5-c1__-vIoYgpki_DGdMukxoc4YjrfPuFnOFWwBcTuWDNg903V9K8kJM1fGjKckQ-XcBYaHdC_KzaWVI90DDCc_86PNc.jpg',
       'https://virtualyard.com.au/photos/C541jdfEZaMT5BC5-c1__-vIoYgpki_DGdMukxoc4YjshRBrAkBNvVnKhCdbuD72Xo-BcqnSEdNDv-oymnzmtiugPCYDL6Ag8RIcF_qkVAI.jpg',
     ],
-    description: `2019 Honda CB650 F — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 28,986 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 119,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2019-honda-cb650-f-/TbQfN1UzDOIl9qKcNkF2Jw\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2019 Honda CB650 F — SiamEZ public inventory.\n\nAdvertised odometer: 28,986 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 119,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Honda',
       'Model': 'CB650 F',
@@ -342,8 +338,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2019-honda-cb650-f-/TbQfN1UzDOIl9qKcNkF2Jw',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -427,7 +422,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/fBnw3UNh7MAsG6fPe8HmB0ORsjCf-vbKUY8dVYMCsQTrMAsdMbQl7sCACEs4a9iNU5wmnC0upQgCkHW1BrAdZmFpUFpmpaBN3z-W8QbR-p4.jpg',
       'https://virtualyard.com.au/photos/fBnw3UNh7MAsG6fPe8HmB0ORsjCf-vbKUY8dVYMCsQTvhm5SseJ57G25kFzh9J9e5LuqgYHtvnvCkwvkWru0xxC4P8a0gtcnKFPlvtUgc9w.jpg',
     ],
-    description: `2022 Honda CB500X — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 23,362 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 174,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2022-honda-cb500x-/YtHIXonhrkiZdeF2nfzitA\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2022 Honda CB500X — SiamEZ public inventory.\n\nAdvertised odometer: 23,362 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 174,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Honda',
       'Model': 'CB500X',
@@ -436,8 +431,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2022-honda-cb500x-/YtHIXonhrkiZdeF2nfzitA',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -517,7 +511,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/fBnw3UNh7MAsG6fPe8HmB2Pc5UBfKh6ttyCkmSq8bAHplpWcBdo8M8wBAWPNy7UwH8qid7CFk2nLaqFtl0Z_dYYm7ZwXD80ViuIad28K7bw.jpg',
       'https://virtualyard.com.au/photos/fBnw3UNh7MAsG6fPe8HmB2Pc5UBfKh6ttyCkmSq8bAHwhS0T8gbYpimiYVMXnENNK-TM3SlfbKY_7W_slpUK6ciJCTN-a0SQvBS2Y6eFC1w.jpg',
     ],
-    description: `2025 Honda NT 1100 DCT — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 346 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 439,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2025-honda-nt-1100-dct-/nTnu9u8Te0exV9upvKSdwA\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2025 Honda NT 1100 DCT — SiamEZ public inventory.\n\nAdvertised odometer: 346 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 439,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Honda',
       'Model': 'NT 1100 DCT',
@@ -526,8 +520,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Automatic',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2025-honda-nt-1100-dct-/nTnu9u8Te0exV9upvKSdwA',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -607,7 +600,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/tCpZDSEJ06DfTvpg6n2YUDFvymZyiN2Ysb6reSQNk4PqC1ZNx2jDytCwNnum17mr4nlle_Bqxy62RfU9FtLYhwgF-n6WJ4As2ekNc3n44g4.jpg',
       'https://virtualyard.com.au/photos/tCpZDSEJ06DfTvpg6n2YUDFvymZyiN2Ysb6reSQNk4PxbFnFjGYe1WY8HTzz7tVX-sBsfbdlSFrQGBABD64x-YuIy5pN896q5gQY2xyWTmQ.jpg',
     ],
-    description: `2016 Kawasaki 1400GTR ABS — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 50,291 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 249,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2016-kawasaki-1400gtr-abs-/Oav8tqjVYCIczjj0SEkkoA\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2016 Kawasaki 1400GTR ABS — SiamEZ public inventory.\n\nAdvertised odometer: 50,291 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 249,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Kawasaki',
       'Model': '1400GTR ABS',
@@ -616,8 +609,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2016-kawasaki-1400gtr-abs-/Oav8tqjVYCIczjj0SEkkoA',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -679,7 +671,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/EEf4X4s14ocb2NFWtxhStbhU-L_slBLYrADFqBrZYdfsg1FlhunROO7e8WRPHEDeb_N1Ef8R3JVxTb2QK9hYNWo9u6FyO0EG2Lh8Hbeqg-8.jpg',
       'https://virtualyard.com.au/photos/EEf4X4s14ocb2NFWtxhStbhU-L_slBLYrADFqBrZYdfwCjVv-OGHpNB4fikNwV5qkShiu9cKWDPrR3r86plhxyOK2iQ2nBG1NDg-KFHxCoo.jpg',
     ],
-    description: `2021 Kawasaki Z 900 ABS SP — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 4,846 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 248,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2021-kawasaki-z-900-abs-sp-/V8e0lkIoem3_OsEy5FjesQ\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2021 Kawasaki Z 900 ABS SP — SiamEZ public inventory.\n\nAdvertised odometer: 4,846 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 248,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Kawasaki',
       'Model': 'Z 900 ABS SP',
@@ -688,8 +680,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2021-kawasaki-z-900-abs-sp-/V8e0lkIoem3_OsEy5FjesQ',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -759,7 +750,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/LFhb8atg9IkPQQt_qcu6q5ABE67pPLaAXvvN5l8vogroK_j7En2v71Cv1LOwnPc68rJ2K1xc-vinLnuQssxvlg6E4AwXAPdGDWWyetZx4-s.jpg',
       'https://virtualyard.com.au/photos/LFhb8atg9IkPQQt_qcu6q5ABE67pPLaAXvvN5l8vogrrPDy5HRba4v4Aijk_lyyswXI3m7DytxU2Y_wqDJto7YAoqYpZHzc1m0SBfzGwk9M.jpg',
     ],
-    description: `2023 Kawasaki KLR 650 — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 8,174 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 164,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2023-kawasaki-klr-650-/He4vYzv05WW7ZqNdl8NFlw\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2023 Kawasaki KLR 650 — SiamEZ public inventory.\n\nAdvertised odometer: 8,174 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 164,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Kawasaki',
       'Model': 'KLR 650',
@@ -768,8 +759,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2023-kawasaki-klr-650-/He4vYzv05WW7ZqNdl8NFlw',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -815,7 +805,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/C541jdfEZaMT5BC5-c1__5p41GR5hT6IxWN-J2xLbYrYOW_7OUNtWbM8nGnDs73BiFXya3DQjNYqQR_rPophg1ARK6vk7Ug-XPBe59arEdk.jpg',
       'https://virtualyard.com.au/photos/C541jdfEZaMT5BC5-c1__5p41GR5hT6IxWN-J2xLbYrtIElXE8F4xsGMdHXzCgI1qIbPfByswLVtsozu6FscqbzvB63nNWb8_wOV9cACJEI.jpg',
     ],
-    description: `2026 Indian SCOUT BOBBER — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 0 km (advertised as new). Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 719,000 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2026-indian-scout-bobber-/WulSdUpf8CqHItFw3jMX0w\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2026 Indian SCOUT BOBBER — SiamEZ public inventory.\n\nAdvertised odometer: 0 km (advertised as new). Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 719,000 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Indian',
       'Model': 'SCOUT BOBBER',
@@ -824,8 +814,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2026-indian-scout-bobber-/WulSdUpf8CqHItFw3jMX0w',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -885,7 +874,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/EEf4X4s14ocb2NFWtxhStS4-pISowvqRI5c8Q0Snb5HkfsmzUGsQP_CrccPRSfIcBoQ1Cc-Mp4fBzrRHtwr0Gaz154bNq944YIzvRGtzS68.jpg',
       'https://virtualyard.com.au/photos/EEf4X4s14ocb2NFWtxhStS4-pISowvqRI5c8Q0Snb5Ho-niiipvgp32T-3pMTW1FBT73T7SceQbJiigiLax7ILbaMWSCTnf9RLucyx4wCHM.jpg',
     ],
-    description: `2025 Honda FORZA 350 — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 4,537 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 178,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2025-honda-forza-350-/m7ERS0TgLTkCwsVzJp7RDQ\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2025 Honda FORZA 350 — SiamEZ public inventory.\n\nAdvertised odometer: 4,537 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 178,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Honda',
       'Model': 'FORZA 350',
@@ -894,8 +883,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Automatic',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2025-honda-forza-350-/m7ERS0TgLTkCwsVzJp7RDQ',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -943,7 +931,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/NzWNINTIRuCikcVj8iQgUWnAF2mAhmeWuDmQeXUB1gjkV0nei35df77yk3kx0hjeKhVlyB-TyGv5Wx1eH_merAGIwkyNhCRXEe3gbNooczk.jpg',
       'https://virtualyard.com.au/photos/NzWNINTIRuCikcVj8iQgUWnAF2mAhmeWuDmQeXUB1gjyUhzPYxzK2ZJApk10acxr7hR848SYy7TCNy1zQGV4xhdOk7PdXdgyb3UbE8QW4aA.jpg',
     ],
-    description: `2026 Honda SCOOPY I PRESTIGE — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 1,764 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 51,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2026-honda-scoopy-i-prestige-/blOE_ThtXboqaX_S4TJCpw\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2026 Honda SCOOPY I PRESTIGE — SiamEZ public inventory.\n\nAdvertised odometer: 1,764 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 51,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Honda',
       'Model': 'SCOOPY I PRESTIGE',
@@ -952,8 +940,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Automatic',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2026-honda-scoopy-i-prestige-/blOE_ThtXboqaX_S4TJCpw',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -968,7 +955,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
     imageUrls: [
       'https://virtualyard.com.au/photos/fBnw3UNh7MAsG6fPe8HmBy9U75521LXIWr9Z57W9N6Un8_vigAtBCQj19whvmjvF6ewTKJiglRkXbl4L0qqSwyYv8hY44R8xMEZhMjGgHkk.jpg',
     ],
-    description: `2024 Honda CLICK 125 — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 19,096 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 44,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2024-honda-click-125-/xpqWQgB5xvboSnXP8KcIyg\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2024 Honda CLICK 125 — SiamEZ public inventory.\n\nAdvertised odometer: 19,096 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 44,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Honda',
       'Model': 'CLICK 125',
@@ -977,8 +964,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Automatic',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2024-honda-click-125-/xpqWQgB5xvboSnXP8KcIyg',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -1030,7 +1016,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/oZJiPI1hJxX7tTDlCPJD2BRGX-D3pSTcghqNFqP-TNrpC-2tXILv3S44PoHH2v7LL0Wk4Jedwv4eLPHNJ23v1vFXFi_xTBZz_C4Lu7xJ3RY.jpg',
       'https://virtualyard.com.au/photos/oZJiPI1hJxX7tTDlCPJD2BRGX-D3pSTcghqNFqP-TNryj_0X15znXvhll-nQvyceCRNs8-vBhKnBeJDEE1AoFK24g2QEtBUMr9Oum--Nphk.jpg',
     ],
-    description: `2024 Honda CLICK 160 ABS — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 6,457 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 63,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2024-honda-click-160-abs-/JeSOen1xD4lhpCEbHFXbUQ\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2024 Honda CLICK 160 ABS — SiamEZ public inventory.\n\nAdvertised odometer: 6,457 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 63,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Honda',
       'Model': 'CLICK 160 ABS',
@@ -1039,8 +1025,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Automatic',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2024-honda-click-160-abs-/JeSOen1xD4lhpCEbHFXbUQ',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -1104,7 +1089,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/-aexg0FIGG7zgOTLvDxDVo2cBbWm082wLXfNiTX_SIXy13PC9GBE1Ou6bhqW32cOE-wvZkTjln-w_IqYg3Y-FzDVJrELe7Z__pWi6aunYsI.jpg',
       'https://virtualyard.com.au/photos/-aexg0FIGG7zgOTLvDxDVo2cBbWm082wLXfNiTX_SIXymPnikuBwMEE2iEE1ikq6gEGDGr285cmjV2RKVo55sN-GgZLT1xFOqjxgDL7WPrY.jpg',
     ],
-    description: `2023 Suzuki BERGMAN — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 1,106 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 178,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2023-suzuki-bergman-/pQP-WAKT7OYRtzAzzfeGbw\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2023 Suzuki BERGMAN — SiamEZ public inventory.\n\nAdvertised odometer: 1,106 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 178,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Suzuki',
       'Model': 'BERGMAN',
@@ -1113,8 +1098,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Automatic',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2023-suzuki-bergman-/pQP-WAKT7OYRtzAzzfeGbw',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -1180,7 +1164,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/bsBkX8gxkvUItaHqK3wlLGJNUFGlGsjlRRya2zj6HqjvL2RFbCBmjhFS3LQOROVQJEpVUw9_Fxb9ttYVTokbCR9VAxPAq6Qi1BpWlF4-BrA.jpg',
       'https://virtualyard.com.au/photos/bsBkX8gxkvUItaHqK3wlLGJNUFGlGsjlRRya2zj6HqjvL5EM1WvD2VSmOe0Y5hdzuxeQHL0i6wHdDnN1HXVLvpoHNrsPm172XP7mOsFbWe4.jpg',
     ],
-    description: `2025 Suzuki HAYABUSA — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 3,744 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 799,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2025-suzuki-hayabusa-/rfF-HRx6C9mCFxFqNHoGjA\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2025 Suzuki HAYABUSA — SiamEZ public inventory.\n\nAdvertised odometer: 3,744 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 799,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Suzuki',
       'Model': 'HAYABUSA',
@@ -1189,8 +1173,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2025-suzuki-hayabusa-/rfF-HRx6C9mCFxFqNHoGjA',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -1272,7 +1255,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/EEf4X4s14ocb2NFWtxhStcy9OXxeeJGwJnEn9tCfKdzt0qyPxpkSRr4pbdakwo4RRpHp1R76nJlpEnDze4b4lAL1y1bax6_dfu7JH3kO7vE.jpg',
       'https://virtualyard.com.au/photos/EEf4X4s14ocb2NFWtxhStcy9OXxeeJGwJnEn9tCfKdzuwhL9VR9rc656hvfU7RnIucqPec_Eju_sLw8KxHgX_Qb6MCwoCKrVNVEV8G1iOwE.jpg',
     ],
-    description: `2018 Triumph BONNEVILLE BOBBER 1200 — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 23,200 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 389,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2018-triumph-bonneville-bobber-1200-/arT0iBmZDjMm524CRWsN-A\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2018 Triumph BONNEVILLE BOBBER 1200 — SiamEZ public inventory.\n\nAdvertised odometer: 23,200 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 389,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Triumph',
       'Model': 'BONNEVILLE BOBBER 1200',
@@ -1281,8 +1264,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2018-triumph-bonneville-bobber-1200-/arT0iBmZDjMm524CRWsN-A',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -1330,7 +1312,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/tCpZDSEJ06DfTvpg6n2YUPqNsB42ywhU70IESlfXul_cg8wM-HfxKmHHayFj6cXrHXt21OWZBJLN_hzxcDOFIJ9NVtP_rSWKGHppU5hNzUE.jpg',
       'https://virtualyard.com.au/photos/tCpZDSEJ06DfTvpg6n2YUPqNsB42ywhU70IESlfXul_lMYQxSfk_oMw0zrPVx-4GAeP811ENT7s-1u5C5PIPkp5aXpkNmBZepUMUEbr9OtQ.jpg',
     ],
-    description: `2025 Yamaha FINO 125 — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 610 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 46,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2025-yamaha-fino-125-/AnBfDt84ZZnVjdza1LoE-w\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2025 Yamaha FINO 125 — SiamEZ public inventory.\n\nAdvertised odometer: 610 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 46,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Yamaha',
       'Model': 'FINO 125',
@@ -1339,8 +1321,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Automatic',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2025-yamaha-fino-125-/AnBfDt84ZZnVjdza1LoE-w',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -1394,7 +1375,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/Thbi5cuUZBSNvi8K6rlriK-r5DujrLC-6cSoJ7yjoZfuhrVQMqa-uB1utCO_Gdm9dntFGLsgvx7CqzgsfJNEhzC5z3wqrAj8PXTZjMH9TAc.jpg',
       'https://virtualyard.com.au/photos/Thbi5cuUZBSNvi8K6rlriK-r5DujrLC-6cSoJ7yjoZfzIQe8cn_5cXuUEh-4422wsBJZsi57crcn_E1tAFvECweuiFQnKy0XAPS04PJR7OA.jpg',
     ],
-    description: `2024 Yamaha MT15 — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 5,407 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 67,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2024-yamaha-mt15-/i0JWCkeUsusQFdpb7DbDkw\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2024 Yamaha MT15 — SiamEZ public inventory.\n\nAdvertised odometer: 5,407 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 67,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Yamaha',
       'Model': 'MT15',
@@ -1403,8 +1384,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2024-yamaha-mt15-/i0JWCkeUsusQFdpb7DbDkw',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -1464,7 +1444,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/bDsGawLonSwJyV8cavEJOSZNiLYhGvPKcfyYpIp854_z5H4lP-XPYw4h57WoLygvQ70Oh4NQvZrUvG7k6GritL4dLKNgBKVRYrNiu3A2sW4.jpg',
       'https://virtualyard.com.au/photos/bDsGawLonSwJyV8cavEJOSZNiLYhGvPKcfyYpIp854_zq-KNPiwdKyPHPTRBT8srA5WofGBw36OU9jLXjgmvjgVS7e8Lx8hKvmiHqANjDrw.jpg',
     ],
-    description: `2025 Yamaha GRAND FILANO 125 ABS — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 606 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 69,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2025-yamaha-grand-filano-125-abs-/-MQql36tggQCBa08DKqf5g\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2025 Yamaha GRAND FILANO 125 ABS — SiamEZ public inventory.\n\nAdvertised odometer: 606 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 69,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Yamaha',
       'Model': 'GRAND FILANO 125 ABS',
@@ -1473,8 +1453,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Automatic',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2025-yamaha-grand-filano-125-abs-/-MQql36tggQCBa08DKqf5g',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -1540,7 +1519,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/fBnw3UNh7MAsG6fPe8HmByIgdpPpHPPgfC74vek2Q9nurEKQ0KcMsZlJWIlFSQC50Nmd5PnsqxsZNGDNQmXwuTXEEi2BogEJGUjaaoTkXQ0.jpg',
       'https://virtualyard.com.au/photos/fBnw3UNh7MAsG6fPe8HmByIgdpPpHPPgfC74vek2Q9nw62CpseGhlY4686hAqITTBDkfwsq7j2_f1pnI3AakcNEkIphCkz4L6PXcEFdV5c8.jpg',
     ],
-    description: `2023 Yamaha MT15 — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 5,206 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 49,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2023-yamaha-mt15-/CwnzzG_QPNcFsCadDn1t_w\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2023 Yamaha MT15 — SiamEZ public inventory.\n\nAdvertised odometer: 5,206 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 49,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Yamaha',
       'Model': 'MT15',
@@ -1549,8 +1528,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2023-yamaha-mt15-/CwnzzG_QPNcFsCadDn1t_w',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -1614,7 +1592,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/fBnw3UNh7MAsG6fPe8HmB_f2xRvIt41xH0qrnzUdy2PjQZwE9qVg50EDlELl6-7VTq397kMBJNhiB9ANf0ZyQd-T4JpeUScmn-MLXxvBxOc.jpg',
       'https://virtualyard.com.au/photos/fBnw3UNh7MAsG6fPe8HmB_f2xRvIt41xH0qrnzUdy2Pt3GzZccL5XjQVc6TR4lTXqnK0QxaseHpuHTVQuzP9BwcPG4MEhbnOLSD1_d79rQ0.jpg',
     ],
-    description: `2015 Yamaha TRICITY — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 56,796 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 28,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2015-yamaha-tricity-/znXqrjrC-IW8pV8nIv6aQQ\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2015 Yamaha TRICITY — SiamEZ public inventory.\n\nAdvertised odometer: 56,796 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 28,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Yamaha',
       'Model': 'TRICITY',
@@ -1623,8 +1601,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Automatic',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2015-yamaha-tricity-/znXqrjrC-IW8pV8nIv6aQQ',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -1658,7 +1635,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/7vaPlOh6_WGc7hbcn62hTapQYmo5vPZBaquLLL2fsvTWUUgS2ie0LJD1xAbOAS43iL-n7dHHXT64LfeqqNS2Q3IH0hQGvMwoLkg5tNSUR3c.jpg',
       'https://virtualyard.com.au/photos/7vaPlOh6_WGc7hbcn62hTapQYmo5vPZBaquLLL2fsvTyzMBlJLQVatjLvz19WS3psSSQMMu9KcmnYfusd7ZP2_jCYydPWqjxVIeCW4Z_dPk.jpg',
     ],
-    description: `2023 Yamaha MT-07 — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 2,213 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 215,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2023-yamaha-mt-07-/D4D9NRlr7pv2b7onwf2Ovw\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2023 Yamaha MT-07 — SiamEZ public inventory.\n\nAdvertised odometer: 2,213 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 215,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Yamaha',
       'Model': 'MT-07',
@@ -1667,8 +1644,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2023-yamaha-mt-07-/D4D9NRlr7pv2b7onwf2Ovw',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -1724,7 +1700,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/9XbWOtLBq5ix0RHPm2D0CtNxgj87KBorL2Z9TAk6LX_ZgF4pXYasvKMRX4JDsrhd1Uf2FMUXbhcClIqU_ywm49Fq7-an7ftNR-gx3fhg1oY.jpg',
       'https://virtualyard.com.au/photos/9XbWOtLBq5ix0RHPm2D0CtNxgj87KBorL2Z9TAk6LX_dRPYOTC0xL5VYkq9H3GMi1PTiNeyp_w7GC35xBVknUbZ0J5J9nHt6mo33Bendoqo.jpg',
     ],
-    description: `2024 Yamaha R7 — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 8,982 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 228,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2024-yamaha-r7-/4baw-tW1-CMxwEKMLqvmzg\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2024 Yamaha R7 — SiamEZ public inventory.\n\nAdvertised odometer: 8,982 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 228,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Yamaha',
       'Model': 'R7',
@@ -1733,8 +1709,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2024-yamaha-r7-/4baw-tW1-CMxwEKMLqvmzg',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -1794,7 +1769,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/bsBkX8gxkvUItaHqK3wlLFV7j1aZZKHw2p4KVm4iZ_Hm4kgIPxDLUXA6p3rYhlFw1rFn-EgaplOmSaJuieHCb3vLzq26INXlPd6oTFbMC4E.jpg',
       'https://virtualyard.com.au/photos/bsBkX8gxkvUItaHqK3wlLFV7j1aZZKHw2p4KVm4iZ_HzN1neXrSS6JJr4muza8VeR8gM5wuVIRznnfMRoDWsWxF3_cB75EUTBkziwvlCXQI.jpg',
     ],
-    description: `2012 Yamaha T-MAX — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 44,545 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 139,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2012-yamaha-t-max-/r6wDJdiEmgiLClvh6sfUTw\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2012 Yamaha T-MAX — SiamEZ public inventory.\n\nAdvertised odometer: 44,545 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 139,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Yamaha',
       'Model': 'T-MAX',
@@ -1803,8 +1778,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Automatic',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2012-yamaha-t-max-/r6wDJdiEmgiLClvh6sfUTw',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -1860,7 +1834,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/OdpO-F2ZIKmevQg_XNz_jFRZ3ddx5yHfpwNWD_8ryWrs8rxAAnN9TEKuOyGA4Eh53BX-bB9y0krjIW1FtJOxqfwRhh8CigLczpm6R6Ji6qI.jpg',
       'https://virtualyard.com.au/photos/OdpO-F2ZIKmevQg_XNz_jFRZ3ddx5yHfpwNWD_8ryWryEDTflwK3pCGyWpAo-GBw_zwyQlxxyYEnCQKAMXDnqcePsLEAAmqGtRnML87f5YY.jpg',
     ],
-    description: `2024 Yamaha XSR 155 — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 7,418 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 79,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2024-yamaha-xsr-155-/1kp-t59q1nDvqv5eiTlroA\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2024 Yamaha XSR 155 — SiamEZ public inventory.\n\nAdvertised odometer: 7,418 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 79,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Yamaha',
       'Model': 'XSR 155',
@@ -1869,8 +1843,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2024-yamaha-xsr-155-/1kp-t59q1nDvqv5eiTlroA',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -1942,7 +1915,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/LFhb8atg9IkPQQt_qcu6q4_-nsOJT2_3VUmk0TQUsXDxwHtZ6r0pnL3KgEGFIZHTDHZ5OjYVIlYGxO6rO2Chaga8OJkemRopyWRK75N6SwU.jpg',
       'https://virtualyard.com.au/photos/LFhb8atg9IkPQQt_qcu6q4_-nsOJT2_3VUmk0TQUsXDzYE-sGe2i2IKLlqqeJC4baMFPp4jwppviYS7ijhTwmV9_8IPmWuW2Rmerh4sFK0A.jpg',
     ],
-    description: `2024 Yamaha PG 115 — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 4,994 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 54,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2024-yamaha-pg-115-/rxK878ZwZe9acNkPjLY2lQ\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2024 Yamaha PG 115 — SiamEZ public inventory.\n\nAdvertised odometer: 4,994 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 54,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Yamaha',
       'Model': 'PG 115',
@@ -1951,8 +1924,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2024-yamaha-pg-115-/rxK878ZwZe9acNkPjLY2lQ',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -2006,7 +1978,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/OdpO-F2ZIKmevQg_XNz_jBG85-9LtVcyluoFAZvQ0TbqmFB8aosd_QCmjfVsu1R7_mAVB7KVNioV26rcFRgsu1k14T0MArPK8QDMPGuOv0Q.jpg',
       'https://virtualyard.com.au/photos/OdpO-F2ZIKmevQg_XNz_jBG85-9LtVcyluoFAZvQ0Tbuy_oCF-ISlwtXd_dhby3YxYEywoAC6TziwesR7f42LIS9tlVSqXR7lcaVUP5LZiw.jpg',
     ],
-    description: `2025 Yamaha YZF-15 M ABS — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 2,654 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 99,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2025-yamaha-yzf-15-m-abs-/DOpS-LNYr9mUF0XhzucSNw\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2025 Yamaha YZF-15 M ABS — SiamEZ public inventory.\n\nAdvertised odometer: 2,654 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 99,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Yamaha',
       'Model': 'YZF-15 M ABS',
@@ -2015,8 +1987,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2025-yamaha-yzf-15-m-abs-/DOpS-LNYr9mUF0XhzucSNw',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -2080,7 +2051,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/tCpZDSEJ06DfTvpg6n2YUN90mOloXScAIJ1J8yZIFxnpo3xxB1xpqStgnTt6nIAvlke0ivuGr45II7BhEh7mdy0GWOwKXEAuy8QACaOmo28.jpg',
       'https://virtualyard.com.au/photos/tCpZDSEJ06DfTvpg6n2YUN90mOloXScAIJ1J8yZIFxnytahMJj4G-KI-rxmountcbLRXLdY0zEAxuOpDvcRBz0Iwx9F-wVaXp5D2knhcJOc.jpg',
     ],
-    description: `2025 Yamaha X-MAX 300 CONNECT — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 3,838 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 164,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2025-yamaha-x-max-300-connect-/yrpdHPsctTOxsqC6LGPGEA\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2025 Yamaha X-MAX 300 CONNECT — SiamEZ public inventory.\n\nAdvertised odometer: 3,838 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 164,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Yamaha',
       'Model': 'X-MAX 300 CONNECT',
@@ -2089,8 +2060,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Automatic',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2025-yamaha-x-max-300-connect-/yrpdHPsctTOxsqC6LGPGEA',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -2150,7 +2120,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/fBnw3UNh7MAsG6fPe8HmBxo2dbq6Sx8YPPef-dCV4Wnp4_mfItlxI6tglcY2UX6iUzRfMES_868ugLjKBwmdbNEdQtfdEQdO3MOaPMpF14Y.jpg',
       'https://virtualyard.com.au/photos/fBnw3UNh7MAsG6fPe8HmBxo2dbq6Sx8YPPef-dCV4WnzouNjUPZWrTDt_2Ieh4GhP0SfAb6hqlY86gvJHdzPnT4fxQxmdMo_cvUahgdwrTY.jpg',
     ],
-    description: `2020 KTM 390RC — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 7,854 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 94,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2020-ktm-390rc-/M-n5eWw6OVAxp983ct1z_g\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2020 KTM 390RC — SiamEZ public inventory.\n\nAdvertised odometer: 7,854 km. Transmission: Manual. Condition (advertised): Excellent.\n\nAdvertised price: THB 94,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'KTM',
       'Model': '390RC',
@@ -2159,8 +2129,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Manual',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2020-ktm-390rc-/M-n5eWw6OVAxp983ct1z_g',
+      'Price note': 'THB excluding government charges',
     },
   },
   {
@@ -2218,7 +2187,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'https://virtualyard.com.au/photos/bsBkX8gxkvUItaHqK3wlLL46PDsEhl-6S5DAwATfVaLgOgB7FlrqBq02gjEd06y-_A276lPhwOUmYSpKgeylVpPzf0nC8mpPEoD6JCx1BlE.jpg',
       'https://virtualyard.com.au/photos/bsBkX8gxkvUItaHqK3wlLL46PDsEhl-6S5DAwATfVaLk-y5Twogm9zN2Fk8kaKHA8BJjvATVByWyFAqME22cn0oGoTys6mTVrGsWp3eZZCE.jpg',
     ],
-    description: `2025 Zontes 350D ABS — mirrored for SiamEZ public inventory from the seller’s listing.\n\nAdvertised odometer: 9,998 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 128,800 excluding government charges — confirm final pricing and paperwork with the seller.\n\nSource listing: https://sunsetscootersthailand.shop/buy/2025-zontes-350d-abs-/VqiM4nvfZ_9HYrOmtjSr6A\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
+    description: `2025 Zontes 350D ABS — SiamEZ public inventory.\n\nAdvertised odometer: 9,998 km. Transmission: Automatic. Condition (advertised): Excellent.\n\nAdvertised price: THB 128,800 excluding government charges — confirm final pricing and paperwork before purchase.\n\nSiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.`,
     specifications: {
       'Make': 'Zontes',
       'Model': '350D ABS',
@@ -2227,8 +2196,7 @@ export const SUNSET_SCOOTERS_BATCH_LISTINGS: SunsetBatchListing[] = [
       'Transmission': 'Automatic',
       'Fuel type': 'Unleaded',
       'Condition (advertised)': 'Excellent',
-      'Price note': 'THB excluding government charges (per source listing)',
-      'Source listing': 'https://sunsetscootersthailand.shop/buy/2025-zontes-350d-abs-/VqiM4nvfZ_9HYrOmtjSr6A',
+      'Price note': 'THB excluding government charges',
     },
   },
 ];

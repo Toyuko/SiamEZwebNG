@@ -194,10 +194,9 @@ for (const [slug, sourceUrl] of seen) {
   const imageUrls = extractGalleryUrls(html);
 
   const description = [
-    `${title} — mirrored for SiamEZ public inventory from the seller’s listing.`,
+    `${title} — SiamEZ public inventory.`,
     `Advertised odometer: ${mileageKm === 0 && /new/i.test(v.Odometer ?? "") ? "0 km (advertised as new)" : `${mileageKm.toLocaleString("en-US")} km`}. Transmission: ${transmission}. Condition (advertised): ${condition}.`,
-    `Advertised price: THB ${priceAmount.toLocaleString("en-US")} excluding government charges — confirm final pricing and paperwork with the seller.`,
-    `Source listing: ${sourceUrl}`,
+    `Advertised price: THB ${priceAmount.toLocaleString("en-US")} excluding government charges — confirm final pricing and paperwork before purchase.`,
     "SiamEZ Auto & Bike Finder can assist with inspection, negotiation, and transfer — contact us if you want support beyond browsing this inventory.",
   ].join("\\n\\n");
 
@@ -209,8 +208,7 @@ for (const [slug, sourceUrl] of seen) {
     Transmission: transmission,
     "Fuel type": v["Fuel Type"] ?? "Unleaded",
     "Condition (advertised)": condition,
-    "Price note": "THB excluding government charges (per source listing)",
-    "Source listing": sourceUrl,
+    "Price note": "THB excluding government charges",
   };
 
   rows.push({
