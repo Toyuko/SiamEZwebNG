@@ -11,6 +11,10 @@ import { site } from "@/config/site";
 import { Mail, MessageCircle, Phone } from "lucide-react";
 import { SalesVehicleImageGallery } from "@/components/sales/SalesVehicleImageGallery";
 import { SalesListingBoostPanel } from "@/components/sales/SalesListingBoostPanel";
+import {
+  isSunsetScootersDealerMotorcycleListing,
+  resolveSunsetDealerMotorcycleHeroUrl,
+} from "@/lib/sunset-dealer-motorcycle-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -60,10 +64,13 @@ function getVideoEmbedUrl(url: string) {
 
 export default async function SalesVehicleDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string; id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { locale, id } = await params;
+  const sp = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("sales");
 
@@ -84,11 +91,27 @@ export default async function SalesVehicleDetailPage({
     boostActive && vehicle.boostExpiresAt
       ? new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(vehicle.boostExpiresAt)
       : null;
+  const rawOpenBoost = typeof sp.openBoost === "string" ? sp.openBoost : "";
+  const initialBoostPackage =
+    rawOpenBoost === "1w" || rawOpenBoost === "2w" || rawOpenBoost === "4w" ? rawOpenBoost : null;
+  const openBoostOnMount =
+    rawOpenBoost === "1" || rawOpenBoost === "true" || initialBoostPackage !== null;
   const sellerKind = vehicle.sellerKind === "dealer" ? "dealer" : "private";
+
+  const resolvedHeroImageUrl = isSunsetScootersDealerMotorcycleListing({
+    category: vehicle.category,
+    sellerKind: vehicle.sellerKind,
+  })
+    ? resolveSunsetDealerMotorcycleHeroUrl({
+        slug: vehicle.slug,
+        heroImageUrl: vehicle.heroImageUrl,
+        imageUrls: vehicle.imageUrls,
+      })
+    : vehicle.heroImageUrl;
 
   const images = Array.from(
     new Set([
-      vehicle.heroImageUrl,
+      resolvedHeroImageUrl,
       ...(Array.isArray(vehicle.imageUrls)
         ? vehicle.imageUrls.filter((url): url is string => typeof url === "string")
         : []),
@@ -214,6 +237,22 @@ export default async function SalesVehicleDetailPage({
 
         <Card className="h-fit">
           <CardContent className="space-y-4 p-6">
+            <SalesListingBoostPanel
+              vehicleId={vehicle.id}
+              canBoost={canBoost}
+              boostOmiseEnabled={boostOmiseEnabled}
+              boostActive={boostActive}
+              boostExpiresLabel={boostExpiresLabel}
+              isPendingBoost={isPendingBoost}
+              openBoostOnMount={openBoostOnMount}
+              initialBoostPackage={initialBoostPackage}
+              bank={{
+                bankName: paymentSettings.bankName,
+                bankBranch: paymentSettings.bankBranch,
+                bankAccountName: paymentSettings.bankAccountName,
+                bankAccountNumber: paymentSettings.bankAccountNumber,
+              }}
+            />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {vehicle.year} {vehicle.make} {vehicle.model}
             </h1>
@@ -263,22 +302,6 @@ export default async function SalesVehicleDetailPage({
                 ))}
               </div>
             ) : null}
-            <div className="space-y-2">
-              <SalesListingBoostPanel
-                vehicleId={vehicle.id}
-                canBoost={canBoost}
-                boostOmiseEnabled={boostOmiseEnabled}
-                boostActive={boostActive}
-                boostExpiresLabel={boostExpiresLabel}
-                isPendingBoost={isPendingBoost}
-                bank={{
-                  bankName: paymentSettings.bankName,
-                  bankBranch: paymentSettings.bankBranch,
-                  bankAccountName: paymentSettings.bankAccountName,
-                  bankAccountNumber: paymentSettings.bankAccountNumber,
-                }}
-              />
-            </div>
             <div className="space-y-2">
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("contactMethodsTitle")}</p>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">

@@ -8,6 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
+import { SALES_BOOST_PACKAGES } from "@/lib/sales-boost-packages";
+
+export type PostCreateBoostChoice = "none" | "1w" | "2w" | "4w";
 
 export type SalesListingInput = {
   title: string;
@@ -28,6 +31,8 @@ export type SalesListingInput = {
   description: string;
   specifications: Record<string, string>;
   published: boolean;
+  /** After creating a new listing, open paid boost flow on the public detail page (ignored when editing). */
+  postCreateBoost: PostCreateBoostChoice;
 };
 
 const EMPTY_FORM: SalesListingInput = {
@@ -49,6 +54,7 @@ const EMPTY_FORM: SalesListingInput = {
   description: "",
   specifications: {},
   published: true,
+  postCreateBoost: "none",
 };
 
 export function SalesListingFormModal({
@@ -240,6 +246,7 @@ export function SalesListingFormModal({
       imageUrls: normalizedImageUrls,
       videoUrls: normalizedVideoUrls,
       priceCurrency: form.priceCurrency.trim().toUpperCase() || "THB",
+      postCreateBoost: initialData ? "none" : form.postCreateBoost,
     });
   };
 
@@ -718,6 +725,38 @@ export function SalesListingFormModal({
               ))}
             </div>
           </div>
+          {!initialData ? (
+            <div className="rounded-lg border border-yellow-500/40 bg-yellow-500/[0.07] p-4 dark:bg-yellow-500/10">
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("postCreateBoost.title")}</p>
+              <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{t("postCreateBoost.subtitle")}</p>
+              <div className="mt-3 space-y-2">
+                <label className="flex cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="post-create-boost"
+                    checked={form.postCreateBoost === "none"}
+                    onChange={() => setForm((p) => ({ ...p, postCreateBoost: "none" }))}
+                    className="text-yellow-600"
+                  />
+                  {t("postCreateBoost.none")}
+                </label>
+                {SALES_BOOST_PACKAGES.map((pkg) => (
+                  <label key={pkg.id} className="flex cursor-pointer items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="post-create-boost"
+                      checked={form.postCreateBoost === pkg.id}
+                      onChange={() => setForm((p) => ({ ...p, postCreateBoost: pkg.id }))}
+                      className="text-yellow-600"
+                    />
+                    <span>
+                      {t(`postCreateBoost.packages.${pkg.id}`)} — {t("postCreateBoost.priceThb", { amount: pkg.priceThb })}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

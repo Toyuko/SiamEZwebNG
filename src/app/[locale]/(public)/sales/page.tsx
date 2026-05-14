@@ -7,6 +7,10 @@ import {
 import { parsePublicSalesPageSizeParam } from "@/lib/public-sales-inventory";
 import { SalesInventoryClient } from "./SalesInventoryClient";
 import type { PublicSalesVehicleCard } from "@/components/sales/SalesListingCard";
+import {
+  isSunsetScootersDealerMotorcycleListing,
+  resolveSunsetDealerMotorcycleHeroUrl,
+} from "@/lib/sunset-dealer-motorcycle-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -22,9 +26,19 @@ function toPublicSalesVehicleCard(
   const boostActive = Boolean(
     v.isBoosted && v.boostExpiresAt != null && new Date(v.boostExpiresAt).getTime() > Date.now()
   );
+  const heroImageUrl = isSunsetScootersDealerMotorcycleListing({
+    category: v.category,
+    sellerKind: v.sellerKind,
+  })
+    ? resolveSunsetDealerMotorcycleHeroUrl({
+        slug: v.slug,
+        heroImageUrl: v.heroImageUrl,
+        imageUrls: v.imageUrls,
+      })
+    : v.heroImageUrl;
   return {
     id: v.id,
-    heroImageUrl: v.heroImageUrl,
+    heroImageUrl,
     priceAmount: v.priceAmount,
     priceCurrency: v.priceCurrency,
     make: v.make,

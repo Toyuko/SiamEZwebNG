@@ -246,6 +246,17 @@
       "sold": "Sold",
       "pending_boost": "Pending boost"
     },
+    "postCreateBoost": {
+      "title": "Boost visibility (optional)",
+      "subtitle": "After you publish, we can open the paid boost checkout on your new listing so you can pay with PromptPay or bank transfer.",
+      "none": "Not now — I will boost later if needed",
+      "priceThb": "฿{amount}",
+      "packages": {
+        "1w": "1 week featured",
+        "2w": "2 weeks featured",
+        "4w": "4 weeks featured"
+      }
+    },
     "errors": {
       "uploadFailed": "Image upload failed",
       "step1Required": "Please fill in make, model, and title.",
@@ -1029,5 +1040,29 @@
       "deactivateAccount": "Deactivate my account",
       "genericError": "Something went wrong. Please try again."
     }
+  },
+  "paymentInformation": {
+    "title": "Bank transfer & PromptPay",
+    "description": "Pay from any Thai bank app using the QR code or transfer to the account below, then upload your payment slip.",
+    "bankTransferTitle": "Bank transfer",
+    "bankNameLabel": "Bank",
+    "accountNameLabel": "Account name",
+    "accountNumberLabel": "Account number",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Could not copy",
+    "qrTitle": "PromptPay QR",
+    "scanQrHint": "Scan this QR in your banking app to transfer to our account.",
+    "referenceLabel": "Reference",
+    "amountLabel": "Amount",
+    "dynamicQrNote": "This QR code includes the exact amount for this payment.",
+    "staticQrNote": "If your app asks for an amount after scanning, enter the total you are paying.",
+    "uploadSlipLabel": "Upload transfer slip",
+    "uploadSlipHint": "Attach a screenshot or photo of your payment confirmation (PNG, JPG, or PDF).",
+    "acceptsAllBanks": "Accepts all banks — transfers from any Thai banking app are welcome.",
+    "kbankName": "Kasikorn Bank (K-Bank)",
+    "qrAlt": "PromptPay QR code",
+    "qrLoading": "Generating payment QR…",
+    "qrLoadError": "Could not generate an amount-specific QR. Use the standard QR and enter the amount in your bank app if asked."
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -90,6 +90,7 @@ function normalizeForForm(listing: Listing): SalesListingInput {
     specifications:
       listing.specifications && typeof listing.specifications === "object" ? (listing.specifications as Record<string, string>) : {},
     published: listing.published,
+    postCreateBoost: "none",
   };
 }
 
@@ -139,13 +140,21 @@ export function SalesDashboardClient({ initialListings }: { initialListings: Lis
 
   const handleSubmit = (data: SalesListingInput) => {
     startTransition(async () => {
+      const { postCreateBoost, ...payload } = data;
       if (editing) {
-        await updateSalesListing(editing.id, data);
-      } else {
-        await createSalesListing(data);
+        await updateSalesListing(editing.id, payload);
+        setFormOpen(false);
+        setEditing(null);
+        router.refresh();
+        return;
       }
+      const created = await createSalesListing(payload);
       setFormOpen(false);
       setEditing(null);
+      if (postCreateBoost && postCreateBoost !== "none") {
+        router.push(`/sales/${created.id}?openBoost=${postCreateBoost}`);
+        return;
+      }
       router.refresh();
     });
   };

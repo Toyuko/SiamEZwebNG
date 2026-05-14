@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,9 @@ type SalesListingBoostPanelProps = {
   boostActive: boolean;
   boostExpiresLabel: string | null;
   isPendingBoost: boolean;
+  /** Open boost checkout after creating a listing (query `?openBoost=…`). */
+  openBoostOnMount?: boolean;
+  initialBoostPackage?: "1w" | "2w" | "4w" | null;
   bank: BankInfo;
 };
 
@@ -33,6 +36,8 @@ export function SalesListingBoostPanel({
   boostActive,
   boostExpiresLabel,
   isPendingBoost,
+  openBoostOnMount = false,
+  initialBoostPackage = null,
   bank,
 }: SalesListingBoostPanelProps) {
   const t = useTranslations("sales.boost");
@@ -42,6 +47,14 @@ export function SalesListingBoostPanel({
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (!openBoostOnMount || !canBoost) return;
+    setOpen(true);
+    if (initialBoostPackage === "1w" || initialBoostPackage === "2w" || initialBoostPackage === "4w") {
+      setPkgId(initialBoostPackage);
+    }
+  }, [openBoostOnMount, initialBoostPackage, canBoost]);
 
   if (!canBoost) {
     return null;
@@ -119,7 +132,7 @@ export function SalesListingBoostPanel({
         </div>
       ) : null}
 
-      {!boostActive && !isPendingBoost ? (
+      {!boostActive && !isPendingBoost && !open ? (
         <Button
           type="button"
           variant="outline"
