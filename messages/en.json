@@ -98,8 +98,10 @@
     "pagination": {
       "previous": "Previous",
       "next": "Next",
-      "pageInfo": "Page {page} of {totalPages}"
+      "pageInfo": "Page {page} of {totalPages}",
+      "showingRange": "Showing {from}–{to} of {total}"
     },
+    "perPageLabel": "Per page",
     "backToInventory": "Back to inventory",
     "categoryLabel": "Category",
     "videos": "Videos",

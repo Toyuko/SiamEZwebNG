@@ -98,8 +98,10 @@
     "pagination": {
       "previous": "ก่อนหน้า",
       "next": "ถัดไป",
-      "pageInfo": "หน้า {page} จาก {totalPages}"
+      "pageInfo": "หน้า {page} จาก {totalPages}",
+      "showingRange": "แสดง {from}–{to} จากทั้งหมด {total} รายการ"
     },
+    "perPageLabel": "ต่อหน้า",
     "backToInventory": "กลับไปหน้ารายการรถ",
     "categoryLabel": "หมวดหมู่",
     "videos": "วิดีโอ",

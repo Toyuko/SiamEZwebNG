@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { resolvePublicSalesPageSize } from "@/lib/public-sales-inventory";
 import type { SalesListingStatus } from "@prisma/client";
 
 export type VehicleCategoryFilter = "all" | "car" | "motorcycle";
@@ -98,7 +99,7 @@ export async function getSalesFilterBounds() {
 export async function getPublicSalesVehicles(filters: SalesFilters) {
   const search = filters.search?.trim();
   const page = Math.max(1, filters.page ?? 1);
-  const pageSize = Math.max(1, Math.min(24, filters.pageSize ?? 9));
+  const pageSize = resolvePublicSalesPageSize(filters.pageSize);
 
   const where = {
     published: true,

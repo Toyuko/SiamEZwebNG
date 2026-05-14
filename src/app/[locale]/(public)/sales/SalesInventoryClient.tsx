@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
+import { DEFAULT_PUBLIC_SALES_PAGE_SIZE, PUBLIC_SALES_PAGE_SIZES } from "@/lib/public-sales-inventory";
 
 type VehicleCard = {
   id: string;
@@ -45,6 +46,7 @@ type SalesInventoryClientProps = {
     page: number;
     totalPages: number;
     total: number;
+    pageSize: number;
   };
 };
 
@@ -84,6 +86,19 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
           params.delete("page");
           continue;
         }
+      }
+      if (key === "pageSize") {
+        const n = typeof raw === "number" ? raw : Number(raw);
+        if (!Number.isFinite(n) || n === DEFAULT_PUBLIC_SALES_PAGE_SIZE) {
+          params.delete("pageSize");
+          continue;
+        }
+        if (!(PUBLIC_SALES_PAGE_SIZES as readonly number[]).includes(n)) {
+          params.delete("pageSize");
+          continue;
+        }
+        params.set("pageSize", String(n));
+        continue;
       }
       params.set(key, String(raw));
     }
@@ -252,7 +267,44 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
         </CardContent>
       </Card>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {pagination.total > 0 ? (
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {t("pagination.showingRange", {
+              from: (pagination.page - 1) * pagination.pageSize + 1,
+              to: Math.min(pagination.page * pagination.pageSize, pagination.total),
+              total: pagination.total,
+            })}
+          </p>
+          <div className="flex items-center gap-2 sm:justify-end">
+            <label htmlFor="sales-inventory-page-size" className="text-sm text-gray-600 dark:text-gray-400">
+              {t("perPageLabel")}
+            </label>
+            <Select
+              id="sales-inventory-page-size"
+              className="h-10 w-[5.5rem] shrink-0"
+              value={String(pagination.pageSize)}
+              onChange={(e) => {
+                patchSearchParams({ pageSize: Number(e.currentTarget.value), page: 1 });
+              }}
+            >
+              {PUBLIC_SALES_PAGE_SIZES.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </Select>
+          </div>
+        </div>
+      ) : null}
+
+      <div
+        className={
+          pagination.total > 0
+            ? "mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+            : "mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+        }
+      >
         {vehicles.map((vehicle) => (
           <Link key={vehicle.id} href={`/sales/${vehicle.id}`} className="group">
             <Card className="h-full overflow-hidden transition-shadow hover:shadow-lg">

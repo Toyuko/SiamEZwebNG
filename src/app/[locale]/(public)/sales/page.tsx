@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { getPublicSalesVehicles, getSalesFilterBounds } from "@/data-access/sales";
+import { parsePublicSalesPageSizeParam } from "@/lib/public-sales-inventory";
 import { SalesInventoryClient } from "./SalesInventoryClient";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +36,7 @@ export default async function SalesPage({
       ? sortParam
       : "latest";
   const page = Math.max(1, parseIntParam(typeof sp.page === "string" ? sp.page : undefined, 1));
+  const pageSize = parsePublicSalesPageSizeParam(typeof sp.pageSize === "string" ? sp.pageSize : undefined);
 
   const minPrice = Math.max(bounds.minPrice, parseIntParam(typeof sp.minPrice === "string" ? sp.minPrice : undefined, bounds.minPrice));
   const maxPrice = Math.min(bounds.maxPrice, parseIntParam(typeof sp.maxPrice === "string" ? sp.maxPrice : undefined, bounds.maxPrice));
@@ -50,7 +52,7 @@ export default async function SalesPage({
     maxYear: Math.max(minYear, maxYear),
     sort,
     page,
-    pageSize: 9,
+    pageSize,
   });
 
   return (
@@ -61,6 +63,7 @@ export default async function SalesPage({
         page: result.page,
         totalPages: result.totalPages,
         total: result.total,
+        pageSize: result.pageSize,
       }}
       filters={{
         category,
