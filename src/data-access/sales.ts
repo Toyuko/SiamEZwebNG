@@ -1,12 +1,18 @@
 import { prisma } from "@/lib/db";
 import { resolvePublicSalesPageSize } from "@/lib/public-sales-inventory";
 import type { SalesListingStatus } from "@prisma/client";
+import { boostDaysFromTier } from "@/lib/sales-boost-packages";
 
 export type VehicleCategoryFilter = "all" | "car" | "motorcycle";
-export type ListingStatus = "available" | "reserved" | "sold";
+export type SalesSellerKindFilter = "all" | "dealer" | "private";
+export type ListingStatus = "available" | "reserved" | "sold" | "pending_boost";
+
+/** Published inventory shown on /sales (includes bank-slip boost pending review). */
+export const PUBLIC_SALES_INVENTORY_STATUSES: SalesListingStatus[] = ["available", "reserved", "pending_boost"];
 
 export type SalesFilters = {
   category?: VehicleCategoryFilter;
+  sellerKind?: SalesSellerKindFilter;
   search?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -34,10 +40,82 @@ const salesVehicleLegacySelect = {
   description: true,
   specifications: true,
   published: true,
+  sellerKind: true,
+  isBoosted: true,
+  boostExpiresAt: true,
+  boostTier: true,
+  omiseChargeId: true,
+  boostProofDocumentId: true,
   createdById: true,
   createdAt: true,
   updatedAt: true,
 } as const;
+
+const SALES_STRIPE_LEGACY_BOOST_DAYS = 30;
+
+/** Applies paid boost window and marks listing available (clears pending_boost after bank approval). */
+export async function applySalesBoostAfterPayment(
+  salesVehicleId: string,
+  opts: { days: number; tier?: string | null; clearOmiseCharge?: boolean }
+) {
+  const days = Number.isFinite(opts.days) && opts.days > 0 ? opts.days : boostDaysFromTier(opts.tier);
+  const boostExpiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+  await prisma.salesVehicle.update({
+    where: { id: salesVehicleId },
+    data: {
+      isBoosted: true,
+      boostExpiresAt,
+      ...(opts.tier !== undefined && opts.tier !== null ? { boostTier: opts.tier } : {}),
+      status: "available",
+      ...(opts.clearOmiseCharge ? { omiseChargeId: null } : {}),
+    },
+  });
+}
+
+/** Called from Stripe webhook after verified payment for legacy Super Boost checkout. */
+export async function applySalesSuperBoostForListing(salesVehicleId: string) {
+  await applySalesBoostAfterPayment(salesVehicleId, {
+    days: SALES_STRIPE_LEGACY_BOOST_DAYS,
+    tier: "stripe_30d",
+    clearOmiseCharge: false,
+  });
+}
+
+/** Clears boost flags when the window has passed (read-path maintenance, no cron required). */
+export async function expireStaleSalesBoostsNow() {
+  try {
+    await prisma.salesVehicle.updateMany({
+      where: {
+        isBoosted: true,
+        boostExpiresAt: { lte: new Date() },
+      },
+      data: { isBoosted: false },
+    });
+  } catch (error) {
+    console.warn("expireStaleSalesBoostsNow skipped:", error);
+  }
+}
+
+/** Active boosted vehicles for the featured carousel (empty when none). */
+export async function getPublicFeaturedBoostedSalesVehicles() {
+  await expireStaleSalesBoostsNow();
+  const where = {
+    published: true,
+    status: { in: ["available", "reserved"] as SalesListingStatus[] },
+    isBoosted: true,
+    boostExpiresAt: { gt: new Date() },
+  };
+  try {
+    return await prisma.salesVehicle.findMany({
+      where,
+      orderBy: [{ boostExpiresAt: "desc" }, { createdAt: "desc" }],
+      take: 24,
+    });
+  } catch (error) {
+    console.warn("Featured boosted vehicles unavailable:", error);
+    return [];
+  }
+}
 
 function isMissingSalesMediaColumnError(error: unknown) {
   if (!(error instanceof Error)) return false;
@@ -62,19 +140,19 @@ export async function getSalesFilterBounds() {
   try {
     const [minPrice, maxPrice, minYear, maxYear] = await Promise.all([
       prisma.salesVehicle.aggregate({
-        where: { published: true, status: { in: ["available", "reserved"] } },
+        where: { published: true, status: { in: PUBLIC_SALES_INVENTORY_STATUSES } },
         _min: { priceAmount: true },
       }),
       prisma.salesVehicle.aggregate({
-        where: { published: true, status: { in: ["available", "reserved"] } },
+        where: { published: true, status: { in: PUBLIC_SALES_INVENTORY_STATUSES } },
         _max: { priceAmount: true },
       }),
       prisma.salesVehicle.aggregate({
-        where: { published: true, status: { in: ["available", "reserved"] } },
+        where: { published: true, status: { in: PUBLIC_SALES_INVENTORY_STATUSES } },
         _min: { year: true },
       }),
       prisma.salesVehicle.aggregate({
-        where: { published: true, status: { in: ["available", "reserved"] } },
+        where: { published: true, status: { in: PUBLIC_SALES_INVENTORY_STATUSES } },
         _max: { year: true },
       }),
     ]);
@@ -103,8 +181,11 @@ export async function getPublicSalesVehicles(filters: SalesFilters) {
 
   const where = {
     published: true,
-    status: { in: ["available", "reserved"] as SalesListingStatus[] },
+    status: { in: PUBLIC_SALES_INVENTORY_STATUSES },
     ...(filters.category && filters.category !== "all" ? { category: filters.category } : {}),
+    ...(filters.sellerKind && filters.sellerKind !== "all"
+      ? { sellerKind: filters.sellerKind }
+      : {}),
     ...(search
       ? {
           OR: [
@@ -132,16 +213,20 @@ export async function getPublicSalesVehicles(filters: SalesFilters) {
       : {}),
   };
 
-  const orderBy =
+  const secondaryOrder =
     filters.sort === "price_asc"
-      ? [{ priceAmount: "asc" as const }, { createdAt: "desc" as const }]
+      ? ([{ priceAmount: "asc" as const }, { createdAt: "desc" as const }] as const)
       : filters.sort === "price_desc"
-        ? [{ priceAmount: "desc" as const }, { createdAt: "desc" as const }]
+        ? ([{ priceAmount: "desc" as const }, { createdAt: "desc" as const }] as const)
         : filters.sort === "year_desc"
-          ? [{ year: "desc" as const }, { createdAt: "desc" as const }]
+          ? ([{ year: "desc" as const }, { createdAt: "desc" as const }] as const)
           : filters.sort === "year_asc"
-            ? [{ year: "asc" as const }, { createdAt: "desc" as const }]
-            : [{ createdAt: "desc" as const }];
+            ? ([{ year: "asc" as const }, { createdAt: "desc" as const }] as const)
+            : ([{ createdAt: "desc" as const }] as const);
+
+  const orderBy = [{ isBoosted: "desc" as const }, ...secondaryOrder];
+
+  await expireStaleSalesBoostsNow();
 
   try {
     const [items, total] = await Promise.all([
@@ -199,6 +284,7 @@ export async function getPublicSalesVehicles(filters: SalesFilters) {
 }
 
 export async function getPublicSalesVehicleById(id: string) {
+  await expireStaleSalesBoostsNow();
   try {
     return await prisma.salesVehicle.findFirst({
       where: { id, published: true },

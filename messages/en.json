@@ -79,10 +79,49 @@
   "sales": {
     "inventoryTitle": "Sales Inventory",
     "inventoryDescription": "Browse available cars and motorcycles from SiamEZ trusted sellers.",
+    "featuredTitle": "Featured listings",
+    "featuredSubtitle": "Super Boost — highlighted, promoted, and pinned to the top of results.",
+    "featuredCarouselAria": "Featured promoted listings",
+    "featuredBadge": "Featured",
+    "boost": {
+      "openButton": "Boost this listing",
+      "modalTitle": "Boost your listing",
+      "modalSubtitle": "Choose a package, then pay with Thai PromptPay (Omise) or upload a bank transfer slip.",
+      "close": "Close",
+      "pickPackageFirst": "Select a boost package first.",
+      "needSlip": "Please choose your payment slip file.",
+      "uploadFailed": "Upload failed.",
+      "activeUntil": "Featured until {date}.",
+      "pendingBoostBody": "Pending boost: we received your bank transfer slip and will activate your listing after verification.",
+      "omiseSection": "PromptPay (Omise)",
+      "omisePayButton": "Generate PromptPay QR",
+      "omiseNoQr": "Charge created but no QR image was returned. Check your Omise dashboard or try again.",
+      "omiseAfterPay": "After you pay in your banking app, your boost activates within a minute once Omise confirms the charge.",
+      "omiseDisabled": "Online PromptPay checkout is not configured. Use bank transfer below.",
+      "bankSection": "Bank transfer (manual)",
+      "slipLabel": "Upload payment slip",
+      "bankNote": "Your listing status becomes “Pending boost” until staff verifies your slip. We also notify the team automatically when possible.",
+      "qrAlt": "PromptPay QR code",
+      "priceThb": "฿{amount}",
+      "packages": {
+        "1w": { "label": "1 week (7 days)" },
+        "2w": { "label": "2 weeks (14 days)" },
+        "4w": { "label": "4 weeks (28 days)" }
+      }
+    },
     "searchPlaceholder": "Search make or model",
     "category": {
       "cars": "Cars",
       "motorcycles": "Motorcycles"
+    },
+    "sellerKind": {
+      "label": "Listing category",
+      "all": "All listings",
+      "dealer": "Dealer sales",
+      "private": "Private sales",
+      "dealerChip": "Dealer",
+      "dealerBadge": "Dealer inventory",
+      "privateBadge": "Private seller"
     },
     "sort": {
       "latest": "Latest",
@@ -129,6 +168,7 @@
     "addListing": "Add New Listing",
     "empty": "No listings yet. Add your first vehicle.",
     "confirmDelete": "Delete \"{label}\" listing?",
+    "approveBoost": "Approve boost",
     "table": {
       "listing": "Listing",
       "category": "Category",
@@ -140,7 +180,8 @@
     "status": {
       "available": "Available",
       "reserved": "Reserved",
-      "sold": "Sold"
+      "sold": "Sold",
+      "pending_boost": "Pending boost"
     },
     "category": {
       "car": "Car",
@@ -181,6 +222,7 @@
       "mileage": "Mileage (km)",
       "price": "Price (THB)",
       "category": "Category",
+      "sellerKind": "Sale type",
       "status": "Status",
       "published": "Visible on public page",
       "images": "Upload images",
@@ -194,10 +236,15 @@
       "car": "Car",
       "motorcycle": "Motorcycle"
     },
+    "sellerKind": {
+      "dealer": "Dealer sale",
+      "private": "Private sale"
+    },
     "status": {
       "available": "Available",
       "reserved": "Reserved",
-      "sold": "Sold"
+      "sold": "Sold",
+      "pending_boost": "Pending boost"
     },
     "errors": {
       "uploadFailed": "Image upload failed",

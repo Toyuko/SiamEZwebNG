@@ -5,6 +5,7 @@ import { env } from "@/lib/env";
 import { prisma } from "@/lib/db";
 import * as invoiceDA from "@/data-access/invoice";
 import * as paymentDA from "@/data-access/payment";
+import { applySalesSuperBoostForListing } from "@/data-access/sales";
 
 export const runtime = "nodejs";
 
@@ -56,6 +57,14 @@ export async function POST(request: NextRequest) {
             where: { id: caseId },
             data: { status: "paid" },
           });
+        }
+
+        if (pi.metadata?.intent === "super_boost" && pi.metadata?.salesVehicleId) {
+          try {
+            await applySalesSuperBoostForListing(pi.metadata.salesVehicleId);
+          } catch (boostErr) {
+            console.error("Super Boost apply after payment_intent.succeeded failed:", boostErr);
+          }
         }
         break;
       }

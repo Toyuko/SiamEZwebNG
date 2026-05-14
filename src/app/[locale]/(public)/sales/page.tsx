@@ -1,7 +1,12 @@
 import { setRequestLocale } from "next-intl/server";
-import { getPublicSalesVehicles, getSalesFilterBounds } from "@/data-access/sales";
+import {
+  getPublicFeaturedBoostedSalesVehicles,
+  getPublicSalesVehicles,
+  getSalesFilterBounds,
+} from "@/data-access/sales";
 import { parsePublicSalesPageSizeParam } from "@/lib/public-sales-inventory";
 import { SalesInventoryClient } from "./SalesInventoryClient";
+import type { PublicSalesVehicleCard } from "@/components/sales/SalesListingCard";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +14,29 @@ function parseIntParam(value: string | undefined, fallback: number) {
   if (!value) return fallback;
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function toPublicSalesVehicleCard(
+  v: Awaited<ReturnType<typeof getPublicSalesVehicles>>["items"][number]
+): PublicSalesVehicleCard {
+  const boostActive = Boolean(
+    v.isBoosted && v.boostExpiresAt != null && new Date(v.boostExpiresAt).getTime() > Date.now()
+  );
+  return {
+    id: v.id,
+    heroImageUrl: v.heroImageUrl,
+    priceAmount: v.priceAmount,
+    priceCurrency: v.priceCurrency,
+    make: v.make,
+    model: v.model,
+    year: v.year,
+    mileageKm: v.mileageKm,
+    category: v.category,
+    status: v.status,
+    sellerKind: v.sellerKind,
+    isBoosted: v.isBoosted,
+    boostActive,
+  };
 }
 
 export default async function SalesPage({
@@ -25,6 +53,8 @@ export default async function SalesPage({
 
   const categoryValue = typeof sp.category === "string" ? sp.category : "";
   const category = categoryValue === "car" || categoryValue === "motorcycle" ? categoryValue : "all";
+  const sellerParam = typeof sp.seller === "string" ? sp.seller : "";
+  const sellerKind = sellerParam === "dealer" || sellerParam === "private" ? sellerParam : "all";
   const search = typeof sp.search === "string" ? sp.search : "";
   const sortParam = typeof sp.sort === "string" ? sp.sort : "";
   const sort =
@@ -43,21 +73,32 @@ export default async function SalesPage({
   const minYear = Math.max(bounds.minYear, parseIntParam(typeof sp.minYear === "string" ? sp.minYear : undefined, bounds.minYear));
   const maxYear = Math.min(bounds.maxYear, parseIntParam(typeof sp.maxYear === "string" ? sp.maxYear : undefined, bounds.maxYear));
 
-  const result = await getPublicSalesVehicles({
-    category,
-    search,
-    minPrice: Math.min(minPrice, maxPrice),
-    maxPrice: Math.max(minPrice, maxPrice),
-    minYear: Math.min(minYear, maxYear),
-    maxYear: Math.max(minYear, maxYear),
-    sort,
-    page,
-    pageSize,
-  });
+  const [result, featuredRaw] = await Promise.all([
+    getPublicSalesVehicles({
+      category,
+      sellerKind,
+      search,
+      minPrice: Math.min(minPrice, maxPrice),
+      maxPrice: Math.max(minPrice, maxPrice),
+      minYear: Math.min(minYear, maxYear),
+      maxYear: Math.max(minYear, maxYear),
+      sort,
+      page,
+      pageSize,
+    }),
+    getPublicFeaturedBoostedSalesVehicles(),
+  ]);
+
+  const featuredBoosted: PublicSalesVehicleCard[] = featuredRaw.map((v) => ({
+    ...toPublicSalesVehicleCard(v),
+    isBoosted: true,
+    boostActive: true,
+  }));
 
   return (
     <SalesInventoryClient
-      vehicles={result.items}
+      featuredBoosted={featuredBoosted}
+      vehicles={result.items.map(toPublicSalesVehicleCard)}
       bounds={bounds}
       pagination={{
         page: result.page,
@@ -67,6 +108,7 @@ export default async function SalesPage({
       }}
       filters={{
         category,
+        sellerKind,
         search,
         minPrice: Math.min(minPrice, maxPrice),
         maxPrice: Math.max(minPrice, maxPrice),

@@ -1,0 +1,37 @@
+-- Mark Sunset Scooters Thailand batch inventory as dealer listings (see prisma/sunset-scooters-batch-listings.ts).
+UPDATE "sales_vehicles"
+SET "seller_kind" = 'dealer'
+WHERE "slug" IN (
+  '2015-bmw-r9t',
+  '2022-cfmoto-250nk',
+  '2015-ducati-monster-821',
+  '2017-ducati-multistrada-1200-abs',
+  '2019-honda-cb650-f',
+  '2022-honda-cb500x',
+  '2025-honda-nt-1100-dct',
+  '2016-kawasaki-1400gtr-abs',
+  '2021-kawasaki-z-900-abs-sp',
+  '2023-kawasaki-klr-650',
+  '2026-indian-scout-bobber',
+  '2025-honda-forza-350',
+  '2026-honda-scoopy-i-prestige',
+  '2024-honda-click-125',
+  '2024-honda-click-160-abs',
+  '2023-suzuki-bergman',
+  '2025-suzuki-hayabusa',
+  '2018-triumph-bonneville-bobber-1200',
+  '2025-yamaha-fino-125',
+  '2024-yamaha-mt15',
+  '2025-yamaha-grand-filano-125-abs',
+  '2023-yamaha-mt15',
+  '2015-yamaha-tricity',
+  '2023-yamaha-mt-07',
+  '2024-yamaha-r7',
+  '2012-yamaha-t-max',
+  '2024-yamaha-xsr-155',
+  '2024-yamaha-pg-115',
+  '2025-yamaha-yzf-15-m-abs',
+  '2025-yamaha-x-max-300-connect',
+  '2020-ktm-390rc',
+  '2025-zontes-350d-abs'
+);

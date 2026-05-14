@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
 import { createSalesListing, deleteSalesListing, updateSalesListing } from "@/actions/sales";
+import { approvePendingSalesBoost } from "@/actions/sales-boost";
 import { SalesListingFormModal, type SalesListingInput } from "./sales-listing-form-modal";
 import { useTranslations } from "next-intl";
 
@@ -19,7 +20,8 @@ type Listing = {
   priceAmount: number;
   priceCurrency: string;
   category: "car" | "motorcycle";
-  status: "available" | "reserved" | "sold";
+  sellerKind?: "dealer" | "private";
+  status: "available" | "reserved" | "sold" | "pending_boost";
   published: boolean;
   heroMediaType?: "image" | "video";
   heroImageUrl: string;
@@ -59,6 +61,7 @@ function formatPrice(amount: unknown, currency: unknown) {
 function statusClasses(status: Listing["status"]) {
   if (status === "available") return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
   if (status === "reserved") return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300";
+  if (status === "pending_boost") return "bg-violet-100 text-violet-900 dark:bg-violet-900/30 dark:text-violet-200";
   return "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200";
 }
 
@@ -72,6 +75,7 @@ function normalizeForForm(listing: Listing): SalesListingInput {
     priceAmount: listing.priceAmount,
     priceCurrency: listing.priceCurrency,
     category: listing.category,
+    sellerKind: listing.sellerKind === "dealer" ? "dealer" : "private",
     status: listing.status,
     heroMediaType: listing.heroMediaType === "video" ? "video" : "image",
     heroImageUrl: listing.heroImageUrl,
@@ -105,6 +109,17 @@ export function SalesDashboardClient({ initialListings }: { initialListings: Lis
   const openEdit = (listing: Listing) => {
     setEditing(listing);
     setFormOpen(true);
+  };
+
+  const handleApproveBoost = (id: string) => {
+    startTransition(async () => {
+      const r = await approvePendingSalesBoost(id);
+      if (!r.success) {
+        window.alert(r.error ?? "Failed");
+        return;
+      }
+      router.refresh();
+    });
   };
 
   const handleDelete = (id: string, label: string) => {
@@ -161,7 +176,7 @@ export function SalesDashboardClient({ initialListings }: { initialListings: Lis
                   <th className="px-4 py-3 font-medium">{t("table.price")}</th>
                   <th className="px-4 py-3 font-medium">{t("table.yearMileage")}</th>
                   <th className="px-4 py-3 font-medium">{t("table.status")}</th>
-                  <th className="w-28 px-4 py-3 font-medium">{t("table.actions")}</th>
+                  <th className="min-w-[10rem] px-4 py-3 font-medium">{t("table.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -195,11 +210,24 @@ export function SalesDashboardClient({ initialListings }: { initialListings: Lis
                           <option value="available">{t("status.available")}</option>
                           <option value="reserved">{t("status.reserved")}</option>
                           <option value="sold">{t("status.sold")}</option>
+                          <option value="pending_boost">{t("status.pending_boost")}</option>
                         </Select>
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
+                      <div className="flex flex-wrap items-center gap-1">
+                        {listing.status === "pending_boost" ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            disabled={pending}
+                            onClick={() => handleApproveBoost(listing.id)}
+                          >
+                            {t("approveBoost")}
+                          </Button>
+                        ) : null}
                         <Button variant="ghost" size="icon" onClick={() => openEdit(listing)}>
                           <Pencil className="h-4 w-4" />
                         </Button>

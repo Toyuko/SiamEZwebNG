@@ -389,6 +389,7 @@ async function main() {
         description: listing.description,
         specifications: listing.specifications,
         published: true,
+        sellerKind: "dealer",
         createdById: adminForListings?.id ?? null,
       },
       update: {
@@ -409,6 +410,7 @@ async function main() {
         description: listing.description,
         specifications: listing.specifications,
         published: true,
+        sellerKind: "dealer",
       },
     });
     console.log("Sales listing upserted:", listing.slug, `(${listing.imageUrls.length} photos)`);

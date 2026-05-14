@@ -361,6 +361,14 @@ enum SalesListingStatus {
   available
   reserved
   sold
+  /** Bank-transfer boost slip submitted; awaiting staff approval. */
+  pending_boost
+}
+
+/** Public inventory: dealer (e.g. Sunset Scooters sync) vs private seller listings. */
+enum SalesSellerKind {
+  dealer
+  private
 }
 
 model SalesVehicle {
@@ -374,6 +382,7 @@ model SalesVehicle {
   priceAmount      Int                @map("price_amount")
   priceCurrency    String             @default("THB") @map("price_currency")
   category         VehicleCategory
+  sellerKind       SalesSellerKind    @default(private) @map("seller_kind")
   status           SalesListingStatus @default(available)
   heroMediaType    String             @default("image") @map("hero_media_type")
   heroImageUrl     String             @map("hero_image_url")
@@ -383,13 +392,21 @@ model SalesVehicle {
   description      String             @db.Text
   specifications   Json?
   published        Boolean            @default(true)
+  isBoosted        Boolean            @default(false) @map("is_boosted")
+  boostExpiresAt   DateTime?          @map("boost_expires_at")
+  /** Package key, e.g. 1w / 2w / 4w (see SALES_BOOST_PACKAGES). */
+  boostTier        String?            @map("boost_tier")
+  omiseChargeId    String?            @unique @map("omise_charge_id")
+  boostProofDocumentId String?        @map("boost_proof_document_id")
   createdById      String?            @map("created_by_id")
   createdAt        DateTime           @default(now()) @map("created_at")
   updatedAt        DateTime           @updatedAt @map("updated_at")
 
   createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
+  @@index([isBoosted, boostExpiresAt])
   @@index([category, status, published])
+  @@index([sellerKind, status, published])
   @@index([make, model, year])
   @@map("sales_vehicles")
 }

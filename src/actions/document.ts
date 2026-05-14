@@ -1,6 +1,6 @@
 "use server";
 
-import { getSession } from "@/lib/auth";
+import { getSession, requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
   createDocumentMetadata as createDocumentMetadataDomain,
@@ -111,6 +111,44 @@ export async function adminUploadDocumentAction(
     return { success: true, documentId: doc.id };
   } catch (e) {
     console.error("adminUploadDocumentAction", e);
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Upload failed",
+    };
+  }
+}
+
+export interface UploadUserSalesBoostProofResult {
+  success: boolean;
+  documentId?: string;
+  error?: string;
+}
+
+/**
+ * Logged-in user: upload bank slip for a sales listing boost (no case required).
+ * Expects FormData: `file` (File).
+ */
+export async function uploadUserSalesBoostProofAction(
+  formData: FormData
+): Promise<UploadUserSalesBoostProofResult> {
+  const session = await requireAuth();
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) {
+    return { success: false, error: "Choose a file to upload." };
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return { success: false, error: "File is too large (max 10 MB)." };
+  }
+  try {
+    const doc = await uploadAndCreateDocument({
+      file,
+      caseId: null,
+      uploadedBy: session.user.id,
+      documentType: "sales_boost_bank_slip",
+    });
+    return { success: true, documentId: doc.id };
+  } catch (e) {
+    console.error("uploadUserSalesBoostProofAction", e);
     return {
       success: false,
       error: e instanceof Error ? e.message : "Upload failed",

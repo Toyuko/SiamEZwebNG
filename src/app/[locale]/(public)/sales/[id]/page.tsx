@@ -1,12 +1,16 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getPublicSalesVehicleById } from "@/data-access/sales";
+import { getSession } from "@/lib/auth";
+import { getPaymentSettings } from "@/lib/payment-settings";
+import { isOmiseBoostConfigured } from "@/lib/omise";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { site } from "@/config/site";
 import { Mail, MessageCircle, Phone } from "lucide-react";
 import { SalesVehicleImageGallery } from "@/components/sales/SalesVehicleImageGallery";
+import { SalesListingBoostPanel } from "@/components/sales/SalesListingBoostPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +71,20 @@ export default async function SalesVehicleDetailPage({
   if (!vehicle) {
     notFound();
   }
+
+  const session = await getSession();
+  const paymentSettings = await getPaymentSettings();
+  const boostOmiseEnabled = isOmiseBoostConfigured();
+  const canBoost = Boolean(session?.user?.id && vehicle.createdById && session.user.id === vehicle.createdById);
+  const boostActive = Boolean(
+    vehicle.isBoosted && vehicle.boostExpiresAt && vehicle.boostExpiresAt > new Date()
+  );
+  const isPendingBoost = vehicle.status === "pending_boost";
+  const boostExpiresLabel =
+    boostActive && vehicle.boostExpiresAt
+      ? new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(vehicle.boostExpiresAt)
+      : null;
+  const sellerKind = vehicle.sellerKind === "dealer" ? "dealer" : "private";
 
   const images = Array.from(
     new Set([
@@ -199,6 +217,17 @@ export default async function SalesVehicleDetailPage({
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {vehicle.year} {vehicle.make} {vehicle.model}
             </h1>
+            <p>
+              <span
+                className={
+                  sellerKind === "dealer"
+                    ? "inline-block rounded-full bg-siam-blue/15 px-3 py-1 text-xs font-semibold text-siam-blue dark:bg-siam-blue/25 dark:text-siam-blue-light"
+                    : "inline-block rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-800 dark:bg-gray-700 dark:text-gray-100"
+                }
+              >
+                {sellerKind === "dealer" ? t("sellerKind.dealerBadge") : t("sellerKind.privateBadge")}
+              </span>
+            </p>
             <p className="text-3xl font-bold text-siam-blue dark:text-siam-blue-light">
               {formatPrice(vehicle.priceAmount, vehicle.priceCurrency)}
             </p>
@@ -234,6 +263,22 @@ export default async function SalesVehicleDetailPage({
                 ))}
               </div>
             ) : null}
+            <div className="space-y-2">
+              <SalesListingBoostPanel
+                vehicleId={vehicle.id}
+                canBoost={canBoost}
+                boostOmiseEnabled={boostOmiseEnabled}
+                boostActive={boostActive}
+                boostExpiresLabel={boostExpiresLabel}
+                isPendingBoost={isPendingBoost}
+                bank={{
+                  bankName: paymentSettings.bankName,
+                  bankBranch: paymentSettings.bankBranch,
+                  bankAccountName: paymentSettings.bankAccountName,
+                  bankAccountNumber: paymentSettings.bankAccountNumber,
+                }}
+              />
+            </div>
             <div className="space-y-2">
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("contactMethodsTitle")}</p>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">

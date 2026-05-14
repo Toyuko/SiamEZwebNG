@@ -79,10 +79,49 @@
   "sales": {
     "inventoryTitle": "คลังรถสำหรับขาย",
     "inventoryDescription": "ค้นหารถยนต์และมอเตอร์ไซค์ที่พร้อมขายจากผู้ขายที่เชื่อถือได้ของ SiamEZ",
+    "featuredTitle": "รายการแนะนำ",
+    "featuredSubtitle": "Super Boost — โดดเด่น แสดงป้ายโปรโมท และอยู่ด้านบนสุดของผลการค้นหา",
+    "featuredCarouselAria": "Featured promoted listings",
+    "featuredBadge": "แนะนำ",
+    "boost": {
+      "openButton": "โปรโมทรายการนี้",
+      "modalTitle": "โปรโมทรายการขาย",
+      "modalSubtitle": "เลือกแพ็กเกจ แล้วชำระผ่าน PromptPay (Omise) หรืออัปโหลดสลิปโอนเงิน",
+      "close": "ปิด",
+      "pickPackageFirst": "กรุณาเลือกแพ็กเกจก่อน",
+      "needSlip": "กรุณาเลือกไฟล์สลิปโอนเงิน",
+      "uploadFailed": "อัปโหลดไม่สำเร็จ",
+      "activeUntil": "แสดงแนะนำจนถึง {date}",
+      "pendingBoostBody": "รอตรวจสลิป: ทีมงานจะเปิดใช้งานแพ็กเกจหลังตรวจสอบการโอนเงิน",
+      "omiseSection": "PromptPay (Omise)",
+      "omisePayButton": "สร้าง QR PromptPay",
+      "omiseNoQr": "สร้างรายการชำระแล้วแต่ไม่ได้รับรูป QR โปรดตรวจสอบใน Omise หรือลองใหม่",
+      "omiseAfterPay": "หลังชำระในแอปธนาคาร ระบบจะเปิดใช้งานภายในไม่กี่นาทีเมื่อ Omise ยืนยัน",
+      "omiseDisabled": "ยังไม่ได้ตั้งค่าชำระเงินออนไลน์ ใช้การโอนธนาคารด้านล่าง",
+      "bankSection": "โอนธนาคาร (ตรวจสลิป)",
+      "slipLabel": "อัปโหลดสลิปโอนเงิน",
+      "bankNote": "สถานะรายการจะเป็น “รอตรวจโปรโมท” จนกว่าทีมงานจะยืนยัน และระบบจะแจ้งทีมอัตโนมัติเมื่อตั้งค่า webhook แล้ว",
+      "qrAlt": "QR PromptPay",
+      "priceThb": "฿{amount}",
+      "packages": {
+        "1w": { "label": "1 สัปดาห์ (7 วัน)" },
+        "2w": { "label": "2 สัปดาห์ (14 วัน)" },
+        "4w": { "label": "4 สัปดาห์ (28 วัน)" }
+      }
+    },
     "searchPlaceholder": "ค้นหายี่ห้อหรือรุ่น",
     "category": {
       "cars": "รถยนต์",
       "motorcycles": "มอเตอร์ไซค์"
+    },
+    "sellerKind": {
+      "label": "ประเภทรายการ",
+      "all": "ทั้งหมด",
+      "dealer": "ดีลเลอร์",
+      "private": "ขายเอง",
+      "dealerChip": "ดีลเลอร์",
+      "dealerBadge": "รถจากดีลเลอร์",
+      "privateBadge": "ขายโดยเจ้าของ"
     },
     "sort": {
       "latest": "ล่าสุด",
@@ -129,6 +168,7 @@
     "addListing": "เพิ่มรายการใหม่",
     "empty": "ยังไม่มีรายการรถ เพิ่มรายการแรกของคุณได้เลย",
     "confirmDelete": "ลบรายการ \"{label}\" ใช่หรือไม่?",
+    "approveBoost": "อนุมัติโปรโมท",
     "table": {
       "listing": "รายการ",
       "category": "หมวดหมู่",
@@ -140,7 +180,8 @@
     "status": {
       "available": "พร้อมขาย",
       "reserved": "จองแล้ว",
-      "sold": "ขายแล้ว"
+      "sold": "ขายแล้ว",
+      "pending_boost": "รอตรวจโปรโมท"
     },
     "category": {
       "car": "รถยนต์",
@@ -181,6 +222,7 @@
       "mileage": "ระยะทาง (กม.)",
       "price": "ราคา (บาท)",
       "category": "หมวดหมู่",
+      "sellerKind": "ประเภทการขาย",
       "status": "สถานะ",
       "published": "แสดงบนหน้าเว็บไซต์",
       "images": "อัปโหลดรูปภาพ",
@@ -194,10 +236,15 @@
       "car": "รถยนต์",
       "motorcycle": "มอเตอร์ไซค์"
     },
+    "sellerKind": {
+      "dealer": "ขายโดยดีลเลอร์",
+      "private": "ขายเอง (เจ้าของ)"
+    },
     "status": {
       "available": "พร้อมขาย",
       "reserved": "จองแล้ว",
-      "sold": "ขายแล้ว"
+      "sold": "ขายแล้ว",
+      "pending_boost": "รอตรวจโปรโมท"
     },
     "errors": {
       "uploadFailed": "อัปโหลดรูปภาพไม่สำเร็จ",

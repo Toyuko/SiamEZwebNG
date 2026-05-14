@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useMemo } from "react";
 import { usePathname, useRouter, Link } from "@/i18n/navigation";
 import { Input } from "@/components/ui/input";
@@ -9,19 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
 import { DEFAULT_PUBLIC_SALES_PAGE_SIZE, PUBLIC_SALES_PAGE_SIZES } from "@/lib/public-sales-inventory";
-
-type VehicleCard = {
-  id: string;
-  heroImageUrl: string;
-  priceAmount: number;
-  priceCurrency: string;
-  make: string;
-  model: string;
-  year: number;
-  mileageKm: number;
-  category: "car" | "motorcycle";
-  status: "available" | "reserved" | "sold";
-};
+import { FeaturedBoostedCarousel } from "@/components/sales/FeaturedBoostedCarousel";
+import { SalesListingCard, type PublicSalesVehicleCard } from "@/components/sales/SalesListingCard";
 
 type FilterBounds = {
   minPrice: number;
@@ -31,10 +19,12 @@ type FilterBounds = {
 };
 
 type SalesInventoryClientProps = {
-  vehicles: VehicleCard[];
+  featuredBoosted?: PublicSalesVehicleCard[];
+  vehicles: PublicSalesVehicleCard[];
   bounds: FilterBounds;
   filters: {
     category: "all" | "car" | "motorcycle";
+    sellerKind: "all" | "dealer" | "private";
     search: string;
     minPrice: number;
     maxPrice: number;
@@ -56,7 +46,13 @@ function formatPrice(amount: number, currency: string) {
   );
 }
 
-export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: SalesInventoryClientProps) {
+export function SalesInventoryClient({
+  featuredBoosted = [],
+  vehicles,
+  bounds,
+  filters,
+  pagination,
+}: SalesInventoryClientProps) {
   const t = useTranslations("sales");
   const router = useRouter();
   const pathname = usePathname();
@@ -64,6 +60,7 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
   const hasFilters = useMemo(() => {
     return (
       filters.category !== "all" ||
+      filters.sellerKind !== "all" ||
       filters.search.length > 0 ||
       filters.minPrice !== bounds.minPrice ||
       filters.maxPrice !== bounds.maxPrice ||
@@ -124,6 +121,8 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
           {t("inventoryDescription")}
         </p>
       </div>
+
+      <FeaturedBoostedCarousel vehicles={featuredBoosted} />
 
       <div className="mb-6 rounded-xl border border-siam-blue/25 bg-siam-blue/[0.06] p-4 dark:bg-siam-blue/10">
         <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{t("finderPromoTitle")}</h2>
@@ -202,6 +201,51 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
                 <Button variant="ghost" onClick={() => router.push(pathname)}>{t("resetFilters")}
                 </Button>
               ) : null}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              {t("sellerKind.label")}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={filters.sellerKind === "all" ? "default" : "outline"}
+                className={filters.sellerKind === "all" ? "bg-siam-blue text-white hover:bg-siam-blue-light" : ""}
+                onClick={() => patchSearchParams({ seller: "all", page: 1 })}
+              >
+                {t("sellerKind.all")}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={filters.sellerKind === "dealer" ? "default" : "outline"}
+                className={filters.sellerKind === "dealer" ? "bg-siam-blue text-white hover:bg-siam-blue-light" : ""}
+                onClick={() =>
+                  patchSearchParams({
+                    seller: filters.sellerKind === "dealer" ? "all" : "dealer",
+                    page: 1,
+                  })
+                }
+              >
+                {t("sellerKind.dealer")}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={filters.sellerKind === "private" ? "default" : "outline"}
+                className={filters.sellerKind === "private" ? "bg-siam-blue text-white hover:bg-siam-blue-light" : ""}
+                onClick={() =>
+                  patchSearchParams({
+                    seller: filters.sellerKind === "private" ? "all" : "private",
+                    page: 1,
+                  })
+                }
+              >
+                {t("sellerKind.private")}
+              </Button>
             </div>
           </div>
 
@@ -306,31 +350,7 @@ export function SalesInventoryClient({ vehicles, bounds, filters, pagination }: 
         }
       >
         {vehicles.map((vehicle) => (
-          <Link key={vehicle.id} href={`/sales/${vehicle.id}`} className="group">
-            <Card className="h-full overflow-hidden transition-shadow hover:shadow-lg">
-              <div className="relative aspect-[16/10] w-full overflow-hidden">
-                <Image
-                  src={vehicle.heroImageUrl}
-                  alt={`${vehicle.make} ${vehicle.model}`}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                  className="object-cover transition-transform group-hover:scale-105"
-                />
-              </div>
-              <CardContent className="p-4">
-                <p className="text-lg font-bold text-siam-blue dark:text-siam-blue-light">
-                  {formatPrice(vehicle.priceAmount, vehicle.priceCurrency)}
-                </p>
-                <p className="mt-1 font-semibold text-gray-900 dark:text-gray-100">
-                  {vehicle.make} {vehicle.model}
-                </p>
-                <div className="mt-2 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                  <span>{vehicle.year}</span>
-                  <span>{vehicle.mileageKm.toLocaleString()} km</span>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+          <SalesListingCard key={vehicle.id} vehicle={vehicle} />
         ))}
       </div>
 

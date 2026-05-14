@@ -18,7 +18,8 @@ export type SalesListingInput = {
   priceAmount: number;
   priceCurrency: string;
   category: "car" | "motorcycle";
-  status: "available" | "reserved" | "sold";
+  sellerKind: "dealer" | "private";
+  status: "available" | "reserved" | "sold" | "pending_boost";
   heroMediaType: "image" | "video";
   heroImageUrl: string;
   heroVideoUrl: string | null;
@@ -38,6 +39,7 @@ const EMPTY_FORM: SalesListingInput = {
   priceAmount: 0,
   priceCurrency: "THB",
   category: "car",
+  sellerKind: "private",
   status: "available",
   heroMediaType: "image",
   heroImageUrl: "",
@@ -529,6 +531,20 @@ export function SalesListingFormModal({
             </Select>
           </div>
           <div>
+            <Label htmlFor="sales-seller-kind">{t("fields.sellerKind")}</Label>
+            <Select
+              id="sales-seller-kind"
+              value={form.sellerKind}
+              onChange={(e) => {
+                const value = e.currentTarget.value as SalesListingInput["sellerKind"];
+                setForm((p) => ({ ...p, sellerKind: value }));
+              }}
+            >
+              <option value="private">{t("sellerKind.private")}</option>
+              <option value="dealer">{t("sellerKind.dealer")}</option>
+            </Select>
+          </div>
+          <div>
             <Label htmlFor="sales-status">{t("fields.status")}</Label>
             <Select
               id="sales-status"
@@ -541,6 +557,7 @@ export function SalesListingFormModal({
               <option value="available">{t("status.available")}</option>
               <option value="reserved">{t("status.reserved")}</option>
               <option value="sold">{t("status.sold")}</option>
+              <option value="pending_boost">{t("status.pending_boost")}</option>
             </Select>
           </div>
           <div>
