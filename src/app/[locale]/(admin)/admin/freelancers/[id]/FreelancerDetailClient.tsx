@@ -156,7 +156,7 @@ export function FreelancerDetailClient({ freelancer }: { freelancer: FreelancerD
                     >
                       {job.status.replace("_", " ")}
                     </span>
-                    {job.status === "completed" && (
+                    {(job.status === "completed_awaiting_review" || job.status === "completed") && (
                       <Button
                         type="button"
                         size="sm"

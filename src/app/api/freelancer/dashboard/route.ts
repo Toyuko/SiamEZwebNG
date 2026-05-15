@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   try {
     const { userId } = await requireApiFreelancer(request);
     const [openJobs, activeJobs, revenue, profile] = await Promise.all([
-      getOpenJobsForFeed(),
+      getOpenJobsForFeed(userId),
       getActiveJobsByFreelancerId(userId),
       getFreelancerRevenueStats(userId),
       getFreelancerProfileByUserId(userId),

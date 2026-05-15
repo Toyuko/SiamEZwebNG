@@ -6,7 +6,7 @@ import { markJobComplete } from "@/actions/freelancer-jobs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatJobAmount } from "@/data-access/job";
-import { jobProgressPercent } from "@/lib/jobs/auto-approve";
+import { isAwaitingReviewStatus, jobProgressPercent } from "@/lib/jobs/auto-approve";
 import type { JobStatus } from "@prisma/client";
 import { MapPin, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -70,7 +70,7 @@ export function ActiveJobsTrack({ jobs }: { jobs: ActiveJobItem[] }) {
                     <div
                       className={cn(
                         "h-full rounded-full transition-all duration-500",
-                        job.status === "completed"
+                        isAwaitingReviewStatus(job.status)
                           ? "bg-siam-yellow"
                           : "bg-siam-blue"
                       )}
@@ -91,7 +91,7 @@ export function ActiveJobsTrack({ jobs }: { jobs: ActiveJobItem[] }) {
                     {t("markAsDone")}
                   </Button>
                 )}
-                {job.status === "completed" && (
+                {isAwaitingReviewStatus(job.status) && (
                   <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
                     {t("awaitingClientApproval")}
                   </p>

@@ -1,31 +1,16 @@
-import { getFreelancerJobsAdmin } from "@/actions/admin";
-import { FreelancerJobsPageClient } from "./FreelancerJobsPageClient";
-import type { JobStatus } from "@prisma/client";
+import { redirect } from "next/navigation";
 
-export default async function AdminFreelancerJobsPage({
+/** Legacy route — marketplace jobs live on Service Jobs with ?source=freelancer */
+export default async function AdminFreelancerJobsRedirectPage({
   searchParams,
 }: {
   searchParams: Promise<{ search?: string; page?: string; status?: string }>;
 }) {
   const params = await searchParams;
-  const search = params.search ?? undefined;
-  const page = Number(params.page) || 1;
-  const status = params.status as JobStatus | undefined;
-
-  const { jobs, total, totalPages } = await getFreelancerJobsAdmin({
-    search,
-    page,
-    status,
-  });
-
-  return (
-    <FreelancerJobsPageClient
-      jobs={jobs}
-      total={total}
-      page={page}
-      totalPages={totalPages}
-      search={search}
-      status={params.status}
-    />
-  );
+  const qs = new URLSearchParams();
+  qs.set("source", "freelancer");
+  if (params.search) qs.set("search", params.search);
+  if (params.page) qs.set("page", params.page);
+  if (params.status) qs.set("status", params.status);
+  redirect(`/admin/service-jobs?${qs.toString()}`);
 }

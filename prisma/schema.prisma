@@ -63,6 +63,7 @@ model FreelancerProfile {
   skills             String[]                     @default([])
   bio                String?                      @db.Text
   verificationStatus FreelancerVerificationStatus @default(pending) @map("verification_status")
+  isSpecialMember      Boolean                      @default(false) @map("is_special_member")
   averageRating      Float                        @default(0) @map("average_rating")
   createdAt          DateTime                     @default(now()) @map("created_at")
   updatedAt          DateTime                     @updatedAt @map("updated_at")
@@ -72,30 +73,46 @@ model FreelancerProfile {
   @@map("freelancer_profiles")
 }
 
+enum AssignmentSource {
+  internal
+  freelancer
+}
+
 enum JobStatus {
   open
   in_progress
-  completed
+  completed_awaiting_review
   approved
+  completed
 }
 
 model Job {
-  id                      String    @id @default(cuid())
+  id                      String           @id @default(cuid())
   title                   String
-  description             String    @db.Text
-  postedById              String    @map("posted_by_id")
-  freelancerId            String?   @map("freelancer_id")
-  amount                  Int       // smallest currency unit (e.g. satang)
-  currency                String    @default("THB")
-  status                  JobStatus @default(open)
-  completionSubmittedAt   DateTime? @map("completion_submitted_at")
-  createdAt               DateTime  @default(now()) @map("created_at")
-  updatedAt               DateTime  @updatedAt @map("updated_at")
+  description             String           @db.Text
+  postedById              String           @map("posted_by_id")
+  freelancerId            String?          @map("freelancer_id")
+  serviceId               String?          @map("service_id")
+  assignmentSource        AssignmentSource @default(freelancer) @map("assignment_source")
+  /** Client-facing / invoice amount (smallest currency unit) */
+  amount                  Int
+  /** Freelancer payout (smallest currency unit); defaults to amount when unset */
+  payoutAmount            Int?             @map("payout_amount")
+  currency                String           @default("THB")
+  isSpecialMemberOnly     Boolean          @default(false) @map("is_special_member_only")
+  enableAutoApproval      Boolean          @default(true) @map("enable_auto_approval")
+  status                  JobStatus        @default(open)
+  completionSubmittedAt   DateTime?        @map("completion_submitted_at")
+  approvedAt              DateTime?        @map("approved_at")
+  createdAt               DateTime         @default(now()) @map("created_at")
+  updatedAt               DateTime         @updatedAt @map("updated_at")
 
-  postedBy   User  @relation("JobPostedBy", fields: [postedById], references: [id], onDelete: Restrict)
-  freelancer User? @relation("JobFreelancer", fields: [freelancerId], references: [id], onDelete: SetNull)
+  postedBy   User     @relation("JobPostedBy", fields: [postedById], references: [id], onDelete: Restrict)
+  freelancer User?    @relation("JobFreelancer", fields: [freelancerId], references: [id], onDelete: SetNull)
+  service    Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
 
   @@index([status])
+  @@index([assignmentSource, status])
   @@index([freelancerId, status])
   @@index([postedById])
   @@map("jobs")
@@ -165,6 +182,7 @@ model Service {
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
   cases Case[]
+  jobs  Job[]
 }
 
 // ----- Cases (every booking becomes a case) -----

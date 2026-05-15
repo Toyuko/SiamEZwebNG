@@ -3,8 +3,18 @@ import { notifyClientJobCompleted } from "@/lib/jobs/notify-client";
 
 export async function acceptJobForFreelancer(freelancerId: string, jobId: string) {
   const job = await prisma.job.findUnique({ where: { id: jobId } });
-  if (!job || job.status !== "open") {
+  if (!job || job.status !== "open" || job.assignmentSource !== "freelancer") {
     return { error: "Job is no longer available." as const };
+  }
+
+  if (job.isSpecialMemberOnly) {
+    const profile = await prisma.freelancerProfile.findUnique({
+      where: { userId: freelancerId },
+      select: { isSpecialMember: true, verificationStatus: true },
+    });
+    if (!profile?.isSpecialMember || profile.verificationStatus !== "verified") {
+      return { error: "This job is for Special Members only." as const };
+    }
   }
 
   await prisma.job.update({
@@ -42,7 +52,7 @@ export async function markJobCompleteForFreelancer(
   await prisma.job.update({
     where: { id: jobId },
     data: {
-      status: "completed",
+      status: "completed_awaiting_review",
       completionSubmittedAt: now,
     },
   });

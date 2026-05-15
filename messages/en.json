@@ -1102,6 +1102,7 @@
     "status": {
       "open": "Open",
       "in_progress": "In progress",
+      "completed_awaiting_review": "Awaiting approval",
       "completed": "Awaiting approval",
       "approved": "Approved"
     }

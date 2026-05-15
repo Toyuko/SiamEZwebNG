@@ -48,7 +48,9 @@ export async function getAdminStats() {
     prisma.payment.count({ where: { status: "submitted" } }),
     prisma.user.count({ where: { role: "freelancer" } }),
     prisma.job.count({ where: { status: "open" } }),
-    prisma.job.count({ where: { status: "completed" } }),
+    prisma.job.count({
+      where: { status: { in: ["completed_awaiting_review", "completed"] } },
+    }),
   ]);
   return {
     openCases,
@@ -180,6 +182,7 @@ export async function getFreelancerJobsAdmin(options?: {
   const skip = (page - 1) * ITEMS_PER_PAGE;
 
   const where = {
+    assignmentSource: "freelancer" as const,
     ...(options?.status ? { status: options.status } : {}),
     ...(options?.search
       ? {
@@ -197,7 +200,15 @@ export async function getFreelancerJobsAdmin(options?: {
       where,
       include: {
         postedBy: { select: { id: true, name: true, email: true } },
-        freelancer: { select: { id: true, name: true, email: true } },
+        freelancer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            freelancerProfile: { select: { isSpecialMember: true } },
+          },
+        },
+        service: { select: { id: true, name: true } },
       },
       orderBy: { updatedAt: "desc" },
       skip,
@@ -229,10 +240,29 @@ export async function updateFreelancerVerification(
 
 export async function approveFreelancerJob(jobId: string) {
   await ensureStaffAccess();
-  return prisma.job.update({
+  const { triggerFreelancerPayout } = await import("@/lib/jobs/payout");
+  const job = await prisma.job.update({
     where: { id: jobId },
-    data: { status: "approved" },
+    data: { status: "approved", approvedAt: new Date() },
+    select: {
+      id: true,
+      title: true,
+      payoutAmount: true,
+      amount: true,
+      currency: true,
+      freelancerId: true,
+    },
   });
+  if (job.freelancerId) {
+    void triggerFreelancerPayout({
+      jobId: job.id,
+      jobTitle: job.title,
+      freelancerId: job.freelancerId,
+      payoutAmount: job.payoutAmount ?? job.amount,
+      currency: job.currency,
+    });
+  }
+  return job;
 }
 
 // ----- Clients -----

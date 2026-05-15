@@ -13,10 +13,12 @@ export function ServiceJobsPageClient({
   services,
   clients,
   staffUsers,
+  defaultAssignmentSource = "INTERNAL",
 }: {
   services: Service[];
   clients: Client[];
   staffUsers: StaffUser[];
+  defaultAssignmentSource?: "INTERNAL" | "FREELANCER";
 }) {
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -32,6 +34,7 @@ export function ServiceJobsPageClient({
         services={services}
         clients={clients}
         staffUsers={staffUsers}
+        defaultAssignmentSource={defaultAssignmentSource}
       />
     </>
   );

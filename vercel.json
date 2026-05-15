@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/jobs/auto-approve",
-      "schedule": "0 3 * * *"
+      "schedule": "* * * * *"
     }
   ]
 }

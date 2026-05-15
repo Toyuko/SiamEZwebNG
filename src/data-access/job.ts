@@ -2,6 +2,8 @@ import type { JobStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { autoApproveStaleCompletedJobs } from "@/lib/jobs/auto-approve";
 
+const AWAITING_REVIEW: JobStatus[] = ["completed_awaiting_review", "completed"];
+
 const jobInclude = {
   postedBy: { select: { id: true, name: true, email: true } },
   freelancer: { select: { id: true, name: true, email: true } },
@@ -11,10 +13,20 @@ export async function runJobMaintenance() {
   await autoApproveStaleCompletedJobs();
 }
 
-export async function getOpenJobsForFeed() {
+export async function getOpenJobsForFeed(freelancerId: string) {
   await runJobMaintenance();
+  const profile = await prisma.freelancerProfile.findUnique({
+    where: { userId: freelancerId },
+    select: { isSpecialMember: true },
+  });
+  const isSpecial = profile?.isSpecialMember ?? false;
+
   return prisma.job.findMany({
-    where: { status: "open" },
+    where: {
+      status: "open",
+      assignmentSource: "freelancer",
+      ...(isSpecial ? {} : { isSpecialMemberOnly: false }),
+    },
     include: jobInclude,
     orderBy: { createdAt: "desc" },
   });
@@ -34,7 +46,7 @@ export async function getActiveJobsByFreelancerId(freelancerId: string) {
   return prisma.job.findMany({
     where: {
       freelancerId,
-      status: { in: ["in_progress", "completed"] satisfies JobStatus[] },
+      status: { in: ["in_progress", ...AWAITING_REVIEW] satisfies JobStatus[] },
     },
     include: jobInclude,
     orderBy: { updatedAt: "desc" },
@@ -57,7 +69,7 @@ export async function getFreelancerRevenueStats(freelancerId: string) {
       _sum: { amount: true },
     }),
     prisma.job.aggregate({
-      where: { freelancerId, status: "completed" },
+      where: { freelancerId, status: { in: AWAITING_REVIEW } },
       _sum: { amount: true },
     }),
   ]);

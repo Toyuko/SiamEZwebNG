@@ -1,6 +1,7 @@
 "use client";
 
 import { Link, usePathname } from "@/i18n/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   LayoutDashboard,
   FolderOpen,
@@ -27,7 +28,7 @@ const nav = [
   { label: "cases", href: "/admin/cases", icon: FolderOpen },
   { label: "clients", href: "/admin/clients", icon: Users },
   { label: "freelancers", href: "/admin/freelancers", icon: UserCheck },
-  { label: "freelancerJobs", href: "/admin/freelancer-jobs", icon: ClipboardList },
+  { label: "freelancerJobs", href: "/admin/service-jobs?source=freelancer", icon: ClipboardList },
   { label: "services", href: "/admin/services", icon: Package },
   { label: "sales", href: "/admin/sales", icon: Car },
   { label: "invoices", href: "/admin/invoices", icon: FileText },
@@ -41,15 +42,25 @@ const nav = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isMarketplaceJobs = searchParams.get("source") === "freelancer";
   const t = useTranslations("adminNav");
 
   return (
     <aside className="w-56 shrink-0 border-r border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
       <nav className="flex flex-col gap-1 p-4">
         {nav.map((item) => {
-          const isActive =
-            pathname === item.href ||
-            (item.href !== "/admin/dashboard" && pathname.startsWith(item.href));
+          const baseHref = item.href.split("?")[0];
+          let isActive = false;
+          if (item.href.includes("source=freelancer")) {
+            isActive = pathname === "/admin/service-jobs" && isMarketplaceJobs;
+          } else if (baseHref === "/admin/service-jobs") {
+            isActive = pathname === "/admin/service-jobs" && !isMarketplaceJobs;
+          } else {
+            isActive =
+              pathname === item.href ||
+              (item.href !== "/admin/dashboard" && pathname.startsWith(item.href));
+          }
           const Icon = item.icon;
           return (
             <Link

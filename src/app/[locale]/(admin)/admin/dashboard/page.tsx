@@ -212,7 +212,7 @@ export default async function AdminDashboardPage() {
             </Button>
             {stats.pendingFreelancerApprovals > 0 && (
               <Button variant="primary" size="sm" asChild>
-                <Link href="/admin/freelancer-jobs?status=completed">
+                <Link href="/admin/service-jobs?source=freelancer&status=completed_awaiting_review">
                   Review {stats.pendingFreelancerApprovals} pending approval
                 </Link>
               </Button>

@@ -35,7 +35,9 @@ export default async function JobTrackingPage({
 
   const progress = jobProgressPercent(job.status);
   const showCountdown =
-    isClient && job.status === "completed" && job.completionSubmittedAt != null;
+    isClient &&
+    (job.status === "completed_awaiting_review" || job.status === "completed") &&
+    job.completionSubmittedAt != null;
 
   return (
     <div className="mx-auto max-w-2xl">

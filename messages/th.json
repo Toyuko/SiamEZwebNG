@@ -1102,6 +1102,7 @@
     "status": {
       "open": "เปิดรับ",
       "in_progress": "กำลังทำ",
+      "completed_awaiting_review": "รออนุมัติ",
       "completed": "รออนุมัติ",
       "approved": "อนุมัติแล้ว"
     }

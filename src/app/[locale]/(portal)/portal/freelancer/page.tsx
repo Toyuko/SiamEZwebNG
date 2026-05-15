@@ -24,7 +24,7 @@ export default async function FreelancerPortalPage({
   const t = await getTranslations("freelancer");
 
   const [openJobs, activeJobs, revenue, profile] = await Promise.all([
-    getOpenJobsForFeed(),
+    getOpenJobsForFeed(session.user.id),
     getActiveJobsByFreelancerId(session.user.id),
     getFreelancerRevenueStats(session.user.id),
     getFreelancerProfileByUserId(session.user.id),
