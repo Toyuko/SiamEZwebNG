@@ -1,0 +1,59 @@
+import { prisma } from "@/lib/db";
+import { notifyClientJobCompleted } from "@/lib/jobs/notify-client";
+
+export async function acceptJobForFreelancer(freelancerId: string, jobId: string) {
+  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  if (!job || job.status !== "open") {
+    return { error: "Job is no longer available." as const };
+  }
+
+  await prisma.job.update({
+    where: { id: jobId },
+    data: {
+      freelancerId,
+      status: "in_progress",
+    },
+  });
+
+  return { ok: true as const };
+}
+
+export async function markJobCompleteForFreelancer(
+  freelancerId: string,
+  jobId: string,
+  freelancerName?: string | null
+) {
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    include: {
+      postedBy: { select: { email: true, name: true } },
+      freelancer: { select: { name: true } },
+    },
+  });
+
+  if (!job || job.freelancerId !== freelancerId) {
+    return { error: "Job not found." as const };
+  }
+  if (job.status !== "in_progress") {
+    return { error: "Only active jobs can be marked complete." as const };
+  }
+
+  const now = new Date();
+  await prisma.job.update({
+    where: { id: jobId },
+    data: {
+      status: "completed",
+      completionSubmittedAt: now,
+    },
+  });
+
+  void notifyClientJobCompleted({
+    jobId: job.id,
+    jobTitle: job.title,
+    clientEmail: job.postedBy.email,
+    clientName: job.postedBy.name,
+    freelancerName: job.freelancer?.name ?? freelancerName ?? null,
+  });
+
+  return { ok: true as const, completionSubmittedAt: now.toISOString() };
+}

@@ -11,6 +11,8 @@ import type {
   UserRole,
   EventType,
   PaymentMethod,
+  FreelancerVerificationStatus,
+  JobStatus,
 } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -27,22 +29,36 @@ async function ensureStaffAccess() {
 // ----- Dashboard -----
 
 export async function getAdminStats() {
-  const [openCases, totalClients, paidPayments, pendingInvoices, pendingPayments] =
-    await Promise.all([
-      prisma.case.count({ where: { status: { notIn: ["completed", "cancelled"] as CaseStatus[] } } }),
-      prisma.user.count({ where: { role: "customer" } }),
-      prisma.payment.aggregate({ where: { status: "approved" }, _sum: { amount: true } }),
-      prisma.invoice.count({
-        where: { status: { in: ["unpaid", "pending_verification", "draft"] as InvoiceStatus[] } },
-      }),
-      prisma.payment.count({ where: { status: "submitted" } }),
-    ]);
+  const [
+    openCases,
+    totalClients,
+    paidPayments,
+    pendingInvoices,
+    pendingPayments,
+    totalFreelancers,
+    openFreelancerJobs,
+    pendingFreelancerApprovals,
+  ] = await Promise.all([
+    prisma.case.count({ where: { status: { notIn: ["completed", "cancelled"] as CaseStatus[] } } }),
+    prisma.user.count({ where: { role: "customer" } }),
+    prisma.payment.aggregate({ where: { status: "approved" }, _sum: { amount: true } }),
+    prisma.invoice.count({
+      where: { status: { in: ["unpaid", "pending_verification", "draft"] as InvoiceStatus[] } },
+    }),
+    prisma.payment.count({ where: { status: "submitted" } }),
+    prisma.user.count({ where: { role: "freelancer" } }),
+    prisma.job.count({ where: { status: "open" } }),
+    prisma.job.count({ where: { status: "completed" } }),
+  ]);
   return {
     openCases,
     totalClients,
     revenue: paidPayments._sum.amount ?? 0,
     pendingInvoices,
     pendingPayments,
+    totalFreelancers,
+    openFreelancerJobs,
+    pendingFreelancerApprovals,
   };
 }
 
@@ -70,6 +86,153 @@ export async function getRecentActivity() {
     }),
   ]);
   return { recentCases, recentPayments };
+}
+
+export async function getRecentFreelancerJobs() {
+  return prisma.job.findMany({
+    take: 5,
+    include: {
+      postedBy: { select: { name: true, email: true } },
+      freelancer: { select: { name: true, email: true } },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+}
+
+// ----- Freelancers -----
+
+export async function getFreelancersAdmin(options?: {
+  search?: string;
+  page?: number;
+  verification?: FreelancerVerificationStatus;
+}) {
+  await ensureStaffAccess();
+  const page = options?.page ?? 1;
+  const skip = (page - 1) * ITEMS_PER_PAGE;
+
+  const where = {
+    role: "freelancer" as const,
+    ...(options?.search
+      ? {
+          OR: [
+            { name: { contains: options.search, mode: "insensitive" as const } },
+            { email: { contains: options.search, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+    ...(options?.verification
+      ? { freelancerProfile: { verificationStatus: options.verification } }
+      : {}),
+  };
+
+  const [freelancers, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        active: true,
+        createdAt: true,
+        freelancerProfile: {
+          select: {
+            verificationStatus: true,
+            averageRating: true,
+            skills: true,
+          },
+        },
+        _count: { select: { jobsAsFreelancer: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: ITEMS_PER_PAGE,
+    }),
+    prisma.user.count({ where }),
+  ]);
+
+  return { freelancers, total, page, totalPages: Math.ceil(total / ITEMS_PER_PAGE) };
+}
+
+export async function getFreelancerByIdAdmin(id: string) {
+  await ensureStaffAccess();
+  return prisma.user.findFirst({
+    where: { id, role: "freelancer" },
+    include: {
+      freelancerProfile: true,
+      jobsAsFreelancer: {
+        include: {
+          postedBy: { select: { id: true, name: true, email: true } },
+        },
+        orderBy: { updatedAt: "desc" },
+      },
+    },
+  });
+}
+
+export async function getFreelancerJobsAdmin(options?: {
+  status?: JobStatus;
+  page?: number;
+  search?: string;
+}) {
+  await ensureStaffAccess();
+  const page = options?.page ?? 1;
+  const skip = (page - 1) * ITEMS_PER_PAGE;
+
+  const where = {
+    ...(options?.status ? { status: options.status } : {}),
+    ...(options?.search
+      ? {
+          OR: [
+            { title: { contains: options.search, mode: "insensitive" as const } },
+            { postedBy: { email: { contains: options.search, mode: "insensitive" as const } } },
+            { freelancer: { email: { contains: options.search, mode: "insensitive" as const } } },
+          ],
+        }
+      : {}),
+  };
+
+  const [jobs, total] = await Promise.all([
+    prisma.job.findMany({
+      where,
+      include: {
+        postedBy: { select: { id: true, name: true, email: true } },
+        freelancer: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { updatedAt: "desc" },
+      skip,
+      take: ITEMS_PER_PAGE,
+    }),
+    prisma.job.count({ where }),
+  ]);
+
+  return { jobs, total, page, totalPages: Math.ceil(total / ITEMS_PER_PAGE) };
+}
+
+export async function updateFreelancerVerification(
+  userId: string,
+  verificationStatus: FreelancerVerificationStatus
+) {
+  await ensureStaffAccess();
+  const user = await prisma.user.findFirst({
+    where: { id: userId, role: "freelancer" },
+    select: { id: true },
+  });
+  if (!user) throw new Error("Freelancer not found");
+
+  return prisma.freelancerProfile.upsert({
+    where: { userId },
+    create: { userId, verificationStatus },
+    update: { verificationStatus },
+  });
+}
+
+export async function approveFreelancerJob(jobId: string) {
+  await ensureStaffAccess();
+  return prisma.job.update({
+    where: { id: jobId },
+    data: { status: "approved" },
+  });
 }
 
 // ----- Clients -----

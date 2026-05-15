@@ -15,6 +15,8 @@ import {
   UserCog,
   Briefcase,
   Car,
+  UserCheck,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
@@ -24,6 +26,8 @@ const nav = [
   { label: "serviceJobs", href: "/admin/service-jobs", icon: Briefcase },
   { label: "cases", href: "/admin/cases", icon: FolderOpen },
   { label: "clients", href: "/admin/clients", icon: Users },
+  { label: "freelancers", href: "/admin/freelancers", icon: UserCheck },
+  { label: "freelancerJobs", href: "/admin/freelancer-jobs", icon: ClipboardList },
   { label: "services", href: "/admin/services", icon: Package },
   { label: "sales", href: "/admin/sales", icon: Car },
   { label: "invoices", href: "/admin/invoices", icon: FileText },
