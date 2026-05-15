@@ -68,7 +68,7 @@ export default async function AdminServiceJobsPage({
             services={services}
             clients={clientsResult.clients}
             staffUsers={[]}
-            defaultAssignmentSource="FREELANCER"
+            marketplaceOnly
           />
         </div>
 
@@ -128,7 +128,6 @@ export default async function AdminServiceJobsPage({
           services={services}
           clients={clientsResult.clients}
           staffUsers={staffUsers}
-          defaultAssignmentSource="INTERNAL"
         />
       </div>
 

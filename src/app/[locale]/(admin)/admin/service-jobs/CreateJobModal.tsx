@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
@@ -30,20 +30,30 @@ export function CreateJobModal({
   services,
   clients,
   staffUsers,
-  defaultAssignmentSource = "INTERNAL",
+  assignmentSource: assignmentSourceProp = "INTERNAL",
+  hideSourceToggle = false,
 }: {
   open: boolean;
   onClose: () => void;
   services: Service[];
   clients: Client[];
   staffUsers: StaffUser[];
-  defaultAssignmentSource?: "INTERNAL" | "FREELANCER";
+  assignmentSource?: "INTERNAL" | "FREELANCER";
+  /** Hide Internal vs Marketplace toggle when opened via marketplace button. */
+  hideSourceToggle?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [assignmentSource, setAssignmentSource] = useState<"INTERNAL" | "FREELANCER">(
-    defaultAssignmentSource
+    assignmentSourceProp
   );
+
+  useEffect(() => {
+    if (open) {
+      setAssignmentSource(assignmentSourceProp);
+      setError(null);
+    }
+  }, [open, assignmentSourceProp]);
   const [enableAutoApproval, setEnableAutoApproval] = useState(true);
   const [isSpecialMemberOnly, setIsSpecialMemberOnly] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,8 +118,20 @@ export function CreateJobModal({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Create Job">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={isFreelancer ? "Post to freelancer marketplace" : "Create internal job"}
+      className={isFreelancer ? "max-w-lg" : undefined}
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {isFreelancer && (
+          <p className="rounded-lg border border-siam-blue/30 bg-siam-blue/5 px-3 py-2 text-sm text-gray-600 dark:text-gray-300">
+            This job is published to the freelancer portal. Freelancers can accept it from their job
+            feed.
+          </p>
+        )}
+        {!hideSourceToggle && (
         <div>
           <Label>Assignment source *</Label>
           <div className="mt-2 grid grid-cols-2 gap-2">
@@ -151,6 +173,7 @@ export function CreateJobModal({
             </label>
           </div>
         </div>
+        )}
 
         <div>
           <Label htmlFor="create-client">Client *</Label>
