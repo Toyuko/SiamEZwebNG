@@ -164,7 +164,7 @@ async function main() {
   }
   console.log("Seeded", services.length, "services.");
 
-  const adminEmail = process.env.SEED_ADMIN_EMAIL ?? "admin@siamez.com";
+  const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? "admin@siamez.com").toLowerCase();
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMeInProduction!";
   const hash = await bcrypt.hash(adminPassword, 10);
   await prisma.user.upsert({
@@ -174,14 +174,20 @@ async function main() {
       name: "Admin",
       role: "admin",
       passwordHash: hash,
+      active: true,
     },
-    update: {},
+    update: {
+      name: "Admin",
+      role: "admin",
+      passwordHash: hash,
+      active: true,
+    },
   });
   console.log("Admin user ensured:", adminEmail);
 
   // Common typo / brand-style email (same password as SEED_ADMIN_PASSWORD)
   const brandAdminEmail = "siam@siamez.com";
-  if (brandAdminEmail !== adminEmail.toLowerCase()) {
+  if (brandAdminEmail !== adminEmail) {
     await prisma.user.upsert({
       where: { email: brandAdminEmail },
       create: {
@@ -189,13 +195,19 @@ async function main() {
         name: "Admin",
         role: "admin",
         passwordHash: hash,
+        active: true,
       },
-      update: {},
+      update: {
+        name: "Admin",
+        role: "admin",
+        passwordHash: hash,
+        active: true,
+      },
     });
     console.log("Admin user ensured:", brandAdminEmail);
   }
 
-  const customerEmail = process.env.SEED_CUSTOMER_EMAIL ?? "customer@example.com";
+  const customerEmail = (process.env.SEED_CUSTOMER_EMAIL ?? "customer@example.com").toLowerCase();
   const customerPassword = process.env.SEED_CUSTOMER_PASSWORD ?? "Customer123!";
   const customerHash = await bcrypt.hash(customerPassword, 10);
   await prisma.user.upsert({
@@ -205,8 +217,14 @@ async function main() {
       name: "Alex Thompson",
       role: "customer",
       passwordHash: customerHash,
+      active: true,
     },
-    update: {},
+    update: {
+      name: "Alex Thompson",
+      role: "customer",
+      passwordHash: customerHash,
+      active: true,
+    },
   });
   console.log("Customer user ensured:", customerEmail);
 
@@ -215,26 +233,36 @@ async function main() {
     select: { id: true },
   });
 
-  const freelancerEmail = process.env.SEED_FREELANCER_EMAIL ?? "freelancer@example.com";
+  const freelancerEmail = (process.env.SEED_FREELANCER_EMAIL ?? "freelancer@example.com").toLowerCase();
   const freelancerPassword = process.env.SEED_FREELANCER_PASSWORD ?? "Freelancer123!";
   const freelancerHash = await bcrypt.hash(freelancerPassword, 10);
-  await prisma.user.upsert({
+  const freelancerProfileData = {
+    skills: ["Translation", "Visa support", "Document prep"],
+    bio: "Experienced Thailand relocation specialist.",
+    verificationStatus: "verified" as const,
+    averageRating: 4.8,
+  };
+  const freelancerUser = await prisma.user.upsert({
     where: { email: freelancerEmail },
     create: {
       email: freelancerEmail,
       name: "Sam Freelancer",
       role: "freelancer",
       passwordHash: freelancerHash,
-      freelancerProfile: {
-        create: {
-          skills: ["Translation", "Visa support", "Document prep"],
-          bio: "Experienced Thailand relocation specialist.",
-          verificationStatus: "verified",
-          averageRating: 4.8,
-        },
-      },
+      active: true,
     },
-    update: {},
+    update: {
+      name: "Sam Freelancer",
+      role: "freelancer",
+      passwordHash: freelancerHash,
+      active: true,
+    },
+    select: { id: true },
+  });
+  await prisma.freelancerProfile.upsert({
+    where: { userId: freelancerUser.id },
+    create: { userId: freelancerUser.id, ...freelancerProfileData },
+    update: freelancerProfileData,
   });
   console.log("Freelancer user ensured:", freelancerEmail);
 

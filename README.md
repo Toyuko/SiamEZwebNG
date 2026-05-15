@@ -24,9 +24,19 @@ Production-grade, mobile-first services booking platform for SiamEZ (Thailand: v
 3. **Database**
    ```bash
    npx prisma generate
-   npx prisma db push
+   npx prisma migrate deploy   # or: npx prisma db push (local dev)
    npm run db:seed
    ```
+
+   **Seed credentials** (after `db:seed`):
+
+   | Role | Email | Password |
+   |------|-------|----------|
+   | Admin | `admin@siamez.com` | `ChangeMeInProduction!` (or `SEED_ADMIN_PASSWORD`) |
+   | Client | `customer@example.com` | `Customer123!` |
+   | Freelancer | `freelancer@example.com` | `Freelancer123!` |
+
+   Freelancers appear under **Admin → Freelancers**, not on the Clients page. Re-running `db:seed` refreshes passwords and ensures the freelancer profile exists.
 
 4. **Run**
    ```bash
