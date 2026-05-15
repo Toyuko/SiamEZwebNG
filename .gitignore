@@ -13,8 +13,9 @@ yarn-error.log*
 .env
 .env*.local
 
-# Vercel
-.vercel
+# Vercel (keep project.json in git for CI; ignore local link cache)
+.vercel/*
+!.vercel/project.json
 
 # TypeScript
 *.tsbuildinfo

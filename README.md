@@ -62,10 +62,26 @@ Production-grade, mobile-first services booking platform for SiamEZ (Thailand: v
 
 ## Deploy (Vercel)
 
-1. Connect repo to Vercel.
-2. Set env vars: `DATABASE_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, Stripe keys.
-3. Build: `npm run build`. Use `prisma generate` in build (postinstall) and run migrations in a release step or manually: `npx prisma migrate deploy`.
+The repo is linked to the Vercel project **siam-e-zweb-ng** (see `.vercel/project.json`). Every push to GitHub triggers a deployment via [`.github/workflows/vercel-deploy.yml`](.github/workflows/vercel-deploy.yml).
+
+### One-time GitHub setup
+
+1. Create a Vercel token: [vercel.com/account/tokens](https://vercel.com/account/tokens) (scope: deploy for **Toyuko's projects**).
+2. In GitHub → **Settings → Secrets and variables → Actions**, add repository secret:
+   - `VERCEL_TOKEN` — your Vercel token
+
+Pushes to `main` deploy to **production**; other branches get **preview** URLs.
+
+**Note:** Vercel is already connected to this GitHub repo, so pushes deploy automatically without the Action. Add `VERCEL_TOKEN` only if you want GitHub Actions to deploy as well (optional backup).
+
+### Vercel project setup
+
+1. Connect this repo in the Vercel dashboard if it is not already linked.
+2. Set env vars: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, Stripe keys, `CRON_SECRET`, etc. (see `.env.example`).
+3. Build uses `npm run vercel-build` (`prisma migrate deploy` then `next build`).
 4. Optional: run seed once (e.g. from CI or locally against prod DB).
+
+If you see **two deployments per push**, disable automatic Git deployments in Vercel → Project → **Settings → Git** (use either native Git hooks or the GitHub Action, not both).
 
 ## Content
 

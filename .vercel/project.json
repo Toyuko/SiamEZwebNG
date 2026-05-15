@@ -1,0 +1,13 @@
+{
+  "projectId": "prj_RbOMeoZeEcePysM95PRJGhiBDuO6",
+  "orgId": "team_cMJ9dUQnkpzJlkONhFOuJ9MV",
+  "settings": {
+    "createdAt": 1774513088482,
+    "framework": "nextjs",
+    "nodeVersion": "24.x",
+    "installCommand": "npm install",
+    "buildCommand": "npm run vercel-build",
+    "devCommand": "npm run dev",
+    "outputDirectory": null
+  }
+}
