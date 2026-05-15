@@ -268,7 +268,9 @@ export default async function SalesVehicleDetailPage({
               </span>
             </p>
             <p className="text-3xl font-bold text-siam-blue dark:text-siam-blue-light">
-              {formatPrice(vehicle.priceAmount, vehicle.priceCurrency)}
+              {vehicle.priceAmount <= 0
+                ? t("priceContactSeller")
+                : formatPrice(vehicle.priceAmount, vehicle.priceCurrency)}
             </p>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">

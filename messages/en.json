@@ -160,7 +160,8 @@
     "emptyStateFinderTitle": "No vehicles match your filters",
     "emptyStateFinderBody": "Try adjusting filters, browse our vehicle finder service to source the right car or bike, or book a consultation.",
     "finderDetailTitle": "Looking for something else?",
-    "finderDetailBody": "We can help you find, inspect, negotiate, and complete transfer for vehicles that are not listed here — or help you sell through our network."
+    "finderDetailBody": "We can help you find, inspect, negotiate, and complete transfer for vehicles that are not listed here — or help you sell through our network.",
+    "priceContactSeller": "Contact seller for price"
   },
   "salesAdmin": {
     "title": "Sales Dashboard",

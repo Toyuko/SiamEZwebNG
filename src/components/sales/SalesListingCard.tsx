@@ -67,7 +67,9 @@ export function SalesListingCard({ vehicle }: SalesListingCardProps) {
         </div>
         <CardContent className="p-4">
           <p className="text-lg font-bold text-siam-blue dark:text-siam-blue-light">
-            {formatPrice(vehicle.priceAmount, vehicle.priceCurrency)}
+            {vehicle.priceAmount <= 0
+              ? t("priceContactSeller")
+              : formatPrice(vehicle.priceAmount, vehicle.priceCurrency)}
           </p>
           <p className="mt-1 font-semibold text-gray-900 dark:text-gray-100">
             {vehicle.make} {vehicle.model}

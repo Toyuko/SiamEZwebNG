@@ -23,6 +23,12 @@ import {
   ducatiPanigaleR2015Description,
   ducatiPanigaleR2015Specifications,
 } from "./ducati-panigale-r-2015-listing";
+import {
+  HONDA_CB650F_2013_IMAGE_URLS,
+  HONDA_CB650F_2013_SLUG,
+  hondaCb650f2013Description,
+  hondaCb650f2013Specifications,
+} from "./honda-cb650f-2013-listing";
 import { SUNSET_SCOOTERS_BATCH_LISTINGS } from "./sunset-scooters-batch-listings";
 
 const prisma = new PrismaClient();
@@ -359,6 +365,62 @@ async function main() {
       "Sales listing upserted:",
       DUCATI_PANIGALE_R_2015_SLUG,
       `(${DUCATI_PANIGALE_R_2015_IMAGE_URLS.length} photos)`
+    );
+  }
+
+  const hondaCbHeroUrl = HONDA_CB650F_2013_IMAGE_URLS[0];
+  if (!hondaCbHeroUrl) {
+    console.warn("Honda CB650F 2013 seed skipped: no image URLs.");
+  } else {
+    await prisma.salesVehicle.upsert({
+      where: { slug: HONDA_CB650F_2013_SLUG },
+      create: {
+        slug: HONDA_CB650F_2013_SLUG,
+        title: "2013 Honda CB650F — Black & Gold Custom",
+        make: "Honda",
+        model: "CB650F",
+        year: 2013,
+        mileageKm: 30_000,
+        priceAmount: 0,
+        priceCurrency: "THB",
+        category: "motorcycle",
+        sellerKind: "private",
+        status: "available",
+        heroMediaType: "image",
+        heroImageUrl: hondaCbHeroUrl,
+        heroVideoUrl: null,
+        imageUrls: HONDA_CB650F_2013_IMAGE_URLS,
+        videoUrls: [],
+        description: hondaCb650f2013Description,
+        specifications: hondaCb650f2013Specifications,
+        published: true,
+        createdById: adminForListings?.id ?? null,
+      },
+      update: {
+        title: "2013 Honda CB650F — Black & Gold Custom",
+        make: "Honda",
+        model: "CB650F",
+        year: 2013,
+        mileageKm: 30_000,
+        priceAmount: 0,
+        priceCurrency: "THB",
+        category: "motorcycle",
+        sellerKind: "private",
+        status: "available",
+        heroMediaType: "image",
+        heroImageUrl: hondaCbHeroUrl,
+        heroVideoUrl: null,
+        imageUrls: HONDA_CB650F_2013_IMAGE_URLS,
+        videoUrls: [],
+        description: hondaCb650f2013Description,
+        specifications: hondaCb650f2013Specifications,
+        published: true,
+      },
+    });
+    console.log(
+      "Sales listing upserted:",
+      HONDA_CB650F_2013_SLUG,
+      `(${HONDA_CB650F_2013_IMAGE_URLS.length} photos)`
     );
   }
 
