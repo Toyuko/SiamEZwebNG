@@ -13,6 +13,7 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(1, "Name is required"),
+  accountType: z.enum(["customer", "freelancer"]).default("customer"),
 });
 
 export async function register(_prev: unknown, formData: FormData) {
@@ -20,33 +21,40 @@ export async function register(_prev: unknown, formData: FormData) {
     email: formData.get("email"),
     password: formData.get("password"),
     name: formData.get("name"),
+    accountType: formData.get("accountType") ?? "customer",
   });
 
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  const { email, password, name } = parsed.data;
+  const { email, password, name, accountType } = parsed.data;
   const existing = await getUserByEmail(email);
   if (existing) {
     return { error: { email: ["This email is already registered."] } };
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
+  const role = accountType === "freelancer" ? "freelancer" : "customer";
   const newUser = await prisma.user.create({
     data: {
       email: email.toLowerCase(),
       name: name.trim(),
       passwordHash,
-      role: "customer",
+      role,
+      ...(role === "freelancer"
+        ? { freelancerProfile: { create: {} } }
+        : {}),
     },
   });
 
-  await linkGuestCasesToUser(email, newUser.id);
+  if (role === "customer") {
+    await linkGuestCasesToUser(email, newUser.id);
+  }
 
   // Session cookie must be set via client `signIn()` (see LoginForm) — Server Action
   // signIn does not reliably forward Set-Cookie on Next.js 15+.
-  return { ok: true as const };
+  return { ok: true as const, role };
 }
 
 export async function logout() {

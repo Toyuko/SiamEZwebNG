@@ -12,6 +12,7 @@ const registerSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(1, "Name is required"),
   phone: z.string().optional(),
+  accountType: z.enum(["customer", "freelancer"]).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -22,6 +23,7 @@ export async function POST(request: NextRequest) {
       password: body?.password,
       name: body?.name,
       phone: body?.phone,
+      accountType: body?.accountType,
     });
 
     if (!parsed.success) {
@@ -39,16 +41,22 @@ export async function POST(request: NextRequest) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const role = parsed.data.accountType === "freelancer" ? "freelancer" : "customer";
     const newUser = await prisma.user.create({
       data: {
         email,
         name,
         passwordHash,
-        role: "customer",
+        role,
+        ...(role === "freelancer"
+          ? { freelancerProfile: { create: {} } }
+          : {}),
       },
     });
 
-    await linkGuestCasesToUser(email, newUser.id);
+    if (role === "customer") {
+      await linkGuestCasesToUser(email, newUser.id);
+    }
 
     const token = await createApiJwtForUser({
       id: newUser.id,

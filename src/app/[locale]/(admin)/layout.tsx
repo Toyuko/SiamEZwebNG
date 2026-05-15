@@ -23,8 +23,8 @@ export default async function AdminLayout({
     }
 
     // Block customers: only staff and admin can access /admin
-    if (session.user.role === "customer") {
-      redirect(`/${locale}/portal`);
+    if (session.user.role === "customer" || session.user.role === "freelancer") {
+      redirect(`/${locale}/${session.user.role === "freelancer" ? "portal/freelancer" : "portal"}`);
     }
   }
 

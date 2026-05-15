@@ -210,6 +210,74 @@ async function main() {
   });
   console.log("Customer user ensured:", customerEmail);
 
+  const customerUser = await prisma.user.findUnique({
+    where: { email: customerEmail },
+    select: { id: true },
+  });
+
+  const freelancerEmail = process.env.SEED_FREELANCER_EMAIL ?? "freelancer@example.com";
+  const freelancerPassword = process.env.SEED_FREELANCER_PASSWORD ?? "Freelancer123!";
+  const freelancerHash = await bcrypt.hash(freelancerPassword, 10);
+  await prisma.user.upsert({
+    where: { email: freelancerEmail },
+    create: {
+      email: freelancerEmail,
+      name: "Sam Freelancer",
+      role: "freelancer",
+      passwordHash: freelancerHash,
+      freelancerProfile: {
+        create: {
+          skills: ["Translation", "Visa support", "Document prep"],
+          bio: "Experienced Thailand relocation specialist.",
+          verificationStatus: "verified",
+          averageRating: 4.8,
+        },
+      },
+    },
+    update: {},
+  });
+  console.log("Freelancer user ensured:", freelancerEmail);
+
+  if (customerUser) {
+    const sampleJobs = [
+      {
+        title: "Company registration document review",
+        description:
+          "Review Thai company registration documents and prepare an English summary for foreign directors.",
+        amount: 450_000,
+      },
+      {
+        title: "Work permit application support",
+        description:
+          "Assist a Bangkok-based company with work permit paperwork and BOI liaison.",
+        amount: 850_000,
+      },
+      {
+        title: "Thai-English contract translation",
+        description:
+          "Translate a 12-page service agreement between a Thai vendor and EU buyer.",
+        amount: 120_000,
+      },
+    ];
+
+    for (const job of sampleJobs) {
+      const existing = await prisma.job.findFirst({
+        where: { title: job.title, postedById: customerUser.id },
+      });
+      if (!existing) {
+        await prisma.job.create({
+          data: {
+            ...job,
+            currency: "THB",
+            postedById: customerUser.id,
+            status: "open",
+          },
+        });
+      }
+    }
+    console.log("Sample freelancer jobs ensured for customer:", customerEmail);
+  }
+
   const adminForListings = await prisma.user.findFirst({
     where: { role: "admin" },
     orderBy: { createdAt: "asc" },

@@ -1,13 +1,22 @@
 "use client";
 
 import { Link, usePathname } from "@/i18n/navigation";
-import { LayoutDashboard, FolderOpen, FileText, Settings, CreditCard, Moon, Car } from "lucide-react";
+import {
+  LayoutDashboard,
+  FolderOpen,
+  FileText,
+  Settings,
+  CreditCard,
+  Moon,
+  Car,
+  Briefcase,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { LanguageSwitcher } from "@/components/portal/LanguageSwitcher";
 
-const nav = [
+const clientNav = [
   { labelKey: "dashboard", href: "/portal", icon: LayoutDashboard },
   { labelKey: "myCases", href: "/portal/cases", icon: FolderOpen },
   { labelKey: "mySales", href: "/portal/sales", icon: Car },
@@ -16,9 +25,15 @@ const nav = [
   { labelKey: "settings", href: "/portal/profile", icon: Settings },
 ];
 
-export function PortalSidebar() {
+const freelancerNav = [
+  { labelKey: "freelancerDashboard", href: "/portal/freelancer", icon: Briefcase },
+  { labelKey: "settings", href: "/portal/profile", icon: Settings },
+];
+
+export function PortalSidebar({ isFreelancer = false }: { isFreelancer?: boolean }) {
   const pathname = usePathname();
   const t = useTranslations("portal");
+  const nav = isFreelancer ? freelancerNav : clientNav;
 
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col bg-[#21438F] dark:bg-[#1a3569]">

@@ -16,6 +16,7 @@ enum UserRole {
   admin
   staff
   customer
+  freelancer
 }
 
 model User {
@@ -45,6 +46,59 @@ model User {
   eventsAsClient Event[]           @relation("EventClient")
   eventsAsStaff  Event[]           @relation("EventStaff")
   salesVehiclesCreated SalesVehicle[]
+  freelancerProfile   FreelancerProfile?
+  jobsPosted          Job[]              @relation("JobPostedBy")
+  jobsAsFreelancer    Job[]              @relation("JobFreelancer")
+}
+
+enum FreelancerVerificationStatus {
+  pending
+  verified
+  rejected
+}
+
+model FreelancerProfile {
+  id                 String                       @id @default(cuid())
+  userId             String                       @unique @map("user_id")
+  skills             String[]                     @default([])
+  bio                String?                      @db.Text
+  verificationStatus FreelancerVerificationStatus @default(pending) @map("verification_status")
+  averageRating      Float                        @default(0) @map("average_rating")
+  createdAt          DateTime                     @default(now()) @map("created_at")
+  updatedAt          DateTime                     @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("freelancer_profiles")
+}
+
+enum JobStatus {
+  open
+  in_progress
+  completed
+  approved
+}
+
+model Job {
+  id                      String    @id @default(cuid())
+  title                   String
+  description             String    @db.Text
+  postedById              String    @map("posted_by_id")
+  freelancerId            String?   @map("freelancer_id")
+  amount                  Int       // smallest currency unit (e.g. satang)
+  currency                String    @default("THB")
+  status                  JobStatus @default(open)
+  completionSubmittedAt   DateTime? @map("completion_submitted_at")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+
+  postedBy   User  @relation("JobPostedBy", fields: [postedById], references: [id], onDelete: Restrict)
+  freelancer User? @relation("JobFreelancer", fields: [freelancerId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([freelancerId, status])
+  @@index([postedById])
+  @@map("jobs")
 }
 
 model Account {

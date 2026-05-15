@@ -38,7 +38,7 @@ export function PortalLayoutClient({
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <PortalSidebar />
+        <PortalSidebar isFreelancer={user.role === "freelancer"} />
       </aside>
 
       <div className="flex flex-1 flex-col overflow-hidden lg:ml-0">
@@ -55,7 +55,7 @@ export function PortalLayoutClient({
 
         <PortalTopBar
           userName={user.name || user.email}
-          userRole="Client Account"
+          userRole={user.role === "freelancer" ? "Freelancer Account" : "Client Account"}
           userAvatar={user.image ?? undefined}
         />
 

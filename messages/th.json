@@ -16,7 +16,10 @@
     "signIn": "เข้าสู่ระบบ",
     "createAccount": "สร้างบัญชี",
     "invalidCredentials": "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
-    "signInAfterRegisterFailed": "สร้างบัญชีแล้ว กรุณาเข้าสู่ระบบด้วยตนเอง"
+    "signInAfterRegisterFailed": "สร้างบัญชีแล้ว กรุณาเข้าสู่ระบบด้วยตนเอง",
+    "accountType": "ประเภทบัญชี",
+    "accountTypeCustomer": "ลูกค้า / บริษัท",
+    "accountTypeFreelancer": "ฟรีแลนซ์"
   },
   "common": {
     "home": "หน้าแรก",
@@ -999,6 +1002,7 @@
     "privacyPolicy": "นโยบายความเป็นส่วนตัว",
     "termsOfService": "ข้อกำหนดการให้บริการ",
     "contactSupport": "ติดต่อฝ่ายสนับสนุน",
+    "freelancerDashboard": "พอร์ทัลฟรีแลนซ์",
     "settings": "การตั้งค่า",
     "settingsSubtitle": "จัดการโปรไฟล์ ความปลอดภัย การแจ้งเตือน และความเป็นส่วนตัว",
     "logout": "ออกจากระบบ",
@@ -1060,6 +1064,44 @@
       "confirmEmailLabel": "พิมพ์อีเมลของคุณเพื่อยืนยัน",
       "deactivateAccount": "ปิดการใช้งานบัญชีของฉัน",
       "genericError": "เกิดข้อผิดพลาด โปรดลองอีกครั้ง"
+    }
+  },
+  "freelancer": {
+    "dashboardTitle": "พอร์ทัลฟรีแลนซ์",
+    "dashboardSubtitle": "ค้นหางาน ติดตามงานที่กำลังทำ และจัดการรายได้บน SiamEZ",
+    "verified": "ยืนยันแล้ว",
+    "verificationPending": "รอการยืนยัน",
+    "verificationRejected": "การยืนยันถูกปฏิเสธ",
+    "jobFeed": "งานที่เปิดรับ",
+    "jobFeedSubtitle": "งานจากบริษัทบนแพลตฟอร์ม SiamEZ",
+    "noOpenJobs": "ยังไม่มีงานเปิดรับ กรุณาตรวจสอบอีกครั้ง",
+    "acceptJob": "รับงาน",
+    "revenueTracker": "ติดตามรายได้",
+    "totalEarned": "รายได้รวม",
+    "pendingClearance": "รอเคลียร์เงิน",
+    "pendingClearanceHint": "เงินถูกเก็บไว้จนกว่าลูกค้าจะอนุมัติ",
+    "activeTrackTrace": "ติดตามงานที่ทำอยู่",
+    "activeTrackTraceSubtitle": "งานที่คุณกำลังดำเนินการ",
+    "noActiveJobs": "ไม่มีงานที่กำลังทำ รับงานจากฟีดด้านซ้าย",
+    "markAsDone": "ทำเสร็จแล้ว",
+    "awaitingClientApproval": "รอลูกค้าอนุมัติ (อนุมัติอัตโนมัติภายใน 1 ชม.)",
+    "subscriptionTitle": "สมาชิกพิเศษ",
+    "subscriptionDescription": "อัปเกรดเพื่อรับงานก่อน ค่าธรรมเนียมลดลง และตรายืนยัน",
+    "subscriptionBenefit1": "แสดงงานก่อนในฟีด",
+    "subscriptionBenefit2": "ค่าคอมมิชชันแพลตฟอร์มลดลง",
+    "subscriptionBenefit3": "ตราฟรีแลนซ์ยืนยันแล้ว",
+    "upgradeSubscription": "อัปเกรดบัญชี",
+    "autoApprovalCountdown": "อนุมัติอัตโนมัติใน",
+    "autoApprovalHint": "ระบบจะปล่อยเงินอัตโนมัติหากลูกค้าไม่ตรวจสอบก่อน",
+    "autoApprovalImminent": "กำลังดำเนินการอนุมัติอัตโนมัติ…",
+    "backToPortal": "กลับ",
+    "progress": "ความคืบหน้า",
+    "jobApproved": "งานได้รับการอนุมัติและปล่อยเงินแล้ว",
+    "status": {
+      "open": "เปิดรับ",
+      "in_progress": "กำลังทำ",
+      "completed": "รออนุมัติ",
+      "approved": "อนุมัติแล้ว"
     }
   },
   "paymentInformation": {

@@ -1,8 +1,14 @@
 /**
  * Same-origin relative path only (prevents open redirects).
  */
-export function resolvePostAuthRedirect(locale: string, redirect?: string | null): string {
-  const fallback = `/${locale}/portal`;
+export function resolvePostAuthRedirect(
+  locale: string,
+  redirect?: string | null,
+  role?: string | null
+): string {
+  const roleFallback =
+    role === "freelancer" ? `/${locale}/portal/freelancer` : `/${locale}/portal`;
+  const fallback = roleFallback;
   if (!redirect || typeof redirect !== "string") return fallback;
   const trimmed = redirect.trim();
   if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return fallback;

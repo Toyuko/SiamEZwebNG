@@ -16,7 +16,10 @@
     "signIn": "Sign in",
     "createAccount": "Create account",
     "invalidCredentials": "Invalid email or password.",
-    "signInAfterRegisterFailed": "Account created. Please sign in manually."
+    "signInAfterRegisterFailed": "Account created. Please sign in manually.",
+    "accountType": "Account type",
+    "accountTypeCustomer": "Client / Company",
+    "accountTypeFreelancer": "Freelancer"
   },
   "common": {
     "home": "Home",
@@ -999,6 +1002,7 @@
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
     "contactSupport": "Contact Support",
+    "freelancerDashboard": "Freelancer Hub",
     "settings": "Settings",
     "settingsSubtitle": "Manage your profile, security, notifications, and privacy.",
     "logout": "Logout",
@@ -1060,6 +1064,44 @@
       "confirmEmailLabel": "Type your email to confirm",
       "deactivateAccount": "Deactivate my account",
       "genericError": "Something went wrong. Please try again."
+    }
+  },
+  "freelancer": {
+    "dashboardTitle": "Freelancer Portal",
+    "dashboardSubtitle": "Find jobs, track active work, and manage your earnings on SiamEZ.",
+    "verified": "Verified",
+    "verificationPending": "Verification pending",
+    "verificationRejected": "Verification declined",
+    "jobFeed": "Job Feed",
+    "jobFeedSubtitle": "Open jobs posted by companies on SiamEZ.",
+    "noOpenJobs": "No open jobs right now. Check back soon.",
+    "acceptJob": "Accept job",
+    "revenueTracker": "Revenue Tracker",
+    "totalEarned": "Total Earned",
+    "pendingClearance": "Pending Clearance",
+    "pendingClearanceHint": "Funds in escrow until client approval",
+    "activeTrackTrace": "Active Track & Trace",
+    "activeTrackTraceSubtitle": "Jobs you are currently working on.",
+    "noActiveJobs": "No active jobs. Accept one from the feed.",
+    "markAsDone": "Mark as Done",
+    "awaitingClientApproval": "Awaiting client approval (auto-approves in 1 hour)",
+    "subscriptionTitle": "Special Member Subscription",
+    "subscriptionDescription": "Upgrade to unlock priority job matching, lower platform fees, and a verified badge.",
+    "subscriptionBenefit1": "Priority placement in the job feed",
+    "subscriptionBenefit2": "Reduced platform commission",
+    "subscriptionBenefit3": "Verified freelancer badge",
+    "upgradeSubscription": "Upgrade account",
+    "autoApprovalCountdown": "Auto-approval in",
+    "autoApprovalHint": "Payment will be released automatically unless the client reviews sooner.",
+    "autoApprovalImminent": "Auto-approval processing…",
+    "backToPortal": "Back",
+    "progress": "Progress",
+    "jobApproved": "This job has been approved and payment released.",
+    "status": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "completed": "Awaiting approval",
+      "approved": "Approved"
     }
   },
   "paymentInformation": {

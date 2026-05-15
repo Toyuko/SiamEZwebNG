@@ -52,7 +52,16 @@ export async function requireAuth(): Promise<Session> {
 /** Admin or staff only; customers receive Forbidden. */
 export async function requireStaff(): Promise<Session> {
   const session = await requireAuth();
-  if (session.user.role === "customer") {
+  if (session.user.role === "customer" || session.user.role === "freelancer") {
+    throw new Error("Forbidden");
+  }
+  return session;
+}
+
+/** Freelancer portal only. */
+export async function requireFreelancer(): Promise<Session> {
+  const session = await requireAuth();
+  if (session.user.role !== "freelancer") {
     throw new Error("Forbidden");
   }
   return session;
