@@ -29,6 +29,12 @@ import {
   hondaCb650f2013Description,
   hondaCb650f2013Specifications,
 } from "./honda-cb650f-2013-listing";
+import {
+  MAZDA_2_SEDAN_2017_IMAGE_URLS,
+  MAZDA_2_SEDAN_2017_SLUG,
+  mazda2Sedan2017Description,
+  mazda2Sedan2017Specifications,
+} from "./mazda-2-sedan-2017-listing";
 import { SUNSET_SCOOTERS_BATCH_LISTINGS } from "./sunset-scooters-batch-listings";
 
 const prisma = new PrismaClient();
@@ -411,6 +417,62 @@ async function main() {
       "Sales listing upserted:",
       HONDA_CB650F_2013_SLUG,
       `(${HONDA_CB650F_2013_IMAGE_URLS.length} photos)`
+    );
+  }
+
+  const mazdaHeroUrl = MAZDA_2_SEDAN_2017_IMAGE_URLS[0];
+  if (!mazdaHeroUrl) {
+    console.warn("Mazda 2 Sedan 2017 seed skipped: no image URLs.");
+  } else {
+    await prisma.salesVehicle.upsert({
+      where: { slug: MAZDA_2_SEDAN_2017_SLUG },
+      create: {
+        slug: MAZDA_2_SEDAN_2017_SLUG,
+        title: "2017 Mazda 2 Sedan 1.3 Skyactiv Auto",
+        make: "Mazda",
+        model: "2 Sedan",
+        year: 2017,
+        mileageKm: 105_360,
+        priceAmount: 285_000,
+        priceCurrency: "THB",
+        category: "car",
+        sellerKind: "private",
+        status: "available",
+        heroMediaType: "image",
+        heroImageUrl: mazdaHeroUrl,
+        heroVideoUrl: null,
+        imageUrls: MAZDA_2_SEDAN_2017_IMAGE_URLS,
+        videoUrls: [],
+        description: mazda2Sedan2017Description,
+        specifications: mazda2Sedan2017Specifications,
+        published: true,
+        createdById: adminForListings?.id ?? null,
+      },
+      update: {
+        title: "2017 Mazda 2 Sedan 1.3 Skyactiv Auto",
+        make: "Mazda",
+        model: "2 Sedan",
+        year: 2017,
+        mileageKm: 105_360,
+        priceAmount: 285_000,
+        priceCurrency: "THB",
+        category: "car",
+        sellerKind: "private",
+        status: "available",
+        heroMediaType: "image",
+        heroImageUrl: mazdaHeroUrl,
+        heroVideoUrl: null,
+        imageUrls: MAZDA_2_SEDAN_2017_IMAGE_URLS,
+        videoUrls: [],
+        description: mazda2Sedan2017Description,
+        specifications: mazda2Sedan2017Specifications,
+        published: true,
+      },
+    });
+    console.log(
+      "Sales listing upserted:",
+      MAZDA_2_SEDAN_2017_SLUG,
+      `(${MAZDA_2_SEDAN_2017_IMAGE_URLS.length} photos)`
     );
   }
 
