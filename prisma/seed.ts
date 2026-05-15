@@ -210,6 +210,8 @@ async function main() {
     select: { id: true },
   });
 
+  // Sales upserts: heroMediaType / heroImageUrl / heroVideoUrl are set only on create so
+  // re-seeding refreshes catalog copy and galleries without overwriting admin "Set hero" picks.
   const heroUrl = BENELLI_TRK_502X_IMAGE_URLS[0];
   if (!heroUrl) {
     console.warn("Benelli TRK 502X seed skipped: no image URLs.");
@@ -247,9 +249,6 @@ async function main() {
         priceCurrency: "THB",
         category: "motorcycle",
         status: "available",
-        heroMediaType: "image",
-        heroImageUrl: heroUrl,
-        heroVideoUrl: null,
         imageUrls: BENELLI_TRK_502X_IMAGE_URLS,
         videoUrls: [],
         description: benelliTrk502xListingDescription,
@@ -297,9 +296,6 @@ async function main() {
         priceCurrency: "THB",
         category: "motorcycle",
         status: "available",
-        heroMediaType: "image",
-        heroImageUrl: kawasakiHeroUrl,
-        heroVideoUrl: null,
         imageUrls: KAWASAKI_NINJA_ZX636R_2003_IMAGE_URLS,
         videoUrls: [],
         description: kawasakiNinjaZx636r2003Description,
@@ -351,9 +347,6 @@ async function main() {
         priceCurrency: "THB",
         category: "motorcycle",
         status: "available",
-        heroMediaType: "image",
-        heroImageUrl: ducatiHeroUrl,
-        heroVideoUrl: null,
         imageUrls: DUCATI_PANIGALE_R_2015_IMAGE_URLS,
         videoUrls: [],
         description: ducatiPanigaleR2015Description,
@@ -407,9 +400,6 @@ async function main() {
         category: "motorcycle",
         sellerKind: "private",
         status: "available",
-        heroMediaType: "image",
-        heroImageUrl: hondaCbHeroUrl,
-        heroVideoUrl: null,
         imageUrls: HONDA_CB650F_2013_IMAGE_URLS,
         videoUrls: [],
         description: hondaCb650f2013Description,
@@ -464,9 +454,6 @@ async function main() {
         priceCurrency: "THB",
         category: "motorcycle",
         status: "available",
-        heroMediaType: "image",
-        heroImageUrl: hero,
-        heroVideoUrl: null,
         imageUrls: listing.imageUrls,
         videoUrls: [],
         description: listing.description,
