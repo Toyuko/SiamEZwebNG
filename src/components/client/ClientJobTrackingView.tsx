@@ -11,6 +11,7 @@ import {
 import { ClientTrackingApprovalBanner } from "@/components/client/ClientTrackingApprovalBanner";
 import { ClientDocumentUpload } from "@/components/client/ClientDocumentUpload";
 import { ChatBox } from "@/components/jobs/ChatBox";
+import { TrackingMap } from "@/components/tracking/TrackingMap";
 import type { TrackingStep } from "@/config/job-tracking-steps";
 import type { JobStatus, TrackingStatus } from "@prisma/client";
 import { isAwaitingReviewStatus } from "@/lib/jobs/auto-approve";
@@ -106,7 +107,7 @@ export function ClientJobTrackingView({
     );
 
   return (
-    <div className="mx-auto max-w-3xl px-1 pb-10">
+    <div className="mx-auto max-w-5xl px-1 pb-10">
       <Link
         href="/portal"
         className="mb-6 inline-flex items-center gap-2 text-sm text-siam-blue hover:underline"
@@ -202,25 +203,31 @@ export function ClientJobTrackingView({
             )}
           </header>
 
-          <section className="rounded-2xl bg-white/95 p-6 shadow-sm ring-1 ring-sky-100 dark:bg-slate-900/90 dark:ring-sky-900">
-            <h2 className="mb-4 text-sm font-semibold text-sky-900 dark:text-sky-100">
-              {t("timelineTitle")}
-            </h2>
-
-            {data.isTrackable && data.steps ? (
-              <ClientTrackingTimeline
-                steps={data.steps}
-                currentStatus={data.job.trackingStatus}
-                trackingHistory={data.trackingHistory}
-                locale={locale}
-                emptyMessage={t("noHistoryYet")}
-              />
-            ) : (
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                {t("notTrackable")}
-              </p>
+          <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-start">
+            {data.isTrackable && (
+              <TrackingMap jobId={data.job.id} locale={locale} />
             )}
-          </section>
+
+            <section className="rounded-2xl bg-white/95 p-6 shadow-sm ring-1 ring-sky-100 dark:bg-slate-900/90 dark:ring-sky-900 lg:min-h-[min(420px,55vh)]">
+              <h2 className="mb-4 text-sm font-semibold text-sky-900 dark:text-sky-100">
+                {t("timelineTitle")}
+              </h2>
+
+              {data.isTrackable && data.steps ? (
+                <ClientTrackingTimeline
+                  steps={data.steps}
+                  currentStatus={data.job.trackingStatus}
+                  trackingHistory={data.trackingHistory}
+                  locale={locale}
+                  emptyMessage={t("noHistoryYet")}
+                />
+              ) : (
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  {t("notTrackable")}
+                </p>
+              )}
+            </section>
+          </div>
 
           <ChatBox
             jobId={data.job.id}

@@ -1,0 +1,114 @@
+import { prisma } from "@/lib/db";
+import { getPusherServer, jobLocationChannel } from "@/lib/pusher-server";
+
+export type JobLocationHistoryEntry = {
+  id: string;
+  status: string;
+  note: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  createdAt: string;
+};
+
+export type JobLocationPayload = {
+  jobId: string;
+  trackingStatus: string | null;
+  isCurrentlyInTransit: boolean;
+  trackingHistory: JobLocationHistoryEntry[];
+  realtime: {
+    channel: string;
+    authEndpoint: string;
+    event: string;
+    pusherKey: string;
+    pusherCluster: string;
+  } | null;
+};
+
+export async function getJobLocationTracking(
+  jobId: string
+): Promise<JobLocationPayload | null> {
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    select: {
+      id: true,
+      trackingStatus: true,
+      isCurrentlyInTransit: true,
+      trackingHistory: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          status: true,
+          note: true,
+          latitude: true,
+          longitude: true,
+          createdAt: true,
+        },
+      },
+    },
+  });
+
+  if (!job) return null;
+
+  const trackingHistory: JobLocationHistoryEntry[] = job.trackingHistory.map(
+    (entry) => ({
+      id: entry.id,
+      status: entry.status,
+      note: entry.note,
+      latitude: entry.latitude,
+      longitude: entry.longitude,
+      createdAt: entry.createdAt.toISOString(),
+    })
+  );
+
+  const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY?.trim() ?? "";
+  const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER?.trim() ?? "";
+  const pusherConfigured = Boolean(getPusherServer() && pusherKey && pusherCluster);
+
+  const realtime =
+    job.isCurrentlyInTransit && pusherConfigured
+      ? {
+          channel: jobLocationChannel(jobId),
+          authEndpoint: "/api/chat/pusher-auth",
+          event: "location-update",
+          pusherKey,
+          pusherCluster,
+        }
+      : null;
+
+  return {
+    jobId: job.id,
+    trackingStatus: job.trackingStatus,
+    isCurrentlyInTransit: job.isCurrentlyInTransit,
+    trackingHistory,
+    realtime,
+  };
+}
+
+export type LocationCoordinate = {
+  latitude: number;
+  longitude: number;
+  /** @deprecated Prefer `timestamp` — kept for internal callers */
+  recordedAt?: string;
+  timestamp?: string;
+};
+
+/** Broadcast live coordinates to subscribers on the job location channel. */
+export async function broadcastJobLocationUpdate(
+  jobId: string,
+  coordinate: LocationCoordinate
+): Promise<void> {
+  const pusher = getPusherServer();
+  if (!pusher) return;
+
+  const timestamp =
+    coordinate.timestamp ??
+    coordinate.recordedAt ??
+    new Date().toISOString();
+
+  await pusher.trigger(jobLocationChannel(jobId), "location-update", {
+    latitude: coordinate.latitude,
+    longitude: coordinate.longitude,
+    timestamp,
+    jobId,
+  });
+}

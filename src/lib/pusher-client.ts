@@ -29,3 +29,7 @@ export function jobChatChannel(jobId: string): string {
 export function jobPresenceChannel(jobId: string): string {
   return `presence-job-chat-${jobId}`;
 }
+
+export function jobLocationChannel(jobId: string): string {
+  return `private-job-location-${jobId}`;
+}

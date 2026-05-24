@@ -1,12 +1,13 @@
 import { NextRequest } from "next/server";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/auth";
 import { fail } from "@/lib/api-response";
 import { getJobChatParticipant } from "@/data-access/job-chat";
 import { getPusherServer } from "@/lib/pusher-server";
+import { assertJobLocationViewer } from "@/lib/jobs/tracking-access";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getSession();
     if (!session?.user?.id) {
       return fail("Unauthorized", 401);
     }
@@ -24,12 +25,27 @@ export async function POST(request: NextRequest) {
       return fail("Missing socket_id or channel_name", 400);
     }
 
-    const privateMatch = channelName.match(/^private-job-chat-(.+)$/);
+    const chatPrivateMatch = channelName.match(/^private-job-chat-(.+)$/);
     const presenceMatch = channelName.match(/^presence-job-chat-(.+)$/);
-    const jobId = privateMatch?.[1] ?? presenceMatch?.[1];
+    const locationMatch = channelName.match(/^private-job-location-(.+)$/);
+    const jobId =
+      chatPrivateMatch?.[1] ?? presenceMatch?.[1] ?? locationMatch?.[1];
 
     if (!jobId) {
       return fail("Invalid channel", 403);
+    }
+
+    if (locationMatch) {
+      try {
+        await assertJobLocationViewer(session.user.id, session.user.role, jobId);
+      } catch {
+        return fail("Forbidden", 403);
+      }
+
+      const authResponse = pusher.authorizeChannel(socketId, channelName);
+      return new Response(JSON.stringify(authResponse), {
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const participant = await getJobChatParticipant(jobId, session.user.id);

@@ -60,6 +60,24 @@ export async function assertClientCanUploadJobDocuments(
   return job;
 }
 
+/** Client (job owner) or admin/staff may view live location map data. */
+export async function assertJobLocationViewer(
+  userId: string,
+  userRole: string,
+  jobId: string
+): Promise<JobTrackingAccess> {
+  const job = await getJobTrackingAccess(jobId);
+  if (!job) {
+    throw new Error("Forbidden");
+  }
+  const isClient = job.postedById === userId;
+  const isStaff = userRole === "admin" || userRole === "staff";
+  if (!isClient && !isStaff) {
+    throw new Error("Forbidden");
+  }
+  return job;
+}
+
 /** Only the assigned freelancer may upload tracking attachments or update progress. */
 export async function assertFreelancerCanUpdateJobTracking(
   userId: string,

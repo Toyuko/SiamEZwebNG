@@ -1119,6 +1119,19 @@
       "completed_awaiting_review": "Awaiting your review",
       "completed": "Awaiting your review",
       "approved": "Approved"
+    },
+    "map": {
+      "title": "Live route map",
+      "loading": "Loading map…",
+      "loadError": "We could not load the tracking map. Please try again.",
+      "retry": "Try again",
+      "noLocationsYet": "Route locations will appear here once your coordinator shares GPS updates for each step.",
+      "unavailable": "Map unavailable",
+      "scriptError": "The map could not be loaded. This may be due to network restrictions or blocked scripts.",
+      "liveSubtitle": "Your motorcycle is on the move — position updates in real time.",
+      "routeSubtitle": "Completed stops on your service route.",
+      "liveBadge": "Live",
+      "inTransit": "In transit"
     }
   },
   "freelancer": {

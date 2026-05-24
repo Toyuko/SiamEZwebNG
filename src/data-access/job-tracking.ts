@@ -17,7 +17,8 @@ export async function appendJobTrackingHistory(
   jobId: string,
   status: TrackingStatus,
   note?: string | null,
-  attachment?: { url: string; name: string } | null
+  attachment?: { url: string; name: string } | null,
+  coordinates?: { latitude: number; longitude: number } | null
 ) {
   await prisma.jobTrackingHistory.create({
     data: {
@@ -27,6 +28,8 @@ export async function appendJobTrackingHistory(
         typeof note === "string" && note.trim().length > 0 ? note.trim() : null,
       attachmentUrl: attachment?.url ?? null,
       attachmentName: attachment?.name ?? null,
+      latitude: coordinates?.latitude ?? null,
+      longitude: coordinates?.longitude ?? null,
     },
   });
 }

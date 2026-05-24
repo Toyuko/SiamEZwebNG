@@ -117,6 +117,7 @@ model Job {
   status                  JobStatus        @default(open)
   trackingStatus          TrackingStatus?  @map("tracking_status")
   trackingNotes           String?          @map("tracking_notes") @db.Text
+  isCurrentlyInTransit    Boolean          @default(false) @map("is_currently_in_transit")
   completionSubmittedAt   DateTime?        @map("completion_submitted_at")
   approvedAt              DateTime?        @map("approved_at")
   createdAt               DateTime         @default(now()) @map("created_at")
@@ -142,6 +143,8 @@ model JobTrackingHistory {
   note           String?        @db.Text
   attachmentUrl  String?        @map("attachment_url")
   attachmentName String?        @map("attachment_name")
+  latitude       Float?
+  longitude      Float?
   createdAt      DateTime       @default(now()) @map("created_at")
 
   job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
