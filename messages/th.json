@@ -1101,6 +1101,7 @@
     "closeLightbox": "ปิด",
     "documentsTitle": "อัปโหลดเอกสาร",
     "documentsHint": "ส่งเอกสารที่จำเป็นให้ผู้ประสานงาน รองรับ JPG, PNG หรือ PDF (สูงสุด 5 MB)",
+    "documentsPendingAction": "ต้องดำเนินการ: กรุณาอัปโหลดเอกสารด้านล่างเพื่อให้ผู้ประสานงานดำเนินการต่อ",
     "documentDropHint": "ลากไฟล์มาวางที่นี่ หรือเลือกจากเครื่อง",
     "documentBrowse": "เลือกไฟล์",
     "documentTypes": "JPG, PNG หรือ PDF · สูงสุด {maxMb} MB",

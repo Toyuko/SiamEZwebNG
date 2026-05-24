@@ -1101,6 +1101,7 @@
     "closeLightbox": "Close",
     "documentsTitle": "Upload documents",
     "documentsHint": "Submit required documents for your coordinator. Accepted formats: JPG, PNG, or PDF (max 5 MB).",
+    "documentsPendingAction": "Action required: please upload your documents below so your coordinator can continue.",
     "documentDropHint": "Drag and drop a file here, or browse",
     "documentBrowse": "Browse files",
     "documentTypes": "JPG, PNG, or PDF · max {maxMb} MB",

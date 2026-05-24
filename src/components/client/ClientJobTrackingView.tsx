@@ -14,6 +14,7 @@ import { ChatBox } from "@/components/jobs/ChatBox";
 import type { TrackingStep } from "@/config/job-tracking-steps";
 import type { JobStatus, TrackingStatus } from "@prisma/client";
 import { isAwaitingReviewStatus } from "@/lib/jobs/auto-approve";
+import { canClientShowDocumentUpload } from "@/lib/jobs/client-document-upload";
 
 type TrackingPayload = {
   job: {
@@ -47,12 +48,15 @@ export function ClientJobTrackingView({
   const [data, setData] = useState<TrackingPayload | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const loadTracking = useCallback(async () => {
-    setState("loading");
+  const loadTracking = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      setState("loading");
+    }
     setErrorMessage(null);
     try {
       const res = await fetch(`/api/client/jobs/${jobId}/tracking`, {
         credentials: "include",
+        cache: "no-store",
       });
       const json = (await res.json()) as {
         success?: boolean;
@@ -92,6 +96,14 @@ export function ClientJobTrackingView({
     data?.steps && data.job.trackingStatus
       ? data.steps.find((s) => s.key === data.job.trackingStatus)
       : null;
+
+  const showDocumentUpload =
+    data != null &&
+    canClientShowDocumentUpload(
+      data.isTrackable,
+      data.job.status,
+      data.job.trackingStatus
+    );
 
   return (
     <div className="mx-auto max-w-3xl px-1 pb-10">
@@ -178,15 +190,17 @@ export function ClientJobTrackingView({
                 </dd>
               </div>
             </dl>
-          </header>
 
-          {data.isTrackable && data.job.status === "in_progress" && (
-            <ClientDocumentUpload
-              jobId={data.job.id}
-              trackingHistory={data.trackingHistory}
-              onUploaded={() => void loadTracking()}
-            />
-          )}
+            {showDocumentUpload && (
+              <ClientDocumentUpload
+                jobId={data.job.id}
+                trackingHistory={data.trackingHistory}
+                embedded
+                highlight={data.job.trackingStatus === "DOCUMENTS_PENDING"}
+                onUploaded={() => void loadTracking({ silent: true })}
+              />
+            )}
+          </header>
 
           <section className="rounded-2xl bg-white/95 p-6 shadow-sm ring-1 ring-sky-100 dark:bg-slate-900/90 dark:ring-sky-900">
             <h2 className="mb-4 text-sm font-semibold text-sky-900 dark:text-sky-100">

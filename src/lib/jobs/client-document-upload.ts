@@ -1,7 +1,18 @@
 import { prisma } from "@/lib/db";
 import { appendJobTrackingHistory } from "@/data-access/job-tracking";
 import { isTrackableServiceSlug } from "@/config/job-tracking-steps";
+import type { JobStatus, TrackingStatus } from "@prisma/client";
 import { assertClientCanUploadJobDocuments } from "@/lib/jobs/tracking-access";
+
+export function canClientShowDocumentUpload(
+  isTrackable: boolean,
+  status: JobStatus,
+  trackingStatus: TrackingStatus | null
+): boolean {
+  if (!isTrackable || trackingStatus == null) return false;
+  if (status === "approved" || status === "completed") return false;
+  return status === "in_progress";
+}
 
 export async function submitClientJobDocument(
   clientId: string,

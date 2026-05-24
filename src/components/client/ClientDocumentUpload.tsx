@@ -16,6 +16,8 @@ type ClientDocumentUploadProps = {
   jobId: string;
   trackingHistory: ClientTrackingHistoryEntry[];
   disabled?: boolean;
+  embedded?: boolean;
+  highlight?: boolean;
   onUploaded?: () => void;
 };
 
@@ -23,6 +25,8 @@ export function ClientDocumentUpload({
   jobId,
   trackingHistory,
   disabled = false,
+  embedded = false,
+  highlight = false,
   onUploaded,
 }: ClientDocumentUploadProps) {
   const t = useTranslations("clientTracking");
@@ -111,7 +115,18 @@ export function ClientDocumentUpload({
   }
 
   return (
-    <section className="rounded-2xl bg-white/95 p-6 shadow-sm ring-1 ring-sky-100 dark:bg-slate-900/90 dark:ring-sky-900">
+    <div
+      className={cn(
+        embedded
+          ? "mt-5 border-t border-sky-100 pt-5 dark:border-sky-900"
+          : "rounded-2xl bg-white/95 p-6 shadow-sm ring-1 ring-sky-100 dark:bg-slate-900/90 dark:ring-sky-900"
+      )}
+    >
+      {highlight && (
+        <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+          {t("documentsPendingAction")}
+        </p>
+      )}
       <h2 className="text-sm font-semibold text-sky-900 dark:text-sky-100">
         {t("documentsTitle")}
       </h2>
@@ -256,6 +271,6 @@ export function ClientDocumentUpload({
           </ul>
         </div>
       )}
-    </section>
+    </div>
   );
 }
