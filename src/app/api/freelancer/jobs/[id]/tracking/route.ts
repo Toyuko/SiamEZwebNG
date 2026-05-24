@@ -24,7 +24,12 @@ export async function POST(
     const { userId } = await requireApiFreelancer(request);
     const { id } = await params;
 
-    let body: { status?: string; notes?: string | null };
+    let body: {
+      status?: string;
+      notes?: string | null;
+      attachmentUrl?: string | null;
+      attachmentName?: string | null;
+    };
     try {
       body = await request.json();
     } catch {
@@ -41,12 +46,18 @@ export async function POST(
       select: { name: true },
     });
 
+    const attachment =
+      body.attachmentUrl && body.attachmentName
+        ? { url: body.attachmentUrl, name: body.attachmentName }
+        : null;
+
     const result = await updateJobTrackingStatus(
       userId,
       id,
       status as TrackingStatus,
       body.notes,
-      user?.name
+      user?.name,
+      attachment
     );
 
     if ("error" in result) {

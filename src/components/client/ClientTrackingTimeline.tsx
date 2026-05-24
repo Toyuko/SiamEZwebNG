@@ -4,12 +4,15 @@ import { Check } from "lucide-react";
 import type { TrackingStatus } from "@prisma/client";
 import type { TrackingStep } from "@/config/job-tracking-steps";
 import { getTrackingStepIndex } from "@/config/job-tracking-steps";
+import { TrackingAttachmentDisplay } from "@/components/TrackingAttachmentDisplay";
 import { cn } from "@/lib/utils";
 
 export type ClientTrackingHistoryEntry = {
   id: string;
   status: TrackingStatus;
   note: string | null;
+  attachmentUrl?: string | null;
+  attachmentName?: string | null;
   createdAt: string;
 };
 
@@ -139,6 +142,14 @@ export function ClientTrackingTimeline({
                     {entry.note}
                   </p>
                 )}
+                {entry?.attachmentUrl && (
+                  <div className="mt-1 flex justify-center">
+                    <TrackingAttachmentDisplay
+                      attachmentUrl={entry.attachmentUrl}
+                      attachmentName={entry.attachmentName}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -207,6 +218,12 @@ export function ClientTrackingTimeline({
                   <p className="mt-2 rounded-lg bg-sky-50 px-2.5 py-2 text-[11px] leading-snug text-sky-900 dark:bg-sky-950/40 dark:text-sky-100">
                     {entry.note}
                   </p>
+                )}
+                {entry?.attachmentUrl && (
+                  <TrackingAttachmentDisplay
+                    attachmentUrl={entry.attachmentUrl}
+                    attachmentName={entry.attachmentName}
+                  />
                 )}
               </div>
             </div>

@@ -12,6 +12,7 @@ export interface SubmitBookingInput {
   userId?: string;
   formData: Record<string, unknown>;
   documentIds?: string[];
+  postToMarketplace?: boolean;
 }
 
 export interface SubmitBookingResult {
@@ -39,6 +40,7 @@ export async function submitBooking(input: SubmitBookingInput): Promise<SubmitBo
       guestPhone: input.guestPhone,
       formData: input.formData,
       documentIds: input.documentIds,
+      postToMarketplace: input.postToMarketplace,
     });
 
     return {

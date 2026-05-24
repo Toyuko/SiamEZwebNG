@@ -13,7 +13,8 @@ export async function updateJobTrackingStatus(
   jobId: string,
   status: TrackingStatus,
   notes?: string | null,
-  freelancerName?: string | null
+  freelancerName?: string | null,
+  attachment?: { url: string; name: string } | null
 ) {
   const job = await prisma.job.findUnique({
     where: { id: jobId },
@@ -58,7 +59,7 @@ export async function updateJobTrackingStatus(
     },
   });
 
-  await appendJobTrackingHistory(jobId, status, notes);
+  await appendJobTrackingHistory(jobId, status, notes, attachment);
 
   if (isDelivered) {
     void notifyClientJobCompleted({

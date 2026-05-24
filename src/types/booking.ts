@@ -33,6 +33,7 @@ export interface BookingSubmissionPayload {
   userId?: string;
   formData: Record<string, unknown>;
   documentIds?: string[];
+  postToMarketplace?: boolean;
   acceptQuoteId?: string; // when paying for a quoted case
   paymentIntentId?: string; // when fixed-price pay-now
 }

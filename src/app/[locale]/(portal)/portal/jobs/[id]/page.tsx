@@ -6,7 +6,7 @@ import { requireAuth } from "@/lib/auth";
 import { getJobById, formatJobAmount } from "@/data-access/job";
 import { AutoApprovalCountdown } from "@/components/freelancer/AutoApprovalCountdown";
 import { JobTrackingTimeline } from "@/components/jobs/JobTrackingTimeline";
-import { JobTrackingUpdateForm } from "@/components/jobs/JobTrackingUpdateForm";
+import { TrackingUpdater } from "@/components/TrackingUpdater";
 import { ChatBox } from "@/components/jobs/ChatBox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -113,7 +113,7 @@ export default async function JobTrackingPage({
           ) : null}
 
           {canUpdateTracking && (
-            <JobTrackingUpdateForm
+            <TrackingUpdater
               jobId={job.id}
               steps={trackingSteps}
               currentStatus={job.trackingStatus}

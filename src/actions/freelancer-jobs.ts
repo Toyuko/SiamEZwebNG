@@ -37,7 +37,8 @@ export async function markJobComplete(jobId: string) {
 export async function updateJobTrackingProgress(
   jobId: string,
   status: TrackingStatus,
-  notes?: string | null
+  notes?: string | null,
+  attachment?: { url: string; name: string } | null
 ) {
   const session = await requireFreelancer();
   const result = await updateJobTrackingStatus(
@@ -45,12 +46,14 @@ export async function updateJobTrackingProgress(
     jobId,
     status,
     notes,
-    session.user.name
+    session.user.name,
+    attachment
   );
   if ("error" in result) {
     return result;
   }
   revalidatePath("/portal/freelancer");
   revalidatePath(`/portal/jobs/${jobId}`);
+  revalidatePath(`/portal/client/jobs/${jobId}`);
   return result;
 }

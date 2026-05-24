@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Stepper } from "@/components/ui/stepper";
 import { submitBooking } from "@/actions/booking";
+import { MarketplacePostToggle } from "@/components/booking/MarketplacePostToggle";
 import { clientDetailsSchema } from "@/lib/booking-schema";
 import { cn } from "@/lib/utils";
 import { FileText, Store, Upload, X } from "lucide-react";
@@ -71,6 +72,7 @@ export function CarMotorbikeFinderBookingWizard({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [postToMarketplace, setPostToMarketplace] = useState(false);
 
   useEffect(() => {
     if (userEmail || userName) {
@@ -219,6 +221,7 @@ export function CarMotorbikeFinderBookingWizard({
       guestPhone: phone.trim(),
       formData: payload,
       documentIds: undefined,
+      postToMarketplace,
     });
 
     setLoading(false);
@@ -617,6 +620,12 @@ export function CarMotorbikeFinderBookingWizard({
             <p className="rounded-lg bg-siam-blue/10 p-4 text-sm text-gray-700 dark:text-gray-300">
               {t("reviewQuoteNotice", { email })}
             </p>
+
+            <MarketplacePostToggle
+              checked={postToMarketplace}
+              onCheckedChange={setPostToMarketplace}
+              disabled={loading}
+            />
           </div>
         ) : null}
 

@@ -3,6 +3,10 @@ import { prisma } from "@/lib/db";
 import { nextCaseNumber } from "@/lib/utils";
 import { createCase as createCaseRecord } from "@/data-access/case";
 import { createInvoice } from "@/data-access/invoice";
+import {
+  createMarketplaceJobForCase,
+  notifyFreelancers,
+} from "@/lib/domain/marketplace-jobs";
 import type { CaseStatus } from "@prisma/client";
 
 export interface CreateBookingCaseInput {
@@ -14,6 +18,7 @@ export interface CreateBookingCaseInput {
   guestPhone?: string;
   formData?: Record<string, unknown>;
   documentIds?: string[];
+  postToMarketplace?: boolean;
 }
 
 export async function getUserCases(userId: string) {
@@ -78,6 +83,7 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
     guestName: input.guestName?.trim() || null,
     guestPhone: input.guestPhone?.trim() || null,
     formData: (input.formData ?? {}) as object,
+    postToMarketplace: input.postToMarketplace ?? false,
   });
 
   if (input.documentIds?.length) {
@@ -95,6 +101,23 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
       currency: service.priceCurrency ?? "THB",
       status: "unpaid",
     });
+  }
+
+  if (input.postToMarketplace) {
+    try {
+      const { jobId } = await createMarketplaceJobForCase({
+        caseId: c.id,
+        serviceId: input.serviceId,
+        formData: input.formData,
+      });
+      await notifyFreelancers(jobId);
+    } catch (marketplaceError) {
+      console.error(
+        "Marketplace job creation failed for case",
+        c.id,
+        marketplaceError,
+      );
+    }
   }
 
   return {

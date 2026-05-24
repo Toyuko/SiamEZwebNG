@@ -115,6 +115,7 @@ export async function createCase(data: {
   guestName?: string | null;
   guestPhone?: string | null;
   formData?: object;
+  postToMarketplace?: boolean;
 }) {
   return prisma.case.create({
     data: {

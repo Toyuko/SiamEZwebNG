@@ -16,7 +16,8 @@ const jobTrackingInclude = {
 export async function appendJobTrackingHistory(
   jobId: string,
   status: TrackingStatus,
-  note?: string | null
+  note?: string | null,
+  attachment?: { url: string; name: string } | null
 ) {
   await prisma.jobTrackingHistory.create({
     data: {
@@ -24,6 +25,8 @@ export async function appendJobTrackingHistory(
       status,
       note:
         typeof note === "string" && note.trim().length > 0 ? note.trim() : null,
+      attachmentUrl: attachment?.url ?? null,
+      attachmentName: attachment?.name ?? null,
     },
   });
 }
@@ -45,6 +48,8 @@ export async function getClientJobTracking(jobId: string, clientId: string) {
     id: entry.id,
     status: entry.status,
     note: entry.note,
+    attachmentUrl: entry.attachmentUrl,
+    attachmentName: entry.attachmentName,
     createdAt: entry.createdAt.toISOString(),
   }));
 
@@ -58,6 +63,8 @@ export async function getClientJobTracking(jobId: string, clientId: string) {
         id: "legacy-current",
         status: job.trackingStatus,
         note: job.trackingNotes,
+        attachmentUrl: null,
+        attachmentName: null,
         createdAt: job.updatedAt.toISOString(),
       },
     ];

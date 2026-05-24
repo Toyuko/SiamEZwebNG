@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
       guestPhone: typeof body?.guestPhone === "string" ? body.guestPhone : undefined,
       formData: body?.formData ?? {},
       documentIds: Array.isArray(body?.documentIds) ? body.documentIds : undefined,
+      postToMarketplace: Boolean(body?.postToMarketplace),
     });
 
     return ok(result, 201);

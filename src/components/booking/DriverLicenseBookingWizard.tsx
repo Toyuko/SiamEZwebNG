@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Stepper } from "@/components/ui/stepper";
 import { submitBooking } from "@/actions/booking";
+import { MarketplacePostToggle } from "@/components/booking/MarketplacePostToggle";
 import { clientDetailsSchema } from "@/lib/booking-schema";
 import {
   computeAddonsTotalThb,
@@ -76,6 +77,7 @@ export function DriverLicenseBookingWizard({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [postToMarketplace, setPostToMarketplace] = useState(false);
 
   const minYmd = getMinimumAppointmentDateString();
 
@@ -227,6 +229,7 @@ export function DriverLicenseBookingWizard({
       guestPhone: phone.trim(),
       formData: payload,
       documentIds: undefined,
+      postToMarketplace,
     });
 
     setLoading(false);
@@ -558,6 +561,12 @@ export function DriverLicenseBookingWizard({
                 </div>
               </div>
             )}
+
+            <MarketplacePostToggle
+              checked={postToMarketplace}
+              onCheckedChange={setPostToMarketplace}
+              disabled={loading}
+            />
 
             <p className="text-xs text-gray-600 dark:text-gray-400">{t("confirmNote", { email: site.email })}</p>
           </div>

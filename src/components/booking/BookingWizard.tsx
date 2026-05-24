@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Stepper } from "@/components/ui/stepper";
 import { submitBooking } from "@/actions/booking";
+import { MarketplacePostToggle } from "@/components/booking/MarketplacePostToggle";
 import { clientDetailsSchema } from "@/lib/booking-schema";
 import type { ServiceSlug } from "@/config/services";
 import { formatCurrency } from "@/lib/utils";
@@ -52,6 +53,7 @@ export function BookingWizard({ service, serviceSlug, userId, userEmail, userNam
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [postToMarketplace, setPostToMarketplace] = useState(false);
 
   const currentStepId = STEPS[stepIndex].id;
   const isLastStep = stepIndex === STEPS.length - 1;
@@ -143,6 +145,7 @@ export function BookingWizard({ service, serviceSlug, userId, userEmail, userNam
       guestPhone: (formData.phone as string) || undefined,
       formData: payload,
       documentIds: undefined,
+      postToMarketplace,
     });
     setLoading(false);
 
@@ -203,13 +206,21 @@ export function BookingWizard({ service, serviceSlug, userId, userEmail, userNam
           />
         )}
         {currentStepId === "review" && (
-          <ReviewStep
-            service={service}
-            formData={formData}
-            documents={documents}
-            isEventVenue={isEventVenueBooking}
-            tEventVenue={tEventVenue}
-          />
+          <>
+            <ReviewStep
+              service={service}
+              formData={formData}
+              documents={documents}
+              isEventVenue={isEventVenueBooking}
+              tEventVenue={tEventVenue}
+            />
+            <MarketplacePostToggle
+              checked={postToMarketplace}
+              onCheckedChange={setPostToMarketplace}
+              disabled={loading}
+              className="mt-6"
+            />
+          </>
         )}
 
         {error && (
