@@ -29,5 +29,5 @@ export default async function ClientJobTrackingPage({
     redirect(`/${currentLocale}/portal`);
   }
 
-  return <ClientJobTrackingView jobId={id} />;
+  return <ClientJobTrackingView jobId={id} currentUserId={session.user.id} />;
 }

@@ -1138,6 +1138,7 @@
     "trackingSaving": "Saving…",
     "trackingUpdateSaved": "Progress updated.",
     "trackingUpdateFailed": "Could not update progress.",
+    "freelancerPending": "Being assigned",
     "status": {
       "open": "Open",
       "in_progress": "In progress",
@@ -1145,6 +1146,22 @@
       "completed": "Awaiting approval",
       "approved": "Approved"
     }
+  },
+  "jobChat": {
+    "title": "Messages",
+    "with": "Chat with {name}",
+    "loading": "Loading messages…",
+    "loadError": "Could not load messages. Please try again.",
+    "forbidden": "You do not have access to this conversation.",
+    "retry": "Try again",
+    "empty": "No messages yet. Say hello to get started.",
+    "placeholder": "Type a message…",
+    "send": "Send message",
+    "attachFile": "Attach file",
+    "sendFailed": "Could not send your message. Please try again.",
+    "uploadFailed": "Could not upload the file. Please try again.",
+    "viewAttachment": "View attachment",
+    "unavailable": "Messaging opens once a coordinator is assigned to your job."
   },
   "paymentInformation": {
     "title": "Bank transfer & PromptPay",

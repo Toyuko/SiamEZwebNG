@@ -9,6 +9,7 @@ import {
   type ClientTrackingHistoryEntry,
 } from "@/components/client/ClientTrackingTimeline";
 import { ClientTrackingApprovalBanner } from "@/components/client/ClientTrackingApprovalBanner";
+import { ChatBox } from "@/components/jobs/ChatBox";
 import type { TrackingStep } from "@/config/job-tracking-steps";
 import type { JobStatus, TrackingStatus } from "@prisma/client";
 import { isAwaitingReviewStatus } from "@/lib/jobs/auto-approve";
@@ -32,7 +33,13 @@ type TrackingPayload = {
 
 type LoadState = "loading" | "error" | "ready" | "forbidden";
 
-export function ClientJobTrackingView({ jobId }: { jobId: string }) {
+export function ClientJobTrackingView({
+  jobId,
+  currentUserId,
+}: {
+  jobId: string;
+  currentUserId: string;
+}) {
   const t = useTranslations("clientTracking");
   const locale = useLocale();
   const [state, setState] = useState<LoadState>("loading");
@@ -191,6 +198,13 @@ export function ClientJobTrackingView({ jobId }: { jobId: string }) {
               </p>
             )}
           </section>
+
+          <ChatBox
+            jobId={data.job.id}
+            currentUserId={currentUserId}
+            otherPartyName={data.job.freelancer?.displayName ?? t("freelancerPending")}
+            disabled={!data.job.freelancer}
+          />
 
           {data.job.status === "approved" && (
             <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">

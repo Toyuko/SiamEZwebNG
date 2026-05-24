@@ -7,6 +7,7 @@ import { getJobById, formatJobAmount } from "@/data-access/job";
 import { AutoApprovalCountdown } from "@/components/freelancer/AutoApprovalCountdown";
 import { JobTrackingTimeline } from "@/components/jobs/JobTrackingTimeline";
 import { JobTrackingUpdateForm } from "@/components/jobs/JobTrackingUpdateForm";
+import { ChatBox } from "@/components/jobs/ChatBox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   getTrackingStepsForServiceSlug,
@@ -146,6 +147,19 @@ export default async function JobTrackingPage({
             <p className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
               {t("jobApproved")}
             </p>
+          )}
+
+          {(isClient || isFreelancer) && (
+            <ChatBox
+              jobId={job.id}
+              currentUserId={session.user.id}
+              otherPartyName={
+                isFreelancer
+                  ? (job.postedBy.name ?? job.postedBy.email)
+                  : (job.freelancer?.name ?? job.freelancer?.email ?? t("freelancerPending"))
+              }
+              disabled={!job.freelancerId}
+            />
           )}
         </CardContent>
       </Card>
