@@ -11,6 +11,10 @@ import {
   jobPresenceChannel,
 } from "@/lib/pusher-client";
 import type { SerializedMessage } from "@/data-access/job-chat";
+import {
+  playChatNotificationSound,
+  unlockChatNotificationSound,
+} from "@/lib/chat-notification-sound";
 import { cn } from "@/lib/utils";
 
 type ChatBoxProps = {
@@ -103,10 +107,20 @@ export function ChatBox({
     const presenceChannel = pusher.subscribe(jobPresenceChannel(jobId));
 
     privateChannel.bind("new-message", (message: SerializedMessage) => {
+      let shouldNotify = false;
+
       setMessages((prev) => {
         if (prev.some((m) => m.id === message.id)) return prev;
+        if (message.senderId !== currentUserId) {
+          shouldNotify = true;
+        }
         return [...prev, message];
       });
+
+      if (shouldNotify) {
+        playChatNotificationSound();
+      }
+
       requestAnimationFrame(scrollToBottom);
     });
 
@@ -116,7 +130,7 @@ export function ChatBox({
       pusher.unsubscribe(jobChatChannel(jobId));
       pusher.unsubscribe(jobPresenceChannel(jobId));
     };
-  }, [disabled, jobId, scrollToBottom, state]);
+  }, [currentUserId, disabled, jobId, scrollToBottom, state]);
 
   useEffect(() => {
     if (state === "ready") {
@@ -215,7 +229,10 @@ export function ChatBox({
   }
 
   return (
-    <section className="flex flex-col rounded-2xl bg-white/95 shadow-sm ring-1 ring-sky-100 dark:bg-slate-900/90 dark:ring-sky-900">
+    <section
+      className="flex flex-col rounded-2xl bg-white/95 shadow-sm ring-1 ring-sky-100 dark:bg-slate-900/90 dark:ring-sky-900"
+      onPointerDown={unlockChatNotificationSound}
+    >
       <header className="border-b border-sky-100 px-4 py-3 dark:border-slate-700">
         <h3 className="text-sm font-semibold text-sky-900 dark:text-sky-100">{t("title")}</h3>
         <p className="text-xs text-slate-500">{t("with", { name: otherPartyName })}</p>
@@ -331,6 +348,7 @@ export function ChatBox({
         <Input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
+          onFocus={unlockChatNotificationSound}
           placeholder={t("placeholder")}
           disabled={sending || uploading || state !== "ready"}
           className="flex-1"

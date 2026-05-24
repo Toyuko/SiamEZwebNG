@@ -9,6 +9,7 @@ import {
   type ClientTrackingHistoryEntry,
 } from "@/components/client/ClientTrackingTimeline";
 import { ClientTrackingApprovalBanner } from "@/components/client/ClientTrackingApprovalBanner";
+import { ClientDocumentUpload } from "@/components/client/ClientDocumentUpload";
 import { ChatBox } from "@/components/jobs/ChatBox";
 import type { TrackingStep } from "@/config/job-tracking-steps";
 import type { JobStatus, TrackingStatus } from "@prisma/client";
@@ -178,6 +179,14 @@ export function ClientJobTrackingView({
               </div>
             </dl>
           </header>
+
+          {data.isTrackable && data.job.status === "in_progress" && (
+            <ClientDocumentUpload
+              jobId={data.job.id}
+              trackingHistory={data.trackingHistory}
+              onUploaded={() => void loadTracking()}
+            />
+          )}
 
           <section className="rounded-2xl bg-white/95 p-6 shadow-sm ring-1 ring-sky-100 dark:bg-slate-900/90 dark:ring-sky-900">
             <h2 className="mb-4 text-sm font-semibold text-sky-900 dark:text-sky-100">

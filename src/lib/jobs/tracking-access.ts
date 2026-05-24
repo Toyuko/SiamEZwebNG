@@ -45,6 +45,21 @@ export async function assertJobTrackingViewer(
   return job;
 }
 
+/** Client (job owner) may upload documents while the job is active. */
+export async function assertClientCanUploadJobDocuments(
+  userId: string,
+  jobId: string
+): Promise<JobTrackingAccess> {
+  const job = await getJobTrackingAccess(jobId);
+  if (!job || job.postedById !== userId) {
+    throw new Error("Forbidden");
+  }
+  if (job.status !== "in_progress") {
+    throw new Error("Forbidden");
+  }
+  return job;
+}
+
 /** Only the assigned freelancer may upload tracking attachments or update progress. */
 export async function assertFreelancerCanUpdateJobTracking(
   userId: string,
