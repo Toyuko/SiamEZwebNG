@@ -5,6 +5,7 @@ import { PortalFooter } from "@/components/portal/PortalFooter";
 import { getTranslations } from "next-intl/server";
 import { requireAuth } from "@/lib/auth";
 import { getCasesByUserId } from "@/data-access/case";
+import { getJobsByClientId } from "@/data-access/job";
 import { getInvoicesByUserId } from "@/data-access/invoice";
 import { getDocumentsByUserId } from "@/data-access/document";
 import { getRecentActivityForUser } from "@/data-access/activity";
@@ -19,16 +20,16 @@ export default async function PortalDashboardPage({
   const session = await requireAuth();
   const t = await getTranslations("portal");
 
-  const [cases, invoices, documents] = await Promise.all([
+  const [cases, invoices, documents, serviceJobs] = await Promise.all([
     getCasesByUserId(session.user.id),
     getInvoicesByUserId(session.user.id),
     getDocumentsByUserId(session.user.id),
+    getJobsByClientId(session.user.id),
   ]);
 
-  const activeCasesCount = cases.filter(
-    (c) =>
-      !["cancelled", "completed"].includes(c.status)
-  ).length;
+  const activeCasesCount =
+    cases.filter((c) => !["cancelled", "completed"].includes(c.status)).length +
+    serviceJobs.filter((j) => !["completed", "approved"].includes(j.status)).length;
   const pendingInvoicesCount = invoices.filter((i) =>
     ["unpaid", "pending_verification", "draft"].includes(i.status)
   ).length;

@@ -1,6 +1,7 @@
 import { getCasesByUserId } from "./case";
 import { getInvoicesByUserId } from "./invoice";
 import { getDocumentsByUserId } from "./document";
+import { getJobsByClientId } from "./job";
 import type { ActivityItem } from "@/components/portal/ActivityFeed";
 
 function formatRelativeTime(date: Date): string {
@@ -21,10 +22,11 @@ export async function getRecentActivityForUser(
   userId: string,
   maxItems = 10
 ): Promise<ActivityItem[]> {
-  const [cases, invoices, documents] = await Promise.all([
+  const [cases, invoices, documents, serviceJobs] = await Promise.all([
     getCasesByUserId(userId),
     getInvoicesByUserId(userId),
     getDocumentsByUserId(userId),
+    getJobsByClientId(userId),
   ]);
 
   const items: ActivityItem[] = [];
@@ -62,11 +64,23 @@ export async function getRecentActivityForUser(
     });
   });
 
+  serviceJobs.slice(0, 5).forEach((job) => {
+    items.push({
+      id: `job-${job.id}`,
+      type: "job",
+      title: job.title,
+      timestamp: formatRelativeTime(job.updatedAt),
+      action: getJobAction(job.status),
+      status: getJobActivityStatus(job.status),
+    });
+  });
+
   // Sort by date desc
   const dateMap = new Map<string, Date>();
   cases.forEach((c) => dateMap.set(`case-${c.id}`, c.updatedAt));
   invoices.forEach((i) => dateMap.set(`invoice-${i.id}`, i.createdAt));
   documents.forEach((d) => dateMap.set(`doc-${d.id}`, d.createdAt));
+  serviceJobs.forEach((j) => dateMap.set(`job-${j.id}`, j.updatedAt));
 
   items.sort((a, b) => {
     const da = dateMap.get(a.id)?.getTime() ?? 0;
@@ -88,6 +102,36 @@ function getCaseAction(status: string): string {
       return "Completed";
     default:
       return "In Progress";
+  }
+}
+
+function getJobAction(status: string): string {
+  switch (status) {
+    case "open":
+      return "Awaiting freelancer";
+    case "completed_awaiting_review":
+      return "Review completion";
+    case "approved":
+    case "completed":
+      return "Completed";
+    default:
+      return "In progress";
+  }
+}
+
+function getJobActivityStatus(
+  status: string
+): "required" | "pending" | "completed" | "info" {
+  switch (status) {
+    case "completed_awaiting_review":
+      return "required";
+    case "open":
+      return "pending";
+    case "approved":
+    case "completed":
+      return "completed";
+    default:
+      return "info";
   }
 }
 

@@ -33,6 +33,16 @@ export async function getOpenJobsForFeed(freelancerId: string) {
   });
 }
 
+/** Jobs posted by a client (admin-created marketplace jobs). */
+export async function getJobsByClientId(clientId: string) {
+  await runJobMaintenance();
+  return prisma.job.findMany({
+    where: { postedById: clientId, assignmentSource: "freelancer" },
+    include: jobInclude,
+    orderBy: { updatedAt: "desc" },
+  });
+}
+
 export async function getJobsByFreelancerId(freelancerId: string) {
   await runJobMaintenance();
   return prisma.job.findMany({

@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 
 export interface ActivityItem {
   id: string;
-  type: "case" | "invoice" | "document" | "system";
+  type: "case" | "invoice" | "document" | "job" | "system";
   title: string;
   timestamp: string;
   action?: string;
