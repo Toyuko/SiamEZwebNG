@@ -1,8 +1,12 @@
 import { prisma } from "@/lib/db";
 import { notifyClientJobCompleted } from "@/lib/jobs/notify-client";
+import { initializeJobTracking } from "@/lib/jobs/tracking";
 
 export async function acceptJobForFreelancer(freelancerId: string, jobId: string) {
-  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    include: { service: { select: { slug: true } } },
+  });
   if (!job || job.status !== "open" || job.assignmentSource !== "freelancer") {
     return { error: "Job is no longer available." as const };
   }
@@ -24,6 +28,8 @@ export async function acceptJobForFreelancer(freelancerId: string, jobId: string
       status: "in_progress",
     },
   });
+
+  await initializeJobTracking(jobId, job.service?.slug ?? null);
 
   return { ok: true as const };
 }

@@ -1068,6 +1068,36 @@
       "genericError": "เกิดข้อผิดพลาด โปรดลองอีกครั้ง"
     }
   },
+  "clientTracking": {
+    "pageTitle": "ติดตามบริการของคุณ",
+    "backToPortal": "กลับพอร์ทัล",
+    "loading": "กำลังโหลดข้อมูลการติดตาม…",
+    "loadError": "ไม่สามารถโหลดข้อมูลการติดตามได้ กรุณาลองอีกครั้ง",
+    "forbidden": "คุณไม่มีสิทธิ์ดูงานนี้",
+    "retry": "ลองอีกครั้ง",
+    "serviceName": "บริการ",
+    "assignedFreelancer": "ผู้ประสานงาน",
+    "freelancerPending": "กำลังมอบหมาย",
+    "currentStatus": "สถานะปัจจุบัน",
+    "timelineTitle": "ไทม์ไลน์ความคืบหน้า",
+    "noHistoryYet": "ผู้ประสานงานยังไม่ได้อัปเดตขั้นตอน กรุณาตรวจสอบอีกครั้ง — เราจะแสดงแต่ละขั้นตอนที่นี่เมื่อมีความคืบหน้า",
+    "notTrackable": "การติดตามแบบทีละขั้นตอนไม่พร้อมใช้งานสำหรับบริการนี้",
+    "jobApproved": "คุณยืนยันงานแล้ว ระบบได้ปล่อยเงินให้ผู้ประสานงาน",
+    "approvalBannerTitle": "บริการของคุณเสร็จสมบูรณ์แล้ว!",
+    "approvalBannerBody": "กรุณาตรวจสอบและยืนยัน หากไม่ดำเนินการ งานจะอนุมัติอัตโนมัติภายใน {minutes} นาที",
+    "approvalBannerImminent": "กรุณาตรวจสอบและยืนยัน ระบบกำลังดำเนินการอนุมัติอัตโนมัติ",
+    "autoApprovalCountdown": "อนุมัติอัตโนมัติในอีกประมาณ {minutes} นาที",
+    "confirmReleaseFunds": "ยืนยันและปล่อยเงิน",
+    "confirming": "กำลังยืนยัน…",
+    "approveFailed": "ไม่สามารถยืนยันงานได้ กรุณาลองอีกครั้ง",
+    "jobStatus": {
+      "open": "เปิดรับ",
+      "in_progress": "กำลังดำเนินการ",
+      "completed_awaiting_review": "รอการตรวจสอบของคุณ",
+      "completed": "รอการตรวจสอบของคุณ",
+      "approved": "อนุมัติแล้ว"
+    }
+  },
   "freelancer": {
     "dashboardTitle": "พอร์ทัลฟรีแลนซ์",
     "dashboardSubtitle": "ค้นหางาน ติดตามงานที่กำลังทำ และจัดการรายได้บน SiamEZ",
@@ -1099,6 +1129,15 @@
     "backToPortal": "กลับ",
     "progress": "ความคืบหน้า",
     "jobApproved": "งานได้รับการอนุมัติและปล่อยเงินแล้ว",
+    "trackTraceTitle": "ติดตามสถานะ",
+    "updateProgress": "อัปเดตความคืบหน้า",
+    "updateProgressHint": "อัปเดตขั้นตอนปัจจุบันเพื่อให้ลูกค้าติดตามได้",
+    "trackingStatusLabel": "ขั้นตอนปัจจุบัน",
+    "trackingNotesLabel": "หมายเหตุถึงลูกค้า (ไม่บังคับ)",
+    "trackingNotesPlaceholder": "เช่น นัดกรมขนส่ง วันอังคาร 10:00 น.",
+    "trackingSaving": "กำลังบันทึก…",
+    "trackingUpdateSaved": "อัปเดตความคืบหน้าแล้ว",
+    "trackingUpdateFailed": "ไม่สามารถอัปเดตความคืบหน้าได้",
     "status": {
       "open": "เปิดรับ",
       "in_progress": "กำลังทำ",

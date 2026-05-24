@@ -1068,6 +1068,36 @@
       "genericError": "Something went wrong. Please try again."
     }
   },
+  "clientTracking": {
+    "pageTitle": "Track your service",
+    "backToPortal": "Back to portal",
+    "loading": "Loading your tracking details…",
+    "loadError": "We could not load tracking for this job. Please try again.",
+    "forbidden": "You do not have access to view this job.",
+    "retry": "Try again",
+    "serviceName": "Service",
+    "assignedFreelancer": "Assigned coordinator",
+    "freelancerPending": "Being assigned",
+    "currentStatus": "Current status",
+    "timelineTitle": "Progress timeline",
+    "noHistoryYet": "Your coordinator has not posted updates yet. Check back soon — we will show each step here as work moves forward.",
+    "notTrackable": "Step-by-step tracking is not available for this service type.",
+    "jobApproved": "You confirmed this job. Payment has been released to your coordinator.",
+    "approvalBannerTitle": "Your service is complete!",
+    "approvalBannerBody": "Please review and confirm. If no action is taken, this job will auto-approve in {minutes} minutes.",
+    "approvalBannerImminent": "Please review and confirm. Auto-approval is processing now.",
+    "autoApprovalCountdown": "Auto-approval in about {minutes} minutes",
+    "confirmReleaseFunds": "Confirm & Release Funds",
+    "confirming": "Confirming…",
+    "approveFailed": "Could not confirm this job. Please try again.",
+    "jobStatus": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "completed_awaiting_review": "Awaiting your review",
+      "completed": "Awaiting your review",
+      "approved": "Approved"
+    }
+  },
   "freelancer": {
     "dashboardTitle": "Freelancer Portal",
     "dashboardSubtitle": "Find jobs, track active work, and manage your earnings on SiamEZ.",
@@ -1099,6 +1129,15 @@
     "backToPortal": "Back",
     "progress": "Progress",
     "jobApproved": "This job has been approved and payment released.",
+    "trackTraceTitle": "Track & Trace",
+    "updateProgress": "Update Progress",
+    "updateProgressHint": "Update the current step so your client can follow along.",
+    "trackingStatusLabel": "Current step",
+    "trackingNotesLabel": "Notes for client (optional)",
+    "trackingNotesPlaceholder": "e.g. DLT appointment on Tuesday 10:00",
+    "trackingSaving": "Saving…",
+    "trackingUpdateSaved": "Progress updated.",
+    "trackingUpdateFailed": "Could not update progress.",
     "status": {
       "open": "Open",
       "in_progress": "In progress",

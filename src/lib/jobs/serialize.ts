@@ -1,4 +1,4 @@
-import type { JobStatus } from "@prisma/client";
+import type { JobStatus, TrackingStatus } from "@prisma/client";
 
 type JobWithRelations = {
   id: string;
@@ -7,11 +7,14 @@ type JobWithRelations = {
   amount: number;
   currency: string;
   status: JobStatus;
+  trackingStatus: TrackingStatus | null;
+  trackingNotes: string | null;
   completionSubmittedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   postedBy: { id: string; name: string | null; email: string };
   freelancer?: { id: string; name: string | null; email: string } | null;
+  service?: { id: string; slug: string; name: string } | null;
 };
 
 export function serializeFreelancerJob(job: JobWithRelations) {
@@ -22,7 +25,12 @@ export function serializeFreelancerJob(job: JobWithRelations) {
     amount: job.amount,
     currency: job.currency,
     status: job.status,
+    trackingStatus: job.trackingStatus,
+    trackingNotes: job.trackingNotes,
     completionSubmittedAt: job.completionSubmittedAt?.toISOString() ?? null,
+    service: job.service
+      ? { id: job.service.id, slug: job.service.slug, name: job.service.name }
+      : null,
     createdAt: job.createdAt.toISOString(),
     updatedAt: job.updatedAt.toISOString(),
     postedBy: {

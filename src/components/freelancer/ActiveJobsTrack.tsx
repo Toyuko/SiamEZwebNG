@@ -7,8 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatJobAmount } from "@/data-access/job";
 import { isAwaitingReviewStatus, jobProgressPercent } from "@/lib/jobs/auto-approve";
-import type { JobStatus } from "@prisma/client";
-import { MapPin, CheckCircle2 } from "lucide-react";
+import {
+  getTrackingStepsForServiceSlug,
+  isTrackableServiceSlug,
+  trackingProgressPercent,
+} from "@/config/job-tracking-steps";
+import { Link } from "@/i18n/navigation";
+import type { JobStatus, TrackingStatus } from "@prisma/client";
+import { MapPin, CheckCircle2, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type ActiveJobItem = {
@@ -17,6 +23,8 @@ export type ActiveJobItem = {
   status: JobStatus;
   amount: number;
   currency: string;
+  trackingStatus?: TrackingStatus | null;
+  service?: { slug: string; name: string } | null;
   postedBy: { name: string | null };
 };
 
@@ -44,8 +52,14 @@ export function ActiveJobsTrack({ jobs }: { jobs: ActiveJobItem[] }) {
           <p className="text-sm text-gray-500 dark:text-gray-400">{t("noActiveJobs")}</p>
         ) : (
           jobs.map((job) => {
-            const progress = jobProgressPercent(job.status);
-            const canMarkDone = job.status === "in_progress";
+            const serviceSlug = job.service?.slug ?? null;
+            const trackingSteps = getTrackingStepsForServiceSlug(serviceSlug);
+            const isTrackable = isTrackableServiceSlug(serviceSlug);
+            const progress =
+              isTrackable && trackingSteps && job.trackingStatus
+                ? trackingProgressPercent(trackingSteps, job.trackingStatus)
+                : jobProgressPercent(job.status);
+            const canMarkDone = job.status === "in_progress" && !isTrackable;
 
             return (
               <article
@@ -78,6 +92,15 @@ export function ActiveJobsTrack({ jobs }: { jobs: ActiveJobItem[] }) {
                     />
                   </div>
                 </div>
+                {isTrackable && job.status === "in_progress" && (
+                  <Link
+                    href={`/portal/jobs/${job.id}`}
+                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-800 sm:w-auto"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                    {t("updateProgress")}
+                  </Link>
+                )}
                 {canMarkDone && (
                   <Button
                     type="button"
