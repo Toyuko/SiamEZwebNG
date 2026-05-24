@@ -179,7 +179,12 @@ export function TrackingMapInner({
   }, [initialLivePosition]);
 
   const handleLocationUpdate = useCallback(
-    (payload: { latitude: number; longitude: number }) => {
+    (payload: {
+      latitude: number;
+      longitude: number;
+      timestamp?: string;
+      jobId?: string;
+    }) => {
       setAnimateLive(true);
       setLivePosition({
         latitude: payload.latitude,

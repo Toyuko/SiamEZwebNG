@@ -9,6 +9,7 @@ type JobWithRelations = {
   status: JobStatus;
   trackingStatus: TrackingStatus | null;
   trackingNotes: string | null;
+  isCurrentlyInTransit: boolean;
   completionSubmittedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -27,6 +28,7 @@ export function serializeFreelancerJob(job: JobWithRelations) {
     status: job.status,
     trackingStatus: job.trackingStatus,
     trackingNotes: job.trackingNotes,
+    isCurrentlyInTransit: job.isCurrentlyInTransit,
     completionSubmittedAt: job.completionSubmittedAt?.toISOString() ?? null,
     service: job.service
       ? { id: job.service.id, slug: job.service.slug, name: job.service.name }
