@@ -38,12 +38,66 @@ function formatTimestamp(iso: string, locale: string): string {
   });
 }
 
+function normalizeHistoryEntry(
+  raw: Partial<ClientTrackingHistoryEntry> & Record<string, unknown>
+): ClientTrackingHistoryEntry {
+  const attachmentUrl =
+    (raw.attachmentUrl as string | null | undefined) ??
+    (raw.attachment_url as string | null | undefined) ??
+    null;
+  const attachmentName =
+    (raw.attachmentName as string | null | undefined) ??
+    (raw.attachment_name as string | null | undefined) ??
+    null;
+
+  return {
+    id: String(raw.id),
+    status: raw.status as TrackingStatus,
+    note: (raw.note as string | null | undefined) ?? null,
+    attachmentUrl,
+    attachmentName,
+    createdAt:
+      typeof raw.createdAt === "string"
+        ? raw.createdAt
+        : new Date(raw.createdAt as string | number | Date).toISOString(),
+  };
+}
+
+/** Merge all history rows for a status — latest note/time, keep any attachment on that step. */
+function getHistoryEntryForStatus(
+  history: ClientTrackingHistoryEntry[],
+  status: TrackingStatus
+): ClientTrackingHistoryEntry | undefined {
+  const forStatus = history.filter((e) => e.status === status);
+  if (forStatus.length === 0) return undefined;
+
+  const latest = forStatus.reduce((a, b) =>
+    new Date(a.createdAt) >= new Date(b.createdAt) ? a : b
+  );
+  const withAttachment = forStatus
+    .filter((e) => e.attachmentUrl)
+    .reduce<ClientTrackingHistoryEntry | undefined>((best, e) => {
+      if (!best) return e;
+      return new Date(e.createdAt) >= new Date(best.createdAt) ? e : best;
+    }, undefined);
+
+  return {
+    ...latest,
+    attachmentUrl: withAttachment?.attachmentUrl ?? latest.attachmentUrl ?? null,
+    attachmentName:
+      withAttachment?.attachmentName ?? latest.attachmentName ?? null,
+  };
+}
+
 function historyByStatus(
   history: ClientTrackingHistoryEntry[]
 ): Map<TrackingStatus, ClientTrackingHistoryEntry> {
   const map = new Map<TrackingStatus, ClientTrackingHistoryEntry>();
-  for (const entry of history) {
-    map.set(entry.status, entry);
+  for (const status of new Set(history.map((e) => e.status))) {
+    const merged = getHistoryEntryForStatus(history, status);
+    if (merged) {
+      map.set(status, merged);
+    }
   }
   return map;
 }
@@ -52,15 +106,21 @@ function mergeTrackingHistory(
   prev: ClientTrackingHistoryEntry[],
   entry: ClientTrackingHistoryEntry
 ): ClientTrackingHistoryEntry[] {
-  const existing = prev.find((e) => e.id === entry.id);
+  const existing =
+    prev.find((e) => e.id === entry.id) ??
+    prev.find((e) => e.status === entry.status && e.id.startsWith("legacy"));
+
+  const merged: ClientTrackingHistoryEntry = {
+    ...entry,
+    attachmentUrl: entry.attachmentUrl ?? existing?.attachmentUrl ?? null,
+    attachmentName:
+      entry.attachmentName ?? existing?.attachmentName ?? null,
+  };
+
   if (existing) {
-    return prev.map((e) => (e.id === entry.id ? entry : e));
+    return prev.map((e) => (e.id === existing.id ? merged : e));
   }
-  const byStatus = prev.find((e) => e.status === entry.status && e.id.startsWith("legacy"));
-  if (byStatus) {
-    return prev.map((e) => (e.id === byStatus.id ? entry : e));
-  }
-  return [...prev, entry];
+  return [...prev, merged];
 }
 
 export function ClientTrackingTimeline({
@@ -96,7 +156,13 @@ export function ClientTrackingTimeline({
         };
       };
       if (!res.ok || !json.success || !json.data) return;
-      setTrackingHistory(json.data.trackingHistory);
+      setTrackingHistory(
+        json.data.trackingHistory.map((row) =>
+          normalizeHistoryEntry(
+            row as Partial<ClientTrackingHistoryEntry> & Record<string, unknown>
+          )
+        )
+      );
       setCurrentStatus(json.data.job.trackingStatus);
     } catch {
       /* keep SSR / parent seed data */
@@ -117,14 +183,10 @@ export function ClientTrackingTimeline({
       const payload = raw as TrackingUpdatedPayload;
       if (!payload?.trackingHistory) return;
 
-      const entry: ClientTrackingHistoryEntry = {
-        id: payload.trackingHistory.id,
-        status: payload.trackingHistory.status,
-        note: payload.trackingHistory.note,
-        attachmentUrl: payload.trackingHistory.attachmentUrl,
-        attachmentName: payload.trackingHistory.attachmentName,
-        createdAt: payload.trackingHistory.createdAt,
-      };
+      const entry = normalizeHistoryEntry(
+        payload.trackingHistory as Partial<ClientTrackingHistoryEntry> &
+          Record<string, unknown>
+      );
 
       setTrackingHistory((prev) => mergeTrackingHistory(prev, entry));
       setCurrentStatus(payload.trackingStatus);
@@ -170,6 +232,10 @@ export function ClientTrackingTimeline({
 
   return (
     <>
+      {trackingHistory.map((step) => {
+        console.log("Timeline Step Data:", step);
+        return null;
+      })}
       <div className="hidden gap-3 md:flex">
         {steps.map((step, index) => {
           const state = stepState(index, step.key);
@@ -238,14 +304,14 @@ export function ClientTrackingTimeline({
                     {entry.note}
                   </p>
                 )}
-                {entry?.attachmentUrl && (
+                {entry?.attachmentUrl ? (
                   <div className="mt-1 flex justify-center">
                     <TrackingAttachmentDisplay
                       attachmentUrl={entry.attachmentUrl}
                       attachmentName={entry.attachmentName}
                     />
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
           );
@@ -319,12 +385,12 @@ export function ClientTrackingTimeline({
                     {entry.note}
                   </p>
                 )}
-                {entry?.attachmentUrl && (
+                {entry?.attachmentUrl ? (
                   <TrackingAttachmentDisplay
                     attachmentUrl={entry.attachmentUrl}
                     attachmentName={entry.attachmentName}
                   />
-                )}
+                ) : null}
               </div>
             </div>
           );

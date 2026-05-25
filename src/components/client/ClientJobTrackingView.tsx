@@ -86,31 +86,25 @@ export function ClientJobTrackingView({
       setData((prev) => {
         if (!prev) return prev;
         const entry = payload.trackingHistory;
-        const exists = prev.trackingHistory.some((h) => h.id === entry.id);
-        const trackingHistory = exists
+        const existing =
+          prev.trackingHistory.find((h) => h.id === entry.id) ??
+          prev.trackingHistory.find(
+            (h) => h.status === entry.status && h.id.startsWith("legacy")
+          );
+        const mergedEntry = {
+          id: entry.id,
+          status: entry.status,
+          note: entry.note,
+          attachmentUrl: entry.attachmentUrl ?? existing?.attachmentUrl ?? null,
+          attachmentName:
+            entry.attachmentName ?? existing?.attachmentName ?? null,
+          createdAt: entry.createdAt,
+        };
+        const trackingHistory = existing
           ? prev.trackingHistory.map((h) =>
-              h.id === entry.id
-                ? {
-                    id: entry.id,
-                    status: entry.status,
-                    note: entry.note,
-                    attachmentUrl: entry.attachmentUrl,
-                    attachmentName: entry.attachmentName,
-                    createdAt: entry.createdAt,
-                  }
-                : h
+              h.id === existing.id ? mergedEntry : h
             )
-          : [
-              ...prev.trackingHistory,
-              {
-                id: entry.id,
-                status: entry.status,
-                note: entry.note,
-                attachmentUrl: entry.attachmentUrl,
-                attachmentName: entry.attachmentName,
-                createdAt: entry.createdAt,
-              },
-            ];
+          : [...prev.trackingHistory, mergedEntry];
 
         return {
           ...prev,
