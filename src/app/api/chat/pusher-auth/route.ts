@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { getSession } from "@/lib/auth";
 import { fail } from "@/lib/api-response";
+import { resolveApiUserId } from "@/lib/auth/resolveApiUserId";
 import { getJobChatParticipant } from "@/data-access/job-chat";
 import { getPusherServer, privateSpecialJobsChannel } from "@/lib/pusher-server";
 import { assertJobLocationViewer } from "@/lib/jobs/tracking-access";
@@ -8,8 +8,8 @@ import { prisma } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session?.user?.id) {
+    const userId = await resolveApiUserId(request);
+    if (!userId) {
       return fail("Unauthorized", 401);
     }
 
@@ -26,13 +26,22 @@ export async function POST(request: NextRequest) {
       return fail("Missing socket_id or channel_name", 400);
     }
 
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true, name: true, email: true },
+    });
+
+    if (!user) {
+      return fail("Unauthorized", 401);
+    }
+
     if (channelName === privateSpecialJobsChannel()) {
-      if (session.user.role !== "freelancer") {
+      if (user.role !== "freelancer") {
         return fail("Forbidden", 403);
       }
 
       const profile = await prisma.freelancerProfile.findUnique({
-        where: { userId: session.user.id },
+        where: { userId: user.id },
         select: { isSpecialMember: true, verificationStatus: true },
       });
 
@@ -65,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     if (locationMatch) {
       try {
-        await assertJobLocationViewer(session.user.id, session.user.role, jobId);
+        await assertJobLocationViewer(user.id, user.role, jobId);
       } catch {
         return fail("Forbidden", 403);
       }
@@ -76,16 +85,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const participant = await getJobChatParticipant(jobId, session.user.id);
+    const participant = await getJobChatParticipant(jobId, user.id);
     if (!participant) {
       return fail("Forbidden", 403);
     }
 
-    const userName = session.user.name ?? session.user.email ?? "User";
+    const userName = user.name ?? user.email ?? "User";
 
     if (presenceMatch) {
       const authResponse = pusher.authorizeChannel(socketId, channelName, {
-        user_id: session.user.id,
+        user_id: user.id,
         user_info: { name: userName },
       });
       return new Response(JSON.stringify(authResponse), {

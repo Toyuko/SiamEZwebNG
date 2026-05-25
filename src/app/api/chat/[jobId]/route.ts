@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { auth } from "@/auth";
 import { ok, fail } from "@/lib/api-response";
+import { resolveApiUserId } from "@/lib/auth/resolveApiUserId";
 import { createJobMessage, getJobMessages } from "@/data-access/job-chat";
 import { notifyNewJobMessage } from "@/lib/jobs/notify-message";
 import {
@@ -17,17 +17,17 @@ const sendMessageSchema = z.object({
 });
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await resolveApiUserId(request);
+    if (!userId) {
       return fail("Unauthorized", 401);
     }
 
     const { jobId } = await params;
-    const payload = await getJobMessages(jobId, session.user.id);
+    const payload = await getJobMessages(jobId, userId);
 
     if (!payload) {
       return fail("Forbidden", 403);
@@ -45,8 +45,8 @@ export async function POST(
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await resolveApiUserId(request);
+    if (!userId) {
       return fail("Unauthorized", 401);
     }
 
@@ -60,7 +60,7 @@ export async function POST(
 
     const result = await createJobMessage({
       jobId,
-      senderId: session.user.id,
+      senderId: userId,
       content: parsed.data.content,
       attachmentUrl: parsed.data.attachmentUrl,
     });
@@ -86,7 +86,7 @@ export async function POST(
 
       if (recipient?.email) {
         const senderName =
-          session.user.id === participant.clientId
+          userId === participant.clientId
             ? participant.clientName
             : participant.freelancerName;
 

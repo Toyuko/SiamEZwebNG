@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { put } from "@vercel/blob";
-import { auth } from "@/auth";
 import { ok, fail } from "@/lib/api-response";
+import { resolveApiUserId } from "@/lib/auth/resolveApiUserId";
 import { getJobChatParticipant } from "@/data-access/job-chat";
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -17,8 +17,8 @@ const ALLOWED_TYPES = new Set([
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const userId = await resolveApiUserId(request);
+    if (!userId) {
       return fail("Unauthorized", 401);
     }
 
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       return fail("jobId is required", 400);
     }
 
-    const participant = await getJobChatParticipant(jobId, session.user.id);
+    const participant = await getJobChatParticipant(jobId, userId);
     if (!participant) {
       return fail("Forbidden", 403);
     }
