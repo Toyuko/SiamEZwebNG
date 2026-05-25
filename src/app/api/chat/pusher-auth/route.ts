@@ -49,11 +49,15 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const chatPrivateMatch = channelName.match(/^private-job-chat-(.+)$/);
+    const unifiedJobMatch = channelName.match(/^private-job-(?!chat-|location-)(.+)$/);
+    const chatLegacyMatch = channelName.match(/^private-job-chat-(.+)$/);
     const presenceMatch = channelName.match(/^presence-job-chat-(.+)$/);
     const locationMatch = channelName.match(/^private-job-location-(.+)$/);
     const jobId =
-      chatPrivateMatch?.[1] ?? presenceMatch?.[1] ?? locationMatch?.[1];
+      unifiedJobMatch?.[1] ??
+      chatLegacyMatch?.[1] ??
+      presenceMatch?.[1] ??
+      locationMatch?.[1];
 
     if (!jobId) {
       return fail("Invalid channel", 403);

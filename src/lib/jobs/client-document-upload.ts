@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/db";
 import { appendJobTrackingHistory } from "@/data-access/job-tracking";
+import {
+  broadcastTrackingUpdated,
+  serializeTrackingHistoryEntry,
+} from "@/lib/jobs/tracking-realtime";
 import { isTrackableServiceSlug } from "@/config/job-tracking-steps";
 import type { JobStatus, TrackingStatus } from "@prisma/client";
 import { assertClientCanUploadJobDocuments } from "@/lib/jobs/tracking-access";
@@ -38,12 +42,19 @@ export async function submitClientJobDocument(
   const trimmedNote =
     typeof note === "string" && note.trim().length > 0 ? note.trim() : null;
 
-  await appendJobTrackingHistory(
+  const historyEntry = await appendJobTrackingHistory(
     jobId,
     job.trackingStatus,
     trimmedNote,
     attachment
   );
+
+  void broadcastTrackingUpdated(jobId, {
+    trackingHistory: serializeTrackingHistoryEntry(historyEntry),
+    trackingStatus: job.trackingStatus,
+    jobStatus: job.status,
+    completionSubmittedAt: job.completionSubmittedAt?.toISOString() ?? null,
+  });
 
   return { ok: true as const };
 }

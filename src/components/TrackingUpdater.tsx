@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import type { TrackingStatus } from "@prisma/client";
 import { updateJobTrackingProgress } from "@/actions/freelancer-jobs";
 import type { TrackingStep } from "@/config/job-tracking-steps";
+import { useJobChannel } from "@/hooks/use-job-channel";
+import type { TrackingUpdatedPayload } from "@/lib/jobs/tracking-realtime";
 import {
   TRACKING_ATTACHMENT_MAX_BYTES,
   validateTrackingAttachment,
@@ -41,6 +43,26 @@ export function TrackingUpdater({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const busy = pending || uploading;
+
+  useEffect(() => {
+    setStatus(currentStatus ?? steps[0]?.key ?? "DOCUMENTS_PENDING");
+    setNotes(currentNotes ?? "");
+  }, [currentNotes, currentStatus, steps]);
+
+  const handleTrackingUpdated = useCallback((raw: unknown) => {
+    const payload = raw as TrackingUpdatedPayload;
+    if (!payload?.trackingHistory) return;
+    if (payload.trackingStatus) {
+      setStatus(payload.trackingStatus);
+    }
+    if (payload.trackingHistory.note != null) {
+      setNotes(payload.trackingHistory.note);
+    }
+  }, []);
+
+  useJobChannel(jobId, Boolean(jobId), {
+    onTrackingUpdated: handleTrackingUpdated,
+  });
 
   const pickFile = useCallback((next: File | null) => {
     if (!next) {

@@ -1,10 +1,13 @@
 "use client";
 
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import type { TrackingStatus } from "@prisma/client";
 import type { TrackingStep } from "@/config/job-tracking-steps";
 import { getTrackingStepIndex } from "@/config/job-tracking-steps";
 import { TrackingAttachmentDisplay } from "@/components/TrackingAttachmentDisplay";
+import { useJobChannel } from "@/hooks/use-job-channel";
+import type { TrackingUpdatedPayload } from "@/lib/jobs/tracking-realtime";
 import { cn } from "@/lib/utils";
 
 export type ClientTrackingHistoryEntry = {
@@ -17,11 +20,14 @@ export type ClientTrackingHistoryEntry = {
 };
 
 type ClientTrackingTimelineProps = {
+  jobId: string;
   steps: TrackingStep[];
   currentStatus: TrackingStatus | null;
   trackingHistory: ClientTrackingHistoryEntry[];
   locale?: string;
   emptyMessage: string;
+  trackingApiPath: string;
+  onTrackingUpdated?: (payload: TrackingUpdatedPayload) => void;
 };
 
 function formatTimestamp(iso: string, locale: string): string {
@@ -42,13 +48,110 @@ function historyByStatus(
   return map;
 }
 
+function mergeTrackingHistory(
+  prev: ClientTrackingHistoryEntry[],
+  entry: ClientTrackingHistoryEntry
+): ClientTrackingHistoryEntry[] {
+  const existing = prev.find((e) => e.id === entry.id);
+  if (existing) {
+    return prev.map((e) => (e.id === entry.id ? entry : e));
+  }
+  const byStatus = prev.find((e) => e.status === entry.status && e.id.startsWith("legacy"));
+  if (byStatus) {
+    return prev.map((e) => (e.id === byStatus.id ? entry : e));
+  }
+  return [...prev, entry];
+}
+
 export function ClientTrackingTimeline({
+  jobId,
   steps,
-  currentStatus,
-  trackingHistory,
+  currentStatus: initialCurrentStatus,
+  trackingHistory: initialHistory,
   locale = "en",
   emptyMessage,
+  trackingApiPath,
+  onTrackingUpdated,
 }: ClientTrackingTimelineProps) {
+  const [trackingHistory, setTrackingHistory] =
+    useState<ClientTrackingHistoryEntry[]>(initialHistory);
+  const [currentStatus, setCurrentStatus] = useState<TrackingStatus | null>(
+    initialCurrentStatus
+  );
+  const [animatedEntryIds, setAnimatedEntryIds] = useState<Set<string>>(
+    () => new Set()
+  );
+
+  const loadTracking = useCallback(async () => {
+    try {
+      const res = await fetch(trackingApiPath, {
+        credentials: "include",
+        cache: "no-store",
+      });
+      const json = (await res.json()) as {
+        success?: boolean;
+        data?: {
+          trackingHistory: ClientTrackingHistoryEntry[];
+          job: { trackingStatus: TrackingStatus | null };
+        };
+      };
+      if (!res.ok || !json.success || !json.data) return;
+      setTrackingHistory(json.data.trackingHistory);
+      setCurrentStatus(json.data.job.trackingStatus);
+    } catch {
+      /* keep SSR / parent seed data */
+    }
+  }, [trackingApiPath]);
+
+  useEffect(() => {
+    void loadTracking();
+  }, [loadTracking]);
+
+  useEffect(() => {
+    setTrackingHistory(initialHistory);
+    setCurrentStatus(initialCurrentStatus);
+  }, [initialCurrentStatus, initialHistory]);
+
+  const handleTrackingUpdated = useCallback(
+    (raw: unknown) => {
+      const payload = raw as TrackingUpdatedPayload;
+      if (!payload?.trackingHistory) return;
+
+      const entry: ClientTrackingHistoryEntry = {
+        id: payload.trackingHistory.id,
+        status: payload.trackingHistory.status,
+        note: payload.trackingHistory.note,
+        attachmentUrl: payload.trackingHistory.attachmentUrl,
+        attachmentName: payload.trackingHistory.attachmentName,
+        createdAt: payload.trackingHistory.createdAt,
+      };
+
+      setTrackingHistory((prev) => mergeTrackingHistory(prev, entry));
+      setCurrentStatus(payload.trackingStatus);
+      setAnimatedEntryIds((prev) => new Set(prev).add(entry.id));
+      onTrackingUpdated?.(payload);
+    },
+    [onTrackingUpdated]
+  );
+
+  useJobChannel(jobId, Boolean(jobId), {
+    onTrackingUpdated: handleTrackingUpdated,
+  });
+
+  const historyMap = useMemo(
+    () => historyByStatus(trackingHistory),
+    [trackingHistory]
+  );
+  const currentIndex = getTrackingStepIndex(steps, currentStatus);
+  const resolvedIndex = currentIndex < 0 ? 0 : currentIndex;
+
+  function stepState(index: number, stepKey: TrackingStatus): "completed" | "active" | "pending" {
+    if (stepKey === currentStatus) return "active";
+    if (index < resolvedIndex) return "completed";
+    if (historyMap.has(stepKey) && stepKey !== currentStatus) return "completed";
+    return "pending";
+  }
+
   if (steps.length === 0) {
     return (
       <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
@@ -65,17 +168,6 @@ export function ClientTrackingTimeline({
     );
   }
 
-  const historyMap = historyByStatus(trackingHistory);
-  const currentIndex = getTrackingStepIndex(steps, currentStatus);
-  const resolvedIndex = currentIndex < 0 ? 0 : currentIndex;
-
-  function stepState(index: number, stepKey: TrackingStatus): "completed" | "active" | "pending" {
-    if (stepKey === currentStatus) return "active";
-    if (index < resolvedIndex) return "completed";
-    if (historyMap.has(stepKey) && stepKey !== currentStatus) return "completed";
-    return "pending";
-  }
-
   return (
     <>
       <div className="hidden gap-3 md:flex">
@@ -84,13 +176,17 @@ export function ClientTrackingTimeline({
           const entry = historyMap.get(step.key);
           const isCompleted = state === "completed";
           const isActive = state === "active";
+          const animate = entry != null && animatedEntryIds.has(entry.id);
 
           return (
-            <div key={step.key} className="flex flex-1 flex-col items-center">
+            <div
+              key={step.key}
+              className={cn("flex flex-1 flex-col items-center", animate && "tracking-step-enter")}
+            >
               <div className="flex w-full items-center gap-2">
                 <div
                   className={cn(
-                    "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-colors",
+                    "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-colors duration-300",
                     isCompleted &&
                       "border-emerald-600 bg-emerald-600 text-white",
                     isActive &&
@@ -108,7 +204,7 @@ export function ClientTrackingTimeline({
                 {index < steps.length - 1 && (
                   <div
                     className={cn(
-                      "h-0.5 flex-1 rounded-full",
+                      "h-0.5 flex-1 rounded-full transition-colors duration-500",
                       index < resolvedIndex ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700",
                       isActive && index === resolvedIndex && "bg-siam-blue/60"
                     )}
@@ -118,7 +214,7 @@ export function ClientTrackingTimeline({
               <div className="mt-2 w-full text-center">
                 <div
                   className={cn(
-                    "text-xs font-medium",
+                    "text-xs font-medium transition-colors duration-300",
                     isActive && "text-siam-blue",
                     isCompleted && "text-emerald-800 dark:text-emerald-300",
                     state === "pending" && "text-slate-500"
@@ -162,13 +258,17 @@ export function ClientTrackingTimeline({
           const entry = historyMap.get(step.key);
           const isCompleted = state === "completed";
           const isActive = state === "active";
+          const animate = entry != null && animatedEntryIds.has(entry.id);
 
           return (
-            <div key={step.key} className="flex items-start gap-3">
+            <div
+              key={step.key}
+              className={cn("flex items-start gap-3", animate && "tracking-step-enter")}
+            >
               <div className="flex flex-col items-center">
                 <div
                   className={cn(
-                    "relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold",
+                    "relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold transition-colors duration-300",
                     isCompleted &&
                       "border-emerald-600 bg-emerald-600 text-white",
                     isActive &&
@@ -186,7 +286,7 @@ export function ClientTrackingTimeline({
                 {index < steps.length - 1 && (
                   <div
                     className={cn(
-                      "mt-1 min-h-[2rem] w-px flex-1",
+                      "mt-1 min-h-[2rem] w-px flex-1 transition-colors duration-500",
                       index < resolvedIndex ? "bg-emerald-400" : "bg-slate-200 dark:bg-slate-700"
                     )}
                   />
@@ -195,7 +295,7 @@ export function ClientTrackingTimeline({
               <div className="min-w-0 flex-1 pt-0.5">
                 <div
                   className={cn(
-                    "text-xs font-medium",
+                    "text-xs font-medium transition-colors duration-300",
                     isActive && "text-siam-blue",
                     isCompleted && "text-emerald-800 dark:text-emerald-300",
                     state === "pending" && "text-slate-600 dark:text-slate-400"

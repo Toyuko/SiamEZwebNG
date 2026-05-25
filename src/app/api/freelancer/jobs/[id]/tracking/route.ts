@@ -3,6 +3,7 @@ import type { TrackingStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireApiFreelancer } from "@/lib/auth/requireApiFreelancer";
 import { ok, fail } from "@/lib/api-response";
+import { getFreelancerJobTracking } from "@/data-access/job-tracking";
 import { updateJobTrackingStatus } from "@/lib/jobs/tracking";
 
 const TRACKING_STATUSES = new Set<string>([
@@ -15,6 +16,27 @@ const TRACKING_STATUSES = new Set<string>([
   "PLATES_ISSUED",
   "DELIVERED",
 ]);
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { userId } = await requireApiFreelancer(request);
+    const { id } = await params;
+    const payload = await getFreelancerJobTracking(id, userId);
+
+    if (!payload) {
+      return fail("Forbidden", 403);
+    }
+
+    return ok(payload);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Failed to load tracking";
+    const status = message === "Unauthorized" || message === "Forbidden" ? 401 : 500;
+    return fail(message, status);
+  }
+}
 
 export async function POST(
   request: NextRequest,

@@ -7,7 +7,7 @@ import { notifyNewJobMessage } from "@/lib/jobs/notify-message";
 import {
   getPusherServer,
   isUserActiveInJobChat,
-  jobChatChannel,
+  jobChannel,
 } from "@/lib/pusher-server";
 import { prisma } from "@/lib/db";
 
@@ -72,7 +72,7 @@ export async function POST(
     const { message, participant } = result;
     const pusher = getPusherServer();
     if (pusher) {
-      await pusher.trigger(jobChatChannel(jobId), "new-message", message);
+      await pusher.trigger(jobChannel(jobId), "new-message", message);
     }
 
     const receiverId = message.receiverId;

@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { ArrowLeft, Loader2, MapPin, User } from "lucide-react";
+import { ArrowLeft, Loader2, MapPin, Sparkles, User, X } from "lucide-react";
+import type { TrackingUpdatedPayload } from "@/lib/jobs/tracking-realtime";
 import {
   ClientTrackingTimeline,
   type ClientTrackingHistoryEntry,
@@ -36,6 +37,8 @@ type TrackingPayload = {
 
 type LoadState = "loading" | "error" | "ready" | "forbidden";
 
+type StatusToast = { id: string; message: string };
+
 export function ClientJobTrackingView({
   jobId,
   currentUserId,
@@ -48,6 +51,81 @@ export function ClientJobTrackingView({
   const [state, setState] = useState<LoadState>("loading");
   const [data, setData] = useState<TrackingPayload | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [statusToasts, setStatusToasts] = useState<StatusToast[]>([]);
+  const toastTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  const pushStatusToast = useCallback((message: string) => {
+    const id = crypto.randomUUID();
+    setStatusToasts((prev) => [...prev, { id, message }]);
+    const timer = setTimeout(() => {
+      setStatusToasts((prev) => prev.filter((toast) => toast.id !== id));
+      toastTimers.current.delete(id);
+    }, 6000);
+    toastTimers.current.set(id, timer);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      toastTimers.current.forEach((timer) => clearTimeout(timer));
+      toastTimers.current.clear();
+    };
+  }, []);
+
+  const handleRealtimeTracking = useCallback(
+    (payload: TrackingUpdatedPayload) => {
+      const step = data?.steps?.find((s) => s.key === payload.trackingStatus);
+      const stepLabel =
+        step != null
+          ? locale === "th"
+            ? step.th
+            : step.en
+          : payload.trackingStatus ?? "";
+
+      pushStatusToast(t("statusUpdatedToast", { status: stepLabel }));
+
+      setData((prev) => {
+        if (!prev) return prev;
+        const entry = payload.trackingHistory;
+        const exists = prev.trackingHistory.some((h) => h.id === entry.id);
+        const trackingHistory = exists
+          ? prev.trackingHistory.map((h) =>
+              h.id === entry.id
+                ? {
+                    id: entry.id,
+                    status: entry.status,
+                    note: entry.note,
+                    attachmentUrl: entry.attachmentUrl,
+                    attachmentName: entry.attachmentName,
+                    createdAt: entry.createdAt,
+                  }
+                : h
+            )
+          : [
+              ...prev.trackingHistory,
+              {
+                id: entry.id,
+                status: entry.status,
+                note: entry.note,
+                attachmentUrl: entry.attachmentUrl,
+                attachmentName: entry.attachmentName,
+                createdAt: entry.createdAt,
+              },
+            ];
+
+        return {
+          ...prev,
+          trackingHistory,
+          job: {
+            ...prev.job,
+            trackingStatus: payload.trackingStatus,
+            status: payload.jobStatus,
+            completionSubmittedAt: payload.completionSubmittedAt,
+          },
+        };
+      });
+    },
+    [data?.steps, locale, pushStatusToast, t]
+  );
 
   const loadTracking = useCallback(async (options?: { silent?: boolean }) => {
     if (!options?.silent) {
@@ -108,6 +186,31 @@ export function ClientJobTrackingView({
 
   return (
     <div className="mx-auto max-w-5xl px-1 pb-10">
+      <div
+        aria-live="polite"
+        className="pointer-events-none fixed right-4 top-4 z-50 flex w-full max-w-sm flex-col gap-2"
+      >
+        {statusToasts.map((toast) => (
+          <div
+            key={toast.id}
+            className="pointer-events-auto flex items-start gap-2 rounded-lg border border-emerald-300/50 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-lg dark:border-emerald-700/40 dark:bg-gray-900 dark:text-white"
+          >
+            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+            <span className="flex-1">{toast.message}</span>
+            <button
+              type="button"
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              onClick={() =>
+                setStatusToasts((prev) => prev.filter((item) => item.id !== toast.id))
+              }
+              aria-label={t("dismissStatusToast")}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+
       <Link
         href="/portal"
         className="mb-6 inline-flex items-center gap-2 text-sm text-siam-blue hover:underline"
@@ -215,11 +318,14 @@ export function ClientJobTrackingView({
 
               {data.isTrackable && data.steps ? (
                 <ClientTrackingTimeline
+                  jobId={data.job.id}
                   steps={data.steps}
                   currentStatus={data.job.trackingStatus}
                   trackingHistory={data.trackingHistory}
                   locale={locale}
                   emptyMessage={t("noHistoryYet")}
+                  trackingApiPath={`/api/client/jobs/${data.job.id}/tracking`}
+                  onTrackingUpdated={handleRealtimeTracking}
                 />
               ) : (
                 <p className="text-sm text-slate-600 dark:text-slate-400">

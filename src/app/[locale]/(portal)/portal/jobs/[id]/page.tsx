@@ -103,6 +103,7 @@ export default async function JobTrackingPage({
                 {t("trackTraceTitle")}
               </h3>
               <JobTrackingTimeline
+                jobId={job.id}
                 steps={trackingSteps}
                 currentStatus={job.trackingStatus}
                 notes={job.trackingNotes}

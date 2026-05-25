@@ -5,11 +5,8 @@ import { useTranslations } from "next-intl";
 import { Loader2, Paperclip, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  getPusherClient,
-  jobChatChannel,
-  jobPresenceChannel,
-} from "@/lib/pusher-client";
+import { getPusherClient, jobPresenceChannel } from "@/lib/pusher-client";
+import { useJobChannel } from "@/hooks/use-job-channel";
 import type { SerializedMessage } from "@/data-access/job-chat";
 import {
   playChatNotificationSound,
@@ -97,16 +94,9 @@ export function ChatBox({
     }
   }, [disabled, loadMessages]);
 
-  useEffect(() => {
-    if (disabled || state !== "ready") return;
-
-    const pusher = getPusherClient();
-    if (!pusher) return;
-
-    const privateChannel = pusher.subscribe(jobChatChannel(jobId));
-    const presenceChannel = pusher.subscribe(jobPresenceChannel(jobId));
-
-    privateChannel.bind("new-message", (message: SerializedMessage) => {
+  const handleNewMessage = useCallback(
+    (raw: unknown) => {
+      const message = raw as SerializedMessage;
       let shouldNotify = false;
 
       setMessages((prev) => {
@@ -122,15 +112,27 @@ export function ChatBox({
       }
 
       requestAnimationFrame(scrollToBottom);
-    });
+    },
+    [currentUserId, scrollToBottom]
+  );
+
+  useJobChannel(jobId, !disabled && state === "ready", {
+    onNewMessage: handleNewMessage,
+  });
+
+  useEffect(() => {
+    if (disabled || state !== "ready") return;
+
+    const pusher = getPusherClient();
+    if (!pusher) return;
+
+    const presenceChannel = pusher.subscribe(jobPresenceChannel(jobId));
 
     return () => {
-      privateChannel.unbind_all();
       presenceChannel.unbind_all();
-      pusher.unsubscribe(jobChatChannel(jobId));
       pusher.unsubscribe(jobPresenceChannel(jobId));
     };
-  }, [currentUserId, disabled, jobId, scrollToBottom, state]);
+  }, [disabled, jobId, state]);
 
   useEffect(() => {
     if (state === "ready") {

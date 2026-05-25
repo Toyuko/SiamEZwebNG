@@ -7,6 +7,10 @@ import {
 } from "@/config/job-tracking-steps";
 import { appendJobTrackingHistory } from "@/data-access/job-tracking";
 import { notifyClientJobCompleted } from "@/lib/jobs/notify-client";
+import {
+  broadcastTrackingUpdated,
+  serializeTrackingHistoryEntry,
+} from "@/lib/jobs/tracking-realtime";
 
 export async function updateJobTrackingStatus(
   freelancerId: string,
@@ -44,7 +48,7 @@ export async function updateJobTrackingStatus(
   const now = new Date();
   const isDelivered = status === "DELIVERED";
 
-  await prisma.job.update({
+  const updatedJob = await prisma.job.update({
     where: { id: jobId },
     data: {
       trackingStatus: status,
@@ -57,9 +61,22 @@ export async function updateJobTrackingStatus(
           }
         : {}),
     },
+    select: {
+      status: true,
+      trackingStatus: true,
+      completionSubmittedAt: true,
+    },
   });
 
-  await appendJobTrackingHistory(jobId, status, notes, attachment);
+  const historyEntry = await appendJobTrackingHistory(jobId, status, notes, attachment);
+
+  void broadcastTrackingUpdated(jobId, {
+    trackingHistory: serializeTrackingHistoryEntry(historyEntry),
+    trackingStatus: updatedJob.trackingStatus,
+    jobStatus: updatedJob.status,
+    completionSubmittedAt:
+      updatedJob.completionSubmittedAt?.toISOString() ?? null,
+  });
 
   if (isDelivered) {
     void notifyClientJobCompleted({

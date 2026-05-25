@@ -1087,6 +1087,8 @@
     "freelancerPending": "Being assigned",
     "currentStatus": "Current status",
     "timelineTitle": "Progress timeline",
+    "statusUpdatedToast": "Status updated: {status}",
+    "dismissStatusToast": "Dismiss notification",
     "noHistoryYet": "Your coordinator has not posted updates yet. Check back soon — we will show each step here as work moves forward.",
     "notTrackable": "Step-by-step tracking is not available for this service type.",
     "jobApproved": "You confirmed this job. Payment has been released to your coordinator.",

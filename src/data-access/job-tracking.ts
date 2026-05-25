@@ -20,7 +20,7 @@ export async function appendJobTrackingHistory(
   attachment?: { url: string; name: string } | null,
   coordinates?: { latitude: number; longitude: number } | null
 ) {
-  await prisma.jobTrackingHistory.create({
+  return prisma.jobTrackingHistory.create({
     data: {
       jobId,
       status,
@@ -101,4 +101,58 @@ export function serializeClientJobTracking(payload: NonNullable<
   Awaited<ReturnType<typeof getClientJobTracking>>
 >) {
   return payload;
+}
+
+export async function getFreelancerJobTracking(jobId: string, freelancerId: string) {
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    include: jobTrackingInclude,
+  });
+
+  if (!job || job.freelancerId !== freelancerId) {
+    return null;
+  }
+
+  const serviceSlug = job.service?.slug ?? null;
+  const steps: TrackingStep[] | null = getTrackingStepsForServiceSlug(serviceSlug);
+
+  let trackingHistory = job.trackingHistory.map((entry) => ({
+    id: entry.id,
+    status: entry.status,
+    note: entry.note,
+    attachmentUrl: entry.attachmentUrl,
+    attachmentName: entry.attachmentName,
+    createdAt: entry.createdAt.toISOString(),
+  }));
+
+  if (
+    trackingHistory.length === 0 &&
+    job.trackingStatus &&
+    isTrackableServiceSlug(serviceSlug)
+  ) {
+    trackingHistory = [
+      {
+        id: "legacy-current",
+        status: job.trackingStatus,
+        note: job.trackingNotes,
+        attachmentUrl: null,
+        attachmentName: null,
+        createdAt: job.updatedAt.toISOString(),
+      },
+    ];
+  }
+
+  return {
+    job: {
+      id: job.id,
+      status: job.status,
+      trackingStatus: job.trackingStatus,
+      trackingNotes: job.trackingNotes,
+      completionSubmittedAt: job.completionSubmittedAt?.toISOString() ?? null,
+      updatedAt: job.updatedAt.toISOString(),
+    },
+    trackingHistory,
+    steps,
+    isTrackable: isTrackableServiceSlug(serviceSlug),
+  };
 }
