@@ -17,10 +17,15 @@ import {
   historyPointsWithCoordinates,
   markerKindForStatus,
   markerLabelForStatus,
+  parseGpsPayload,
+  toLeafletPosition,
   type MapCoordinate,
   type TrackingMapHistoryPoint,
 } from "@/components/tracking/tracking-map-markers";
 import "leaflet/dist/leaflet.css";
+import "@/components/tracking/tracking-map.css";
+
+const BRAND_BLUE = "#2C54C6";
 
 export type TrackingMapRealtimeConfig = {
   channel: string;
@@ -39,36 +44,44 @@ type TrackingMapInnerProps = {
   inTransitLabel: string;
 };
 
-function markerHtml(kind: ReturnType<typeof markerKindForStatus>, label: string): string {
-  const base =
-    "flex h-9 w-9 items-center justify-center rounded-full border-2 border-white shadow-md text-sm font-bold";
-  const icons: Record<typeof kind, { bg: string; symbol: string }> = {
-    pickup: { bg: "bg-sky-600", symbol: "⌂" },
-    dlt: { bg: "bg-amber-600", symbol: "🏛" },
-    step: { bg: "bg-slate-600", symbol: "●" },
-    delivery: { bg: "bg-emerald-600", symbol: "✓" },
-  };
-  const { bg, symbol } = icons[kind];
-  return `<div class="${base} ${bg} text-white" title="${label}" aria-label="${label}">${symbol}</div>`;
+const STATUS_MARKER_COLORS: Record<
+  ReturnType<typeof markerKindForStatus>,
+  string
+> = {
+  pickup: "#0284c7",
+  dlt: "#d97706",
+  step: "#475569",
+  delivery: "#059669",
+};
+
+function createMotorcycleIcon(): L.DivIcon {
+  return L.divIcon({
+    className: "siamez-motorcycle-marker",
+    html: `<div class="siamez-motorcycle-marker-inner" aria-hidden="true" style="position:relative">🏍</div>`,
+    iconSize: [48, 56],
+    iconAnchor: [24, 52],
+    popupAnchor: [0, -48],
+  });
 }
 
 function createStatusIcon(status: TrackingStatus, locale: string): L.DivIcon {
   const kind = markerKindForStatus(status);
   const label = markerLabelForStatus(status, locale);
+  const bg = STATUS_MARKER_COLORS[kind];
+  const symbols: Record<typeof kind, string> = {
+    pickup: "⌂",
+    dlt: "🏛",
+    step: "●",
+    delivery: "✓",
+  };
+
   return L.divIcon({
-    className: "tracking-map-marker",
-    html: markerHtml(kind, label),
+    className: "siamez-map-marker",
+    html: `<div class="siamez-map-marker-inner" style="background:${bg}" title="${label}" aria-label="${label}">${symbols[kind]}</div>`,
     iconSize: [36, 36],
     iconAnchor: [18, 18],
   });
 }
-
-const motorcycleIcon = L.divIcon({
-  className: "tracking-map-motorcycle",
-  html: `<div style="display:flex;height:44px;width:44px;align-items:center;justify-content:center;border-radius:9999px;border:2px solid #fff;background:#0369a1;box-shadow:0 4px 14px rgba(3,105,161,0.45);font-size:1.25rem" aria-hidden="true">🏍</div>`,
-  iconSize: [44, 44],
-  iconAnchor: [22, 22],
-});
 
 function FitBounds({ points }: { points: MapCoordinate[] }) {
   const map = useMap();
@@ -78,9 +91,30 @@ function FitBounds({ points }: { points: MapCoordinate[] }) {
     if (bounds) {
       map.fitBounds(bounds, { padding: [48, 48], maxZoom: 15 });
     } else {
-      map.setView([DEFAULT_MAP_CENTER.latitude, DEFAULT_MAP_CENTER.longitude], 12);
+      map.setView(
+        [DEFAULT_MAP_CENTER.latitude, DEFAULT_MAP_CENTER.longitude],
+        12
+      );
     }
   }, [map, points]);
+
+  return null;
+}
+
+/** Pans the map when live GPS coordinates update so the vehicle stays in view. */
+function MapViewController({
+  center,
+  zoom = 15,
+}: {
+  center: [number, number] | null;
+  zoom?: number;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!center) return;
+    map.setView(center, Math.max(map.getZoom(), zoom), { animate: true });
+  }, [center, map, zoom]);
 
   return null;
 }
@@ -99,34 +133,55 @@ function interpolateCoordinate(
 function AnimatedMotorcycleMarker({
   target,
   animate,
+  icon,
 }: {
   target: MapCoordinate;
   animate: boolean;
+  icon: L.DivIcon;
 }) {
-  const [position, setPosition] = useState<MapCoordinate>(target);
+  const leafletPosition = toLeafletPosition(target);
+  const [position, setPosition] = useState<[number, number] | null>(
+    leafletPosition
+  );
   const frameRef = useRef<number | null>(null);
   const fromRef = useRef<MapCoordinate>(target);
 
   useEffect(() => {
+    const next = toLeafletPosition(target);
+    if (!next) {
+      setPosition(null);
+      return;
+    }
+
     if (!animate) {
-      setPosition(target);
+      setPosition(next);
       fromRef.current = target;
       return;
     }
 
     const from = fromRef.current;
+    const fromPos = toLeafletPosition(from);
+    if (!fromPos) {
+      setPosition(next);
+      fromRef.current = target;
+      return;
+    }
+
     const start = performance.now();
     const duration = 800;
 
     const tick = (now: number) => {
       const progress = Math.min((now - start) / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
-      setPosition(interpolateCoordinate(from, target, eased));
+      const interpolated = interpolateCoordinate(from, target, eased);
+      const framePos = toLeafletPosition(interpolated);
+      if (framePos) setPosition(framePos);
 
       if (progress < 1) {
         frameRef.current = requestAnimationFrame(tick);
       } else {
         fromRef.current = target;
+        setPosition(next);
       }
     };
 
@@ -134,12 +189,15 @@ function AnimatedMotorcycleMarker({
     return () => {
       if (frameRef.current != null) cancelAnimationFrame(frameRef.current);
     };
-  }, [target.latitude, target.longitude, animate]);
+  }, [target.latitude, target.longitude, animate, target]);
+
+  if (position == null) return null;
 
   return (
     <Marker
-      position={[position.latitude, position.longitude]}
-      icon={motorcycleIcon}
+      key={`motorcycle-${position[0]}-${position[1]}`}
+      position={position}
+      icon={icon}
       zIndexOffset={1000}
     />
   );
@@ -153,13 +211,18 @@ export function TrackingMapInner({
   liveLabel,
   inTransitLabel,
 }: TrackingMapInnerProps) {
+  const motorcycleIcon = useMemo(() => createMotorcycleIcon(), []);
+
   const historyPoints = useMemo(
     () => historyPointsWithCoordinates(trackingHistory),
     [trackingHistory]
   );
 
   const routePositions = useMemo(
-    () => historyPoints.map((p) => [p.latitude, p.longitude] as [number, number]),
+    () =>
+      historyPoints
+        .map((p) => toLeafletPosition(p))
+        .filter((pos): pos is [number, number] => pos != null),
     [historyPoints]
   );
 
@@ -178,27 +241,30 @@ export function TrackingMapInner({
     setLivePosition(initialLivePosition);
   }, [initialLivePosition]);
 
-  const handleLocationUpdate = useCallback(
-    (payload: {
-      latitude: number;
-      longitude: number;
-      timestamp?: string;
-      jobId?: string;
-    }) => {
-      setAnimateLive(true);
-      setLivePosition({
-        latitude: payload.latitude,
-        longitude: payload.longitude,
-      });
-    },
-    []
-  );
+  const handleLocationUpdate = useCallback((payload: unknown) => {
+    console.log("GPS Payload Received:", payload);
+
+    const coordinate = parseGpsPayload(payload);
+    if (!coordinate) {
+      console.warn(
+        "[TrackingMap] Ignored GPS payload — missing or invalid latitude/longitude:",
+        payload
+      );
+      return;
+    }
+
+    setAnimateLive(true);
+    setLivePosition(coordinate);
+  }, []);
 
   useEffect(() => {
     if (!isCurrentlyInTransit || !realtime) return;
 
     const pusher = getPusherClient();
-    if (!pusher) return;
+    if (!pusher) {
+      console.warn("[TrackingMap] Pusher client not configured — live GPS disabled");
+      return;
+    }
 
     const channel = pusher.subscribe(realtime.channel);
 
@@ -210,19 +276,36 @@ export function TrackingMapInner({
     };
   }, [handleLocationUpdate, isCurrentlyInTransit, realtime]);
 
-  const mapCenter: [number, number] =
-    historyPoints.length > 0
-      ? [historyPoints[0].latitude, historyPoints[0].longitude]
-      : [DEFAULT_MAP_CENTER.latitude, DEFAULT_MAP_CENTER.longitude];
+  const liveLeafletPosition = useMemo(
+    () => toLeafletPosition(livePosition),
+    [livePosition]
+  );
+
+  const mapCenter = useMemo<[number, number]>(() => {
+    if (liveLeafletPosition) return liveLeafletPosition;
+    if (historyPoints.length > 0) {
+      const first = historyPoints[0];
+      const pos = toLeafletPosition(first);
+      if (pos) return pos;
+    }
+    return [DEFAULT_MAP_CENTER.latitude, DEFAULT_MAP_CENTER.longitude];
+  }, [liveLeafletPosition, historyPoints]);
 
   const fitPoints: MapCoordinate[] = useMemo(() => {
     const points = historyPoints.map((p) => ({
       latitude: p.latitude,
       longitude: p.longitude,
     }));
-    if (livePosition) points.push(livePosition);
+    if (livePosition && toLeafletPosition(livePosition)) {
+      points.push(livePosition);
+    }
     return points;
   }, [historyPoints, livePosition]);
+
+  const showMotorcycleMarker =
+    isCurrentlyInTransit &&
+    livePosition != null &&
+    liveLeafletPosition != null;
 
   return (
     <div className="relative overflow-hidden rounded-xl">
@@ -236,8 +319,11 @@ export function TrackingMapInner({
         </div>
       )}
 
-      {isCurrentlyInTransit && livePosition && (
-        <div className="absolute right-3 top-3 z-[1000] rounded-full bg-siam-blue/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow">
+      {showMotorcycleMarker && (
+        <div
+          className="absolute right-3 top-3 z-[1000] rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow"
+          style={{ backgroundColor: BRAND_BLUE }}
+        >
           {liveLabel}
         </div>
       )}
@@ -255,6 +341,7 @@ export function TrackingMapInner({
         />
 
         <FitBounds points={fitPoints} />
+        <MapViewController center={liveLeafletPosition} />
 
         {routePositions.length >= 2 && (
           <Polyline
@@ -268,16 +355,25 @@ export function TrackingMapInner({
           />
         )}
 
-        {historyPoints.map((point) => (
-          <Marker
-            key={point.id}
-            position={[point.latitude, point.longitude]}
-            icon={createStatusIcon(point.status, locale)}
-          />
-        ))}
+        {historyPoints.map((point) => {
+          const position = toLeafletPosition(point);
+          if (!position) return null;
 
-        {isCurrentlyInTransit && livePosition && (
-          <AnimatedMotorcycleMarker target={livePosition} animate={animateLive} />
+          return (
+            <Marker
+              key={point.id}
+              position={position}
+              icon={createStatusIcon(point.status, locale)}
+            />
+          );
+        })}
+
+        {showMotorcycleMarker && livePosition && (
+          <AnimatedMotorcycleMarker
+            target={livePosition}
+            animate={animateLive}
+            icon={motorcycleIcon}
+          />
         )}
       </MapContainer>
     </div>
