@@ -22,6 +22,12 @@ type LocationPayload = {
   isCurrentlyInTransit: boolean;
   trackingHistory: TrackingMapHistoryPoint[];
   realtime: TrackingMapRealtimeConfig | null;
+  realtimeDiagnostics?: {
+    isCurrentlyInTransit: boolean;
+    clientPusherConfigured: boolean;
+    serverPusherConfigured: boolean;
+    willSubscribe: boolean;
+  };
 };
 
 type MapLoadState = "loading" | "error" | "forbidden" | "ready" | "unavailable";
@@ -70,6 +76,13 @@ export function TrackingMap({ jobId, locale }: { jobId: string; locale: string }
       }
 
       setData(json.data);
+      console.log("[TrackingMap] Location API response:", json.data);
+      if (json.data.isCurrentlyInTransit && !json.data.realtime) {
+        console.warn(
+          "[TrackingMap] Job shows in transit but realtime is null — check Pusher env vars:",
+          json.data.realtimeDiagnostics
+        );
+      }
       setState("ready");
     } catch {
       setState("error");
@@ -156,9 +169,11 @@ export function TrackingMap({ jobId, locale }: { jobId: string; locale: string }
         className="[&_.leaflet-container]:rounded-xl [&_.leaflet-container]:z-0"
       >
         <TrackingMapInner
+          jobId={jobId}
           trackingHistory={data.trackingHistory}
           isCurrentlyInTransit={data.isCurrentlyInTransit}
           realtime={data.realtime}
+          realtimeDiagnostics={data.realtimeDiagnostics}
           locale={locale}
           liveLabel={t("liveBadge")}
           inTransitLabel={t("inTransit")}

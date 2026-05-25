@@ -29,6 +29,7 @@ const BRAND_BLUE = "#2C54C6";
 
 export type TrackingMapRealtimeConfig = {
   channel: string;
+  legacyChannel?: string;
   authEndpoint: string;
   event: string;
   pusherKey: string;
@@ -36,9 +37,16 @@ export type TrackingMapRealtimeConfig = {
 };
 
 type TrackingMapInnerProps = {
+  jobId: string;
   trackingHistory: TrackingMapHistoryPoint[];
   isCurrentlyInTransit: boolean;
   realtime: TrackingMapRealtimeConfig | null;
+  realtimeDiagnostics?: {
+    isCurrentlyInTransit: boolean;
+    clientPusherConfigured: boolean;
+    serverPusherConfigured: boolean;
+    willSubscribe: boolean;
+  };
   locale: string;
   liveLabel: string;
   inTransitLabel: string;
@@ -204,9 +212,11 @@ function AnimatedMotorcycleMarker({
 }
 
 export function TrackingMapInner({
+  jobId,
   trackingHistory,
   isCurrentlyInTransit,
   realtime,
+  realtimeDiagnostics,
   locale,
   liveLabel,
   inTransitLabel,
@@ -258,23 +268,75 @@ export function TrackingMapInner({
   }, []);
 
   useEffect(() => {
-    if (!isCurrentlyInTransit || !realtime) return;
+    console.log("[TrackingMap] Live GPS setup", {
+      jobId,
+      isCurrentlyInTransit,
+      realtime,
+      realtimeDiagnostics,
+    });
 
-    const pusher = getPusherClient();
-    if (!pusher) {
-      console.warn("[TrackingMap] Pusher client not configured — live GPS disabled");
+    if (!isCurrentlyInTransit) {
+      console.info(
+        "[TrackingMap] Job is not in transit — no Pusher subscription. Set isCurrentlyInTransit=true on the job to enable live GPS."
+      );
       return;
     }
 
-    const channel = pusher.subscribe(realtime.channel);
+    if (!realtime) {
+      console.warn(
+        "[TrackingMap] In transit but realtime config is missing. Check NEXT_PUBLIC_PUSHER_KEY and NEXT_PUBLIC_PUSHER_CLUSTER in .env",
+        realtimeDiagnostics
+      );
+      return;
+    }
 
-    channel.bind(realtime.event, handleLocationUpdate);
+    const pusher = getPusherClient();
+    if (!pusher) {
+      console.warn(
+        "[TrackingMap] Pusher client could not be created — live GPS disabled. Check NEXT_PUBLIC_PUSHER_KEY / NEXT_PUBLIC_PUSHER_CLUSTER."
+      );
+      return;
+    }
+
+    const channelsToSubscribe = [
+      realtime.channel,
+      ...(realtime.legacyChannel && realtime.legacyChannel !== realtime.channel
+        ? [realtime.legacyChannel]
+        : []),
+    ];
+
+    console.log("[TrackingMap] Subscribing to channels:", channelsToSubscribe);
+
+    const subscribed = channelsToSubscribe.map((name) => {
+      const channel = pusher.subscribe(name);
+
+      channel.bind("pusher:subscription_succeeded", () => {
+        console.log("[TrackingMap] Pusher subscription succeeded:", name);
+      });
+
+      channel.bind("pusher:subscription_error", (status: unknown) => {
+        console.error("[TrackingMap] Pusher subscription failed:", name, status);
+      });
+
+      channel.bind(realtime.event, handleLocationUpdate);
+      return { name, channel };
+    });
 
     return () => {
-      channel.unbind(realtime.event, handleLocationUpdate);
-      pusher.unsubscribe(realtime.channel);
+      for (const { name, channel } of subscribed) {
+        channel.unbind(realtime.event, handleLocationUpdate);
+        channel.unbind("pusher:subscription_succeeded");
+        channel.unbind("pusher:subscription_error");
+        pusher.unsubscribe(name);
+      }
     };
-  }, [handleLocationUpdate, isCurrentlyInTransit, realtime]);
+  }, [
+    handleLocationUpdate,
+    isCurrentlyInTransit,
+    jobId,
+    realtime,
+    realtimeDiagnostics,
+  ]);
 
   const liveLeafletPosition = useMemo(
     () => toLeafletPosition(livePosition),

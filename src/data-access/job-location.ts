@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/db";
-import { getPusherServer, jobLocationChannel } from "@/lib/pusher-server";
+import {
+  getPusherServer,
+  jobChannel,
+  jobLocationChannel,
+} from "@/lib/pusher-server";
 
 export type JobLocationHistoryEntry = {
   id: string;
@@ -17,11 +21,19 @@ export type JobLocationPayload = {
   trackingHistory: JobLocationHistoryEntry[];
   realtime: {
     channel: string;
+    legacyChannel: string;
     authEndpoint: string;
     event: string;
     pusherKey: string;
     pusherCluster: string;
   } | null;
+  /** Helps debug why live GPS may not connect (safe to log in browser). */
+  realtimeDiagnostics: {
+    isCurrentlyInTransit: boolean;
+    clientPusherConfigured: boolean;
+    serverPusherConfigured: boolean;
+    willSubscribe: boolean;
+  };
 };
 
 export async function getJobLocationTracking(
@@ -62,12 +74,17 @@ export async function getJobLocationTracking(
 
   const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY?.trim() ?? "";
   const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER?.trim() ?? "";
-  const pusherConfigured = Boolean(getPusherServer() && pusherKey && pusherCluster);
+  const clientPusherConfigured = Boolean(pusherKey && pusherCluster);
+  const serverPusherConfigured = Boolean(getPusherServer());
+  const willSubscribe =
+    job.isCurrentlyInTransit && clientPusherConfigured;
 
-  const realtime =
-    job.isCurrentlyInTransit && pusherConfigured
+  const realtime = willSubscribe
       ? {
-          channel: jobLocationChannel(jobId),
+          /** Unified job channel (same as chat / tracking-updated). */
+          channel: jobChannel(jobId),
+          /** Legacy channel — still listened to for older mobile builds. */
+          legacyChannel: jobLocationChannel(jobId),
           authEndpoint: "/api/chat/pusher-auth",
           event: "location-update",
           pusherKey,
@@ -81,6 +98,12 @@ export async function getJobLocationTracking(
     isCurrentlyInTransit: job.isCurrentlyInTransit,
     trackingHistory,
     realtime,
+    realtimeDiagnostics: {
+      isCurrentlyInTransit: job.isCurrentlyInTransit,
+      clientPusherConfigured,
+      serverPusherConfigured,
+      willSubscribe,
+    },
   };
 }
 
@@ -105,10 +128,15 @@ export async function broadcastJobLocationUpdate(
     coordinate.recordedAt ??
     new Date().toISOString();
 
-  await pusher.trigger(jobLocationChannel(jobId), "location-update", {
+  const payload = {
     latitude: coordinate.latitude,
     longitude: coordinate.longitude,
     timestamp,
     jobId,
-  });
+  };
+
+  await Promise.all([
+    pusher.trigger(jobChannel(jobId), "location-update", payload),
+    pusher.trigger(jobLocationChannel(jobId), "location-update", payload),
+  ]);
 }
