@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ok, fail } from "@/lib/api-response";
+import { broadcastNewJobPosted } from "@/lib/jobs/job-board-payload";
 
 const createJobSchema = z.object({
   assignmentSource: z.enum(["INTERNAL", "FREELANCER"]),
@@ -79,9 +80,11 @@ export async function POST(request: NextRequest) {
       },
       include: {
         postedBy: { select: { id: true, name: true, email: true } },
-        service: { select: { id: true, name: true } },
+        service: { select: { id: true, slug: true, name: true } },
       },
     });
+
+    void broadcastNewJobPosted(job);
 
     return ok({ type: "freelancer", job });
   } catch (e) {

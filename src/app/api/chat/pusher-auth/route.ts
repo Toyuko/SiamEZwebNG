@@ -2,8 +2,9 @@ import { NextRequest } from "next/server";
 import { getSession } from "@/lib/auth";
 import { fail } from "@/lib/api-response";
 import { getJobChatParticipant } from "@/data-access/job-chat";
-import { getPusherServer } from "@/lib/pusher-server";
+import { getPusherServer, privateSpecialJobsChannel } from "@/lib/pusher-server";
 import { assertJobLocationViewer } from "@/lib/jobs/tracking-access";
+import { prisma } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,6 +24,29 @@ export async function POST(request: NextRequest) {
 
     if (!socketId || !channelName) {
       return fail("Missing socket_id or channel_name", 400);
+    }
+
+    if (channelName === privateSpecialJobsChannel()) {
+      if (session.user.role !== "freelancer") {
+        return fail("Forbidden", 403);
+      }
+
+      const profile = await prisma.freelancerProfile.findUnique({
+        where: { userId: session.user.id },
+        select: { isSpecialMember: true, verificationStatus: true },
+      });
+
+      if (
+        !profile?.isSpecialMember ||
+        profile.verificationStatus !== "verified"
+      ) {
+        return fail("Forbidden", 403);
+      }
+
+      const authResponse = pusher.authorizeChannel(socketId, channelName);
+      return new Response(JSON.stringify(authResponse), {
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const chatPrivateMatch = channelName.match(/^private-job-chat-(.+)$/);

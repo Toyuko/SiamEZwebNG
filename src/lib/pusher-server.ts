@@ -37,6 +37,14 @@ export function jobLocationChannel(jobId: string): string {
   return `private-job-location-${jobId}`;
 }
 
+export function publicJobBoardChannel(): string {
+  return "public-job-board";
+}
+
+export function privateSpecialJobsChannel(): string {
+  return "private-special-jobs";
+}
+
 export async function isUserActiveInJobChat(
   jobId: string,
   userId: string

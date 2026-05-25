@@ -7,7 +7,8 @@ import {
   getFreelancerRevenueStats,
 } from "@/data-access/job";
 import { getFreelancerProfileByUserId } from "@/data-access/freelancer";
-import { JobFeedSection } from "@/components/freelancer/JobFeedSection";
+import { FreelancerJobFeed } from "@/components/FreelancerJobFeed";
+import { serializeJobBoardFeedItem } from "@/lib/jobs/job-board-payload";
 import { RevenueTracker } from "@/components/freelancer/RevenueTracker";
 import { ActiveJobsTrack } from "@/components/freelancer/ActiveJobsTrack";
 import { SubscriptionCard } from "@/components/freelancer/SubscriptionCard";
@@ -71,7 +72,13 @@ export default async function FreelancerPortalPage({
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <JobFeedSection jobs={openJobs} />
+        <FreelancerJobFeed
+          initialJobs={openJobs.map(serializeJobBoardFeedItem)}
+          isSpecialMember={
+            profile?.isSpecialMember === true &&
+            profile.verificationStatus === "verified"
+          }
+        />
         <ActiveJobsTrack jobs={activeJobs} />
       </div>
 
