@@ -7,6 +7,7 @@ import {
 } from "@/config/job-tracking-steps";
 import { appendJobTrackingHistory } from "@/data-access/job-tracking";
 import { notifyClientJobCompleted } from "@/lib/jobs/notify-client";
+import { sendPushNotification } from "@/lib/sendPushNotification";
 import {
   broadcastTrackingUpdated,
   serializeTrackingHistoryEntry,
@@ -86,6 +87,13 @@ export async function updateJobTrackingStatus(
       clientName: job.postedBy.name,
       freelancerName: job.freelancer?.name ?? freelancerName ?? null,
     });
+
+    void sendPushNotification(
+      job.postedById,
+      "Action Required",
+      "Your service is complete! Please review within 60 mins.",
+      { jobId: job.id, type: "auto_approval" }
+    );
   }
 
   return {

@@ -30,6 +30,7 @@ model User {
   timezone       String?
   preferredLocale String?  @map("preferred_locale")
   notificationPreferences Json? @map("notification_preferences")
+  expoPushToken  String?   @map("expo_push_token")
   lastLoginAt    DateTime? @map("last_login_at")
   role           UserRole  @default(customer)
   active         Boolean   @default(true)
@@ -66,6 +67,7 @@ model FreelancerProfile {
   verificationStatus FreelancerVerificationStatus @default(pending) @map("verification_status")
   isSpecialMember      Boolean                      @default(false) @map("is_special_member")
   averageRating      Float                        @default(0) @map("average_rating")
+  expoPushToken      String?                      @map("expo_push_token")
   createdAt          DateTime                     @default(now()) @map("created_at")
   updatedAt          DateTime                     @updatedAt @map("updated_at")
 

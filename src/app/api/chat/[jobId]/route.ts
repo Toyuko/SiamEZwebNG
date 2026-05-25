@@ -4,6 +4,7 @@ import { ok, fail } from "@/lib/api-response";
 import { resolveApiUserId } from "@/lib/auth/resolveApiUserId";
 import { createJobMessage, getJobMessages } from "@/data-access/job-chat";
 import { notifyNewJobMessage } from "@/lib/jobs/notify-message";
+import { sendPushNotification } from "@/lib/sendPushNotification";
 import {
   getPusherServer,
   isUserActiveInJobChat,
@@ -79,17 +80,28 @@ export async function POST(
     const isActive = await isUserActiveInJobChat(jobId, receiverId);
 
     if (!isActive) {
+      const senderName =
+        userId === participant.clientId
+          ? participant.clientName
+          : participant.freelancerName;
+      const preview =
+        message.content.trim().length > 0
+          ? message.content.trim().slice(0, 120)
+          : "Sent an attachment";
+
+      void sendPushNotification(
+        receiverId,
+        senderName ? `New message from ${senderName}` : "New message",
+        preview,
+        { jobId, type: "chat_message" }
+      );
+
       const recipient = await prisma.user.findUnique({
         where: { id: receiverId },
         select: { email: true, name: true },
       });
 
       if (recipient?.email) {
-        const senderName =
-          userId === participant.clientId
-            ? participant.clientName
-            : participant.freelancerName;
-
         void notifyNewJobMessage({
           jobId,
           jobTitle: participant.jobTitle,
