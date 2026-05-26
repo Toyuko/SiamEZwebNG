@@ -14,7 +14,8 @@ import { prisma } from "@/lib/db";
 
 const sendMessageSchema = z.object({
   content: z.string().max(5000).optional().default(""),
-  attachmentUrl: z.string().url().optional().nullable(),
+  /** Secure blob URL from POST /api/upload?purpose=chat — persisted on Message.attachmentUrl */
+  attachmentUrl: z.union([z.string().url(), z.literal("")]).optional().nullable(),
 });
 
 export async function GET(
@@ -59,11 +60,16 @@ export async function POST(
       return fail("Invalid message payload", 400);
     }
 
+    const attachmentUrl =
+      typeof parsed.data.attachmentUrl === "string" && parsed.data.attachmentUrl.length > 0
+        ? parsed.data.attachmentUrl
+        : null;
+
     const result = await createJobMessage({
       jobId,
       senderId: userId,
       content: parsed.data.content,
-      attachmentUrl: parsed.data.attachmentUrl,
+      attachmentUrl,
     });
 
     if (!result) {

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { auth } from "@/auth";
+import { getJobChatParticipant } from "@/data-access/job-chat";
+import { resolveApiUserId } from "@/lib/auth/resolveApiUserId";
+import { validateChatAttachment } from "@/lib/uploads/chat-attachment";
 import { validateTrackingAttachment } from "@/lib/uploads/tracking-attachment";
 import { assertFreelancerCanUpdateJobTracking } from "@/lib/jobs/tracking-access";
 
@@ -16,6 +19,8 @@ function safeFileSegment(name: string) {
  * - Default: public image/video upload for sales listings (no auth).
  * - Track & Trace: pass `jobId` + `purpose=tracking` — requires freelancer session,
  *   accepts JPG/PNG/PDF up to 5MB, returns { url, key, name }.
+ * - Job chat: pass `jobId` + `purpose=chat` — requires client or freelancer on the job,
+ *   accepts images and PDF up to 10MB, returns { url, key, name }.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -28,8 +33,13 @@ export async function POST(request: NextRequest) {
     const purpose = formData.get("purpose");
     const jobId = formData.get("jobId");
 
-    if (purpose === "tracking" && typeof jobId === "string" && jobId.length > 0) {
-      return handleTrackingUpload(file, jobId);
+    if (typeof jobId === "string" && jobId.length > 0) {
+      if (purpose === "tracking") {
+        return handleTrackingUpload(file, jobId);
+      }
+      if (purpose === "chat") {
+        return handleChatUpload(request, file, jobId);
+      }
     }
 
     return handleGeneralUpload(file);
@@ -66,6 +76,42 @@ async function handleTrackingUpload(file: File, jobId: string) {
   }
 
   const pathname = `job-tracking/${jobId}/${Date.now()}-${safeFileSegment(file.name)}`;
+  const blob = await put(pathname, file, {
+    access: "public",
+    addRandomSuffix: true,
+  });
+
+  return NextResponse.json({
+    url: blob.url,
+    key: blob.url,
+    name: file.name,
+  });
+}
+
+async function handleChatUpload(request: NextRequest, file: File, jobId: string) {
+  const userId = await resolveApiUserId(request);
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const participant = await getJobChatParticipant(jobId, userId);
+  if (!participant) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const validationError = validateChatAttachment(file);
+  if (validationError) {
+    return NextResponse.json({ error: validationError }, { status: 400 });
+  }
+
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return NextResponse.json(
+      { error: "BLOB_READ_WRITE_TOKEN is not configured on the server" },
+      { status: 500 }
+    );
+  }
+
+  const pathname = `job-chat/${jobId}/${Date.now()}-${safeFileSegment(file.name)}`;
   const blob = await put(pathname, file, {
     access: "public",
     addRandomSuffix: true,

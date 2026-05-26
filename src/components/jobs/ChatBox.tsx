@@ -12,6 +12,7 @@ import {
   playChatNotificationSound,
   unlockChatNotificationSound,
 } from "@/lib/chat-notification-sound";
+import { isChatAttachmentImage } from "@/lib/uploads/chat-attachment";
 import { cn } from "@/lib/utils";
 
 type ChatBoxProps = {
@@ -191,27 +192,28 @@ export function ChatBox({
     setErrorMessage(null);
     try {
       const formData = new FormData();
-      formData.append("jobId", jobId);
       formData.append("file", file);
+      formData.append("jobId", jobId);
+      formData.append("purpose", "chat");
 
-      const uploadRes = await fetch("/api/chat/upload", {
+      const uploadRes = await fetch("/api/upload", {
         method: "POST",
         credentials: "include",
         body: formData,
       });
       const uploadJson = (await uploadRes.json()) as {
-        success?: boolean;
-        data?: { url: string; name: string };
+        url?: string;
+        name?: string;
         error?: string;
       };
 
-      if (!uploadRes.ok || !uploadJson.success || !uploadJson.data?.url) {
+      if (!uploadRes.ok || !uploadJson.url) {
         setErrorMessage(uploadJson.error ?? t("uploadFailed"));
         return;
       }
 
-      const label = draft.trim() || uploadJson.data.name;
-      await sendMessage(label, uploadJson.data.url);
+      const label = draft.trim() || uploadJson.name || file.name;
+      await sendMessage(label, uploadJson.url);
     } catch {
       setErrorMessage(t("uploadFailed"));
     } finally {
@@ -289,19 +291,34 @@ export function ChatBox({
                     {message.content && message.content !== "(attachment)" && (
                       <p className="whitespace-pre-wrap break-words">{message.content}</p>
                     )}
-                    {message.attachmentUrl && (
-                      <a
-                        href={message.attachmentUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={cn(
-                          "mt-1 inline-block text-xs underline",
-                          isMine ? "text-sky-100" : "text-siam-blue"
-                        )}
-                      >
-                        {t("viewAttachment")}
-                      </a>
-                    )}
+                    {message.attachmentUrl &&
+                      (isChatAttachmentImage(message.attachmentUrl) ? (
+                        <a
+                          href={message.attachmentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 block"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={message.attachmentUrl}
+                            alt={t("viewAttachment")}
+                            className="max-w-xs rounded-md border border-white/20 object-cover shadow-sm"
+                          />
+                        </a>
+                      ) : (
+                        <a
+                          href={message.attachmentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cn(
+                            "mt-1 inline-block text-xs underline",
+                            isMine ? "text-sky-100" : "text-siam-blue"
+                          )}
+                        >
+                          {t("viewDocument")}
+                        </a>
+                      ))}
                     <p
                       className={cn(
                         "mt-1 text-[10px]",
@@ -330,7 +347,7 @@ export function ChatBox({
           ref={fileInputRef}
           type="file"
           className="hidden"
-          accept="image/*,.pdf,.doc,.docx"
+          accept="image/*,application/pdf"
           onChange={(e) => void handleFileSelect(e)}
         />
         <Button
@@ -341,11 +358,7 @@ export function ChatBox({
           onClick={() => fileInputRef.current?.click()}
           aria-label={t("attachFile")}
         >
-          {uploading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Paperclip className="h-4 w-4" />
-          )}
+          <Paperclip className="h-4 w-4" />
         </Button>
         <Input
           value={draft}
@@ -356,14 +369,22 @@ export function ChatBox({
           className="flex-1"
           maxLength={5000}
         />
-        <Button
-          type="submit"
-          size="icon"
-          disabled={!draft.trim() || sending || uploading || state !== "ready"}
-          aria-label={t("send")}
-        >
-          {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-        </Button>
+        <div className="flex items-center gap-1.5">
+          {uploading && (
+            <Loader2
+              className="h-4 w-4 shrink-0 animate-spin text-slate-400"
+              aria-label={t("uploading")}
+            />
+          )}
+          <Button
+            type="submit"
+            size="icon"
+            disabled={!draft.trim() || sending || uploading || state !== "ready"}
+            aria-label={t("send")}
+          >
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          </Button>
+        </div>
       </form>
     </section>
   );

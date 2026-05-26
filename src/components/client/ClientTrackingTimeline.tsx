@@ -38,6 +38,13 @@ function formatTimestamp(iso: string, locale: string): string {
   });
 }
 
+function toIsoString(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "number") return new Date(value).toISOString();
+  return new Date().toISOString();
+}
+
 function normalizeHistoryEntry(
   raw: Partial<ClientTrackingHistoryEntry> & Record<string, unknown>
 ): ClientTrackingHistoryEntry {
@@ -56,10 +63,7 @@ function normalizeHistoryEntry(
     note: (raw.note as string | null | undefined) ?? null,
     attachmentUrl,
     attachmentName,
-    createdAt:
-      typeof raw.createdAt === "string"
-        ? raw.createdAt
-        : new Date(raw.createdAt as string | number | Date).toISOString(),
+    createdAt: toIsoString(raw.createdAt ?? raw.created_at),
   };
 }
 

@@ -1208,8 +1208,10 @@
     "send": "Send message",
     "attachFile": "Attach file",
     "sendFailed": "Could not send your message. Please try again.",
+    "uploading": "Uploading attachment…",
     "uploadFailed": "Could not upload the file. Please try again.",
     "viewAttachment": "View attachment",
+    "viewDocument": "📄 View Document",
     "unavailable": "Messaging opens once a coordinator is assigned to your job."
   },
   "paymentInformation": {
