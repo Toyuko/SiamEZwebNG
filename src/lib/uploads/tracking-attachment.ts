@@ -34,11 +34,23 @@ export function isTrackingAttachmentImage(
   url: string,
   name?: string | null
 ): boolean {
-  const lower = (name ?? url).toLowerCase();
+  const nameLower = (name ?? "").toLowerCase();
+  const urlLower = url.toLowerCase();
+
+  if (
+    nameLower.endsWith(".jpg") ||
+    nameLower.endsWith(".jpeg") ||
+    nameLower.endsWith(".png") ||
+    nameLower.includes("image/")
+  ) {
+    return true;
+  }
+
   return (
-    lower.endsWith(".jpg") ||
-    lower.endsWith(".jpeg") ||
-    lower.endsWith(".png") ||
-    lower.includes("image/")
+    urlLower.endsWith(".jpg") ||
+    urlLower.endsWith(".jpeg") ||
+    urlLower.endsWith(".png") ||
+    urlLower.includes("/job-tracking/") ||
+    urlLower.includes("image/")
   );
 }

@@ -232,10 +232,6 @@ export function ClientTrackingTimeline({
 
   return (
     <>
-      {trackingHistory.map((step) => {
-        console.log("Timeline Step Data:", step);
-        return null;
-      })}
       <div className="hidden gap-3 md:flex">
         {steps.map((step, index) => {
           const state = stepState(index, step.key);

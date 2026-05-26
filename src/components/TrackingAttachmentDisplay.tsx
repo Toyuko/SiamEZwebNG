@@ -12,6 +12,29 @@ type TrackingAttachmentDisplayProps = {
   className?: string;
 };
 
+function ViewFileLink({
+  attachmentUrl,
+  className,
+}: {
+  attachmentUrl: string;
+  className?: string;
+}) {
+  return (
+    <a
+      href={attachmentUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn(
+        "mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-siam-blue hover:underline",
+        className
+      )}
+    >
+      <Paperclip className="h-3 w-3" />
+      View File
+    </a>
+  );
+}
+
 export function TrackingAttachmentDisplay({
   attachmentUrl,
   attachmentName,
@@ -19,10 +42,11 @@ export function TrackingAttachmentDisplay({
 }: TrackingAttachmentDisplayProps) {
   const t = useTranslations("clientTracking");
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const isImage = isTrackingAttachmentImage(attachmentUrl, attachmentName);
   const label = attachmentName ?? t("viewAttachment");
 
-  if (isImage) {
+  if (isImage && !imageError) {
     return (
       <>
         <button
@@ -38,6 +62,7 @@ export function TrackingAttachmentDisplay({
             src={attachmentUrl}
             alt={label}
             className="h-16 w-16 rounded-lg border border-sky-200 object-cover shadow-sm transition group-hover:ring-2 group-hover:ring-siam-blue/40 dark:border-sky-800"
+            onError={() => setImageError(true)}
           />
           <span className="inline-flex items-center gap-1 text-[11px] font-medium text-siam-blue hover:underline">
             <Paperclip className="h-3 w-3" />
@@ -67,10 +92,17 @@ export function TrackingAttachmentDisplay({
               alt={label}
               className="max-h-[90vh] max-w-full rounded-lg object-contain shadow-2xl"
               onClick={(e) => e.stopPropagation()}
+              onError={() => setImageError(true)}
             />
           </div>
         )}
       </>
+    );
+  }
+
+  if (isImage && imageError) {
+    return (
+      <ViewFileLink attachmentUrl={attachmentUrl} className={className} />
     );
   }
 
