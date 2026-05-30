@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import { ServiceCard } from "./ServiceCard";
 import type { ServiceSlug } from "@/config/services";
 import { serviceThumbnailImages } from "@/config/services";
@@ -61,6 +60,7 @@ export type DisplayService = {
 interface ServicesGridProps {
   services: DisplayService[];
   searchQuery?: string;
+  noResultsMessage?: string;
   bookNowLabel: string;
   detailsLabel: string;
   priceLabel?: string;
@@ -73,6 +73,7 @@ interface ServicesGridProps {
 export function ServicesGrid({
   services,
   searchQuery = "",
+  noResultsMessage = "No services found matching your search.",
   bookNowLabel,
   detailsLabel,
   priceLabel,
@@ -81,32 +82,18 @@ export function ServicesGrid({
 }: ServicesGridProps) {
   const getBookHref = (slug: string) =>
     isLoggedIn ? `/book/${slug}` : `/login?redirect=/${locale}/book/${slug}`;
-  const filteredServices = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return services;
-    }
-
-    const query = searchQuery.toLowerCase();
-    return services.filter((service) => {
-      const nameMatch = service.name.toLowerCase().includes(query);
-      const descMatch =
-        service.shortDescription?.toLowerCase().includes(query) ||
-        service.description?.toLowerCase().includes(query);
-      return nameMatch || descMatch;
-    });
-  }, [services, searchQuery]);
-
-  if (filteredServices.length === 0) {
+  if (searchQuery.trim() && services.length === 0) {
+    const message = noResultsMessage.replace("{query}", searchQuery.trim());
     return (
-      <div className="py-12 text-center">
-        <p className="text-lg text-muted-foreground">No services found matching your search.</p>
+      <div className="py-12 text-center" role="status">
+        <p className="text-lg text-gray-600 dark:text-gray-400">{message}</p>
       </div>
     );
   }
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {filteredServices.map((service) => {
+      {services.map((service) => {
         const Icon = iconBySlug[service.slug as ServiceSlug] ?? FileText;
         const colors = iconColorBySlug[service.slug as ServiceSlug] ?? iconColorBySlug["translation-services"];
         const desc = service.shortDescription ?? (service.description && service.description.slice(0, 150)) ?? "";

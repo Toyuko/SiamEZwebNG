@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { getSession } from "@/lib/auth";
 import { ServicesPageClient } from "./ServicesPageClient";
 import { getPublicServicesList } from "@/data-access/service";
+import { serviceSearchCategoryKeys } from "@/config/service-search";
 
 export async function generateMetadata({
   params,
@@ -26,11 +27,13 @@ export default async function ServicesPage({
   setRequestLocale(locale);
   const session = await getSession();
   const isLoggedIn = !!session?.user;
-  const [t] = await Promise.all([
-    getTranslations("services"),
-  ]);
+  const t = await getTranslations("services");
 
   const list = await getPublicServicesList().catch(() => []);
+
+  const categoryLabels = Object.fromEntries(
+    serviceSearchCategoryKeys.map((key) => [key, t(`searchCategories.${key}`)])
+  );
 
   return (
     <ServicesPageClient
@@ -44,6 +47,20 @@ export default async function ServicesPage({
       priceLabel={t("from")}
       isLoggedIn={isLoggedIn}
       locale={locale}
+      categoryLabels={categoryLabels}
+      noResultsMessage={t("searchNoResults")}
+      searchLabels={{
+        placeholder: t("searchCommandPlaceholder"),
+        empty: t("searchNoResults"),
+        listening: t("searchListening"),
+        voiceUnsupported: t("searchVoiceUnsupported"),
+        voicePermissionDenied: t("searchVoicePermissionDenied"),
+        voiceNoSpeech: t("searchVoiceNoSpeech"),
+        voiceError: t("searchVoiceError"),
+        voiceSearchAria: t("searchVoiceAria"),
+        shortcutHint: t("searchShortcutHint"),
+        navigateHint: t("searchNavigateHint"),
+      }}
     />
   );
 }

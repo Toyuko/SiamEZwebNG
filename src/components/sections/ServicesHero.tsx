@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { ServiceSearchBar, type ServiceSearchBarLabels } from "@/components/services/ServiceSearchBar";
 
 interface ServicesHeroProps {
   title: string;
   description: string;
   searchPlaceholder?: string;
   searchButtonText?: string;
-  onSearchChange?: (query: string) => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  onOpenSearchPalette?: () => void;
+  voiceLang?: string;
+  searchLabels: ServiceSearchBarLabels;
 }
 
 export function ServicesHero({
@@ -18,31 +19,14 @@ export function ServicesHero({
   description,
   searchPlaceholder = "What service are you looking for?",
   searchButtonText = "Search",
+  searchQuery,
   onSearchChange,
+  onOpenSearchPalette,
+  voiceLang,
+  searchLabels,
 }: ServicesHeroProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      // Filter services by search query - could navigate to filtered view
-      // For now, just scroll to services section
-      const servicesSection = document.getElementById("services-section");
-      if (servicesSection) {
-        servicesSection.scrollIntoView({ behavior: "smooth" });
-      }
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    onSearchChange?.(value);
-  };
-
   return (
     <section className="relative bg-siam-blue py-16 sm:py-20 md:py-24 lg:py-28">
-      {/* Subtle grid pattern overlay */}
       <div
         className="absolute inset-0 opacity-20"
         style={{
@@ -62,26 +46,26 @@ export function ServicesHero({
             {description}
           </p>
         )}
-        <form onSubmit={handleSearch} className="mx-auto mt-8 max-w-2xl sm:mt-10 md:mt-12">
-          <div className="flex gap-0 rounded-2xl bg-white p-1.5 shadow-xl dark:bg-gray-900">
-            <div className="flex flex-1 items-center gap-3 px-4 py-3">
-              <Search className="h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
-              <Input
-                type="text"
-                placeholder={searchPlaceholder}
-                value={searchQuery}
-                onChange={handleInputChange}
-                className="h-auto border-0 bg-transparent p-0 text-base text-gray-900 placeholder:text-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-gray-100 dark:placeholder:text-gray-500"
-              />
-            </div>
-            <Button 
-              type="submit" 
-              className="rounded-xl bg-siam-blue px-6 py-3 text-base font-medium text-white hover:bg-siam-blue-light focus-visible:ring-2 focus-visible:ring-siam-blue focus-visible:ring-offset-2"
-            >
-              {searchButtonText}
-            </Button>
-          </div>
-        </form>
+        <div className="mx-auto mt-8 sm:mt-10 md:mt-12">
+          <ServiceSearchBar
+            placeholder={searchPlaceholder}
+            searchButtonText={searchButtonText}
+            value={searchQuery}
+            onChange={onSearchChange}
+            onOpenPalette={onOpenSearchPalette}
+            voiceLang={voiceLang}
+            labels={searchLabels}
+          />
+          <p className="mt-3 text-xs text-white/70">
+            <kbd className="rounded border border-white/30 bg-white/10 px-1.5 py-0.5 font-mono text-[10px]">
+              ⌘K
+            </kbd>{" "}
+            /{" "}
+            <kbd className="rounded border border-white/30 bg-white/10 px-1.5 py-0.5 font-mono text-[10px]">
+              Ctrl+K
+            </kbd>
+          </p>
+        </div>
       </div>
     </section>
   );
