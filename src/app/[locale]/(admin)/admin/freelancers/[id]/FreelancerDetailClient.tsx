@@ -22,6 +22,7 @@ type FreelancerDetail = {
     skills: string[];
     verificationStatus: FreelancerVerificationStatus;
     averageRating: number;
+    totalReviews: number;
   } | null;
   jobsAsFreelancer: {
     id: string;

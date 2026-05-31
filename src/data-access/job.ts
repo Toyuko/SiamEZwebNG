@@ -6,7 +6,17 @@ const AWAITING_REVIEW: JobStatus[] = ["completed_awaiting_review", "completed"];
 
 const jobInclude = {
   postedBy: { select: { id: true, name: true, email: true } },
-  freelancer: { select: { id: true, name: true, email: true } },
+  freelancer: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      freelancerProfile: {
+        select: { averageRating: true, totalReviews: true, isSpecialMember: true },
+      },
+    },
+  },
   service: { select: { id: true, slug: true, name: true } },
 } as const;
 

@@ -10,6 +10,7 @@ import { isAwaitingReviewStatus } from "@/lib/jobs/auto-approve";
 import { cn } from "@/lib/utils";
 import type { JobStatus } from "@prisma/client";
 import { Eye, Crown, UserMinus, Trash2 } from "lucide-react";
+import { FreelancerRatingBadge } from "@/components/freelancer/FreelancerRatingBadge";
 
 export type MarketplaceJobRow = {
   id: string;
@@ -27,7 +28,11 @@ export type MarketplaceJobRow = {
     id: string;
     name: string | null;
     email: string;
-    freelancerProfile: { isSpecialMember: boolean } | null;
+    freelancerProfile: {
+      isSpecialMember: boolean;
+      averageRating: number;
+      totalReviews: number;
+    } | null;
   } | null;
   service: { id: string; name: string } | null;
 };
@@ -181,6 +186,13 @@ export function MarketplaceJobsTable({
                               <Crown className="h-3 w-3" />
                               Special Member
                             </span>
+                          )}
+                          {job.freelancer.freelancerProfile && (
+                            <FreelancerRatingBadge
+                              averageRating={job.freelancer.freelancerProfile.averageRating}
+                              totalReviews={job.freelancer.freelancerProfile.totalReviews}
+                              className="mt-1"
+                            />
                           )}
                         </div>
                         {job.status === "in_progress" && (

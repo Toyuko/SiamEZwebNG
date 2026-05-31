@@ -9,7 +9,17 @@ import { formatFreelancerDisplayName } from "@/lib/jobs/freelancer-display";
 
 const jobTrackingInclude = {
   service: { select: { id: true, slug: true, name: true } },
-  freelancer: { select: { id: true, name: true } },
+  freelancer: {
+    select: {
+      id: true,
+      name: true,
+      image: true,
+      freelancerProfile: {
+        select: { averageRating: true, totalReviews: true },
+      },
+    },
+  },
+  review: { select: { id: true, rating: true, comment: true, createdAt: true } },
   trackingHistory: { orderBy: { createdAt: "asc" as const } },
 } as const;
 
@@ -88,9 +98,20 @@ export async function getClientJobTracking(jobId: string, clientId: string) {
       freelancer: job.freelancer
         ? {
             displayName: formatFreelancerDisplayName(job.freelancer.name),
+            image: job.freelancer.image,
+            averageRating: job.freelancer.freelancerProfile?.averageRating ?? 0,
+            totalReviews: job.freelancer.freelancerProfile?.totalReviews ?? 0,
           }
         : null,
     },
+    review: job.review
+      ? {
+          id: job.review.id,
+          rating: job.review.rating,
+          comment: job.review.comment,
+          createdAt: job.review.createdAt.toISOString(),
+        }
+      : null,
     trackingHistory,
     steps,
     isTrackable: isTrackableServiceSlug(serviceSlug),

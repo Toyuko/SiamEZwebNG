@@ -11,6 +11,9 @@ import {
 } from "@/components/client/ClientTrackingTimeline";
 import { ClientTrackingApprovalBanner } from "@/components/client/ClientTrackingApprovalBanner";
 import { ClientDocumentUpload } from "@/components/client/ClientDocumentUpload";
+import { JobReviewPromptCard } from "@/components/client/JobReviewPromptCard";
+import { JobReviewModal } from "@/components/JobReviewModal";
+import { FreelancerRatingBadge } from "@/components/freelancer/FreelancerRatingBadge";
 import { ChatBox } from "@/components/jobs/ChatBox";
 import { TrackingMap } from "@/components/tracking/TrackingMap";
 import type { TrackingStep } from "@/config/job-tracking-steps";
@@ -28,8 +31,19 @@ type TrackingPayload = {
     enableAutoApproval: boolean;
     updatedAt: string;
     service: { id: string; slug: string; name: string } | null;
-    freelancer: { displayName: string } | null;
+    freelancer: {
+      displayName: string;
+      image: string | null;
+      averageRating: number;
+      totalReviews: number;
+    } | null;
   };
+  review: {
+    id: string;
+    rating: number;
+    comment: string | null;
+    createdAt: string;
+  } | null;
   trackingHistory: ClientTrackingHistoryEntry[];
   steps: TrackingStep[] | null;
   isTrackable: boolean;
@@ -52,6 +66,8 @@ export function ClientJobTrackingView({
   const [data, setData] = useState<TrackingPayload | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [statusToasts, setStatusToasts] = useState<StatusToast[]>([]);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewDismissed, setReviewDismissed] = useState(false);
   const toastTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const pushStatusToast = useCallback((message: string) => {
@@ -178,6 +194,23 @@ export function ClientJobTrackingView({
       data.job.trackingStatus
     );
 
+  const showReviewPrompt =
+    data != null &&
+    data.job.status === "approved" &&
+    data.job.freelancer != null &&
+    data.review == null &&
+    !reviewDismissed;
+
+  const reviewTimelineFooter =
+    showReviewPrompt ? (
+      <JobReviewPromptCard
+        title={t("reviewPromptTitle")}
+        description={t("reviewPromptDescription")}
+        buttonLabel={t("reviewPromptButton")}
+        onOpenReview={() => setReviewModalOpen(true)}
+      />
+    ) : null;
+
   return (
     <div className="mx-auto max-w-5xl px-1 pb-10">
       <div
@@ -268,9 +301,27 @@ export function ClientJobTrackingView({
                 <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   {t("assignedFreelancer")}
                 </dt>
-                <dd className="mt-1 flex items-center gap-1.5 text-sm font-medium text-gray-800 dark:text-gray-200">
-                  <User className="h-4 w-4 text-slate-400" />
-                  {data.job.freelancer?.displayName ?? t("freelancerPending")}
+                <dd className="mt-1 space-y-1">
+                  <div className="flex items-center gap-2">
+                    {data.job.freelancer?.image ? (
+                      <img
+                        src={data.job.freelancer.image}
+                        alt=""
+                        className="h-8 w-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <User className="h-4 w-4 text-slate-400" />
+                    )}
+                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                      {data.job.freelancer?.displayName ?? t("freelancerPending")}
+                    </span>
+                  </div>
+                  {data.job.freelancer && (
+                    <FreelancerRatingBadge
+                      averageRating={data.job.freelancer.averageRating}
+                      totalReviews={data.job.freelancer.totalReviews}
+                    />
+                  )}
                 </dd>
               </div>
               <div className="sm:col-span-2">
@@ -320,6 +371,7 @@ export function ClientJobTrackingView({
                   emptyMessage={t("noHistoryYet")}
                   trackingApiPath={`/api/client/jobs/${data.job.id}/tracking`}
                   onTrackingUpdated={handleRealtimeTracking}
+                  timelineFooter={reviewTimelineFooter}
                 />
               ) : (
                 <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -341,6 +393,32 @@ export function ClientJobTrackingView({
               {t("jobApproved")}
             </p>
           )}
+
+          {data.review != null && (
+            <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
+              {t("reviewSubmitted", { rating: data.review.rating })}
+            </p>
+          )}
+
+          <JobReviewModal
+            open={reviewModalOpen}
+            onClose={() => setReviewModalOpen(false)}
+            jobId={data.job.id}
+            freelancerName={data.job.freelancer?.displayName ?? t("freelancerPending")}
+            title={t("reviewModalTitle")}
+            submitLabel={t("reviewSubmit")}
+            cancelLabel={t("reviewCancel")}
+            commentLabel={t("reviewCommentLabel")}
+            commentPlaceholder={t("reviewCommentPlaceholder")}
+            ratingLabel={t("reviewRatingLabel")}
+            submittingLabel={t("reviewSubmitting")}
+            onSuccess={() => {
+              setReviewDismissed(true);
+              pushStatusToast(t("reviewSuccessToast"));
+              void loadTracking({ silent: true });
+            }}
+            onError={(message) => pushStatusToast(message)}
+          />
         </div>
       )}
     </div>

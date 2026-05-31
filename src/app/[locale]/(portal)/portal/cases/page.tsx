@@ -2,6 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { requireAuth } from "@/lib/auth";
 import { getCasesByUserId } from "@/data-access/case";
 import { getJobsByClientId } from "@/data-access/job";
+import { FreelancerRatingBadge } from "@/components/freelancer/FreelancerRatingBadge";
 import type { JobStatus } from "@prisma/client";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -103,6 +104,13 @@ export default async function PortalCasesPage({
                             <p className="text-sm text-gray-600 dark:text-gray-400">
                               {job.service?.name ?? t("serviceJobFallback")}
                             </p>
+                            {job.freelancer?.freelancerProfile && (
+                              <FreelancerRatingBadge
+                                averageRating={job.freelancer.freelancerProfile.averageRating}
+                                totalReviews={job.freelancer.freelancerProfile.totalReviews}
+                                className="mt-1"
+                              />
+                            )}
                             <p className="mt-1 text-xs text-gray-500">
                               {new Date(job.createdAt).toLocaleDateString()}
                             </p>

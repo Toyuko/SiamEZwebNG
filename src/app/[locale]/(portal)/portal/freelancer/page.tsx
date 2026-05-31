@@ -51,9 +51,10 @@ export default async function FreelancerPortalPage({
           </div>
           <div className="rounded-full bg-siam-blue/10 px-4 py-2 text-sm font-medium text-siam-blue">
             {verificationLabel}
-            {profile && profile.averageRating > 0 && (
+            {profile && profile.totalReviews > 0 && (
               <span className="ml-2 text-gray-600 dark:text-gray-400">
-                · ★ {profile.averageRating.toFixed(1)}
+                · ⭐ {profile.averageRating.toFixed(1)} ({profile.totalReviews}{" "}
+                {profile.totalReviews === 1 ? "review" : "reviews"})
               </span>
             )}
           </div>

@@ -14,6 +14,7 @@ type FreelancerRow = {
   freelancerProfile: {
     verificationStatus: string;
     averageRating: number;
+    totalReviews: number;
     skills: string[];
   } | null;
   _count: { jobsAsFreelancer: number };

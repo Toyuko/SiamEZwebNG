@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Check } from "lucide-react";
 import type { TrackingStatus } from "@prisma/client";
 import type { TrackingStep } from "@/config/job-tracking-steps";
@@ -28,6 +28,7 @@ type ClientTrackingTimelineProps = {
   emptyMessage: string;
   trackingApiPath: string;
   onTrackingUpdated?: (payload: TrackingUpdatedPayload) => void;
+  timelineFooter?: ReactNode;
 };
 
 function formatTimestamp(iso: string, locale: string): string {
@@ -136,6 +137,7 @@ export function ClientTrackingTimeline({
   emptyMessage,
   trackingApiPath,
   onTrackingUpdated,
+  timelineFooter,
 }: ClientTrackingTimelineProps) {
   const [trackingHistory, setTrackingHistory] =
     useState<ClientTrackingHistoryEntry[]>(initialHistory);
@@ -396,6 +398,8 @@ export function ClientTrackingTimeline({
           );
         })}
       </div>
+
+      {timelineFooter}
     </>
   );
 }

@@ -17,6 +17,7 @@ import {
 import { jobProgressPercent, isAwaitingReviewStatus } from "@/lib/jobs/auto-approve";
 import { Link } from "@/i18n/navigation";
 import { ArrowLeft, User } from "lucide-react";
+import { FreelancerRatingBadge } from "@/components/freelancer/FreelancerRatingBadge";
 import { cn } from "@/lib/utils";
 
 export default async function JobTrackingPage({
@@ -90,10 +91,26 @@ export default async function JobTrackingPage({
               {formatJobAmount(job.amount, job.currency)}
             </span>
             {job.freelancer && (
-              <span className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                <User className="h-4 w-4" />
-                {job.freelancer.name ?? job.freelancer.email}
-              </span>
+              <div className="flex flex-col gap-1">
+                <span className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                  {job.freelancer.image ? (
+                    <img
+                      src={job.freelancer.image}
+                      alt=""
+                      className="h-8 w-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-4 w-4" />
+                  )}
+                  {job.freelancer.name ?? job.freelancer.email}
+                </span>
+                {job.freelancer.freelancerProfile && (
+                  <FreelancerRatingBadge
+                    averageRating={job.freelancer.freelancerProfile.averageRating}
+                    totalReviews={job.freelancer.freelancerProfile.totalReviews}
+                  />
+                )}
+              </div>
             )}
           </div>
 

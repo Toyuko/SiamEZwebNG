@@ -141,6 +141,7 @@ export async function getFreelancersAdmin(options?: {
           select: {
             verificationStatus: true,
             averageRating: true,
+            totalReviews: true,
             skills: true,
           },
         },
@@ -205,7 +206,9 @@ export async function getFreelancerJobsAdmin(options?: {
             id: true,
             name: true,
             email: true,
-            freelancerProfile: { select: { isSpecialMember: true } },
+            freelancerProfile: {
+              select: { isSpecialMember: true, averageRating: true, totalReviews: true },
+            },
           },
         },
         service: { select: { id: true, name: true } },

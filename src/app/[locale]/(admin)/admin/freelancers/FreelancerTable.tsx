@@ -15,6 +15,7 @@ type FreelancerRow = {
   freelancerProfile: {
     verificationStatus: string;
     averageRating: number;
+    totalReviews: number;
     skills: string[];
   } | null;
   _count: { jobsAsFreelancer: number };
@@ -93,8 +94,8 @@ export function FreelancerTable({
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    {f.freelancerProfile && f.freelancerProfile.averageRating > 0
-                      ? `★ ${f.freelancerProfile.averageRating.toFixed(1)}`
+                    {f.freelancerProfile && f.freelancerProfile.totalReviews > 0
+                      ? `⭐ ${f.freelancerProfile.averageRating.toFixed(1)} (${f.freelancerProfile.totalReviews})`
                       : "—"}
                   </td>
                   <td className="px-4 py-3">{f._count.jobsAsFreelancer}</td>
