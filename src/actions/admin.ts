@@ -265,6 +265,67 @@ export async function approveFreelancerJob(jobId: string) {
   return job;
 }
 
+export async function removeFreelancerFromJob(jobId: string) {
+  await ensureStaffAccess();
+
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    select: {
+      id: true,
+      freelancerId: true,
+      status: true,
+      assignmentSource: true,
+    },
+  });
+
+  if (!job || job.assignmentSource !== "freelancer") {
+    throw new Error("Job not found.");
+  }
+  if (!job.freelancerId) {
+    throw new Error("No freelancer assigned.");
+  }
+  if (job.status !== "in_progress") {
+    throw new Error("Freelancer can only be removed from in-progress jobs.");
+  }
+
+  await prisma.job.update({
+    where: { id: jobId },
+    data: {
+      freelancerId: null,
+      status: "open",
+      trackingStatus: null,
+      trackingNotes: null,
+      isCurrentlyInTransit: false,
+    },
+  });
+
+  return { ok: true as const };
+}
+
+export async function removeMarketplaceJob(jobId: string) {
+  await ensureStaffAccess();
+
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    select: {
+      id: true,
+      status: true,
+      assignmentSource: true,
+    },
+  });
+
+  if (!job || job.assignmentSource !== "freelancer") {
+    throw new Error("Job not found.");
+  }
+  if (job.status === "approved") {
+    throw new Error("Approved jobs cannot be removed.");
+  }
+
+  await prisma.job.delete({ where: { id: jobId } });
+
+  return { ok: true as const };
+}
+
 // ----- Clients -----
 
 export async function getClients(options?: { search?: string; page?: number }) {

@@ -4,12 +4,12 @@ import { useState, useTransition } from "react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { AdminAutoApprovalTimer } from "@/components/admin/AdminAutoApprovalTimer";
-import { approveFreelancerJob } from "@/actions/admin";
+import { approveFreelancerJob, removeFreelancerFromJob, removeMarketplaceJob } from "@/actions/admin";
 import { formatJobAmount } from "@/data-access/job";
 import { isAwaitingReviewStatus } from "@/lib/jobs/auto-approve";
 import { cn } from "@/lib/utils";
 import type { JobStatus } from "@prisma/client";
-import { Eye, Crown } from "lucide-react";
+import { Eye, Crown, UserMinus, Trash2 } from "lucide-react";
 
 export type MarketplaceJobRow = {
   id: string;
@@ -86,6 +86,36 @@ export function MarketplaceJobsTable({
     });
   }
 
+  function handleRemove(jobId: string, assigneeName: string) {
+    if (
+      !confirm(
+        `Remove ${assigneeName} from this job? The job will return to the open marketplace.`
+      )
+    ) {
+      return;
+    }
+
+    startTransition(async () => {
+      await removeFreelancerFromJob(jobId);
+      router.refresh();
+    });
+  }
+
+  function handleRemoveJob(jobId: string, jobTitle: string) {
+    if (
+      !confirm(
+        `Remove "${jobTitle}" from the marketplace listing? This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    startTransition(async () => {
+      await removeMarketplaceJob(jobId);
+      router.refresh();
+    });
+  }
+
   if (jobs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -141,15 +171,35 @@ export function MarketplaceJobsTable({
                   <td className="px-4 py-3">{formatJobAmount(payout, job.currency)}</td>
                   <td className="px-4 py-3">
                     {job.freelancer ? (
-                      <div>
-                        <p className="font-medium">
-                          {job.freelancer.name ?? job.freelancer.email}
-                        </p>
-                        {job.freelancer.freelancerProfile?.isSpecialMember && (
-                          <span className="mt-0.5 inline-flex items-center gap-0.5 rounded-full bg-siam-yellow px-2 py-0.5 text-xs font-medium text-siam-blue-dark">
-                            <Crown className="h-3 w-3" />
-                            Special Member
-                          </span>
+                      <div className="flex items-start gap-2">
+                        <div>
+                          <p className="font-medium">
+                            {job.freelancer.name ?? job.freelancer.email}
+                          </p>
+                          {job.freelancer.freelancerProfile?.isSpecialMember && (
+                            <span className="mt-0.5 inline-flex items-center gap-0.5 rounded-full bg-siam-yellow px-2 py-0.5 text-xs font-medium text-siam-blue-dark">
+                              <Crown className="h-3 w-3" />
+                              Special Member
+                            </span>
+                          )}
+                        </div>
+                        {job.status === "in_progress" && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0 text-red-600 hover:text-red-700"
+                            title="Remove freelancer"
+                            disabled={pending}
+                            onClick={() =>
+                              handleRemove(
+                                job.id,
+                                job.freelancer!.name ?? job.freelancer!.email
+                              )
+                            }
+                          >
+                            <UserMinus className="h-4 w-4" />
+                          </Button>
                         )}
                       </div>
                     ) : (
@@ -183,6 +233,19 @@ export function MarketplaceJobsTable({
                           <Eye className="h-4 w-4" />
                         </Link>
                       </Button>
+                      {job.status !== "approved" && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Remove from listing"
+                          disabled={pending}
+                          onClick={() => handleRemoveJob(job.id, job.title)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
+                      )}
                       {isAwaitingReviewStatus(job.status) && (
                         <Button
                           type="button"
