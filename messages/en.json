@@ -369,8 +369,9 @@
   "services": {
     "title": "Professional Solutions for Your Life in Thailand",
     "description": "Comprehensive administrative and concierge services tailored for expatriates and businesses. Simple, efficient, and reliable.",
-    "metaTitle": "Services",
-    "metaDescription": "Explore our professional services in Thailand: marriage registration, translations, driver's license, police clearance, visa, and more.",
+    "metaTitle": "Services Directory",
+    "metaDescription": "Browse and book SiamEZ services in Thailand: driver's license, vehicle registration, visas, translations, police clearance, and more. Bilingual support via LINE @siamez.",
+    "metaKeywords": "Thailand services, expat services Bangkok, driver's license Thailand, visa services, translation services, SiamEZ",
     "from": "From",
     "serviceMetaTitle": "Service",
     "searchPlaceholder": "What service are you looking for?",
@@ -390,6 +391,57 @@
       "immigrationTravel": "Immigration & travel",
       "automotiveTransport": "Automotive & transport",
       "homeLifestyle": "Home & lifestyle"
+    },
+    "popularTitle": "Popular Services",
+    "popularSubtitle": "Most requested by expats — book online or chat with us on LINE",
+    "allCategory": "All Services",
+    "sortLabel": "Sort by",
+    "resultsCount": "{count} services",
+    "emptyStateDescription": "Can't find what you need? Message us on LINE and we'll help you right away.",
+    "emptyStateLineCta": "Chat on LINE",
+    "lineShortcut": "LINE",
+    "requirementsSummary": "Documents",
+    "journeyTitle": "How booking works",
+    "journeySteps": [
+      "Browse services",
+      "View details & requirements",
+      "Choose date & time",
+      "Submit documents",
+      "Pay deposit or full payment",
+      "Track your booking"
+    ],
+    "trustTitle": "Why book with SiamEZ?",
+    "trustSubtitle": "Fast, reliable, and transparent — with bilingual support every step of the way",
+    "trustItems": [
+      { "title": "Fast & efficient", "text": "Quick turnaround without cutting corners on quality." },
+      { "title": "Reliable coordination", "text": "We handle government offices, embassies, and DLT appointments for you." },
+      { "title": "Transparent pricing", "text": "Clear quotes upfront — no hidden fees or surprises." },
+      { "title": "Bilingual EN/TH support", "text": "Friendly expat-focused service in English and Thai." },
+      { "title": "A decade of experience", "text": "Trusted by 1,000+ clients navigating life in Thailand." },
+      { "title": "LINE support", "text": "Quick answers and booking help on LINE @siamez." }
+    ],
+    "directoryCategories": {
+      "drivingVehicle": "Driving & Vehicle",
+      "immigrationLegal": "Immigration & Legal",
+      "translationDocuments": "Translation & Documents",
+      "homeProperty": "Home & Property",
+      "transportPrivateDriver": "Transport & Private Driver",
+      "eventsLifestyle": "Events & Lifestyle",
+      "businessServices": "Business Services"
+    },
+    "sortOptions": {
+      "popular": "Popular",
+      "fastest": "Fastest",
+      "priceLowToHigh": "Price: Low to High",
+      "newServices": "New Services"
+    },
+    "badges": {
+      "popular": "Popular",
+      "sameDay": "Same Day",
+      "fixedPrice": "Fixed Price",
+      "homeService": "Home Service",
+      "bangkok": "Bangkok",
+      "nationwide": "Nationwide"
     },
     "bookNow": "Book Now",
     "details": "Details",

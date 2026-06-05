@@ -1,15 +1,14 @@
 import type { ServiceSlug } from "@/config/services";
 import { serviceSlugs } from "@/config/services";
+import {
+  serviceDirectoryCategoryKeys,
+  type ServiceDirectoryCategoryKey,
+} from "@/config/service-catalog";
 
-/** Category keys for grouping search results (i18n: services.searchCategories.*) */
-export const serviceSearchCategoryKeys = [
-  "legalDocumentation",
-  "immigrationTravel",
-  "automotiveTransport",
-  "homeLifestyle",
-] as const;
+/** Category keys for directory filters and search grouping (i18n: services.directoryCategories.*) */
+export const serviceSearchCategoryKeys = serviceDirectoryCategoryKeys;
 
-export type ServiceSearchCategoryKey = (typeof serviceSearchCategoryKeys)[number];
+export type ServiceSearchCategoryKey = ServiceDirectoryCategoryKey;
 
 export type ServiceSearchMeta = {
   categoryKey: ServiceSearchCategoryKey;
@@ -21,54 +20,58 @@ export type ServiceSearchMeta = {
  * for Fuse.js (titles/descriptions come from the service record itself).
  */
 export const serviceSearchMeta: Record<ServiceSlug, ServiceSearchMeta> = {
-  "marriage-registration": {
-    categoryKey: "legalDocumentation",
-    keywords: ["marriage", "wedding", "amphur", "embassy", "mfa", "spouse", "register"],
-  },
-  "translation-services": {
-    categoryKey: "legalDocumentation",
-    keywords: ["translate", "translation", "certified", "document", "notarize", "thai english"],
-  },
   "driver-license": {
-    categoryKey: "automotiveTransport",
-    keywords: ["license", "licence", "dlt", "driving", "idp", "motorcycle", "car", "bangkok"],
-  },
-  "police-clearance": {
-    categoryKey: "legalDocumentation",
-    keywords: ["police", "clearance", "background check", "criminal record", "certificate"],
-  },
-  "visa-services": {
-    categoryKey: "immigrationTravel",
-    keywords: ["visa", "immigration", "extension", "stay", "permit", "non-immigrant", "tourist"],
-  },
-  "construction-handyman": {
-    categoryKey: "homeLifestyle",
-    keywords: ["construction", "renovation", "repair", "handyman", "home", "condo"],
-  },
-  "car-motorbike-finder-selling-service": {
-    categoryKey: "automotiveTransport",
-    keywords: ["buy car", "sell car", "motorbike", "motorcycle", "dealer", "vehicle finder"],
+    categoryKey: "drivingVehicle",
+    keywords: ["license", "licence", "dlt", "driving", "idp", "motorcycle", "car", "bangkok", "ใบขับขี่"],
   },
   "vehicle-registration": {
-    categoryKey: "automotiveTransport",
-    keywords: ["registration", "dlt", "plate", "transfer", "car register", "bike register"],
+    categoryKey: "drivingVehicle",
+    keywords: ["registration", "dlt", "plate", "transfer", "car register", "bike register", "จดทะเบียนรถ"],
+  },
+  "visa-services": {
+    categoryKey: "immigrationLegal",
+    keywords: ["visa", "immigration", "extension", "stay", "permit", "non-immigrant", "tourist", "วีซ่า"],
+  },
+  "translation-services": {
+    categoryKey: "translationDocuments",
+    keywords: ["translate", "translation", "certified", "document", "notarize", "thai english", "แปลเอกสาร"],
+  },
+  "police-clearance": {
+    categoryKey: "immigrationLegal",
+    keywords: ["police", "clearance", "background check", "criminal record", "certificate", "หนังสือรับรองความประพฤติ"],
+  },
+  "marriage-registration": {
+    categoryKey: "immigrationLegal",
+    keywords: ["marriage", "wedding", "amphur", "embassy", "mfa", "spouse", "register", "จดทะเบียนสมรส"],
+  },
+  "basic-translation": {
+    categoryKey: "translationDocuments",
+    keywords: ["basic translation", "fixed price", "per page", "certified", "แปลราคาคงที่"],
+  },
+  "construction-handyman": {
+    categoryKey: "homeProperty",
+    keywords: ["construction", "renovation", "repair", "handyman", "home", "condo", "ช่างซ่อม"],
+  },
+  "car-motorbike-finder-selling-service": {
+    categoryKey: "drivingVehicle",
+    keywords: ["buy car", "sell car", "motorbike", "motorcycle", "dealer", "vehicle finder", "ซื้อขายรถ"],
   },
   "transportation-services": {
-    categoryKey: "automotiveTransport",
-    keywords: ["airport", "transfer", "taxi", "shuttle", "transport", "tour"],
+    categoryKey: "transportPrivateDriver",
+    keywords: ["airport", "transfer", "taxi", "shuttle", "transport", "tour", "รับส่งสนามบิน"],
   },
   "private-driver-service": {
-    categoryKey: "automotiveTransport",
-    keywords: ["chauffeur", "driver", "private driver", "hire driver", "daily driver"],
+    categoryKey: "transportPrivateDriver",
+    keywords: ["chauffeur", "driver", "private driver", "hire driver", "daily driver", "คนขับส่วนตัว"],
   },
   "event-planning-venue-services": {
-    categoryKey: "homeLifestyle",
-    keywords: ["event", "wedding venue", "party", "planning", "red door", "venue"],
+    categoryKey: "eventsLifestyle",
+    keywords: ["event", "wedding venue", "party", "planning", "red door", "venue", "จัดงาน"],
   },
 };
 
 const defaultMeta: ServiceSearchMeta = {
-  categoryKey: "legalDocumentation",
+  categoryKey: "businessServices",
   keywords: [],
 };
 

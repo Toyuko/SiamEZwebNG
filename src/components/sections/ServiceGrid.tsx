@@ -23,14 +23,15 @@ import {
 } from "@/config/services";
 
 const iconBySlug: Record<ServiceSlug, LucideIcon> = {
-  "marriage-registration": Heart,
-  "translation-services": FileText,
   "driver-license": Car,
-  "police-clearance": Shield,
+  "vehicle-registration": ClipboardList,
   "visa-services": Plane,
+  "translation-services": FileText,
+  "police-clearance": Shield,
+  "marriage-registration": Heart,
+  "basic-translation": FileText,
   "construction-handyman": Wrench,
   "car-motorbike-finder-selling-service": Handshake,
-  "vehicle-registration": ClipboardList,
   "transportation-services": Bus,
   "private-driver-service": User,
   "event-planning-venue-services": PartyPopper,
@@ -38,14 +39,15 @@ const iconBySlug: Record<ServiceSlug, LucideIcon> = {
 
 // Softer pastel colors matching the design - with dark mode variants
 const iconColorBySlug: Record<ServiceSlug, { bg: string; text: string; shape: "circle" | "square" }> = {
-  "marriage-registration": { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-600 dark:text-red-400", shape: "circle" },
-  "translation-services": { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-600 dark:text-amber-400", shape: "square" },
   "driver-license": { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-600 dark:text-blue-400", shape: "circle" },
-  "police-clearance": { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-600 dark:text-purple-400", shape: "circle" },
+  "vehicle-registration": { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-600 dark:text-purple-400", shape: "square" },
   "visa-services": { bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-400", shape: "circle" },
+  "translation-services": { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-600 dark:text-amber-400", shape: "square" },
+  "police-clearance": { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-600 dark:text-purple-400", shape: "circle" },
+  "marriage-registration": { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-600 dark:text-red-400", shape: "circle" },
+  "basic-translation": { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-600 dark:text-amber-400", shape: "square" },
   "construction-handyman": { bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-600 dark:text-orange-400", shape: "circle" },
   "car-motorbike-finder-selling-service": { bg: "bg-yellow-100 dark:bg-yellow-900/30", text: "text-yellow-700 dark:text-yellow-400", shape: "circle" },
-  "vehicle-registration": { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-600 dark:text-purple-400", shape: "square" },
   "transportation-services": { bg: "bg-cyan-100 dark:bg-cyan-900/30", text: "text-cyan-600 dark:text-cyan-400", shape: "circle" },
   "private-driver-service": { bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-400", shape: "circle" },
   "event-planning-venue-services": { bg: "bg-rose-100 dark:bg-rose-900/30", text: "text-rose-600 dark:text-rose-400", shape: "circle" },
