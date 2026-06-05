@@ -1,35 +1,7 @@
-import {
-  Heart,
-  FileText,
-  Car,
-  Shield,
-  Plane,
-  Wrench,
-  Handshake,
-  ClipboardList,
-  Bus,
-  User,
-  PartyPopper,
-  type LucideIcon,
-} from "lucide-react";
 import type { ServiceCatalogEntry } from "@/config/service-catalog";
 import { getServiceCatalogEntry } from "@/config/service-catalog";
 import type { PublicServiceListItem } from "@/data-access/service";
 import { serviceThumbnailObjectPosition, type ServiceSlug } from "@/config/services";
-
-const iconByName: Record<string, LucideIcon> = {
-  Heart,
-  FileText,
-  Car,
-  Shield,
-  Plane,
-  Wrench,
-  Handshake,
-  ClipboardList,
-  Bus,
-  User,
-  PartyPopper,
-};
 
 export type EnrichedService = PublicServiceListItem & {
   thumbnailImage: string | null;
@@ -43,7 +15,8 @@ export type EnrichedService = PublicServiceListItem & {
   featured: boolean;
   popular: boolean;
   isNew: boolean;
-  icon: LucideIcon;
+  /** Lucide icon name (serializable for server → client props). */
+  iconName: string;
   iconBg: string;
   iconText: string;
   iconShape: "circle" | "square";
@@ -96,7 +69,7 @@ export function enrichServiceForDisplay(
     featured: catalog?.featured ?? false,
     popular: catalog?.popular ?? false,
     isNew: catalog?.isNew ?? false,
-    icon: iconByName[catalog?.icon ?? "FileText"] ?? FileText,
+    iconName: catalog?.icon ?? "FileText",
     iconBg: catalog?.iconStyle.bg ?? "bg-amber-100 dark:bg-amber-900/30",
     iconText: catalog?.iconStyle.text ?? "text-amber-600 dark:text-amber-400",
     iconShape: catalog?.iconStyle.shape ?? "square",

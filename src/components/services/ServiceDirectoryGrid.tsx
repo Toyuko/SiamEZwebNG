@@ -12,6 +12,7 @@ import {
   type ServiceSortKey,
 } from "@/lib/service-display";
 import { trackEvent } from "@/lib/analytics";
+import { getServiceIcon } from "@/lib/service-icons";
 import type { ServiceBadgeKey } from "@/config/service-catalog";
 interface ServiceDirectoryGridProps {
   services: EnrichedService[];
@@ -166,7 +167,7 @@ export function ServiceDirectoryGrid({
               name={service.name}
               description={service.shortDescription ?? ""}
               thumbnailImage={service.thumbnailImage}
-              Icon={service.icon}
+              Icon={getServiceIcon(service.iconName)}
               iconBg={service.iconBg}
               iconText={service.iconText}
               iconShape={service.iconShape}

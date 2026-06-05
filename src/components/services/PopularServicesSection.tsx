@@ -5,6 +5,7 @@ import { ArrowRight, Clock } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 import { formatCurrency } from "@/lib/utils";
 import type { EnrichedService } from "@/lib/service-display";
+import { getServiceIcon } from "@/lib/service-icons";
 
 interface PopularServicesSectionProps {
   services: EnrichedService[];
@@ -31,7 +32,9 @@ export function PopularServicesSection({
         <h2 className="text-2xl font-bold text-foreground sm:text-3xl">{title}</h2>
         <p className="mt-2 max-w-2xl text-muted-foreground">{subtitle}</p>
         <div className="-mx-4 mt-6 flex gap-4 overflow-x-auto px-4 pb-2 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3 xl:grid-cols-5">
-          {services.map((service) => (
+          {services.map((service) => {
+            const Icon = getServiceIcon(service.iconName);
+            return (
             <article
               key={service.slug}
               className="flex w-[min(280px,78vw)] shrink-0 flex-col rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-card sm:w-auto"
@@ -40,7 +43,7 @@ export function PopularServicesSection({
                 <div
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${service.iconBg} ${service.iconText}`}
                 >
-                  <service.icon className="h-5 w-5" aria-hidden />
+                  <Icon className="h-5 w-5" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="font-semibold leading-tight text-card-foreground">
@@ -89,7 +92,8 @@ export function PopularServicesSection({
                 </Link>
               </div>
             </article>
-          ))}
+          );
+          })}
         </div>
       </div>
     </section>
