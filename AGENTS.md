@@ -33,6 +33,8 @@ This is a single Next.js 16 app (`siamez-web-ng`) — a services booking & case-
   cp .env.local .env
   ```
 - WARNING: pulling `--environment=production` brings the real (Neon) `DATABASE_URL`. Do NOT run `prisma db push` / `npm run db:seed` / `migrate` against the production database. For local schema work keep using the local Postgres `siamez` DB.
+- After `env pull`, also `cp .env.local .env` (Prisma CLI reads `.env`) and ensure `AUTH_URL="http://localhost:3000"` is present in both for local NextAuth.
+- Switching configs: a local-Postgres copy of the env is kept at `.env.local.localpg.bak` / `.env.localpg.bak`. Restore those (and start the local cluster) to develop against the local DB instead of the Vercel/Neon Development database. The pulled Development `DATABASE_URL` points at Neon (`...neon.tech/neondb`) — avoid destructive Prisma commands against it.
 
 ### Lint / build notes
 - `npm run lint` runs but currently reports ~40 pre-existing errors (`--max-warnings=0`); these are not environment issues.
