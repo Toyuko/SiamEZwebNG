@@ -23,6 +23,17 @@ This is a single Next.js 16 app (`siamez-web-ng`) — a services booking & case-
 - Client `customer@example.com` / `Customer123!`
 - Freelancer `freelancer@example.com` / `Freelancer123!`
 
+### Vercel integration (project `siam-e-zweb-ng`)
+- The repo is already linked to the Vercel project via `.vercel/project.json` (`projectId prj_RbOMeoZeEcePysM95PRJGhiBDuO6`, team `team_cMJ9dUQnkpzJlkONhFOuJ9MV`). Live URL: https://siam-e-zweb-ng.vercel.app/
+- The Vercel CLI is installed under `~/.npm-global/bin` (on `PATH` via `~/.bashrc`).
+- Non-interactive auth requires a `VERCEL_TOKEN` (add it as a Cursor secret; `vercel login` / `whoami` will hang in the agent because they prompt interactively).
+- Pull cloud env vars into local files (Next.js reads `.env.local`, Prisma CLI reads `.env`):
+  ```bash
+  vercel env pull .env.local --environment=development --token="$VERCEL_TOKEN" --yes
+  cp .env.local .env
+  ```
+- WARNING: pulling `--environment=production` brings the real (Neon) `DATABASE_URL`. Do NOT run `prisma db push` / `npm run db:seed` / `migrate` against the production database. For local schema work keep using the local Postgres `siamez` DB.
+
 ### Lint / build notes
 - `npm run lint` runs but currently reports ~40 pre-existing errors (`--max-warnings=0`); these are not environment issues.
 - Booking flow (core feature): `/en/booking/<service-slug>` (e.g. `/en/booking/marriage-registration`) → submitting creates a guest `Case` row.
