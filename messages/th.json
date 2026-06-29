@@ -175,6 +175,10 @@
     "empty": "ยังไม่มีรายการรถ เพิ่มรายการแรกของคุณได้เลย",
     "confirmDelete": "ลบรายการ \"{label}\" ใช่หรือไม่?",
     "approveBoost": "อนุมัติโปรโมท",
+    "copyDescription": "คัดลอกคำอธิบาย",
+    "copyDescriptionCopied": "คัดลอกคำอธิบายแล้ว",
+    "copyDescriptionError": "คัดลอกคำอธิบายไม่สำเร็จ",
+    "downloadImages": "ดาวน์โหลดรูปภาพ {count, plural, other {# รูป}}",
     "table": {
       "listing": "รายการ",
       "category": "หมวดหมู่",

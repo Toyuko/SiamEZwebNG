@@ -175,6 +175,10 @@
     "empty": "No listings yet. Add your first vehicle.",
     "confirmDelete": "Delete \"{label}\" listing?",
     "approveBoost": "Approve boost",
+    "copyDescription": "Copy description",
+    "copyDescriptionCopied": "Description copied",
+    "copyDescriptionError": "Could not copy description",
+    "downloadImages": "Download {count, plural, one {# image} other {# images}}",
     "table": {
       "listing": "Listing",
       "category": "Category",
