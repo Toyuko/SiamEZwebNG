@@ -58,12 +58,29 @@ async function downloadImage(url: string, filename: string) {
   }
 }
 
-export function SalesListingExportActions({ listing }: { listing: ExportListing }) {
-  const t = useTranslations("salesAdmin");
+type SalesListingExportActionsProps = {
+  listing: ExportListing;
+  translationNamespace?: "salesAdmin" | "sales";
+  variant?: "icon" | "labeled";
+};
+
+export function SalesListingExportActions({
+  listing,
+  translationNamespace = "salesAdmin",
+  variant = "icon",
+}: SalesListingExportActionsProps) {
+  const t = useTranslations(translationNamespace);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
   const [downloading, setDownloading] = useState(false);
 
   const imageCount = getListingImageUrls(listing).length;
+  const copyLabel =
+    copyState === "copied"
+      ? t("copyDescriptionCopied")
+      : copyState === "error"
+        ? t("copyDescriptionError")
+        : t("copyDescription");
+  const downloadLabel = t("downloadImages", { count: imageCount });
 
   const handleCopyDescription = async () => {
     try {
@@ -94,19 +111,41 @@ export function SalesListingExportActions({ listing }: { listing: ExportListing 
     }
   };
 
+  if (variant === "labeled") {
+    return (
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full sm:w-auto"
+          onClick={handleCopyDescription}
+        >
+          <ClipboardCopy className={`h-4 w-4 ${copyState === "copied" ? "text-emerald-600" : ""}`} />
+          {copyLabel}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full sm:w-auto"
+          disabled={imageCount === 0 || downloading}
+          onClick={handleDownloadImages}
+        >
+          {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          {downloadLabel}
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-1">
       <Button
         type="button"
         variant="ghost"
         size="icon"
-        title={
-          copyState === "copied"
-            ? t("copyDescriptionCopied")
-            : copyState === "error"
-              ? t("copyDescriptionError")
-              : t("copyDescription")
-        }
+        title={copyLabel}
         aria-label={t("copyDescription")}
         onClick={handleCopyDescription}
       >
@@ -116,10 +155,8 @@ export function SalesListingExportActions({ listing }: { listing: ExportListing 
         type="button"
         variant="ghost"
         size="icon"
-        title={t("downloadImages", { count: imageCount })}
-        aria-label={t("downloadImages", { count: imageCount })}
-        disabled={imageCount === 0 || downloading}
-        onClick={handleDownloadImages}
+        title={downloadLabel}
+        aria-label={downloadLabel}
       >
         {downloading ? (
           <Loader2 className="h-4 w-4 animate-spin" />

@@ -11,6 +11,7 @@ import { site } from "@/config/site";
 import { Mail, MessageCircle, Phone } from "lucide-react";
 import { SalesVehicleImageGallery } from "@/components/sales/SalesVehicleImageGallery";
 import { SalesListingBoostPanel } from "@/components/sales/SalesListingBoostPanel";
+import { SalesListingExportActions } from "@/components/sales/SalesListingExportActions";
 import {
   isSunsetScootersDealerMotorcycleListing,
   resolveSunsetDealerMotorcycleHeroUrl,
@@ -293,6 +294,17 @@ export default async function SalesVehicleDetailPage({
                 <p className="break-words">{vehicle.description}</p>
               )}
             </div>
+            <SalesListingExportActions
+              listing={{
+                make: vehicle.make,
+                model: vehicle.model,
+                heroImageUrl: resolvedHeroImageUrl,
+                imageUrls: vehicle.imageUrls,
+                description: vehicle.description,
+              }}
+              translationNamespace="sales"
+              variant="labeled"
+            />
             {Object.keys(specifications).length > 0 ? (
               <div className="space-y-2 rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700">
                 <p className="font-semibold">{t("specifications")}</p>
