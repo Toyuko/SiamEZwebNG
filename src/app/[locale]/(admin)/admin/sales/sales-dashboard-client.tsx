@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { SalesListingExportActions } from "@/components/sales/SalesListingExportActions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
@@ -225,6 +226,7 @@ export function SalesDashboardClient({ initialListings }: { initialListings: Lis
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-1">
+                        <SalesListingExportActions listing={listing} />
                         {listing.status === "pending_boost" ? (
                           <Button
                             type="button"
