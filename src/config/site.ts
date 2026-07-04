@@ -8,7 +8,7 @@ export const site = {
   line: "@siamez",
   lineUrl: "https://lin.ee/AHqaAXi",
   social: {
-    facebook: "https://www.facebook.com/siamezofficial",
+    facebook: "https://www.facebook.com/siamezth",
     instagram: "https://www.instagram.com/siam_ez/",
     linkedin: "https://www.linkedin.com/company/siam-ez/",
     youtube: "https://www.youtube.com/@siamezofficial/",
