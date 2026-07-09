@@ -13,9 +13,12 @@ import type {
   PaymentMethod,
   FreelancerVerificationStatus,
   JobStatus,
+  AdCampaignStatus,
+  JobPostingStatus,
 } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { toSlug } from "@/lib/slug";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -38,6 +41,10 @@ export async function getAdminStats() {
     totalFreelancers,
     openFreelancerJobs,
     pendingFreelancerApprovals,
+    totalCompanies,
+    pendingCompanyVerifications,
+    pendingAdCampaigns,
+    openCompanyJobPostings,
   ] = await Promise.all([
     prisma.case.count({ where: { status: { notIn: ["completed", "cancelled"] as CaseStatus[] } } }),
     prisma.user.count({ where: { role: "customer" } }),
@@ -51,6 +58,10 @@ export async function getAdminStats() {
     prisma.job.count({
       where: { status: { in: ["completed_awaiting_review", "completed"] } },
     }),
+    prisma.user.count({ where: { role: "company" } }),
+    prisma.company.count({ where: { isVerified: false } }),
+    prisma.adCampaign.count({ where: { status: "PENDING" } }),
+    prisma.jobPosting.count({ where: { status: "OPEN" } }),
   ]);
   return {
     openCases,
@@ -61,6 +72,10 @@ export async function getAdminStats() {
     totalFreelancers,
     openFreelancerJobs,
     pendingFreelancerApprovals,
+    totalCompanies,
+    pendingCompanyVerifications,
+    pendingAdCampaigns,
+    openCompanyJobPostings,
   };
 }
 
@@ -327,6 +342,321 @@ export async function removeMarketplaceJob(jobId: string) {
   await prisma.job.delete({ where: { id: jobId } });
 
   return { ok: true as const };
+}
+
+// ----- Companies -----
+
+async function uniqueCompanySlugAdmin(baseName: string): Promise<string> {
+  const base = toSlug(baseName) || "company";
+  let slug = base;
+  let attempt = 0;
+  while (await prisma.company.findUnique({ where: { slug } })) {
+    attempt += 1;
+    slug = `${base}-${attempt}`;
+  }
+  return slug;
+}
+
+export async function getCompaniesAdmin(options?: {
+  search?: string;
+  page?: number;
+  verified?: "true" | "false";
+}) {
+  await ensureStaffAccess();
+  const page = options?.page ?? 1;
+  const skip = (page - 1) * ITEMS_PER_PAGE;
+
+  const where = {
+    role: "company" as const,
+    ...(options?.search
+      ? {
+          OR: [
+            { name: { contains: options.search, mode: "insensitive" as const } },
+            { email: { contains: options.search, mode: "insensitive" as const } },
+            {
+              company: {
+                OR: [
+                  { companyName: { contains: options.search, mode: "insensitive" as const } },
+                  { slug: { contains: options.search, mode: "insensitive" as const } },
+                ],
+              },
+            },
+          ],
+        }
+      : {}),
+    ...(options?.verified === "true"
+      ? { company: { isVerified: true } }
+      : options?.verified === "false"
+        ? { company: { isVerified: false } }
+        : {}),
+  };
+
+  const [companies, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        active: true,
+        createdAt: true,
+        company: {
+          select: {
+            id: true,
+            slug: true,
+            companyName: true,
+            industry: true,
+            isVerified: true,
+            _count: {
+              select: {
+                jobPostings: true,
+                adCampaigns: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: ITEMS_PER_PAGE,
+    }),
+    prisma.user.count({ where }),
+  ]);
+
+  return { companies, total, page, totalPages: Math.ceil(total / ITEMS_PER_PAGE) };
+}
+
+export async function getCompanyByIdAdmin(userId: string) {
+  await ensureStaffAccess();
+  return prisma.user.findFirst({
+    where: { id: userId, role: "company" },
+    include: {
+      company: {
+        include: {
+          jobPostings: {
+            orderBy: { createdAt: "desc" },
+            include: {
+              _count: { select: { applications: true } },
+            },
+          },
+          adCampaigns: {
+            orderBy: { createdAt: "desc" },
+          },
+        },
+      },
+    },
+  });
+}
+
+export async function createCompanyAdmin(data: {
+  email: string;
+  companyName: string;
+  phone?: string | null;
+  password?: string;
+  industry?: string | null;
+}) {
+  await ensureStaffAccess();
+  const email = data.email.toLowerCase().trim();
+  const companyName = data.companyName.trim();
+  if (!email || !companyName) throw new Error("Email and company name are required");
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) throw new Error("Email already registered");
+
+  const passwordHash = data.password ? await bcrypt.hash(data.password, 10) : null;
+  const slug = await uniqueCompanySlugAdmin(companyName);
+
+  return prisma.user.create({
+    data: {
+      email,
+      name: companyName,
+      phone: data.phone?.trim() || null,
+      role: "company",
+      passwordHash,
+      company: {
+        create: {
+          companyName,
+          slug,
+          industry: data.industry?.trim() || null,
+        },
+      },
+    },
+    include: { company: true },
+  });
+}
+
+export async function updateCompanyVerification(companyId: string, isVerified: boolean) {
+  await ensureStaffAccess();
+  const company = await prisma.company.update({
+    where: { id: companyId },
+    data: { isVerified },
+  });
+  return company;
+}
+
+export async function setCompanyUserActive(userId: string, active: boolean) {
+  await ensureStaffAccess();
+  const user = await prisma.user.findFirst({
+    where: { id: userId, role: "company" },
+    select: { id: true },
+  });
+  if (!user) throw new Error("Company not found");
+  return prisma.user.update({ where: { id: userId }, data: { active } });
+}
+
+export async function updateCompanyProfileAdmin(
+  companyId: string,
+  data: { slug?: string; taxId?: string | null; companyName?: string }
+) {
+  await ensureStaffAccess();
+  const company = await prisma.company.findUnique({ where: { id: companyId } });
+  if (!company) throw new Error("Company not found");
+
+  let slug = data.slug ? toSlug(data.slug) : undefined;
+  if (slug && slug !== company.slug) {
+    const taken = await prisma.company.findFirst({
+      where: { slug, NOT: { id: companyId } },
+      select: { id: true },
+    });
+    if (taken) throw new Error("Slug already taken");
+  }
+
+  const updated = await prisma.company.update({
+    where: { id: companyId },
+    data: {
+      ...(data.companyName?.trim() ? { companyName: data.companyName.trim() } : {}),
+      ...(slug ? { slug } : {}),
+      ...(data.taxId !== undefined ? { taxId: data.taxId?.trim() || null } : {}),
+    },
+  });
+
+  if (data.companyName?.trim()) {
+    await prisma.user.update({
+      where: { id: company.userId },
+      data: { name: data.companyName.trim() },
+    });
+  }
+
+  return updated;
+}
+
+export async function getAdCampaignsAdmin(options?: {
+  status?: AdCampaignStatus;
+  page?: number;
+  search?: string;
+}) {
+  await ensureStaffAccess();
+  const page = options?.page ?? 1;
+  const skip = (page - 1) * ITEMS_PER_PAGE;
+
+  const where = {
+    ...(options?.status ? { status: options.status } : {}),
+    ...(options?.search
+      ? {
+          OR: [
+            { title: { contains: options.search, mode: "insensitive" as const } },
+            {
+              company: {
+                companyName: { contains: options.search, mode: "insensitive" as const },
+              },
+            },
+          ],
+        }
+      : {}),
+  };
+
+  const [campaigns, total] = await Promise.all([
+    prisma.adCampaign.findMany({
+      where,
+      include: {
+        company: {
+          select: {
+            id: true,
+            companyName: true,
+            slug: true,
+            isVerified: true,
+            userId: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: ITEMS_PER_PAGE,
+    }),
+    prisma.adCampaign.count({ where }),
+  ]);
+
+  return { campaigns, total, page, totalPages: Math.ceil(total / ITEMS_PER_PAGE) };
+}
+
+export async function moderateAdCampaign(
+  campaignId: string,
+  status: Extract<AdCampaignStatus, "ACTIVE" | "PAUSED">
+) {
+  await ensureStaffAccess();
+  return prisma.adCampaign.update({
+    where: { id: campaignId },
+    data: { status },
+  });
+}
+
+export async function getCompanyJobPostingsAdmin(options?: {
+  status?: JobPostingStatus;
+  page?: number;
+  search?: string;
+}) {
+  await ensureStaffAccess();
+  const page = options?.page ?? 1;
+  const skip = (page - 1) * ITEMS_PER_PAGE;
+
+  const where = {
+    ...(options?.status ? { status: options.status } : {}),
+    ...(options?.search
+      ? {
+          OR: [
+            { title: { contains: options.search, mode: "insensitive" as const } },
+            {
+              company: {
+                companyName: { contains: options.search, mode: "insensitive" as const },
+              },
+            },
+          ],
+        }
+      : {}),
+  };
+
+  const [postings, total] = await Promise.all([
+    prisma.jobPosting.findMany({
+      where,
+      include: {
+        company: {
+          select: {
+            id: true,
+            companyName: true,
+            slug: true,
+            userId: true,
+            isVerified: true,
+          },
+        },
+        _count: { select: { applications: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: ITEMS_PER_PAGE,
+    }),
+    prisma.jobPosting.count({ where }),
+  ]);
+
+  return { postings, total, page, totalPages: Math.ceil(total / ITEMS_PER_PAGE) };
+}
+
+export async function forceCloseJobPostingAdmin(jobPostingId: string) {
+  await ensureStaffAccess();
+  return prisma.jobPosting.update({
+    where: { id: jobPostingId },
+    data: { status: "CLOSED" },
+  });
 }
 
 // ----- Clients -----

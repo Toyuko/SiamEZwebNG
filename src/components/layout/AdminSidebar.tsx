@@ -18,6 +18,8 @@ import {
   Car,
   UserCheck,
   ClipboardList,
+  Building2,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
@@ -29,6 +31,9 @@ const nav = [
   { label: "clients", href: "/admin/clients", icon: Users },
   { label: "freelancers", href: "/admin/freelancers", icon: UserCheck },
   { label: "freelancerJobs", href: "/admin/service-jobs?source=freelancer", icon: ClipboardList },
+  { label: "companies", href: "/admin/companies", icon: Building2 },
+  { label: "companyJobs", href: "/admin/company-jobs", icon: Briefcase },
+  { label: "adCampaigns", href: "/admin/ad-campaigns", icon: Megaphone },
   { label: "services", href: "/admin/services", icon: Package },
   { label: "sales", href: "/admin/sales", icon: Car },
   { label: "invoices", href: "/admin/invoices", icon: FileText },

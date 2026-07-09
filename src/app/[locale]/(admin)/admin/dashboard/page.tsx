@@ -8,6 +8,8 @@ import {
   UserCheck,
   Briefcase,
   AlertCircle,
+  Building2,
+  Megaphone,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,7 +42,7 @@ export default async function AdminDashboardPage() {
     <div>
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
       <p className="mt-1 text-gray-600 dark:text-gray-400">
-        Overview of cases, clients, freelancers, and financials.
+        Overview of cases, clients, freelancers, companies, and financials.
       </p>
 
       <h2 className="mt-8 text-lg font-semibold text-gray-900 dark:text-white">Operations</h2>
@@ -105,6 +107,53 @@ export default async function AdminDashboardPage() {
             <p className="text-sm text-gray-500">Awaiting approval</p>
           </CardContent>
         </Card>
+      </div>
+
+      <h2 className="mt-8 text-lg font-semibold text-gray-900 dark:text-white">Companies</h2>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardContent className="p-6">
+            <Building2 className="h-8 w-8 text-siam-blue" />
+            <p className="mt-2 text-2xl font-bold">{stats.totalCompanies}</p>
+            <p className="text-sm text-gray-500">Registered companies</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <AlertCircle className="h-8 w-8 text-amber-500" />
+            <p className="mt-2 text-2xl font-bold">{stats.pendingCompanyVerifications}</p>
+            <p className="text-sm text-gray-500">Awaiting verification</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <Briefcase className="h-8 w-8 text-siam-blue" />
+            <p className="mt-2 text-2xl font-bold">{stats.openCompanyJobPostings}</p>
+            <p className="text-sm text-gray-500">Open company jobs</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <Megaphone className="h-8 w-8 text-amber-500" />
+            <p className="mt-2 text-2xl font-bold">{stats.pendingAdCampaigns}</p>
+            <p className="text-sm text-gray-500">Ads pending review</p>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/admin/companies">Manage companies</Link>
+        </Button>
+        {stats.pendingAdCampaigns > 0 && (
+          <Button variant="primary" size="sm" asChild>
+            <Link href="/admin/ad-campaigns?status=PENDING">
+              Review {stats.pendingAdCampaigns} pending ads
+            </Link>
+          </Button>
+        )}
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/admin/company-jobs">Company jobs</Link>
+        </Button>
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -227,6 +276,9 @@ export default async function AdminDashboardPage() {
         </Button>
         <Button asChild variant="outline">
           <Link href="/admin/freelancers">Freelancers</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/admin/companies">Companies</Link>
         </Button>
         <Button asChild variant="outline">
           <Link href="/admin/invoices">View invoices</Link>
