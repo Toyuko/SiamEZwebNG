@@ -7,7 +7,11 @@ export function resolvePostAuthRedirect(
   role?: string | null
 ): string {
   const roleFallback =
-    role === "freelancer" ? `/${locale}/portal/freelancer` : `/${locale}/portal`;
+    role === "freelancer"
+      ? `/${locale}/portal/freelancer`
+      : role === "company"
+        ? `/${locale}/portal/company`
+        : `/${locale}/portal`;
   const fallback = roleFallback;
   if (!redirect || typeof redirect !== "string") return fallback;
   const trimmed = redirect.trim();

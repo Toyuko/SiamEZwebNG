@@ -18,8 +18,9 @@
     "invalidCredentials": "Invalid email or password.",
     "signInAfterRegisterFailed": "Account created. Please sign in manually.",
     "accountType": "Account type",
-    "accountTypeCustomer": "Client / Company",
-    "accountTypeFreelancer": "Freelancer"
+    "accountTypeCustomer": "Client",
+    "accountTypeFreelancer": "Freelancer",
+    "accountTypeCompany": "Company"
   },
   "common": {
     "home": "Home",
@@ -54,6 +55,7 @@
     "home": "Home",
     "services": "Services",
     "sales": "Sales",
+    "freelancers": "Freelancers",
     "about": "About",
     "gallery": "Gallery",
     "testimonials": "Testimonials",
@@ -109,9 +111,15 @@
       "qrAlt": "PromptPay QR code",
       "priceThb": "฿{amount}",
       "packages": {
-        "1w": { "label": "1 week (7 days)" },
-        "2w": { "label": "2 weeks (14 days)" },
-        "4w": { "label": "4 weeks (28 days)" }
+        "1w": {
+          "label": "1 week (7 days)"
+        },
+        "2w": {
+          "label": "2 weeks (14 days)"
+        },
+        "4w": {
+          "label": "4 weeks (28 days)"
+        }
       }
     },
     "searchPlaceholder": "Search make or model",
@@ -421,12 +429,30 @@
     "trustTitle": "Why book with SiamEZ?",
     "trustSubtitle": "Fast, reliable, and transparent — with bilingual support every step of the way",
     "trustItems": [
-      { "title": "Fast & efficient", "text": "Quick turnaround without cutting corners on quality." },
-      { "title": "Reliable coordination", "text": "We handle government offices, embassies, and DLT appointments for you." },
-      { "title": "Transparent pricing", "text": "Clear quotes upfront — no hidden fees or surprises." },
-      { "title": "Bilingual EN/TH support", "text": "Friendly expat-focused service in English and Thai." },
-      { "title": "A decade of experience", "text": "Trusted by 1,000+ clients navigating life in Thailand." },
-      { "title": "LINE support", "text": "Quick answers and booking help on LINE @siamez." }
+      {
+        "title": "Fast & efficient",
+        "text": "Quick turnaround without cutting corners on quality."
+      },
+      {
+        "title": "Reliable coordination",
+        "text": "We handle government offices, embassies, and DLT appointments for you."
+      },
+      {
+        "title": "Transparent pricing",
+        "text": "Clear quotes upfront — no hidden fees or surprises."
+      },
+      {
+        "title": "Bilingual EN/TH support",
+        "text": "Friendly expat-focused service in English and Thai."
+      },
+      {
+        "title": "A decade of experience",
+        "text": "Trusted by 1,000+ clients navigating life in Thailand."
+      },
+      {
+        "title": "LINE support",
+        "text": "Quick answers and booking help on LINE @siamez."
+      }
     ],
     "directoryCategories": {
       "drivingVehicle": "Driving & Vehicle",
@@ -632,17 +658,38 @@
     "packagesTitle": "Packages & indicative pricing",
     "packagesIntro": "Final totals depend on your license type and add-ons. Your coordinator confirms everything in writing before payment.",
     "packageRows": [
-      { "name": "Conversion (foreign license)", "price": "Bike 4,500 THB · Car 6,000 THB" },
-      { "name": "Renewal", "price": "Bike 3,500 THB · Car 4,500 THB" },
-      { "name": "Apply new", "price": "Bike 3,500 THB · Car 5,000 THB · Both 7,500 THB" },
-      { "name": "International Driving Permit (IDP)", "price": "3,500 THB" }
+      {
+        "name": "Conversion (foreign license)",
+        "price": "Bike 4,500 THB · Car 6,000 THB"
+      },
+      {
+        "name": "Renewal",
+        "price": "Bike 3,500 THB · Car 4,500 THB"
+      },
+      {
+        "name": "Apply new",
+        "price": "Bike 3,500 THB · Car 5,000 THB · Both 7,500 THB"
+      },
+      {
+        "name": "International Driving Permit (IDP)",
+        "price": "3,500 THB"
+      }
     ],
     "addonsTitle": "Optional add-ons",
     "addonsIntro": "Prices update your package total in real time when selected.",
     "addonRows": [
-      { "name": "FastTrack booking", "price": "+1,500 THB" },
-      { "name": "Translation letter", "price": "+2,500 THB" },
-      { "name": "Address certificate assistance", "price": "+2,500 THB" }
+      {
+        "name": "FastTrack booking",
+        "price": "+1,500 THB"
+      },
+      {
+        "name": "Translation letter",
+        "price": "+2,500 THB"
+      },
+      {
+        "name": "Address certificate assistance",
+        "price": "+2,500 THB"
+      }
     ],
     "schedulingTitle": "Scheduling note",
     "schedulingBody": "Allow at least three business days before your preferred date. Weekends are usually unavailable. If you process car and motorcycle together, expect a longer appointment block.",
@@ -1088,6 +1135,9 @@
     "termsOfService": "Terms of Service",
     "contactSupport": "Contact Support",
     "freelancerDashboard": "Freelancer Hub",
+    "companyDashboard": "Company Hub",
+    "companyJobs": "Jobs & Talent",
+    "companyAds": "Ad Campaigns",
     "settings": "Settings",
     "settingsSubtitle": "Manage your profile, security, notifications, and privacy.",
     "logout": "Logout",
@@ -1149,7 +1199,8 @@
       "confirmEmailLabel": "Type your email to confirm",
       "deactivateAccount": "Deactivate my account",
       "genericError": "Something went wrong. Please try again."
-    }
+    },
+    "publicProfile": "Public Profile"
   },
   "clientTracking": {
     "pageTitle": "Track your service",
@@ -1284,6 +1335,80 @@
       "approved": "Approved"
     }
   },
+  "company": {
+    "dashboardTitle": "Company Hub",
+    "dashboardSubtitle": "Manage your company profile, hire freelancers, and run ad campaigns.",
+    "verifiedBusiness": "Verified Business",
+    "verificationPending": "Verification pending",
+    "tabOverview": "Overview & Profile",
+    "tabJobs": "Jobs & Talent",
+    "tabAds": "Ad Campaigns",
+    "statsActiveJobs": "Active jobs",
+    "statsTotalSpent": "Total job budget",
+    "statsAdImpressions": "Ad impressions",
+    "statsAdClicks": "Ad clicks",
+    "statsCtr": "CTR",
+    "profileTitle": "Company profile",
+    "companyName": "Company name",
+    "slug": "Profile URL slug",
+    "slugHint": "Public page at /companies/your-slug",
+    "logoUrl": "Logo image URL",
+    "bannerUrl": "Banner image URL",
+    "website": "Website",
+    "description": "Description",
+    "industry": "Industry",
+    "companySize": "Company size",
+    "taxId": "Tax ID",
+    "address": "Address",
+    "saveProfile": "Save profile",
+    "saving": "Saving…",
+    "savedProfile": "Profile saved.",
+    "viewPublicProfile": "View public profile",
+    "postJobTitle": "Post a job",
+    "jobTitle": "Job title",
+    "jobDescription": "Description",
+    "jobBudget": "Budget (THB)",
+    "jobSkills": "Required skills (comma-separated)",
+    "createJob": "Post job",
+    "activeJobs": "Your job postings",
+    "noJobs": "No job postings yet.",
+    "applicants": "Applicants",
+    "noApplicants": "No applications yet.",
+    "hire": "Hire",
+    "decline": "Decline",
+    "status": "Status",
+    "createAdTitle": "Create ad campaign",
+    "adTitle": "Campaign title",
+    "adImageUrl": "Banner image URL",
+    "adTargetUrl": "Target URL",
+    "adBudget": "Budget (THB)",
+    "adDailyLimit": "Daily limit (THB, optional)",
+    "createAd": "Create campaign",
+    "adPerformance": "Campaign performance",
+    "noAds": "No ad campaigns yet.",
+    "impressions": "Impressions",
+    "clicks": "Clicks",
+    "ctr": "CTR",
+    "pauseAd": "Pause",
+    "activateAd": "Activate",
+    "about": "About",
+    "activeOpenings": "Active openings",
+    "noOpenings": "No open positions right now.",
+    "apply": "Apply",
+    "applySuccess": "Application submitted.",
+    "alreadyApplied": "You already applied.",
+    "trustReviews": "Trust & history",
+    "trustPlaceholder": "Reviews from freelancers who have worked with this company will appear here.",
+    "completedJobs": "Completed engagements",
+    "budgetLabel": "Budget",
+    "skillsLabel": "Skills",
+    "visitWebsite": "Visit website",
+    "location": "Location",
+    "coverNote": "Cover note (optional)",
+    "submitApplication": "Submit application",
+    "loginToApply": "Sign in as a freelancer to apply",
+    "errorGeneric": "Something went wrong. Please try again."
+  },
   "jobChat": {
     "title": "Messages",
     "with": "Chat with {name}",
@@ -1325,5 +1450,84 @@
     "qrAlt": "PromptPay QR code",
     "qrLoading": "Generating payment QR…",
     "qrLoadError": "Could not generate an amount-specific QR. Use the standard QR and enter the amount in your bank app if asked."
+  },
+  "freelancerProfile": {
+    "title": "Public Freelancer Profile",
+    "subtitle": "Create a public profile so clients can find you and inquire about your services.",
+    "roleNotAllowed": "Your account type cannot create a public freelancer profile.",
+    "backToPortal": "Back to portal",
+    "visibilityTitle": "Visibility",
+    "visibilityHint": "Control whether your profile appears in the public freelancer directory.",
+    "listPublicly": "List my profile publicly on SiamEZ",
+    "listPubliclyHint": "When enabled, anyone can view your profile at your public URL.",
+    "slugLabel": "Public URL username",
+    "slugPlaceholder": "your-name",
+    "slugHint": "Lowercase letters, numbers, and hyphens only (3–48 characters).",
+    "viewPublicProfile": "View public profile",
+    "detailsTitle": "Professional details",
+    "titleLabel": "Professional title",
+    "titlePlaceholder": "e.g. Certified Translator",
+    "bioLabel": "Bio",
+    "bioPlaceholder": "Tell clients about {name} — experience, languages, and how you help.",
+    "hourlyRateLabel": "Hourly rate (optional)",
+    "skillsTitle": "Skills & tags",
+    "skillsHint": "Add skills clients can search for (e.g. Translation, Visa support).",
+    "noSkillsYet": "No skills added yet.",
+    "skillPlaceholder": "Add a skill",
+    "addSkill": "Add",
+    "removeSkill": "Remove {skill}",
+    "servicesTitle": "Services offered",
+    "servicesHint": "List specific services with optional fixed prices.",
+    "serviceItem": "Service {n}",
+    "serviceTitleLabel": "Service name",
+    "serviceTitlePlaceholder": "e.g. Marriage Registration Assistance",
+    "serviceDescriptionLabel": "Description",
+    "serviceDescriptionPlaceholder": "What is included?",
+    "servicePriceLabel": "Price (optional)",
+    "addService": "Add service",
+    "removeService": "Remove service",
+    "save": "Save profile",
+    "saving": "Saving…",
+    "saved": "Profile saved.",
+    "previewProfile": "Preview profile"
+  },
+  "freelancersPublic": {
+    "metaTitle": "Find Freelancers in Thailand",
+    "metaDescription": "Browse verified freelancers on SiamEZ for translation, visas, documents, and relocation support.",
+    "title": "Freelancers",
+    "subtitle": "Connect with independent professionals who help make life in Thailand easier.",
+    "searchPlaceholder": "Search by name, title, or skill…",
+    "search": "Search",
+    "searching": "Searching…",
+    "allSkills": "All",
+    "resultsCount": "{count, plural, =0 {No freelancers} one {# freelancer} other {# freelancers}}",
+    "emptyTitle": "No public freelancers yet",
+    "emptyDescription": "Try a different search, or check back soon as more professionals join.",
+    "loadError": "Could not load freelancers. Please try again.",
+    "verified": "Verified",
+    "verifiedVendor": "Verified Vendor",
+    "freelancerBadge": "Freelancer",
+    "about": "About",
+    "skills": "Skills",
+    "servicesOffered": "Services offered",
+    "hourlyRate": "Hourly rate",
+    "rateOnRequest": "Rate available on inquiry",
+    "contactCta": "Inquiry / Contact",
+    "contactHint": "Send a message through SiamEZ — we never share your email publicly.",
+    "reviewsCount": "{count, plural, one {# review} other {# reviews}}",
+    "notFoundTitle": "Freelancer not found",
+    "profileMetaTitle": "{name} — Freelancer on SiamEZ",
+    "profileMetaDescription": "Hire {name}, {title}, on SiamEZ.",
+    "inquiryTitle": "Contact {name}",
+    "inquiryName": "Your name",
+    "inquiryEmail": "Your email",
+    "inquiryPhone": "Phone (optional)",
+    "inquiryMessage": "Message",
+    "inquirySend": "Send inquiry",
+    "inquirySending": "Sending…",
+    "inquirySuccess": "Your inquiry was sent. The freelancer will get back to you soon.",
+    "inquiryError": "Could not send your inquiry. Please try again.",
+    "close": "Close",
+    "cancel": "Cancel"
   }
 }

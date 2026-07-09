@@ -1,8 +1,8 @@
 "use client";
 
+import { Suspense, useState, useEffect } from "react";
 import { PortalSidebar } from "@/components/layout/PortalSidebar";
 import { PortalTopBar } from "@/components/portal/PortalTopBar";
-import { useState, useEffect } from "react";
 import { usePathname } from "@/i18n/navigation";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,16 @@ export function PortalLayoutClient({
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <PortalSidebar isFreelancer={user.role === "freelancer"} />
+        <Suspense
+          fallback={
+            <aside className="flex h-screen w-64 shrink-0 flex-col bg-[#21438F]" />
+          }
+        >
+          <PortalSidebar
+            isFreelancer={user.role === "freelancer"}
+            isCompany={user.role === "company"}
+          />
+        </Suspense>
       </aside>
 
       <div className="flex flex-1 flex-col overflow-hidden lg:ml-0">
@@ -55,7 +64,13 @@ export function PortalLayoutClient({
 
         <PortalTopBar
           userName={user.name || user.email}
-          userRole={user.role === "freelancer" ? "Freelancer Account" : "Client Account"}
+          userRole={
+            user.role === "freelancer"
+              ? "Freelancer Account"
+              : user.role === "company"
+                ? "Corporate Account"
+                : "Client Account"
+          }
           userAvatar={user.image ?? undefined}
         />
 

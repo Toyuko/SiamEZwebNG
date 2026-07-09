@@ -31,6 +31,7 @@ export const site = {
 export const publicNav = [
   { label: "Home", href: "/" },
   { label: "Services", href: "/services" },
+  { label: "Freelancers", href: "/freelancers" },
   { label: "About", href: "/about" },
   { label: "Gallery", href: "/gallery" },
   { label: "Testimonials", href: "/testimonials" },

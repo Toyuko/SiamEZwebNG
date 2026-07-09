@@ -1,4 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
+import { redirect } from "next/navigation";
 import { SummaryCard } from "@/components/portal/SummaryCard";
 import { ActivityFeed } from "@/components/portal/ActivityFeed";
 import { PortalFooter } from "@/components/portal/PortalFooter";
@@ -18,6 +19,14 @@ export default async function PortalDashboardPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const session = await requireAuth();
+
+  if (session.user.role === "company") {
+    redirect(`/${locale}/portal/company`);
+  }
+  if (session.user.role === "freelancer") {
+    redirect(`/${locale}/portal/freelancer`);
+  }
+
   const t = await getTranslations("portal");
 
   const [cases, invoices, documents, serviceJobs] = await Promise.all([

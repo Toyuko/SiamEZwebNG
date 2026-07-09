@@ -237,8 +237,26 @@ async function main() {
   const freelancerPassword = process.env.SEED_FREELANCER_PASSWORD ?? "Freelancer123!";
   const freelancerHash = await bcrypt.hash(freelancerPassword, 10);
   const freelancerProfileData = {
+    slug: "sam-freelancer",
+    isPublic: true,
+    title: "Thailand Relocation Specialist",
     skills: ["Translation", "Visa support", "Document prep"],
-    bio: "Experienced Thailand relocation specialist.",
+    bio: "Experienced Thailand relocation specialist helping expats with visas, documents, and settling in.",
+    hourlyRate: 80_000,
+    services: [
+      {
+        title: "Marriage Registration Assistance",
+        description: "Full support for marriage registration at the district office.",
+        price: 500_000,
+        currency: "THB",
+      },
+      {
+        title: "Document Translation (EN ↔ TH)",
+        description: "Certified translation for official documents.",
+        price: 150_000,
+        currency: "THB",
+      },
+    ],
     verificationStatus: "verified" as const,
     averageRating: 4.8,
   };
@@ -265,6 +283,80 @@ async function main() {
     update: freelancerProfileData,
   });
   console.log("Freelancer user ensured:", freelancerEmail);
+
+  const companyEmail = (process.env.SEED_COMPANY_EMAIL ?? "company@example.com").toLowerCase();
+  const companyPassword = process.env.SEED_COMPANY_PASSWORD ?? "Company123!";
+  const companyHash = await bcrypt.hash(companyPassword, 10);
+  const companyUser = await prisma.user.upsert({
+    where: { email: companyEmail },
+    create: {
+      email: companyEmail,
+      name: "Bangkok Legal Partners",
+      role: "company",
+      passwordHash: companyHash,
+      active: true,
+    },
+    update: {
+      name: "Bangkok Legal Partners",
+      role: "company",
+      passwordHash: companyHash,
+      active: true,
+    },
+    select: { id: true },
+  });
+  const companyProfileData = {
+    slug: "bangkok-legal-partners",
+    companyName: "Bangkok Legal Partners",
+    website: "https://example.com",
+    description:
+      "Full-service corporate and immigration support for foreign businesses operating in Thailand.",
+    industry: "Legal Services",
+    companySize: "11-50",
+    taxId: "0105551234567",
+    address: "Sukhumvit Rd, Bangkok, Thailand",
+    isVerified: true,
+  };
+  const company = await prisma.company.upsert({
+    where: { userId: companyUser.id },
+    create: { userId: companyUser.id, ...companyProfileData },
+    update: companyProfileData,
+  });
+  const existingPosting = await prisma.jobPosting.findFirst({
+    where: { companyId: company.id, title: "Thai-English legal translator (contract)" },
+  });
+  if (!existingPosting) {
+    await prisma.jobPosting.create({
+      data: {
+        companyId: company.id,
+        title: "Thai-English legal translator (contract)",
+        description:
+          "Translate and certify corporate contracts for a Bangkok-based foreign investment firm. Remote-friendly with occasional in-person meetings.",
+        budget: 250_000,
+        currency: "THB",
+        requiredSkills: ["Translation", "Legal", "Thai", "English"],
+        status: "OPEN",
+      },
+    });
+  }
+  const existingAd = await prisma.adCampaign.findFirst({
+    where: { companyId: company.id, title: "Hire verified freelancers with BLP" },
+  });
+  if (!existingAd) {
+    await prisma.adCampaign.create({
+      data: {
+        companyId: company.id,
+        title: "Hire verified freelancers with BLP",
+        imageUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200",
+        targetUrl: "https://example.com/careers",
+        budget: 50_000,
+        dailyLimit: 5_000,
+        impressions: 120,
+        clicks: 8,
+        status: "ACTIVE",
+      },
+    });
+  }
+  console.log("Company user ensured:", companyEmail);
 
   if (customerUser) {
     const sampleJobs = [

@@ -8,13 +8,25 @@ import { linkGuestCasesToUser } from "@/data-access/case";
 import * as bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { toSlug } from "@/lib/slug";
 
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(1, "Name is required"),
-  accountType: z.enum(["customer", "freelancer"]).default("customer"),
+  accountType: z.enum(["customer", "freelancer", "company"]).default("customer"),
 });
+
+async function uniqueCompanySlug(baseName: string): Promise<string> {
+  const base = toSlug(baseName) || "company";
+  let slug = base;
+  let attempt = 0;
+  while (await prisma.company.findUnique({ where: { slug } })) {
+    attempt += 1;
+    slug = `${base}-${attempt}`;
+  }
+  return slug;
+}
 
 export async function register(_prev: unknown, formData: FormData) {
   const parsed = registerSchema.safeParse({
@@ -35,16 +47,32 @@ export async function register(_prev: unknown, formData: FormData) {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const role = accountType === "freelancer" ? "freelancer" : "customer";
+  const role =
+    accountType === "freelancer"
+      ? "freelancer"
+      : accountType === "company"
+        ? "company"
+        : "customer";
+
+  const companyName = name.trim();
   const newUser = await prisma.user.create({
     data: {
       email: email.toLowerCase(),
-      name: name.trim(),
+      name: companyName,
       passwordHash,
       role,
       ...(role === "freelancer"
         ? { freelancerProfile: { create: {} } }
-        : {}),
+        : role === "company"
+          ? {
+              company: {
+                create: {
+                  companyName,
+                  slug: await uniqueCompanySlug(companyName),
+                },
+              },
+            }
+          : {}),
     },
   });
 

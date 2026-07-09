@@ -1,6 +1,7 @@
 "use client";
 
 import { Link, usePathname } from "@/i18n/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   LayoutDashboard,
   FolderOpen,
@@ -10,6 +11,9 @@ import {
   Moon,
   Car,
   Briefcase,
+  Building2,
+  Megaphone,
+  UserRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
@@ -22,18 +26,35 @@ const clientNav = [
   { labelKey: "mySales", href: "/portal/sales", icon: Car },
   { labelKey: "invoices", href: "/portal/invoices", icon: CreditCard },
   { labelKey: "documents", href: "/portal/documents", icon: FileText },
+  { labelKey: "publicProfile", href: "/portal/freelancer-profile", icon: UserRound },
   { labelKey: "settings", href: "/portal/profile", icon: Settings },
 ];
 
 const freelancerNav = [
   { labelKey: "freelancerDashboard", href: "/portal/freelancer", icon: Briefcase },
+  { labelKey: "publicProfile", href: "/portal/freelancer-profile", icon: UserRound },
   { labelKey: "settings", href: "/portal/profile", icon: Settings },
 ];
 
-export function PortalSidebar({ isFreelancer = false }: { isFreelancer?: boolean }) {
+const companyNav = [
+  { labelKey: "companyDashboard", href: "/portal/company", icon: Building2 },
+  { labelKey: "companyJobs", href: "/portal/company?tab=jobs", icon: Briefcase },
+  { labelKey: "companyAds", href: "/portal/company?tab=ads", icon: Megaphone },
+  { labelKey: "settings", href: "/portal/profile", icon: Settings },
+];
+
+export function PortalSidebar({
+  isFreelancer = false,
+  isCompany = false,
+}: {
+  isFreelancer?: boolean;
+  isCompany?: boolean;
+}) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const t = useTranslations("portal");
-  const nav = isFreelancer ? freelancerNav : clientNav;
+  const nav = isCompany ? companyNav : isFreelancer ? freelancerNav : clientNav;
+  const currentTab = searchParams.get("tab");
 
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col bg-[#21438F] dark:bg-[#1a3569]">
@@ -48,8 +69,24 @@ export function PortalSidebar({ isFreelancer = false }: { isFreelancer?: boolean
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-4 py-4">
         {nav.map((item) => {
-          const isActive =
-            pathname === item.href || (item.href !== "/portal" && pathname.startsWith(item.href));
+          const hrefPath = item.href.split("?")[0] ?? item.href;
+          const hrefTab = item.href.includes("tab=")
+            ? new URLSearchParams(item.href.split("?")[1]).get("tab")
+            : null;
+          let isActive = false;
+          if (isCompany && hrefPath === "/portal/company") {
+            if (hrefTab) {
+              isActive = pathname === "/portal/company" && currentTab === hrefTab;
+            } else {
+              isActive =
+                pathname === "/portal/company" &&
+                (!currentTab || currentTab === "overview");
+            }
+          } else {
+            isActive =
+              pathname === hrefPath ||
+              (hrefPath !== "/portal" && pathname.startsWith(hrefPath));
+          }
           const Icon = item.icon;
           return (
             <Link

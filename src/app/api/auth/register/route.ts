@@ -6,14 +6,26 @@ import { linkGuestCasesToUser } from "@/data-access/case";
 import { createApiJwtForUser } from "@/lib/auth/api-jwt";
 import { ok, fail } from "@/lib/api-response";
 import { prisma } from "@/lib/db";
+import { toSlug } from "@/lib/slug";
 
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(1, "Name is required"),
   phone: z.string().optional(),
-  accountType: z.enum(["customer", "freelancer"]).optional(),
+  accountType: z.enum(["customer", "freelancer", "company"]).optional(),
 });
+
+async function uniqueCompanySlug(baseName: string): Promise<string> {
+  const base = toSlug(baseName) || "company";
+  let slug = base;
+  let attempt = 0;
+  while (await prisma.company.findUnique({ where: { slug } })) {
+    attempt += 1;
+    slug = `${base}-${attempt}`;
+  }
+  return slug;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,7 +53,12 @@ export async function POST(request: NextRequest) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const role = parsed.data.accountType === "freelancer" ? "freelancer" : "customer";
+    const role =
+      parsed.data.accountType === "freelancer"
+        ? "freelancer"
+        : parsed.data.accountType === "company"
+          ? "company"
+          : "customer";
     const newUser = await prisma.user.create({
       data: {
         email,
@@ -50,7 +67,16 @@ export async function POST(request: NextRequest) {
         role,
         ...(role === "freelancer"
           ? { freelancerProfile: { create: {} } }
-          : {}),
+          : role === "company"
+            ? {
+                company: {
+                  create: {
+                    companyName: name,
+                    slug: await uniqueCompanySlug(name),
+                  },
+                },
+              }
+            : {}),
       },
     });
 

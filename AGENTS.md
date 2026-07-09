@@ -22,6 +22,7 @@ This is a single Next.js 16 app (`siamez-web-ng`) — a services booking & case-
 - Admin `admin@siamez.com` / `ChangeMeInProduction!`
 - Client `customer@example.com` / `Customer123!`
 - Freelancer `freelancer@example.com` / `Freelancer123!`
+- Company `company@example.com` / `Company123!`
 
 ### Lint / build notes
 - `npm run lint` runs but currently reports ~40 pre-existing errors (`--max-warnings=0`); these are not environment issues.

@@ -17,6 +17,7 @@ enum UserRole {
   staff
   customer
   freelancer
+  company
 }
 
 model User {
@@ -48,9 +49,11 @@ model User {
   eventsAsStaff  Event[]           @relation("EventStaff")
   salesVehiclesCreated SalesVehicle[]
   freelancerProfile   FreelancerProfile?
+  company             Company?
   jobsPosted          Job[]              @relation("JobPostedBy")
   jobsAsFreelancer    Job[]              @relation("JobFreelancer")
   marketplaceJobs     MarketplaceJob[]   @relation("MarketplaceJobFreelancer")
+  jobApplications     JobApplication[]   @relation("JobApplicationFreelancer")
   reviewsAsClient     Review[]           @relation("ReviewClient")
   reviewsAsFreelancer Review[]           @relation("ReviewFreelancer")
 }
@@ -64,10 +67,19 @@ enum FreelancerVerificationStatus {
 model FreelancerProfile {
   id                 String                       @id @default(cuid())
   userId             String                       @unique @map("user_id")
+  /// URL-safe public username (e.g. /freelancers/sam-translator). Null until claimed.
+  slug               String?                      @unique
+  isPublic           Boolean                      @default(false) @map("is_public")
+  /// Professional headline, e.g. "Certified Translator"
+  title              String?
   skills             String[]                     @default([])
   bio                String?                      @db.Text
+  /// Hourly rate in smallest currency unit (satang). Null = not listed.
+  hourlyRate         Int?                         @map("hourly_rate")
+  /// Structured service offerings: [{ title, description?, price? (satang), currency? }]
+  services           Json                         @default("[]")
   verificationStatus FreelancerVerificationStatus @default(pending) @map("verification_status")
-  isSpecialMember      Boolean                      @default(false) @map("is_special_member")
+  isSpecialMember    Boolean                      @default(false) @map("is_special_member")
   averageRating      Float                        @default(0) @map("average_rating")
   totalReviews       Int                          @default(0) @map("total_reviews")
   expoPushToken      String?                      @map("expo_push_token")
@@ -76,7 +88,112 @@ model FreelancerProfile {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([isPublic])
   @@map("freelancer_profiles")
+}
+
+// ----- Corporate / Company tier -----
+
+enum JobPostingStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CLOSED
+}
+
+enum JobApplicationStatus {
+  PENDING
+  HIRED
+  DECLINED
+}
+
+enum AdCampaignStatus {
+  PENDING
+  ACTIVE
+  PAUSED
+}
+
+model Company {
+  id           String   @id @default(cuid())
+  userId       String   @unique @map("user_id")
+  slug         String   @unique
+  companyName  String   @map("company_name")
+  logo         String?
+  bannerImage  String?  @map("banner_image")
+  website      String?
+  description  String?  @db.Text
+  industry     String?
+  companySize  String?  @map("company_size")
+  taxId        String?  @map("tax_id")
+  address      String?
+  isVerified   Boolean  @default(false) @map("is_verified")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobPostings  JobPosting[]
+  adCampaigns  AdCampaign[]
+
+  @@map("companies")
+}
+
+model JobPosting {
+  id             String           @id @default(cuid())
+  companyId      String           @map("company_id")
+  title          String
+  description    String           @db.Text
+  budget         Int
+  currency       String           @default("THB")
+  requiredSkills String[]         @default([]) @map("required_skills")
+  status         JobPostingStatus @default(OPEN)
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  company      Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  applications JobApplication[]
+
+  @@index([companyId, status])
+  @@index([status])
+  @@map("job_postings")
+}
+
+model JobApplication {
+  id           String               @id @default(cuid())
+  jobPostingId String               @map("job_posting_id")
+  freelancerId String               @map("freelancer_id")
+  coverNote    String?              @map("cover_note") @db.Text
+  status       JobApplicationStatus @default(PENDING)
+  createdAt    DateTime             @default(now()) @map("created_at")
+  updatedAt    DateTime             @updatedAt @map("updated_at")
+
+  jobPosting JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  freelancer User       @relation("JobApplicationFreelancer", fields: [freelancerId], references: [id], onDelete: Cascade)
+
+  @@unique([jobPostingId, freelancerId])
+  @@index([freelancerId])
+  @@index([jobPostingId, status])
+  @@map("job_applications")
+}
+
+model AdCampaign {
+  id          String           @id @default(cuid())
+  companyId   String           @map("company_id")
+  title       String
+  imageUrl    String           @map("image_url")
+  targetUrl   String           @map("target_url")
+  budget      Int
+  dailyLimit  Int?             @map("daily_limit")
+  impressions Int              @default(0)
+  clicks      Int              @default(0)
+  status      AdCampaignStatus @default(PENDING)
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, status])
+  @@index([status])
+  @@map("ad_campaigns")
 }
 
 enum AssignmentSource {

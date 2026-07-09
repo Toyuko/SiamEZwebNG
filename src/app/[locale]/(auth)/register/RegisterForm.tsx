@@ -87,7 +87,7 @@ function RegisterFormInner({
           <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             {t("accountType")}
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-3 py-2.5 text-sm has-[:checked]:border-siam-blue has-[:checked]:bg-siam-blue/5 dark:border-gray-600">
               <input
                 type="radio"
@@ -106,6 +106,15 @@ function RegisterFormInner({
                 className="text-siam-blue focus:ring-siam-blue"
               />
               <span>{t("accountTypeFreelancer")}</span>
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-3 py-2.5 text-sm has-[:checked]:border-siam-blue has-[:checked]:bg-siam-blue/5 dark:border-gray-600">
+              <input
+                type="radio"
+                name="accountType"
+                value="company"
+                className="text-siam-blue focus:ring-siam-blue"
+              />
+              <span>{t("accountTypeCompany")}</span>
             </label>
           </div>
         </div>

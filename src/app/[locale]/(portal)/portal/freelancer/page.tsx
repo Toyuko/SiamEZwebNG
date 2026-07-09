@@ -13,6 +13,7 @@ import { RevenueTracker } from "@/components/freelancer/RevenueTracker";
 import { ActiveJobsTrack } from "@/components/freelancer/ActiveJobsTrack";
 import { SubscriptionCard } from "@/components/freelancer/SubscriptionCard";
 import { PortalFooter } from "@/components/portal/PortalFooter";
+import { SponsoredAdBanner } from "@/components/company/SponsoredAdBanner";
 
 export default async function FreelancerPortalPage({
   params,
@@ -71,6 +72,8 @@ export default async function FreelancerPortalPage({
         </div>
         <SubscriptionCard />
       </div>
+
+      <SponsoredAdBanner className="mb-6 block overflow-hidden" />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <FreelancerJobFeed

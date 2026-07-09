@@ -26,6 +26,10 @@ export async function GET(request: NextRequest) {
             averageRating: profile.averageRating,
             skills: profile.skills,
             bio: profile.bio,
+            slug: profile.slug,
+            isPublic: profile.isPublic,
+            title: profile.title,
+            hourlyRate: profile.hourlyRate,
           }
         : null,
       revenue: {

@@ -82,6 +82,15 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
             {t("sales")}
           </Link>
           <Link
+            href="/freelancers"
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-siam-blue",
+              pathname.startsWith("/freelancers") ? "text-siam-blue" : "text-header-text-muted"
+            )}
+          >
+            {t("freelancers")}
+          </Link>
+          <Link
             href="/about"
             className={cn(
               "text-sm font-medium transition-colors hover:text-siam-blue",
@@ -246,6 +255,18 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
             onClick={() => setOpen(false)}
           >
             {t("sales")}
+          </Link>
+          <Link
+            href="/freelancers"
+            className={cn(
+              "rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
+              pathname.startsWith("/freelancers")
+                ? "text-siam-blue bg-black/5 dark:bg-white/10"
+                : "text-header-text hover:text-siam-blue"
+            )}
+            onClick={() => setOpen(false)}
+          >
+            {t("freelancers")}
           </Link>
           <Link
             href="/about"
