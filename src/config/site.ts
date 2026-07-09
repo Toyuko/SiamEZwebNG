@@ -28,15 +28,45 @@ export const site = {
   },
 } as const;
 
-export const publicNav = [
-  { label: "Home", href: "/" },
-  { label: "Services", href: "/services" },
-  { label: "Freelancers", href: "/freelancers" },
-  { label: "About", href: "/about" },
-  { label: "Gallery", href: "/gallery" },
-  { label: "Testimonials", href: "/testimonials" },
-  { label: "Contact", href: "/contact" },
-] as const;
+export type PublicNavLink = {
+  labelKey: string;
+  href: string;
+  match?: "exact" | "prefix";
+};
+
+export type PublicNavEntry =
+  | ({ type: "link" } & PublicNavLink)
+  | {
+      type: "group";
+      id: string;
+      labelKey: string;
+      items: PublicNavLink[];
+    };
+
+export const publicNav: PublicNavEntry[] = [
+  { type: "link", labelKey: "home", href: "/", match: "exact" },
+  {
+    type: "group",
+    id: "services",
+    labelKey: "services",
+    items: [
+      { labelKey: "allServices", href: "/services", match: "exact" },
+      { labelKey: "sales", href: "/sales", match: "exact" },
+      { labelKey: "freelancers", href: "/freelancers", match: "prefix" },
+    ],
+  },
+  {
+    type: "group",
+    id: "company",
+    labelKey: "company",
+    items: [
+      { labelKey: "about", href: "/about", match: "exact" },
+      { labelKey: "gallery", href: "/gallery", match: "exact" },
+      { labelKey: "testimonials", href: "/testimonials", match: "exact" },
+    ],
+  },
+  { type: "link", labelKey: "contact", href: "/contact", match: "exact" },
+];
 
 export const footerQuickLinks = [
   { label: "Services", href: "/services" },

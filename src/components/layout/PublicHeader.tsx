@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { Menu, X, Languages, ChevronDown, LogOut, LayoutDashboard, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { site } from "@/config/site";
+import { publicNav, site, type PublicNavLink } from "@/config/site";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useLocale } from "next-intl";
@@ -28,13 +28,31 @@ const LOCALES = [
   { code: "th" as const, label: "TH" },
 ];
 
+function isNavActive(item: PublicNavLink, pathname: string): boolean {
+  if (item.match === "prefix") {
+    return pathname === item.href || pathname.startsWith(`${item.href}/`);
+  }
+  return pathname === item.href;
+}
+
+function isGroupActive(items: PublicNavLink[], pathname: string): boolean {
+  return items.some((item) => isNavActive(item, pathname));
+}
+
 export function PublicHeader({ user = null }: PublicHeaderProps) {
   const [open, setOpen] = useState(false);
+  const [mobileGroups, setMobileGroups] = useState<Record<string, boolean>>({});
   const t = useTranslations("nav");
   const tCommon = useTranslations("common");
   const pathname = usePathname();
   const locale = useLocale();
   const getStartedHref = user ? "/portal" : "/register";
+
+  const toggleMobileGroup = (id: string, currentlyOpen: boolean) => {
+    setMobileGroups((prev) => ({ ...prev, [id]: !currentlyOpen }));
+  };
+
+  const closeMenu = () => setOpen(false);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-header-border bg-header-bg shadow-sm">
@@ -42,7 +60,7 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
         <Link
           href="/"
           className="flex items-center gap-2 transition-opacity hover:opacity-90"
-          onClick={() => setOpen(false)}
+          onClick={closeMenu}
         >
           <Image
             src="/images/logo.png"
@@ -53,80 +71,60 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
           />
           <span className="sr-only">{site.name}</span>
         </Link>
-        <nav className="hidden items-center gap-8 md:flex">
-          <Link
-            href="/"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-siam-blue",
-              pathname === "/" ? "text-siam-blue" : "text-header-text-muted"
-            )}
-          >
-            {t("home")}
-          </Link>
-          <Link
-            href="/services"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-siam-blue",
-              pathname === "/services" ? "text-siam-blue" : "text-header-text-muted"
-            )}
-          >
-            {t("services")}
-          </Link>
-          <Link
-            href="/sales"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-siam-blue",
-              pathname === "/sales" ? "text-siam-blue" : "text-header-text-muted"
-            )}
-          >
-            {t("sales")}
-          </Link>
-          <Link
-            href="/freelancers"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-siam-blue",
-              pathname.startsWith("/freelancers") ? "text-siam-blue" : "text-header-text-muted"
-            )}
-          >
-            {t("freelancers")}
-          </Link>
-          <Link
-            href="/about"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-siam-blue",
-              pathname === "/about" ? "text-siam-blue" : "text-header-text-muted"
-            )}
-          >
-            {t("about")}
-          </Link>
-          <Link
-            href="/gallery"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-siam-blue",
-              pathname === "/gallery" ? "text-siam-blue" : "text-header-text-muted"
-            )}
-          >
-            {t("gallery")}
-          </Link>
-          <Link
-            href="/testimonials"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-siam-blue",
-              pathname === "/testimonials" ? "text-siam-blue" : "text-header-text-muted"
-            )}
-          >
-            {t("testimonials")}
-          </Link>
-          <Link
-            href="/contact"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-siam-blue",
-              pathname === "/contact" ? "text-siam-blue" : "text-header-text-muted"
-            )}
-          >
-            {t("contact")}
-          </Link>
+
+        <nav className="hidden items-center gap-1 md:flex lg:gap-2">
+          {publicNav.map((entry) => {
+            if (entry.type === "link") {
+              const active = isNavActive(entry, pathname);
+              return (
+                <Link
+                  key={entry.href}
+                  href={entry.href}
+                  className={cn(
+                    "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-siam-blue",
+                    active ? "text-siam-blue" : "text-header-text-muted"
+                  )}
+                >
+                  {t(entry.labelKey)}
+                </Link>
+              );
+            }
+
+            const groupActive = isGroupActive(entry.items, pathname);
+            return (
+              <DropdownMenu key={entry.id}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-siam-blue",
+                      groupActive ? "text-siam-blue" : "text-header-text-muted"
+                    )}
+                  >
+                    {t(entry.labelKey)}
+                    <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="min-w-[200px]">
+                  {entry.items.map((item) => (
+                    <DropdownMenuItem key={item.href} asChild>
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          "w-full",
+                          isNavActive(item, pathname) && "bg-siam-blue/10 text-siam-blue"
+                        )}
+                      >
+                        {t(item.labelKey)}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          })}
         </nav>
+
         <div className="flex items-center gap-2">
           <ThemeSwitcher className="shrink-0" />
           <div className="relative flex items-center gap-1 rounded-lg border border-border bg-card p-1">
@@ -149,10 +147,7 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
           </div>
           {user ? (
             <DropdownMenu>
-              <DropdownMenuTrigger
-                asChild
-                className="hidden sm:flex"
-              >
+              <DropdownMenuTrigger asChild className="hidden sm:flex">
                 <button
                   type="button"
                   className="flex items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-header-text hover:bg-black/5 dark:hover:bg-gray-800"
@@ -161,7 +156,9 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-siam-blue text-sm font-semibold text-white">
                     {user.name?.[0]?.toUpperCase() ?? user.email[0].toUpperCase()}
                   </span>
-                  <span className="max-w-[100px] truncate hidden md:inline">{user.name ?? user.email}</span>
+                  <span className="max-w-[100px] truncate hidden md:inline">
+                    {user.name ?? user.email}
+                  </span>
                   <ChevronDown className="h-4 w-4 shrink-0" />
                 </button>
               </DropdownMenuTrigger>
@@ -218,6 +215,7 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
           </button>
         </div>
       </div>
+
       {/* Mobile menu */}
       <div
         className={cn(
@@ -226,101 +224,90 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
         )}
       >
         <nav className="container mx-auto flex flex-col gap-1 px-4 py-4">
-          <Link
-            href="/"
-            className={cn(
-              "rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
-              pathname === "/" ? "text-siam-blue bg-black/5 dark:bg-white/10" : "text-header-text hover:text-siam-blue"
-            )}
-            onClick={() => setOpen(false)}
-          >
-            {t("home")}
-          </Link>
-          <Link
-            href="/services"
-            className={cn(
-              "rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
-              pathname === "/services" ? "text-siam-blue bg-black/5 dark:bg-white/10" : "text-header-text hover:text-siam-blue"
-            )}
-            onClick={() => setOpen(false)}
-          >
-            {t("services")}
-          </Link>
-          <Link
-            href="/sales"
-            className={cn(
-              "rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
-              pathname === "/sales" ? "text-siam-blue bg-black/5 dark:bg-white/10" : "text-header-text hover:text-siam-blue"
-            )}
-            onClick={() => setOpen(false)}
-          >
-            {t("sales")}
-          </Link>
-          <Link
-            href="/freelancers"
-            className={cn(
-              "rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
-              pathname.startsWith("/freelancers")
-                ? "text-siam-blue bg-black/5 dark:bg-white/10"
-                : "text-header-text hover:text-siam-blue"
-            )}
-            onClick={() => setOpen(false)}
-          >
-            {t("freelancers")}
-          </Link>
-          <Link
-            href="/about"
-            className={cn(
-              "rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
-              pathname === "/about" ? "text-siam-blue bg-black/5 dark:bg-white/10" : "text-header-text hover:text-siam-blue"
-            )}
-            onClick={() => setOpen(false)}
-          >
-            {t("about")}
-          </Link>
-          <Link
-            href="/gallery"
-            className={cn(
-              "rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
-              pathname === "/gallery" ? "text-siam-blue bg-black/5 dark:bg-white/10" : "text-header-text hover:text-siam-blue"
-            )}
-            onClick={() => setOpen(false)}
-          >
-            {t("gallery")}
-          </Link>
-          <Link
-            href="/testimonials"
-            className={cn(
-              "rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
-              pathname === "/testimonials" ? "text-siam-blue bg-black/5 dark:bg-white/10" : "text-header-text hover:text-siam-blue"
-            )}
-            onClick={() => setOpen(false)}
-          >
-            {t("testimonials")}
-          </Link>
-          <Link
-            href="/contact"
-            className={cn(
-              "rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
-              pathname === "/contact" ? "text-siam-blue bg-black/5 dark:bg-white/10" : "text-header-text hover:text-siam-blue"
-            )}
-            onClick={() => setOpen(false)}
-          >
-            {t("contact")}
-          </Link>
+          {publicNav.map((entry) => {
+            if (entry.type === "link") {
+              const active = isNavActive(entry, pathname);
+              return (
+                <Link
+                  key={entry.href}
+                  href={entry.href}
+                  className={cn(
+                    "rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
+                    active
+                      ? "text-siam-blue bg-black/5 dark:bg-white/10"
+                      : "text-header-text hover:text-siam-blue"
+                  )}
+                  onClick={closeMenu}
+                >
+                  {t(entry.labelKey)}
+                </Link>
+              );
+            }
+
+            const expanded =
+              entry.id in mobileGroups
+                ? Boolean(mobileGroups[entry.id])
+                : isGroupActive(entry.items, pathname);
+            return (
+              <div key={entry.id} className="flex flex-col">
+                <button
+                  type="button"
+                  aria-expanded={expanded}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
+                    isGroupActive(entry.items, pathname)
+                      ? "text-siam-blue"
+                      : "text-header-text hover:text-siam-blue"
+                  )}
+                  onClick={() => toggleMobileGroup(entry.id, expanded)}
+                >
+                  {t(entry.labelKey)}
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 transition-transform",
+                      expanded && "rotate-180"
+                    )}
+                  />
+                </button>
+                {expanded && (
+                  <div className="ml-2 flex flex-col gap-0.5 border-l border-header-border pl-2">
+                    {entry.items.map((item) => {
+                      const active = isNavActive(item, pathname);
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={cn(
+                            "rounded-lg px-3 py-2 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10",
+                            active
+                              ? "text-siam-blue bg-black/5 dark:bg-white/10"
+                              : "text-header-text-muted hover:text-siam-blue"
+                          )}
+                          onClick={closeMenu}
+                        >
+                          {t(item.labelKey)}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
           {user ? (
             <>
               <Link
                 href="/portal"
                 className="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10 text-header-text hover:text-siam-blue"
-                onClick={() => setOpen(false)}
+                onClick={closeMenu}
               >
                 {t("dashboard")}
               </Link>
               <Link
                 href="/portal/cases"
                 className="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10 text-header-text hover:text-siam-blue"
-                onClick={() => setOpen(false)}
+                onClick={closeMenu}
               >
                 {t("myCases")}
               </Link>
@@ -338,14 +325,14 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
               <Link
                 href="/login"
                 className="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10 text-header-text hover:text-siam-blue"
-                onClick={() => setOpen(false)}
+                onClick={closeMenu}
               >
                 {t("login")}
               </Link>
               <Link
                 href="/register"
                 className="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10 text-header-text hover:text-siam-blue"
-                onClick={() => setOpen(false)}
+                onClick={closeMenu}
               >
                 {t("signUp")}
               </Link>
@@ -354,7 +341,7 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
           <Link
             href={getStartedHref}
             className="mt-2 rounded-lg bg-siam-blue px-3 py-2.5 text-center text-sm font-medium text-white hover:bg-siam-blue-light"
-            onClick={() => setOpen(false)}
+            onClick={closeMenu}
           >
             {tCommon("getStarted")}
           </Link>

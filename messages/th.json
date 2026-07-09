@@ -54,8 +54,10 @@
   "nav": {
     "home": "หน้าแรก",
     "services": "บริการ",
+    "allServices": "บริการทั้งหมด",
     "sales": "ซื้อขายรถ",
     "freelancers": "ฟรีแลนซ์",
+    "company": "บริษัท",
     "about": "เกี่ยวกับเรา",
     "gallery": "แกลเลอรี่",
     "testimonials": "คำรับรอง",

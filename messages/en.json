@@ -54,8 +54,10 @@
   "nav": {
     "home": "Home",
     "services": "Services",
+    "allServices": "All Services",
     "sales": "Sales",
     "freelancers": "Freelancers",
+    "company": "Company",
     "about": "About",
     "gallery": "Gallery",
     "testimonials": "Testimonials",
