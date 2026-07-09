@@ -6,8 +6,11 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Neon pooler does not support session advisory locks used by migrate.
+  // Set DIRECT_URL to the non-pooler host (strip "-pooler" from the hostname).
+  directUrl = env("DIRECT_URL")
 }
 
 // ----- Users & Auth -----

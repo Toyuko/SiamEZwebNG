@@ -12,11 +12,12 @@ This is a single Next.js 16 app (`siamez-web-ng`) — a services booking & case-
 ### Env files (gitignored, present in the VM)
 - `.env.local` is read by Next.js; `.env` is a copy read by the **Prisma CLI** (Prisma does not read `.env.local`). Keep both in sync if you change `DATABASE_URL`.
 - Local `DATABASE_URL` is `postgresql://postgres:postgres@localhost:5432/siamez?schema=public`.
+- On Neon/Vercel: set `DATABASE_URL` to the **pooled** (`-pooler`) URL and `DIRECT_URL` to the **direct** host (same string without `-pooler`). Prisma Migrate needs the direct URL (`directUrl` in `schema.prisma`); `scripts/migrate-deploy.sh` also strips `-pooler` as a fallback.
 - `BYPASS_ADMIN_AUTH="true"` is set so `/admin` is reachable without login during local dev.
 
 ### Database setup gotcha (important)
-- The committed migrations in `prisma/migrations/` contain **MySQL syntax (backticks)** and FAIL against PostgreSQL. Do NOT run `prisma migrate deploy` / `npm run db:migrate` / `npm run vercel-build` locally.
-- Use `npx prisma db push` to sync the schema, then `npm run db:seed` to seed. Re-running `db:seed` is idempotent (upserts) and refreshes the demo passwords.
+- Older committed migrations in `prisma/migrations/` may contain **MySQL syntax (backticks)** and FAIL against a fresh local PostgreSQL. Prefer `npx prisma db push` + `npm run db:seed` for local cloud VMs.
+- Production/Vercel uses `npm run vercel-build` → `scripts/migrate-deploy.sh` (direct Neon URL) then `next build`. If deploy fails with **P1002 advisory lock**, a stuck session is holding Prisma’s migrate lock — terminate that backend in Neon SQL Editor (`SELECT pg_terminate_backend(pid) FROM pg_locks WHERE locktype = 'advisory' AND objid = 72707369;`) and redeploy.
 
 ### Seed/login credentials (after `npm run db:seed`)
 - Admin `admin@siamez.com` / `ChangeMeInProduction!`
