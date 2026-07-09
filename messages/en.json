@@ -68,6 +68,12 @@
   },
   "adminNav": {
     "dashboard": "Dashboard",
+    "groupOperations": "Operations",
+    "groupPeople": "People",
+    "groupCompanies": "Companies",
+    "groupCatalog": "Catalog",
+    "groupFinance": "Finance",
+    "groupInsights": "Insights",
     "serviceJobs": "Service Jobs",
     "cases": "Cases",
     "clients": "Clients",

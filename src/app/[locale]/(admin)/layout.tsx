@@ -41,7 +41,7 @@ export default async function AdminLayout({
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
-      <Suspense fallback={<aside className="w-56 shrink-0 border-r border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900" />}>
+      <Suspense fallback={<aside className="sticky top-0 h-screen w-56 shrink-0 border-r border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900" />}>
         <AdminSidebar />
       </Suspense>
       <div className="flex flex-1 flex-col">

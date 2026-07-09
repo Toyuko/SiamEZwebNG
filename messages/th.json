@@ -68,6 +68,12 @@
   },
   "adminNav": {
     "dashboard": "แดชบอร์ด",
+    "groupOperations": "การดำเนินงาน",
+    "groupPeople": "บุคคล",
+    "groupCompanies": "บริษัท",
+    "groupCatalog": "แคตตาล็อก",
+    "groupFinance": "การเงิน",
+    "groupInsights": "ข้อมูลเชิงลึก",
     "serviceJobs": "งานบริการ",
     "cases": "เคส",
     "clients": "ลูกค้า",
