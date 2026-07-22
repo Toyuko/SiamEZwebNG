@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { BookingWizard } from "@/components/booking/BookingWizard";
 import { DriverLicenseBookingWizard } from "@/components/booking/DriverLicenseBookingWizard";
 import { CarMotorbikeFinderBookingWizard } from "@/components/booking/CarMotorbikeFinderBookingWizard";
+import { RealEstateBookingWizard } from "@/components/booking/RealEstateBookingWizard";
 import { getSession } from "@/lib/auth";
 
 export default async function BookServicePage({
@@ -43,6 +44,13 @@ export default async function BookServicePage({
         />
       ) : serviceSlug === "car-motorbike-finder-selling-service" ? (
         <CarMotorbikeFinderBookingWizard
+          service={service}
+          userId={session?.user.id}
+          userEmail={session?.user.email ?? undefined}
+          userName={session?.user.name ?? undefined}
+        />
+      ) : serviceSlug === "real-estate-services" ? (
+        <RealEstateBookingWizard
           service={service}
           userId={session?.user.id}
           userEmail={session?.user.email ?? undefined}
