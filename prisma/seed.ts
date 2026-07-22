@@ -36,7 +36,6 @@ import {
   mazda2Sedan2017Specifications,
 } from "./mazda-2-sedan-2017-listing";
 import { SUNSET_SCOOTERS_BATCH_LISTINGS } from "./sunset-scooters-batch-listings";
-import { REAL_ESTATE_SAMPLE_LISTINGS } from "./real-estate-sample-listings";
 
 const prisma = new PrismaClient();
 
@@ -724,74 +723,6 @@ async function main() {
       },
     });
     console.log("Sales listing upserted:", listing.slug, `(${listing.imageUrls.length} photos)`);
-  }
-
-  const boostExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  for (const listing of REAL_ESTATE_SAMPLE_LISTINGS) {
-    await prisma.salesProperty.upsert({
-      where: { slug: listing.slug },
-      create: {
-        slug: listing.slug,
-        title: listing.title,
-        propertyType: listing.propertyType,
-        listingType: listing.listingType,
-        bedrooms: listing.bedrooms,
-        bathrooms: listing.bathrooms,
-        areaSqm: listing.areaSqm,
-        landAreaSqm: listing.landAreaSqm,
-        floor: listing.floor,
-        yearBuilt: listing.yearBuilt,
-        province: listing.province,
-        district: listing.district,
-        neighborhood: listing.neighborhood,
-        priceAmount: listing.priceAmount,
-        priceCurrency: "THB",
-        sellerKind: listing.sellerKind,
-        status: "available",
-        furnished: listing.furnished,
-        heroMediaType: "image",
-        heroImageUrl: listing.heroImageUrl,
-        heroVideoUrl: null,
-        imageUrls: listing.imageUrls,
-        videoUrls: [],
-        description: listing.description,
-        specifications: listing.specifications,
-        published: true,
-        isBoosted: Boolean(listing.isBoosted),
-        boostExpiresAt: listing.isBoosted ? boostExpiresAt : null,
-        boostTier: listing.isBoosted ? "manual" : null,
-        createdById: adminForListings?.id ?? null,
-      },
-      update: {
-        title: listing.title,
-        propertyType: listing.propertyType,
-        listingType: listing.listingType,
-        bedrooms: listing.bedrooms,
-        bathrooms: listing.bathrooms,
-        areaSqm: listing.areaSqm,
-        landAreaSqm: listing.landAreaSqm,
-        floor: listing.floor,
-        yearBuilt: listing.yearBuilt,
-        province: listing.province,
-        district: listing.district,
-        neighborhood: listing.neighborhood,
-        priceAmount: listing.priceAmount,
-        priceCurrency: "THB",
-        sellerKind: listing.sellerKind,
-        status: "available",
-        furnished: listing.furnished,
-        heroImageUrl: listing.heroImageUrl,
-        imageUrls: listing.imageUrls,
-        videoUrls: [],
-        description: listing.description,
-        specifications: listing.specifications,
-        published: true,
-        isBoosted: Boolean(listing.isBoosted),
-        boostExpiresAt: listing.isBoosted ? boostExpiresAt : null,
-        boostTier: listing.isBoosted ? "manual" : null,
-      },
-    });
-    console.log("Real estate listing upserted:", listing.slug);
   }
 }
 
