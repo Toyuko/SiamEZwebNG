@@ -1631,7 +1631,8 @@
     "contactWhatsapp": "Contact via WhatsApp",
     "contactLine": "Chat on LINE",
     "contactCall": "Call now",
-    "contactEmail": "Email us"
+    "contactEmail": "Email us",
+    "studio": "Studio"
   },
   "realEstateAdmin": {
     "title": "Real Estate Dashboard",

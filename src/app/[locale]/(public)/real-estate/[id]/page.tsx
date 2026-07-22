@@ -256,7 +256,11 @@ export default async function RealEstateDetailPage({
               <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
                 <p className="text-gray-500">{t("bedsLabel")}</p>
                 <p className="font-semibold">
-                  {property.bedrooms != null ? property.bedrooms : t("bedsNa")}
+                  {property.bedrooms == null
+                    ? t("bedsNa")
+                    : property.bedrooms === 0
+                      ? t("studio")
+                      : property.bedrooms}
                 </p>
               </div>
               <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">

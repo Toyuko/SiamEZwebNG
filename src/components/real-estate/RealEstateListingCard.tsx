@@ -89,9 +89,11 @@ export function RealEstateListingCard({ property }: RealEstateListingCardProps) 
           </p>
           <div className="mt-2 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
             <span>
-              {property.bedrooms != null
-                ? t("bedsShort", { count: property.bedrooms })
-                : t("bedsNa")}
+              {property.bedrooms == null
+                ? t("bedsNa")
+                : property.bedrooms === 0
+                  ? t("studio")
+                  : t("bedsShort", { count: property.bedrooms })}
               {" · "}
               {property.bathrooms != null
                 ? t("bathsShort", { count: property.bathrooms })

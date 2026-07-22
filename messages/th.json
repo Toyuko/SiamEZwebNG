@@ -1631,7 +1631,8 @@
     "contactWhatsapp": "ติดต่อผ่าน WhatsApp",
     "contactLine": "แชท LINE",
     "contactCall": "โทรเลย",
-    "contactEmail": "ส่งอีเมล"
+    "contactEmail": "ส่งอีเมล",
+    "studio": "สตูดิโอ"
   },
   "realEstateAdmin": {
     "title": "แดชบอร์ดอสังหาริมทรัพย์",
