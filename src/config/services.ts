@@ -11,6 +11,7 @@ export const serviceSlugs = [
   "marriage-registration",
   "basic-translation",
   "construction-handyman",
+  "real-estate-services",
   "car-motorbike-finder-selling-service",
   "transportation-services",
   "private-driver-service",
@@ -28,6 +29,7 @@ export const serviceDisplayNames: Record<ServiceSlug, string> = {
   "marriage-registration": "Marriage Registration",
   "basic-translation": "Basic Translation (Fixed Price)",
   "construction-handyman": "Construction & Handyman",
+  "real-estate-services": "Real Estate Services",
   "car-motorbike-finder-selling-service": "Car & Motorbike Finding and Selling Service",
   "transportation-services": "Transportation Services",
   "private-driver-service": "Private Driver Service",
@@ -52,6 +54,8 @@ export const serviceShortDescriptions: Record<ServiceSlug, string> = {
     "Simple document translation with fixed pricing per page — pay immediately upon booking",
   "construction-handyman":
     "Professional home repairs, renovations, and construction services for residential and commercial properties",
+  "real-estate-services":
+    "Buy, sell, rent, or invest in property across Thailand — simple, safe, and stress-free with a trusted local team",
   "car-motorbike-finder-selling-service":
     "Buy or sell cars and motorcycles in Thailand with full negotiation, paperwork, and registration support from start to finish",
   "transportation-services":
@@ -72,6 +76,7 @@ export const serviceIcons: Record<ServiceSlug, string> = {
   "marriage-registration": "Heart",
   "basic-translation": "FileText",
   "construction-handyman": "Wrench",
+  "real-estate-services": "Building2",
   "car-motorbike-finder-selling-service": "Handshake",
   "transportation-services": "Taxi",
   "private-driver-service": "User",
@@ -88,6 +93,7 @@ export const serviceThumbnailImages: Record<ServiceSlug, string> = {
   "marriage-registration": "/images/services/marriage-registration-poster.png",
   "basic-translation": "/images/services/translation-services-poster.png",
   "construction-handyman": "/images/services/construction-handyman-poster.png",
+  "real-estate-services": "/images/services/real-estate-services-poster.png",
   "car-motorbike-finder-selling-service":
     "/images/services/car-motorbike-finder-selling-poster.png",
   "transportation-services": "/images/services/transportation-services-poster.png",
@@ -101,6 +107,7 @@ export const serviceThumbnailImages: Record<ServiceSlug, string> = {
  */
 export const serviceThumbnailObjectPosition: Partial<Record<ServiceSlug, string>> = {
   "construction-handyman": "center 16%",
+  "real-estate-services": "center 18%",
   "car-motorbike-finder-selling-service": "center 16%",
   "private-driver-service": "center 22%",
   "event-planning-venue-services": "18% 78%",

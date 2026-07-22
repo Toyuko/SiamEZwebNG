@@ -66,7 +66,8 @@
     "signUp": "Sign Up",
     "dashboard": "Dashboard",
     "myCases": "My Cases",
-    "logout": "Logout"
+    "logout": "Logout",
+    "realEstate": "Real Estate"
   },
   "adminNav": {
     "dashboard": "Dashboard",
@@ -92,7 +93,8 @@
     "calendar": "Calendar",
     "staff": "Staff",
     "reports": "Reports",
-    "settings": "Settings"
+    "settings": "Settings",
+    "realEstate": "Real Estate"
   },
   "sales": {
     "inventoryTitle": "Sales Inventory",
@@ -896,6 +898,7 @@
     "police-clearance": "Police Clearance",
     "visa-services": "Visa Services",
     "construction-handyman": "Construction & Handyman",
+    "real-estate-services": "Real Estate Services",
     "car-motorbike-finder-selling-service": "Car & Motorbike Finding and Selling Service",
     "vehicle-registration": "Vehicle Registration",
     "transportation-services": "Transportation Services",
@@ -909,6 +912,7 @@
     "police": "Police Clearance",
     "visa": "Visa Services",
     "construction": "Construction & Handyman",
+    "real-estate": "Real Estate Services",
     "car-bike-finder-selling": "Car & Motorbike Finding and Selling Service",
     "vehicle": "Vehicle Registration",
     "transport": "Transportation Services",
@@ -1211,7 +1215,8 @@
       "deactivateAccount": "Deactivate my account",
       "genericError": "Something went wrong. Please try again."
     },
-    "publicProfile": "Public Profile"
+    "publicProfile": "Public Profile",
+    "myRealEstate": "My Properties"
   },
   "clientTracking": {
     "pageTitle": "Track your service",
@@ -1540,5 +1545,219 @@
     "inquiryError": "Could not send your inquiry. Please try again.",
     "close": "Close",
     "cancel": "Cancel"
+  },
+  "realEstate": {
+    "inventoryTitle": "Real Estate",
+    "inventoryDescription": "Browse homes, condos, land, and commercial properties listed with SiamEZ.",
+    "featuredTitle": "Featured properties",
+    "featuredSubtitle": "Highlighted listings pinned to the top of results.",
+    "featuredCarouselAria": "Featured promoted properties",
+    "featuredBadge": "Featured",
+    "searchPlaceholder": "Search title, province, or district",
+    "perMonth": "/mo",
+    "priceContactSeller": "Contact seller for price",
+    "bedsShort": "{count} bed",
+    "bathsShort": "{count} bath",
+    "bedsNa": "— beds",
+    "bathsNa": "— baths",
+    "bedsLabel": "Bedrooms",
+    "bathsLabel": "Bathrooms",
+    "areaLabel": "Area",
+    "landAreaLabel": "Land area",
+    "floorLabel": "Floor",
+    "yearBuiltLabel": "Year built",
+    "furnishedLabel": "Furnished",
+    "listingType": {
+      "label": "Listing type",
+      "all": "Sale & rent",
+      "sale": "For sale",
+      "rent": "For rent"
+    },
+    "propertyType": {
+      "label": "Property type",
+      "all": "All types",
+      "condo": "Condo",
+      "house": "House",
+      "townhouse": "Townhouse",
+      "land": "Land",
+      "commercial": "Commercial",
+      "villa": "Villa"
+    },
+    "sellerKind": {
+      "label": "Listing category",
+      "all": "All listings",
+      "dealer": "Agency / dealer",
+      "private": "Private seller",
+      "dealerChip": "Agency",
+      "dealerBadge": "Agency listing",
+      "privateBadge": "Private seller"
+    },
+    "furnished": {
+      "unfurnished": "Unfurnished",
+      "partially": "Partially furnished",
+      "furnished": "Furnished",
+      "not_applicable": "N/A"
+    },
+    "sort": {
+      "latest": "Latest",
+      "priceLowHigh": "Price: Low to High",
+      "priceHighLow": "Price: High to Low",
+      "areaLargeSmall": "Area: Large to Small",
+      "areaSmallLarge": "Area: Small to Large"
+    },
+    "resetFilters": "Reset filters",
+    "priceRange": "Price range",
+    "minBedrooms": "Min bedrooms",
+    "province": "Province",
+    "provincePlaceholder": "e.g. Bangkok",
+    "any": "Any",
+    "emptyStateTitle": "No properties match your filters",
+    "emptyStateBody": "Try adjusting filters or check back soon for new listings.",
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "pageInfo": "Page {page} of {totalPages}",
+      "showingRange": "Showing {from}–{to} of {total}"
+    },
+    "perPageLabel": "Per page",
+    "backToInventory": "Back to properties",
+    "videos": "Videos",
+    "specifications": "Specifications",
+    "copyDescription": "Copy description",
+    "copyDescriptionCopied": "Description copied",
+    "copyDescriptionError": "Could not copy description",
+    "downloadImages": "Download {count, plural, one {# image} other {# images}}",
+    "contactMethodsTitle": "Contact seller",
+    "contactWhatsapp": "Contact via WhatsApp",
+    "contactLine": "Chat on LINE",
+    "contactCall": "Call now",
+    "contactEmail": "Email us"
+  },
+  "realEstateAdmin": {
+    "title": "Real Estate Dashboard",
+    "subtitle": "Manage public property listings and inventory status.",
+    "addListing": "Add New Listing",
+    "empty": "No listings yet. Add your first property.",
+    "confirmDelete": "Delete \"{label}\" listing?",
+    "copyDescription": "Copy description",
+    "copyDescriptionCopied": "Description copied",
+    "copyDescriptionError": "Could not copy description",
+    "downloadImages": "Download {count, plural, one {# image} other {# images}}",
+    "table": {
+      "listing": "Listing",
+      "type": "Type",
+      "price": "Price",
+      "details": "Beds / Area",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "available": "Available",
+      "reserved": "Reserved",
+      "sold": "Sold",
+      "pending_boost": "Pending boost"
+    },
+    "propertyType": {
+      "condo": "Condo",
+      "house": "House",
+      "townhouse": "Townhouse",
+      "land": "Land",
+      "commercial": "Commercial",
+      "villa": "Villa"
+    },
+    "listingType": {
+      "sale": "For sale",
+      "rent": "For rent"
+    }
+  },
+  "realEstateAdminForm": {
+    "createTitle": "Add New Property",
+    "editTitle": "Edit property",
+    "step": "Step {current} of {total}",
+    "yes": "Yes",
+    "no": "No",
+    "next": "Next",
+    "back": "Back",
+    "cancel": "Cancel",
+    "save": "Save listing",
+    "saving": "Saving...",
+    "uploading": "Uploading...",
+    "hero": "Hero",
+    "setHero": "Set hero",
+    "remove": "Remove",
+    "reorderHint": "Drag and drop images to reorder the gallery.",
+    "uploadHint": "Images are uploaded to the existing Blob upload API endpoint.",
+    "imageUrlHint": "Paste one image URL per line, then click Add URLs.",
+    "imageUrlsPlaceholder": "https://example.com/image-1.jpg\nhttps://example.com/image-2.jpg",
+    "addImageUrls": "Add URLs",
+    "uploadVideoHint": "Upload your own video files (up to 100 MB each).",
+    "videoHint": "Paste one video URL per line (YouTube, Vimeo, or direct video URL).",
+    "videoUrlsPlaceholder": "https://www.youtube.com/watch?v=...\nhttps://vimeo.com/...",
+    "addSpec": "Add spec",
+    "specKeyPlaceholder": "Key (e.g. parking)",
+    "specValuePlaceholder": "Value (e.g. 2 cars)",
+    "fields": {
+      "title": "Listing title",
+      "propertyType": "Property type",
+      "listingType": "Listing type",
+      "price": "Price (THB)",
+      "areaSqm": "Area (m²)",
+      "bedrooms": "Bedrooms",
+      "bathrooms": "Bathrooms",
+      "landAreaSqm": "Land area (m²)",
+      "floor": "Floor",
+      "yearBuilt": "Year built",
+      "furnished": "Furnished",
+      "province": "Province",
+      "district": "District",
+      "neighborhood": "Neighborhood",
+      "sellerKind": "Sale type",
+      "status": "Status",
+      "published": "Visible on public page",
+      "isBoosted": "Featured listing",
+      "images": "Upload images",
+      "imageUrls": "Paste image URLs",
+      "uploadVideos": "Upload videos",
+      "videos": "Video URLs",
+      "description": "Description",
+      "specifications": "Specifications"
+    },
+    "propertyType": {
+      "condo": "Condo",
+      "house": "House",
+      "townhouse": "Townhouse",
+      "land": "Land",
+      "commercial": "Commercial",
+      "villa": "Villa"
+    },
+    "listingType": {
+      "sale": "For sale",
+      "rent": "For rent"
+    },
+    "sellerKind": {
+      "dealer": "Agency / dealer",
+      "private": "Private sale"
+    },
+    "furnished": {
+      "unfurnished": "Unfurnished",
+      "partially": "Partially furnished",
+      "furnished": "Furnished",
+      "not_applicable": "N/A"
+    },
+    "status": {
+      "available": "Available",
+      "reserved": "Reserved",
+      "sold": "Sold",
+      "pending_boost": "Pending boost"
+    },
+    "errors": {
+      "uploadFailed": "Image upload failed",
+      "step1Required": "Please fill in title and province.",
+      "priceInvalid": "Price must be greater than 0.",
+      "areaInvalid": "Area must be at least 1 m².",
+      "mediaRequired": "Add at least one image or video.",
+      "heroRequired": "Select a hero image.",
+      "descriptionShort": "Description must be at least 20 characters."
+    }
   }
 }

@@ -66,7 +66,8 @@
     "signUp": "สมัครสมาชิก",
     "dashboard": "แดชบอร์ด",
     "myCases": "เคสของฉัน",
-    "logout": "ออกจากระบบ"
+    "logout": "ออกจากระบบ",
+    "realEstate": "อสังหาริมทรัพย์"
   },
   "adminNav": {
     "dashboard": "แดชบอร์ด",
@@ -92,7 +93,8 @@
     "calendar": "ปฏิทิน",
     "staff": "พนักงาน",
     "reports": "รายงาน",
-    "settings": "ตั้งค่า"
+    "settings": "ตั้งค่า",
+    "realEstate": "อสังหาริมทรัพย์"
   },
   "sales": {
     "inventoryTitle": "คลังรถสำหรับขาย",
@@ -896,6 +898,7 @@
     "police-clearance": "หนังสือรับรองความประพฤติ",
     "visa-services": "บริการวีซ่า",
     "construction-handyman": "ก่อสร้างและซ่อมแซม",
+    "real-estate-services": "บริการอสังหาริมทรัพย์",
     "car-motorbike-finder-selling-service": "บริการหารถและขายรถ/มอเตอร์ไซค์",
     "vehicle-registration": "จดทะเบียนรถ",
     "transportation-services": "บริการขนส่ง",
@@ -909,6 +912,7 @@
     "police": "หนังสือรับรองความประพฤติ",
     "visa": "บริการวีซ่า",
     "construction": "ก่อสร้างและซ่อมแซม",
+    "real-estate": "บริการอสังหาริมทรัพย์",
     "car-bike-finder-selling": "บริการหารถและขายรถ/มอเตอร์ไซค์",
     "vehicle": "จดทะเบียนรถ",
     "transport": "บริการขนส่ง",
@@ -1211,7 +1215,8 @@
       "deactivateAccount": "ปิดการใช้งานบัญชีของฉัน",
       "genericError": "เกิดข้อผิดพลาด โปรดลองอีกครั้ง"
     },
-    "publicProfile": "โปรไฟล์สาธารณะ"
+    "publicProfile": "โปรไฟล์สาธารณะ",
+    "myRealEstate": "อสังหาฯ ของฉัน"
   },
   "clientTracking": {
     "pageTitle": "ติดตามบริการของคุณ",
@@ -1540,5 +1545,219 @@
     "inquiryError": "ส่งคำสอบถามไม่สำเร็จ กรุณาลองอีกครั้ง",
     "close": "ปิด",
     "cancel": "ยกเลิก"
+  },
+  "realEstate": {
+    "inventoryTitle": "อสังหาริมทรัพย์",
+    "inventoryDescription": "ดูบ้าน คอนโด ที่ดิน และอสังหาฯ เพื่อการพาณิชย์ที่ลงขายกับ SiamEZ",
+    "featuredTitle": "รายการแนะนำ",
+    "featuredSubtitle": "รายการที่ไฮไลต์และปักหมุดไว้ด้านบนของผลการค้นหา",
+    "featuredCarouselAria": "รายการอสังหาฯ ที่โปรโมท",
+    "featuredBadge": "แนะนำ",
+    "searchPlaceholder": "ค้นหาชื่อ จังหวัด หรือเขต",
+    "perMonth": "/เดือน",
+    "priceContactSeller": "ติดต่อผู้ขายเพื่อสอบถามราคา",
+    "bedsShort": "{count} ห้องนอน",
+    "bathsShort": "{count} ห้องน้ำ",
+    "bedsNa": "— ห้องนอน",
+    "bathsNa": "— ห้องน้ำ",
+    "bedsLabel": "ห้องนอน",
+    "bathsLabel": "ห้องน้ำ",
+    "areaLabel": "พื้นที่",
+    "landAreaLabel": "พื้นที่ดิน",
+    "floorLabel": "ชั้น",
+    "yearBuiltLabel": "ปีที่สร้าง",
+    "furnishedLabel": "เฟอร์นิเจอร์",
+    "listingType": {
+      "label": "ประเภทประกาศ",
+      "all": "ขายและเช่า",
+      "sale": "ขาย",
+      "rent": "เช่า"
+    },
+    "propertyType": {
+      "label": "ประเภทอสังหาฯ",
+      "all": "ทุกประเภท",
+      "condo": "คอนโด",
+      "house": "บ้าน",
+      "townhouse": "ทาวน์เฮาส์",
+      "land": "ที่ดิน",
+      "commercial": "เชิงพาณิชย์",
+      "villa": "วิลล่า"
+    },
+    "sellerKind": {
+      "label": "หมวดรายการ",
+      "all": "ทุกรายการ",
+      "dealer": "เอเจนซี่ / ตัวแทน",
+      "private": "ขายส่วนตัว",
+      "dealerChip": "เอเจนซี่",
+      "dealerBadge": "รายการเอเจนซี่",
+      "privateBadge": "ขายส่วนตัว"
+    },
+    "furnished": {
+      "unfurnished": "ไม่มีเฟอร์นิเจอร์",
+      "partially": "มีเฟอร์นิเจอร์บางส่วน",
+      "furnished": "มีเฟอร์นิเจอร์ครบ",
+      "not_applicable": "ไม่ระบุ"
+    },
+    "sort": {
+      "latest": "ล่าสุด",
+      "priceLowHigh": "ราคา: ต่ำไปสูง",
+      "priceHighLow": "ราคา: สูงไปต่ำ",
+      "areaLargeSmall": "พื้นที่: ใหญ่ไปเล็ก",
+      "areaSmallLarge": "พื้นที่: เล็กไปใหญ่"
+    },
+    "resetFilters": "รีเซ็ตตัวกรอง",
+    "priceRange": "ช่วงราคา",
+    "minBedrooms": "ห้องนอนขั้นต่ำ",
+    "province": "จังหวัด",
+    "provincePlaceholder": "เช่น กรุงเทพฯ",
+    "any": "ทั้งหมด",
+    "emptyStateTitle": "ไม่พบอสังหาฯ ที่ตรงกับตัวกรอง",
+    "emptyStateBody": "ลองปรับตัวกรอง หรือกลับมาดูรายการใหม่ในภายหลัง",
+    "pagination": {
+      "previous": "ก่อนหน้า",
+      "next": "ถัดไป",
+      "pageInfo": "หน้า {page} จาก {totalPages}",
+      "showingRange": "แสดง {from}–{to} จาก {total}"
+    },
+    "perPageLabel": "ต่อหน้า",
+    "backToInventory": "กลับไปรายการอสังหาฯ",
+    "videos": "วิดีโอ",
+    "specifications": "รายละเอียดเพิ่มเติม",
+    "copyDescription": "คัดลอกรายละเอียด",
+    "copyDescriptionCopied": "คัดลอกแล้ว",
+    "copyDescriptionError": "คัดลอกไม่สำเร็จ",
+    "downloadImages": "ดาวน์โหลด {count, plural, one {# รูป} other {# รูป}}",
+    "contactMethodsTitle": "ติดต่อผู้ขาย",
+    "contactWhatsapp": "ติดต่อผ่าน WhatsApp",
+    "contactLine": "แชท LINE",
+    "contactCall": "โทรเลย",
+    "contactEmail": "ส่งอีเมล"
+  },
+  "realEstateAdmin": {
+    "title": "แดชบอร์ดอสังหาริมทรัพย์",
+    "subtitle": "จัดการรายการอสังหาฯ สาธารณะและสถานะสินค้าคงคลัง",
+    "addListing": "เพิ่มรายการใหม่",
+    "empty": "ยังไม่มีรายการ เพิ่มอสังหาฯ รายการแรกของคุณ",
+    "confirmDelete": "ลบรายการ \"{label}\" ?",
+    "copyDescription": "คัดลอกรายละเอียด",
+    "copyDescriptionCopied": "คัดลอกแล้ว",
+    "copyDescriptionError": "คัดลอกไม่สำเร็จ",
+    "downloadImages": "ดาวน์โหลด {count, plural, one {# รูป} other {# รูป}}",
+    "table": {
+      "listing": "รายการ",
+      "type": "ประเภท",
+      "price": "ราคา",
+      "details": "ห้องนอน / พื้นที่",
+      "status": "สถานะ",
+      "actions": "การจัดการ"
+    },
+    "status": {
+      "available": "ว่าง",
+      "reserved": "จองแล้ว",
+      "sold": "ขายแล้ว",
+      "pending_boost": "รออนุมัติบูสต์"
+    },
+    "propertyType": {
+      "condo": "คอนโด",
+      "house": "บ้าน",
+      "townhouse": "ทาวน์เฮาส์",
+      "land": "ที่ดิน",
+      "commercial": "เชิงพาณิชย์",
+      "villa": "วิลล่า"
+    },
+    "listingType": {
+      "sale": "ขาย",
+      "rent": "เช่า"
+    }
+  },
+  "realEstateAdminForm": {
+    "createTitle": "เพิ่มอสังหาฯ ใหม่",
+    "editTitle": "แก้ไขอสังหาฯ",
+    "step": "ขั้นตอน {current} จาก {total}",
+    "yes": "ใช่",
+    "no": "ไม่",
+    "next": "ถัดไป",
+    "back": "ย้อนกลับ",
+    "cancel": "ยกเลิก",
+    "save": "บันทึกรายการ",
+    "saving": "กำลังบันทึก...",
+    "uploading": "กำลังอัปโหลด...",
+    "hero": "รูปหลัก",
+    "setHero": "ตั้งเป็นรูปหลัก",
+    "remove": "ลบ",
+    "reorderHint": "ลากวางรูปเพื่อจัดลำดับแกลเลอรี",
+    "uploadHint": "รูปจะอัปโหลดผ่าน Blob upload API ที่มีอยู่",
+    "imageUrlHint": "วาง URL รูปทีละบรรทัด แล้วกดเพิ่ม URL",
+    "imageUrlsPlaceholder": "https://example.com/image-1.jpg\nhttps://example.com/image-2.jpg",
+    "addImageUrls": "เพิ่ม URL",
+    "uploadVideoHint": "อัปโหลดไฟล์วิดีโอของคุณ (สูงสุด 100 MB ต่อไฟล์)",
+    "videoHint": "วาง URL วิดีโอทีละบรรทัด (YouTube, Vimeo หรือลิงก์ตรง)",
+    "videoUrlsPlaceholder": "https://www.youtube.com/watch?v=...\nhttps://vimeo.com/...",
+    "addSpec": "เพิ่มสเปก",
+    "specKeyPlaceholder": "คีย์ (เช่น ที่จอดรถ)",
+    "specValuePlaceholder": "ค่า (เช่น 2 คัน)",
+    "fields": {
+      "title": "ชื่อรายการ",
+      "propertyType": "ประเภทอสังหาฯ",
+      "listingType": "ประเภทประกาศ",
+      "price": "ราคา (บาท)",
+      "areaSqm": "พื้นที่ (ตร.ม.)",
+      "bedrooms": "ห้องนอน",
+      "bathrooms": "ห้องน้ำ",
+      "landAreaSqm": "พื้นที่ดิน (ตร.ม.)",
+      "floor": "ชั้น",
+      "yearBuilt": "ปีที่สร้าง",
+      "furnished": "เฟอร์นิเจอร์",
+      "province": "จังหวัด",
+      "district": "เขต/อำเภอ",
+      "neighborhood": "ย่าน",
+      "sellerKind": "ประเภทการขาย",
+      "status": "สถานะ",
+      "published": "แสดงในหน้าสาธารณะ",
+      "isBoosted": "รายการแนะนำ",
+      "images": "อัปโหลดรูป",
+      "imageUrls": "วาง URL รูป",
+      "uploadVideos": "อัปโหลดวิดีโอ",
+      "videos": "URL วิดีโอ",
+      "description": "รายละเอียด",
+      "specifications": "สเปกเพิ่มเติม"
+    },
+    "propertyType": {
+      "condo": "คอนโด",
+      "house": "บ้าน",
+      "townhouse": "ทาวน์เฮาส์",
+      "land": "ที่ดิน",
+      "commercial": "เชิงพาณิชย์",
+      "villa": "วิลล่า"
+    },
+    "listingType": {
+      "sale": "ขาย",
+      "rent": "เช่า"
+    },
+    "sellerKind": {
+      "dealer": "เอเจนซี่ / ตัวแทน",
+      "private": "ขายส่วนตัว"
+    },
+    "furnished": {
+      "unfurnished": "ไม่มีเฟอร์นิเจอร์",
+      "partially": "มีเฟอร์นิเจอร์บางส่วน",
+      "furnished": "มีเฟอร์นิเจอร์ครบ",
+      "not_applicable": "ไม่ระบุ"
+    },
+    "status": {
+      "available": "ว่าง",
+      "reserved": "จองแล้ว",
+      "sold": "ขายแล้ว",
+      "pending_boost": "รออนุมัติบูสต์"
+    },
+    "errors": {
+      "uploadFailed": "อัปโหลดรูปไม่สำเร็จ",
+      "step1Required": "กรุณากรอกชื่อรายการและจังหวัด",
+      "priceInvalid": "ราคาต้องมากกว่า 0",
+      "areaInvalid": "พื้นที่ต้องอย่างน้อย 1 ตร.ม.",
+      "mediaRequired": "เพิ่มอย่างน้อย 1 รูปหรือวิดีโอ",
+      "heroRequired": "เลือกรูปหลัก",
+      "descriptionShort": "รายละเอียดต้องยาวอย่างน้อย 20 ตัวอักษร"
+    }
   }
 }

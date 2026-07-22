@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "dealers.virtualyard.com.au", pathname: "/**" },
       { protocol: "https", hostname: "virtualyard.com.au", pathname: "/**" },
       { protocol: "https", hostname: "img.youtube.com", pathname: "/vi/**" },
+      { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
     ],
   },
   experimental: {

@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
 
 type ExportListing = {
-  make: string;
-  model: string;
+  make?: string;
+  model?: string;
+  title?: string;
   heroImageUrl: string;
   imageUrls: unknown;
   description: string;
@@ -60,7 +61,7 @@ async function downloadImage(url: string, filename: string) {
 
 type SalesListingExportActionsProps = {
   listing: ExportListing;
-  translationNamespace?: "salesAdmin" | "sales";
+  translationNamespace?: "salesAdmin" | "sales" | "realEstate" | "realEstateAdmin";
   variant?: "icon" | "labeled";
 };
 
@@ -98,7 +99,11 @@ export function SalesListingExportActions({
     if (urls.length === 0 || downloading) return;
 
     setDownloading(true);
-    const base = slugifyFilename(`${listing.make}-${listing.model}`);
+    const base = slugifyFilename(
+      listing.title?.trim() ||
+        [listing.make, listing.model].filter(Boolean).join("-") ||
+        "listing"
+    );
     try {
       for (let index = 0; index < urls.length; index += 1) {
         await downloadImage(urls[index], `${base}-${index + 1}.${getExtension(urls[index])}`);

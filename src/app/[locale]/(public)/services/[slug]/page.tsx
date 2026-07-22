@@ -7,7 +7,7 @@ import { ServiceDetailHero } from "@/components/sections/ServiceDetailHero";
 import { ServiceDetailTabs } from "@/components/sections/ServiceDetailTabs";
 import { ServiceDetailSidebar } from "@/components/sections/ServiceDetailSidebar";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, Clock, Shield, FileText, Car, Plane, Wrench, Handshake, ClipboardList, Bus, User, Award, Zap, CheckCircle, Landmark, CalendarCheck } from "lucide-react";
+import { CheckCircle2, Clock, Shield, FileText, Car, Plane, Wrench, Handshake, ClipboardList, Bus, User, Award, Zap, CheckCircle, Landmark, CalendarCheck, Building2, Key, MapPin, TrendingUp, Users } from "lucide-react";
 import { serviceDisplayNames, serviceShortDescriptions, serviceSlugs } from "@/config/services";
 import type { ServiceSlug } from "@/config/services";
 import { MarriageRegistrationSections } from "@/components/sections/MarriageRegistrationSections";
@@ -356,6 +356,87 @@ const getServiceContent = (slug: string): ServiceDetailContent => {
         ],
       },
       processingTime: "Varies by Project",
+    },
+    "real-estate-services": {
+      subtitle: "Your property, our priority — buy, sell, rent, or invest with a trusted real estate partner in Thailand.",
+      overview:
+        "SiamEZ Real Estate Services makes property simple, safe, and stress-free. Whether you want to buy, sell, rent, or invest, our bilingual Thai & English speaking team guides you from first viewing through negotiation and transfer. We cover Bangkok and properties nationwide, with transparent service and local know-how so you can find your next dream property with confidence.",
+      features: [
+        {
+          icon: Building2,
+          title: "Property Sales",
+          description: "Find the perfect property for you — homes, condos, and more matched to your goals and budget.",
+        },
+        {
+          icon: Key,
+          title: "Property Rentals",
+          description: "Wide selection of homes and condos for rent, with viewing support and lease guidance.",
+        },
+        {
+          icon: TrendingUp,
+          title: "Investment Advice",
+          description: "Smart guidance for high-return opportunities across Bangkok and Thailand.",
+        },
+        {
+          icon: Handshake,
+          title: "Full Support",
+          description: "From viewing to transfer, we handle the process so you avoid stress and costly missteps.",
+        },
+        {
+          icon: MapPin,
+          title: "Nationwide Coverage",
+          description: "Properties in Bangkok and all over Thailand — local reach with one trusted partner.",
+        },
+        {
+          icon: Shield,
+          title: "Trusted & Reliable",
+          description: "Professional, transparent service from a team that puts your satisfaction first.",
+        },
+        {
+          icon: Users,
+          title: "Local Team You Can Trust",
+          description: "Friendly Thai & English speaking coordinators who negotiate the best deals for you.",
+        },
+      ],
+      requirements: [
+        "Tell us whether you want to buy, sell, rent, or invest — and your preferred timeline.",
+        "Share budget range, preferred areas (Bangkok or other provinces), and property type.",
+        "For sellers/landlords: property details, photos, ownership or lease documents, and target price.",
+        "Valid contact details (phone / LINE @siamez / WhatsApp) for viewings and offers.",
+        "Be ready for property viewings or document checks when needed.",
+      ],
+      processSteps: [
+        {
+          title: "Step 1: Share your property goals",
+          description:
+            "Tell us if you want to buy, sell, rent, or invest, plus budget, location preferences, and timeline.",
+        },
+        {
+          title: "Step 2: Shortlist and viewings",
+          description:
+            "We match suitable listings or qualified buyers/tenants, then arrange viewings and market feedback.",
+        },
+        {
+          title: "Step 3: Negotiation and paperwork",
+          description:
+            "We negotiate on your behalf and coordinate contracts, deposits, and transfer preparation.",
+        },
+        {
+          title: "Step 4: Completion and handover",
+          description:
+            "From final checks to key handover or transfer day, we stay with you until the deal is done.",
+        },
+      ],
+      documents: {
+        foreigner: [
+          "Passport / ID and contact details",
+          "Budget and preferred areas / property type",
+          "For buyers/investors: proof of funds when requested",
+          "For sellers/landlords: title deed (Chanote) or ownership documents, floor plans, and photos",
+          "Any existing listing agreements or agency paperwork",
+        ],
+      },
+      processingTime: "Quote within 24 hours",
     },
     "car-motorbike-finder-selling-service": {
       subtitle:

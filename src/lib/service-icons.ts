@@ -10,6 +10,7 @@ import {
   Bus,
   User,
   PartyPopper,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -26,6 +27,8 @@ export const serviceIconByName: Record<string, LucideIcon> = {
   Bus,
   User,
   PartyPopper,
+  Building2,
+  Taxi: Bus,
 };
 
 export function getServiceIcon(name: string): LucideIcon {

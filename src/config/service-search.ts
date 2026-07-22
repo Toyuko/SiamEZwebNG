@@ -52,6 +52,22 @@ export const serviceSearchMeta: Record<ServiceSlug, ServiceSearchMeta> = {
     categoryKey: "homeProperty",
     keywords: ["construction", "renovation", "repair", "handyman", "home", "condo", "ช่างซ่อม"],
   },
+  "real-estate-services": {
+    categoryKey: "homeProperty",
+    keywords: [
+      "real estate",
+      "property",
+      "buy house",
+      "sell condo",
+      "rent",
+      "invest",
+      "bangkok",
+      "อสังหาริมทรัพย์",
+      "ซื้อบ้าน",
+      "ขายคอนโด",
+      "เช่า",
+    ],
+  },
   "car-motorbike-finder-selling-service": {
     categoryKey: "drivingVehicle",
     keywords: ["buy car", "sell car", "motorbike", "motorcycle", "dealer", "vehicle finder", "ซื้อขายรถ"],

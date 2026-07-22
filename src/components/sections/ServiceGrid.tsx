@@ -11,6 +11,7 @@ import {
   Bus,
   User,
   PartyPopper,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
 import { ServiceCard } from "./ServiceCard";
@@ -31,6 +32,7 @@ const iconBySlug: Record<ServiceSlug, LucideIcon> = {
   "marriage-registration": Heart,
   "basic-translation": FileText,
   "construction-handyman": Wrench,
+  "real-estate-services": Building2,
   "car-motorbike-finder-selling-service": Handshake,
   "transportation-services": Bus,
   "private-driver-service": User,
@@ -47,6 +49,7 @@ const iconColorBySlug: Record<ServiceSlug, { bg: string; text: string; shape: "c
   "marriage-registration": { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-600 dark:text-red-400", shape: "circle" },
   "basic-translation": { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-600 dark:text-amber-400", shape: "square" },
   "construction-handyman": { bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-600 dark:text-orange-400", shape: "circle" },
+  "real-estate-services": { bg: "bg-sky-100 dark:bg-sky-900/30", text: "text-sky-700 dark:text-sky-400", shape: "circle" },
   "car-motorbike-finder-selling-service": { bg: "bg-yellow-100 dark:bg-yellow-900/30", text: "text-yellow-700 dark:text-yellow-400", shape: "circle" },
   "transportation-services": { bg: "bg-cyan-100 dark:bg-cyan-900/30", text: "text-cyan-600 dark:text-cyan-400", shape: "circle" },
   "private-driver-service": { bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-400", shape: "circle" },

@@ -36,6 +36,7 @@ import {
   mazda2Sedan2017Specifications,
 } from "./mazda-2-sedan-2017-listing";
 import { SUNSET_SCOOTERS_BATCH_LISTINGS } from "./sunset-scooters-batch-listings";
+import { REAL_ESTATE_SAMPLE_LISTINGS } from "./real-estate-sample-listings";
 
 const prisma = new PrismaClient();
 
@@ -91,6 +92,16 @@ const services = [
     sortOrder: 6,
   },
   {
+    slug: "real-estate-services",
+    name: "Real Estate Services",
+    shortDescription:
+      "Buy, sell, rent, or invest in property across Thailand — simple, safe, and stress-free with a trusted local team.",
+    description:
+      "SiamEZ Real Estate Services helps you buy, sell, rent, or invest in property across Thailand. From finding the right home or condo to viewing, negotiation, and transfer, we make property simple, safe, and stress-free with a bilingual Thai & English speaking team.",
+    type: "quote" as const,
+    sortOrder: 7,
+  },
+  {
     slug: "car-motorbike-finder-selling-service",
     name: "Car & Motorbike Finding and Selling Service",
     shortDescription:
@@ -98,7 +109,7 @@ const services = [
     description:
       "SiamEZ Auto & Bike Finder helps you buy or sell cars, motorcycles, vans, and big bikes in Thailand. We handle sourcing, negotiation, paperwork, and registration with transparent support for locals and expats.",
     type: "quote" as const,
-    sortOrder: 7,
+    sortOrder: 8,
   },
   {
     slug: "vehicle-registration",
@@ -108,7 +119,7 @@ const services = [
     description:
       "Professional vehicle registration assistance across Thailand: ownership transfers, tax and insurance renewals, plate changes, book updates, and lost book replacement. Bangkok one-day processing for qualifying BKK-plated cars and motorcycles; other provinces quoted on inquiry. Service fees are transparent; DLT fees are separate.",
     type: "quote" as const,
-    sortOrder: 8,
+    sortOrder: 9,
   },
   {
     slug: "transportation-services",
@@ -116,7 +127,7 @@ const services = [
     shortDescription: "Reliable airport transfers, city tours, and inter-city transportation with comfortable vehicles.",
     description: "Reliable airport transfers, city tours, and inter-city transportation with comfortable vehicles. Book for a single trip or regular transfers.",
     type: "quote" as const,
-    sortOrder: 9,
+    sortOrder: 10,
   },
   {
     slug: "private-driver-service",
@@ -124,7 +135,7 @@ const services = [
     shortDescription: "Professional private drivers for daily use, business trips, or special occasions with flexible packages.",
     description: "Professional private drivers for daily use, business trips, or special occasions. Flexible hourly, daily, or monthly packages available.",
     type: "quote" as const,
-    sortOrder: 10,
+    sortOrder: 11,
   },
   {
     slug: "basic-translation",
@@ -134,7 +145,7 @@ const services = [
     type: "fixed" as const,
     priceAmount: 50000, // 500 THB in satang (smallest unit)
     priceCurrency: "THB",
-    sortOrder: 11,
+    sortOrder: 12,
   },
   {
     slug: "event-planning-venue-services",
@@ -144,7 +155,7 @@ const services = [
     description:
       "We have partnered with The Red Door Bkk to bring you exceptional event planning and venue services.",
     type: "quote" as const,
-    sortOrder: 12,
+    sortOrder: 13,
   },
 ];
 
@@ -713,6 +724,74 @@ async function main() {
       },
     });
     console.log("Sales listing upserted:", listing.slug, `(${listing.imageUrls.length} photos)`);
+  }
+
+  const boostExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  for (const listing of REAL_ESTATE_SAMPLE_LISTINGS) {
+    await prisma.salesProperty.upsert({
+      where: { slug: listing.slug },
+      create: {
+        slug: listing.slug,
+        title: listing.title,
+        propertyType: listing.propertyType,
+        listingType: listing.listingType,
+        bedrooms: listing.bedrooms,
+        bathrooms: listing.bathrooms,
+        areaSqm: listing.areaSqm,
+        landAreaSqm: listing.landAreaSqm,
+        floor: listing.floor,
+        yearBuilt: listing.yearBuilt,
+        province: listing.province,
+        district: listing.district,
+        neighborhood: listing.neighborhood,
+        priceAmount: listing.priceAmount,
+        priceCurrency: "THB",
+        sellerKind: listing.sellerKind,
+        status: "available",
+        furnished: listing.furnished,
+        heroMediaType: "image",
+        heroImageUrl: listing.heroImageUrl,
+        heroVideoUrl: null,
+        imageUrls: listing.imageUrls,
+        videoUrls: [],
+        description: listing.description,
+        specifications: listing.specifications,
+        published: true,
+        isBoosted: Boolean(listing.isBoosted),
+        boostExpiresAt: listing.isBoosted ? boostExpiresAt : null,
+        boostTier: listing.isBoosted ? "manual" : null,
+        createdById: adminForListings?.id ?? null,
+      },
+      update: {
+        title: listing.title,
+        propertyType: listing.propertyType,
+        listingType: listing.listingType,
+        bedrooms: listing.bedrooms,
+        bathrooms: listing.bathrooms,
+        areaSqm: listing.areaSqm,
+        landAreaSqm: listing.landAreaSqm,
+        floor: listing.floor,
+        yearBuilt: listing.yearBuilt,
+        province: listing.province,
+        district: listing.district,
+        neighborhood: listing.neighborhood,
+        priceAmount: listing.priceAmount,
+        priceCurrency: "THB",
+        sellerKind: listing.sellerKind,
+        status: "available",
+        furnished: listing.furnished,
+        heroImageUrl: listing.heroImageUrl,
+        imageUrls: listing.imageUrls,
+        videoUrls: [],
+        description: listing.description,
+        specifications: listing.specifications,
+        published: true,
+        isBoosted: Boolean(listing.isBoosted),
+        boostExpiresAt: listing.isBoosted ? boostExpiresAt : null,
+        boostTier: listing.isBoosted ? "manual" : null,
+      },
+    });
+    console.log("Real estate listing upserted:", listing.slug);
   }
 }
 

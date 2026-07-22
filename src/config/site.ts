@@ -52,6 +52,7 @@ export const publicNav: PublicNavEntry[] = [
     items: [
       { labelKey: "allServices", href: "/services", match: "exact" },
       { labelKey: "sales", href: "/sales", match: "exact" },
+      { labelKey: "realEstate", href: "/real-estate", match: "exact" },
       { labelKey: "freelancers", href: "/freelancers", match: "prefix" },
     ],
   },

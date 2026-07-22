@@ -123,6 +123,7 @@ export function ContactRequestForm() {
           <option value="police">{tOptions("police")}</option>
           <option value="visa">{tOptions("visa")}</option>
           <option value="construction">{tOptions("construction")}</option>
+          <option value="real-estate">{tOptions("real-estate")}</option>
           <option value="car-bike-finder-selling">{tOptions("car-bike-finder-selling")}</option>
           <option value="vehicle">{tOptions("vehicle")}</option>
           <option value="transport">{tOptions("transport")}</option>

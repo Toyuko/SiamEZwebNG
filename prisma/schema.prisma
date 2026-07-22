@@ -51,6 +51,7 @@ model User {
   eventsAsClient Event[]           @relation("EventClient")
   eventsAsStaff  Event[]           @relation("EventStaff")
   salesVehiclesCreated SalesVehicle[]
+  salesPropertiesCreated SalesProperty[]
   freelancerProfile   FreelancerProfile?
   company             Company?
   jobsPosted          Job[]              @relation("JobPostedBy")
@@ -715,4 +716,71 @@ model SalesVehicle {
   @@index([sellerKind, status, published])
   @@index([make, model, year])
   @@map("sales_vehicles")
+}
+
+enum PropertyType {
+  condo
+  house
+  townhouse
+  land
+  commercial
+  villa
+}
+
+enum PropertyListingType {
+  sale
+  rent
+}
+
+enum PropertyFurnished {
+  unfurnished
+  partially
+  furnished
+  not_applicable
+}
+
+/** Public real-estate inventory (sale / rent listings). */
+model SalesProperty {
+  id               String              @id @default(cuid())
+  slug             String              @unique
+  title            String
+  propertyType     PropertyType        @map("property_type")
+  listingType      PropertyListingType @default(sale) @map("listing_type")
+  bedrooms         Int?
+  bathrooms        Int?
+  areaSqm          Int                 @map("area_sqm")
+  landAreaSqm      Int?                @map("land_area_sqm")
+  floor            Int?
+  yearBuilt        Int?                @map("year_built")
+  province         String
+  district         String?
+  neighborhood     String?
+  priceAmount      Int                 @map("price_amount")
+  priceCurrency    String              @default("THB") @map("price_currency")
+  sellerKind       SalesSellerKind     @default(private) @map("seller_kind")
+  status           SalesListingStatus  @default(available)
+  furnished        PropertyFurnished   @default(not_applicable)
+  heroMediaType    String              @default("image") @map("hero_media_type")
+  heroImageUrl     String              @map("hero_image_url")
+  heroVideoUrl     String?             @map("hero_video_url")
+  imageUrls        Json                @map("image_urls")
+  videoUrls        Json?               @map("video_urls")
+  description      String              @db.Text
+  specifications   Json?
+  published        Boolean             @default(true)
+  isBoosted        Boolean             @default(false) @map("is_boosted")
+  boostExpiresAt   DateTime?           @map("boost_expires_at")
+  boostTier        String?             @map("boost_tier")
+  createdById      String?             @map("created_by_id")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([isBoosted, boostExpiresAt])
+  @@index([propertyType, status, published])
+  @@index([listingType, status, published])
+  @@index([sellerKind, status, published])
+  @@index([province, district])
+  @@map("sales_properties")
 }

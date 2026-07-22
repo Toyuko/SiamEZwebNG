@@ -20,6 +20,7 @@ import {
   UserCheck,
   ClipboardList,
   Building2,
+  Home,
   Megaphone,
   ChevronDown,
   type LucideIcon,
@@ -83,6 +84,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "services", href: "/admin/services", icon: Package },
       { label: "sales", href: "/admin/sales", icon: Car },
+      { label: "realEstate", href: "/admin/real-estate", icon: Home },
     ],
   },
   {

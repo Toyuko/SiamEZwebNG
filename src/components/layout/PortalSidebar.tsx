@@ -12,6 +12,7 @@ import {
   Car,
   Briefcase,
   Building2,
+  Home,
   Megaphone,
   UserRound,
 } from "lucide-react";
@@ -24,6 +25,7 @@ const clientNav = [
   { labelKey: "dashboard", href: "/portal", icon: LayoutDashboard },
   { labelKey: "myCases", href: "/portal/cases", icon: FolderOpen },
   { labelKey: "mySales", href: "/portal/sales", icon: Car },
+  { labelKey: "myRealEstate", href: "/portal/real-estate", icon: Home },
   { labelKey: "invoices", href: "/portal/invoices", icon: CreditCard },
   { labelKey: "documents", href: "/portal/documents", icon: FileText },
   { labelKey: "publicProfile", href: "/portal/freelancer-profile", icon: UserRound },
