@@ -165,7 +165,8 @@ flowchart LR
 | P0 Security (A10) | **Merged** (`09b6370` → `9905fae`) |
 | P0 QA gates (A12) | **Merged** (`2e785b8`; 32 tests green) |
 | P1 Analyst docs (A01) | **Merged** (`a06b468`) |
-| P1 Design system (A02) | In flight |
-| P2–P7 | Queued |
+| P1 Design system (A02) | **Merged** (`14b8a92`) |
+| P2 Wizard engine (A05) | Ready to launch |
+| P3–P7 | Queued |
 
 Blockers, risks, and agent status live on the Orchestrator canvas.

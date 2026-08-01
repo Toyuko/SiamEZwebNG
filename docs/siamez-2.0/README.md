@@ -21,7 +21,8 @@ Incremental evolution of SiamEZwebNG into an AI-powered concierge platform.
 1. Audit — **done**  
 2. Roadmap — **approved** (2026-08-01)  
 3. Integration branch — `siamez-2.0`  
-4. Wave 1 — A01 + A10 + A12 **merged** (P0 complete; `npm test` 32/32)  
-5. Wave 2 in flight — A02 (Design System)  
+4. Wave 1 — A01 + A10 + A12 **merged** (P0 complete)  
+5. Wave 2 — A02 Design System **merged**  
+6. Next — P2 Universal Wizard Engine (A05)  
 
 Feature branches merge into `siamez-2.0` after Orchestrator review.
