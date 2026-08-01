@@ -28,7 +28,8 @@ Incremental evolution of SiamEZwebNG into an AI-powered concierge platform.
 8. P4 — A03 Concierge + A04 Signup **merged**  
 9. P5 — A07 Documents **merged**  
 10. P6 — A08 + A09 dashboards **merged**  
-11. P7 — A12 release QA **merged** · **77** tests · report: [releases/SIAMEZ-2.0-RELEASE-REPORT.md](./releases/SIAMEZ-2.0-RELEASE-REPORT.md)  
-12. Next — A11 performance merge · human smoke · promote (keep `BYPASS_ADMIN_AUTH` off in prod) 
+11. P7 — A11 Performance + A12 Release QA **merged** · **77** tests  
+12. Reports — [SIAMEZ-2.0-RELEASE-REPORT.md](./releases/SIAMEZ-2.0-RELEASE-REPORT.md) · [P7-PERF.md](./releases/P7-PERF.md)  
+13. Next — **human smoke** then promote (keep `BYPASS_ADMIN_AUTH` off in prod) 
 
 Feature branches merge into `siamez-2.0` after Orchestrator review.

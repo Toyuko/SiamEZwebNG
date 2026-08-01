@@ -175,6 +175,7 @@ flowchart LR
 | P6 Customer dashboard (A08) | **Merged** (`92737cc`) |
 | P6 Staff dashboard (A09) | **Merged** (`230225b`) |
 | P7 Release QA (A12) | **Merged** (`be0a0fc`; 77 tests) |
-| P7 Performance (A11) | In flight |
+| P7 Performance (A11) | **Merged** (`0ae3f90`) |
+| Roadmap delivery | **Complete on `siamez-2.0`** — awaiting human smoke / promote |
 
 Blockers, risks, and agent status live on the Orchestrator canvas.
