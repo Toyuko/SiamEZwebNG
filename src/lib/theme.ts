@@ -1,9 +1,22 @@
+/**
+ * Theme helpers for SiamEZ (light / dark / night / auto).
+ * Applied via `data-theme` + `.dark` on `<html>` — see ThemeProvider.
+ * Semantic colors live in `src/app/globals.css`; brand blues/yellows are theme-invariant.
+ */
 export const THEME_STORAGE_KEY = "siam-theme";
 
 export type ThemeChoice = "light" | "dark" | "night" | "auto";
 
 /** Resolved theme applied to the document (light, dark, or night). */
 export type ResolvedTheme = "light" | "dark" | "night";
+
+/** Choices shown in ThemeSwitcher (order preserved). */
+export const THEME_CHOICES: readonly ThemeChoice[] = [
+  "light",
+  "dark",
+  "night",
+  "auto",
+] as const;
 
 export function getSystemPrefersDark(): boolean {
   if (typeof window === "undefined") return false;

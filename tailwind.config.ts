@@ -10,6 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Semantic (theme-aware via CSS vars in globals.css)
         background: "var(--background)",
         foreground: "var(--foreground)",
         muted: "var(--muted)",
@@ -20,17 +21,26 @@ const config: Config = {
         "header-border": "var(--header-border)",
         "header-text": "var(--header-text)",
         "header-text-muted": "var(--header-text-muted)",
+        input: "var(--input)",
+        "input-border": "var(--input-border)",
+        overlay: "var(--overlay)",
+        ring: "var(--ring)",
+        destructive: {
+          DEFAULT: "var(--destructive)",
+          foreground: "var(--destructive-foreground)",
+        },
+        // Brand – preserved siam.blue / siam.yellow (CSS var single source)
         siam: {
           blue: {
-            DEFAULT: "#2C54C6",
-            light: "#3D5FCE",
-            dark: "#2344B0",
-            bright: "#5B76E0",
+            DEFAULT: "var(--siam-blue)",
+            light: "var(--siam-blue-light)",
+            dark: "var(--siam-blue-dark)",
+            bright: "var(--siam-blue-bright)",
           },
           yellow: {
-            DEFAULT: "#FFCE2D",
-            light: "#FFD84D",
-            dark: "#E6B828",
+            DEFAULT: "var(--siam-yellow)",
+            light: "var(--siam-yellow-light)",
+            dark: "var(--siam-yellow-dark)",
           },
           gray: {
             DEFAULT: "#374151",
@@ -64,12 +74,16 @@ const config: Config = {
           "0%": { opacity: "0", transform: "translateX(20px)" },
           "100%": { opacity: "1", transform: "translateX(0)" },
         },
+        "skeleton-pulse": {
+          "50%": { opacity: "0.5" },
+        },
       },
       animation: {
         "fade-in": "fade-in 0.6s ease-out forwards",
         "fade-in-up": "fade-in-up 0.6s ease-out forwards",
         "fade-in-scale": "fade-in-scale 0.5s ease-out forwards",
         "slide-in-right": "slide-in-right 0.6s ease-out forwards",
+        "skeleton-pulse": "skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
     },
   },
