@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { MarketplacePostToggle } from "@/components/booking/MarketplacePostToggle";
 import { submitBooking } from "@/actions/booking";
-import type { WizardConfig } from "@/config/wizards/types";
+import { uploadWizardDocumentAction } from "@/actions/document";
+import type { WizardConfig, WizardRequiredDocument } from "@/config/wizards/types";
 import {
   autosaveStorageKey,
   clearAutosave,
@@ -26,6 +27,32 @@ import {
   type WizardDocumentMeta,
 } from "@/components/wizard/steps/DocumentsStep";
 import { ReviewStep } from "@/components/wizard/steps/ReviewStep";
+import {
+  applyWizardPrefill,
+  extractDocumentFields,
+  extractedFieldsToWizardPrefill,
+  formatMissingDocumentWarning,
+  getMissingDocuments,
+  validateWizardDocument,
+} from "@/lib/documents";
+
+function documentsStepConfig(config: WizardConfig) {
+  return config.steps.find((s) => s.type === "documents");
+}
+
+function resolveRequiredDoc(
+  requiredDocuments: WizardRequiredDocument[] | undefined,
+  selectedRequiredId: string | null
+): WizardRequiredDocument | undefined {
+  if (!requiredDocuments?.length) return undefined;
+  if (selectedRequiredId) {
+    return (
+      requiredDocuments.find((r) => r.id === selectedRequiredId) ??
+      requiredDocuments[0]
+    );
+  }
+  return requiredDocuments[0];
+}
 
 export interface WizardEngineProps {
   config: WizardConfig;
@@ -72,7 +99,10 @@ export function WizardEngine({
   const [documents, setDocuments] = useState<WizardDocumentMeta[]>([]);
   const [postToMarketplace, setPostToMarketplace] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [docWarning, setDocWarning] = useState<string | null>(null);
+  const [selectedRequiredId, setSelectedRequiredId] = useState<string | null>(null);
   const [resumeBanner, setResumeBanner] = useState(false);
 
   const form = useForm<Record<string, unknown>>({
@@ -138,6 +168,14 @@ export function WizardEngine({
   const currentStep = visibleSteps[stepIndex] ?? visibleSteps[0];
   const isLastStep = stepIndex >= visibleSteps.length - 1;
   const isGuest = !userId;
+  const canUpload = Boolean(userId);
+  const docsStep = useMemo(() => documentsStepConfig(config), [config]);
+  const requiredDocuments = docsStep?.requiredDocuments;
+
+  const missingDocWarning = useMemo(() => {
+    const result = getMissingDocuments(requiredDocuments, documents);
+    return formatMissingDocumentWarning(result);
+  }, [documents, requiredDocuments]);
 
   // Autosave debounce
   useEffect(() => {
@@ -187,6 +225,9 @@ export function WizardEngine({
     setError(null);
     const values = getValues() as Record<string, unknown>;
     const shaped = config.buildFormData ? config.buildFormData(values) : values;
+    const documentIds = documents
+      .map((d) => d.documentId)
+      .filter((id): id is string => Boolean(id));
     const payload = {
       ...shaped,
       documents: documents.map((d) => ({
@@ -194,6 +235,9 @@ export function WizardEngine({
         size: d.size,
         mimeType: d.mimeType,
         documentType: d.documentType,
+        documentId: d.documentId,
+        requiredId: d.requiredId,
+        uploadStatus: d.uploadStatus,
       })),
     };
 
@@ -206,7 +250,7 @@ export function WizardEngine({
       guestName: (values.name as string) || userName || undefined,
       guestPhone: (values.phone as string) || undefined,
       formData: payload,
-      documentIds: undefined,
+      documentIds: documentIds.length > 0 ? documentIds : undefined,
       postToMarketplace,
     });
     setLoading(false);
@@ -262,10 +306,14 @@ export function WizardEngine({
       clearErrors();
     }
 
-    if (currentStep.type === "documents" && currentStep.documentsRequired) {
-      if (documents.length < 1) {
+    if (currentStep.type === "documents") {
+      if (currentStep.documentsRequired && documents.length < 1) {
         setError("Please upload at least one document to continue.");
         return;
+      }
+      // Soft warn on missing checklist items — guests and partial uploads may continue.
+      if (missingDocWarning) {
+        setDocWarning(missingDocWarning);
       }
     }
 
@@ -282,6 +330,7 @@ export function WizardEngine({
     getValues,
     handleSubmit,
     isLastStep,
+    missingDocWarning,
     visibleSteps.length,
   ]);
 
@@ -291,20 +340,181 @@ export function WizardEngine({
     setStepIndex((i) => Math.max(i - 1, 0));
   }, [clearErrors]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const applyExtractPrefill = useCallback(
+    async (meta: {
+      fileName: string;
+      mimeType?: string;
+      documentType?: string;
+      storageKey?: string;
+      prefillFields?: string[];
+    }) => {
+      try {
+        const extracted = await extractDocumentFields({
+          fileName: meta.fileName,
+          mimeType: meta.mimeType,
+          documentType: meta.documentType,
+          storageKey: meta.storageKey,
+        });
+        const patch = extractedFieldsToWizardPrefill(extracted.fields, {
+          currentValues: getValues() as Record<string, unknown>,
+          allowFields: meta.prefillFields,
+        });
+        applyWizardPrefill(patch, (name, value) => {
+          setValue(name, value, { shouldDirty: true, shouldValidate: false });
+        });
+        if (extracted.warnings?.length && !canUpload) {
+          // Guest path already shows guest banner; keep OCR note mild.
+          setDocWarning((prev) => prev ?? extracted.warnings?.[0] ?? null);
+        }
+      } catch {
+        // Prefill is best-effort
+      }
+    },
+    [canUpload, getValues, setValue]
+  );
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files?.length) return;
-    const next: WizardDocumentMeta[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const f = files[i];
-      next.push({
-        name: f.name,
-        size: f.size,
-        mimeType: f.type,
-      });
-    }
-    setDocuments((prev) => [...prev, ...next]);
+    setError(null);
+
+    const missing = getMissingDocuments(requiredDocuments, documents);
+    const autoPick =
+      selectedRequiredId ??
+      missing.missing[0]?.id ??
+      missing.optionalMissing[0]?.id ??
+      requiredDocuments?.[0]?.id ??
+      null;
+    const req = resolveRequiredDoc(requiredDocuments, autoPick);
+    const documentType = req?.documentType ?? req?.id;
+    const requiredId = req?.id;
+
+    const fileList = Array.from(files);
     e.target.value = "";
+
+    for (const file of fileList) {
+      const validationError = validateWizardDocument(file);
+      if (validationError) {
+        setDocWarning(validationError);
+        continue;
+      }
+
+      if (!canUpload) {
+        const meta: WizardDocumentMeta = {
+          name: file.name,
+          size: file.size,
+          mimeType: file.type,
+          documentType,
+          requiredId,
+          uploadStatus: "metadata",
+        };
+        setDocuments((prev) => [...prev, meta]);
+        await applyExtractPrefill({
+          fileName: file.name,
+          mimeType: file.type,
+          documentType,
+          prefillFields: req?.prefillFields,
+        });
+        continue;
+      }
+
+      setUploading(true);
+      const pending: WizardDocumentMeta = {
+        name: file.name,
+        size: file.size,
+        mimeType: file.type,
+        documentType,
+        requiredId,
+        uploadStatus: "pending",
+      };
+      setDocuments((prev) => [...prev, pending]);
+
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        if (documentType) formData.append("documentType", documentType);
+
+        const result = await uploadWizardDocumentAction(formData);
+        if (!result.success || !result.documentId) {
+          setDocuments((prev) => {
+            const copy = [...prev];
+            const idx = copy.findIndex(
+              (d) => d.name === file.name && d.uploadStatus === "pending"
+            );
+            if (idx >= 0) {
+              copy[idx] = {
+                ...copy[idx],
+                uploadStatus: "metadata",
+                error: result.error ?? "Upload failed — saved as metadata",
+              };
+            }
+            return copy;
+          });
+          setDocWarning(
+            result.error ??
+              "Upload unavailable. File metadata was kept so you can continue."
+          );
+          await applyExtractPrefill({
+            fileName: file.name,
+            mimeType: file.type,
+            documentType,
+            prefillFields: req?.prefillFields,
+          });
+          continue;
+        }
+
+        setDocuments((prev) => {
+          const copy = [...prev];
+          const idx = copy.findIndex(
+            (d) => d.name === file.name && d.uploadStatus === "pending"
+          );
+          if (idx >= 0) {
+            copy[idx] = {
+              ...copy[idx],
+              documentId: result.documentId,
+              documentType: result.documentType ?? documentType,
+              uploadStatus: "uploaded",
+              error: undefined,
+            };
+          }
+          return copy;
+        });
+
+        if (result.usedMockStorage) {
+          setDocWarning(
+            "Blob storage token not configured — files use mock:// storage keys locally."
+          );
+        }
+
+        await applyExtractPrefill({
+          fileName: result.name ?? file.name,
+          mimeType: result.mimeType ?? file.type,
+          documentType: result.documentType ?? documentType,
+          storageKey: result.storageKey,
+          prefillFields: req?.prefillFields,
+        });
+      } catch {
+        setDocuments((prev) => {
+          const copy = [...prev];
+          const idx = copy.findIndex(
+            (d) => d.name === file.name && d.uploadStatus === "pending"
+          );
+          if (idx >= 0) {
+            copy[idx] = {
+              ...copy[idx],
+              uploadStatus: "metadata",
+              error: "Upload failed — saved as metadata",
+            };
+          }
+          return copy;
+        });
+        setDocWarning("Upload failed. File metadata was kept so you can continue.");
+      } finally {
+        setUploading(false);
+      }
+    }
+
+    if (requiredId) setSelectedRequiredId(null);
   };
 
   const removeDocument = (idx: number) => {
@@ -323,6 +533,8 @@ export function WizardEngine({
     setPostToMarketplace(false);
     setStepIndex(0);
     setResumeBanner(false);
+    setDocWarning(null);
+    setSelectedRequiredId(null);
   };
 
   const locale =
@@ -393,6 +605,12 @@ export function WizardEngine({
             <DocumentsStep
               documents={documents}
               description={currentStep.description}
+              requiredDocuments={currentStep.requiredDocuments}
+              canUpload={canUpload}
+              uploading={uploading}
+              warning={docWarning ?? missingDocWarning}
+              selectedRequiredId={selectedRequiredId}
+              onSelectRequiredId={setSelectedRequiredId}
               onFileChange={handleFileChange}
               onRemove={removeDocument}
             />

@@ -121,7 +121,23 @@ export const marriageRegistrationWizard: WizardConfig = {
       label: "Documents",
       labelKey: "steps.documents",
       description:
-        "Upload passport copies, affidavits, or other supporting documents if you have them. Metadata is saved now; file storage may be completed later.",
+        "Upload passport copies, affidavits, or other supporting documents if you have them. Signed-in uploads are linked to your booking; guests can continue with a checklist warning.",
+      requiredDocuments: [
+        {
+          id: "passport",
+          label: "Passport copy",
+          documentType: "passport",
+          required: true,
+          prefillFields: ["name", "partnerNationality"],
+        },
+        {
+          id: "affidavit",
+          label: "Affidavit / single-status certificate",
+          documentType: "affidavit",
+          required: false,
+          prefillFields: ["name"],
+        },
+      ],
     },
     {
       id: "review",

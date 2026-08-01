@@ -8,6 +8,11 @@ export interface WizardAutosavePayload {
     size?: number;
     mimeType?: string;
     documentType?: string;
+    /** Persisted Document.id when upload succeeded (authenticated). */
+    documentId?: string;
+    /** Checklist item id from wizard requiredDocuments. */
+    requiredId?: string;
+    uploadStatus?: "pending" | "uploaded" | "metadata" | "error";
   }>;
   postToMarketplace: boolean;
   savedAt: string;

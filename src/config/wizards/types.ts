@@ -61,6 +61,24 @@ export type WizardStepType =
   | "documents"
   | "review";
 
+/** Checklist item for a documents step (missing-doc detection + typed upload). */
+export interface WizardRequiredDocument {
+  /** Stable id used in checklist / matching (e.g. "passport"). */
+  id: string;
+  label: string;
+  labelKey?: string;
+  description?: string;
+  /** When false, shown as optional. Default true. */
+  required?: boolean;
+  /**
+   * Stored on Document.documentType and used for missing-doc matching.
+   * Defaults to `id` when omitted.
+   */
+  documentType?: string;
+  /** Wizard form fields this document may prefill after extraction. */
+  prefillFields?: string[];
+}
+
 export interface WizardStepConfig {
   id: string;
   type: WizardStepType;
@@ -73,6 +91,8 @@ export interface WizardStepConfig {
   showWhen?: WizardCondition;
   /** When type is documents, require at least one file before continuing */
   documentsRequired?: boolean;
+  /** Per-service missing-document checklist (documents steps). */
+  requiredDocuments?: WizardRequiredDocument[];
 }
 
 export interface WizardConfig {
