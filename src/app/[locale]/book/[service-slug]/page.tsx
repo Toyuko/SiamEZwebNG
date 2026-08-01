@@ -8,6 +8,8 @@ import { BookingWizard } from "@/components/booking/BookingWizard";
 import { DriverLicenseBookingWizard } from "@/components/booking/DriverLicenseBookingWizard";
 import { CarMotorbikeFinderBookingWizard } from "@/components/booking/CarMotorbikeFinderBookingWizard";
 import { RealEstateBookingWizard } from "@/components/booking/RealEstateBookingWizard";
+import { WizardEngine } from "@/components/wizard";
+import { getWizardConfig } from "@/config/wizards";
 import { getSession } from "@/lib/auth";
 
 export default async function BookServicePage({
@@ -25,6 +27,14 @@ export default async function BookServicePage({
   ]);
   if (!service) notFound();
 
+  const engineConfig = getWizardConfig(serviceSlug);
+  const wizardProps = {
+    service,
+    userId: session?.user.id,
+    userEmail: session?.user.email ?? undefined,
+    userName: session?.user.name ?? undefined,
+  };
+
   return (
     <div className="container mx-auto max-w-2xl px-4 py-6 sm:py-8">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -36,33 +46,27 @@ export default async function BookServicePage({
         </Button>
       </div>
       {serviceSlug === "driver-license" ? (
-        <DriverLicenseBookingWizard
-          service={service}
-          userId={session?.user.id}
-          userEmail={session?.user.email ?? undefined}
-          userName={session?.user.name ?? undefined}
-        />
+        <DriverLicenseBookingWizard {...wizardProps} />
       ) : serviceSlug === "car-motorbike-finder-selling-service" ? (
-        <CarMotorbikeFinderBookingWizard
-          service={service}
-          userId={session?.user.id}
-          userEmail={session?.user.email ?? undefined}
-          userName={session?.user.name ?? undefined}
-        />
+        <CarMotorbikeFinderBookingWizard {...wizardProps} />
       ) : serviceSlug === "real-estate-services" ? (
-        <RealEstateBookingWizard
+        <RealEstateBookingWizard {...wizardProps} />
+      ) : engineConfig ? (
+        <WizardEngine
+          config={engineConfig}
           service={service}
-          userId={session?.user.id}
-          userEmail={session?.user.email ?? undefined}
-          userName={session?.user.name ?? undefined}
+          serviceSlug={serviceSlug}
+          userId={wizardProps.userId}
+          userEmail={wizardProps.userEmail}
+          userName={wizardProps.userName}
         />
       ) : (
         <BookingWizard
           service={service}
           serviceSlug={serviceSlug}
-          userId={session?.user.id}
-          userEmail={session?.user.email ?? undefined}
-          userName={session?.user.name ?? undefined}
+          userId={wizardProps.userId}
+          userEmail={wizardProps.userEmail}
+          userName={wizardProps.userName}
         />
       )}
     </div>
