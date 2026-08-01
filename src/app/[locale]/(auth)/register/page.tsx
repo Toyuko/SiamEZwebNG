@@ -3,6 +3,8 @@ import { getTranslations } from "next-intl/server";
 import { RegisterForm } from "./RegisterForm";
 import { Link } from "@/i18n/navigation";
 import { safeRedirectQueryParam } from "@/lib/auth-redirect";
+import { getConfiguredSocialProviders } from "@/lib/auth-providers";
+import { AuthShell } from "@/components/auth/AuthShell";
 
 export default async function RegisterPage({
   params,
@@ -14,39 +16,32 @@ export default async function RegisterPage({
   const { locale } = await params;
   const { email, redirect: redirectRaw } = await searchParams;
   const redirectTo = safeRedirectQueryParam(redirectRaw);
-  const loginHref = redirectTo ? `/login?redirect=${encodeURIComponent(redirectTo)}` : "/login";
+  const loginHref = redirectTo
+    ? `/login?redirect=${encodeURIComponent(redirectTo)}`
+    : "/login";
   setRequestLocale(locale);
   const t = await getTranslations("auth");
-  const enableFacebook = process.env.AUTH_ENABLE_FACEBOOK === "true";
-  const providers = {
-    google: Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET),
-    facebook: Boolean(
-      enableFacebook && process.env.AUTH_FACEBOOK_ID && process.env.AUTH_FACEBOOK_SECRET
-    ),
-    line: Boolean(process.env.AUTH_LINE_ID && process.env.AUTH_LINE_SECRET),
-  };
+  const providers = getConfiguredSocialProviders();
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-800">
-      <div className="mb-6 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-siam-blue">
-          <span className="text-xl font-bold text-white">SZ</span>
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("register")}</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("registerSubtitle")}</p>
-      </div>
+    <AuthShell
+      title={t("register")}
+      subtitle={t("registerSubtitle")}
+      footer={
+        <>
+          {t("hasAccount")}{" "}
+          <Link href={loginHref} className="font-medium text-siam-blue hover:underline">
+            {t("login")}
+          </Link>
+        </>
+      }
+    >
       <RegisterForm
         locale={locale}
         prefillEmail={email ?? undefined}
         redirectTo={redirectTo}
         providers={providers}
       />
-      <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-        {t("hasAccount")}{" "}
-        <Link href={loginHref} className="font-medium text-siam-blue hover:underline">
-          {t("login")}
-        </Link>
-      </p>
-    </div>
+    </AuthShell>
   );
 }
