@@ -24,10 +24,11 @@ Incremental evolution of SiamEZwebNG into an AI-powered concierge platform.
 4. Wave 1 — A01 + A10 + A12 **merged** (P0 complete)  
 5. Wave 2 — A02 Design System **merged**  
 6. P2 — A05 Wizard Engine **merged**  
-7. P3 — A06 Service Migration **merged** (all 13 slugs; 46 tests)  
+7. P3 — A06 Service Migration **merged** (all 13 slugs)  
 8. P4 — A03 Concierge + A04 Signup **merged**  
 9. P5 — A07 Documents **merged**  
-10. P6 — A08 + A09 dashboards **merged** · 75 tests green  
-11. Next — P7 Performance + release QA (A11, A12)  
+10. P6 — A08 + A09 dashboards **merged**  
+11. P7 — A12 release QA **complete** on `agent/12-release-qa` · **77** tests + typecheck green · report: [releases/SIAMEZ-2.0-RELEASE-REPORT.md](./releases/SIAMEZ-2.0-RELEASE-REPORT.md)  
+12. Next — merge A12 → `siamez-2.0`; A11 performance / human smoke / promote  
 
 Feature branches merge into `siamez-2.0` after Orchestrator review.

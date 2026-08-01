@@ -174,6 +174,6 @@ flowchart LR
 | P5 Documents (A07) | **Merged** (`1034d8d`) |
 | P6 Customer dashboard (A08) | **Merged** (`92737cc`) |
 | P6 Staff dashboard (A09) | **Merged** (`230225b`) |
-| P7 Perf & QA (A11, A12) | In flight |
+| P7 Perf & QA (A11, A12) | **A12 QA done** (`agent/12-release-qa`; 77 tests) · A11 perf still open |
 
 Blockers, risks, and agent status live on the Orchestrator canvas.
