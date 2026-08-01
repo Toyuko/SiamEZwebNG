@@ -162,7 +162,8 @@ flowchart LR
 |-------|--------|
 | Audit | Done |
 | Roadmap approval | **Approved** |
-| P0 Security (A10+A12) | In flight |
+| P0 Security (A10) | **Merged** (`09b6370` → `9905fae`) |
+| P0 QA gates (A12) | In flight |
 | P1 Analyst docs (A01) | **Merged** (`a06b468`) |
 | P1 Design system (A02) | In flight |
 | P2–P7 | Queued |
