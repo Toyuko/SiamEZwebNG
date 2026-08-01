@@ -5,8 +5,10 @@ Incremental evolution of SiamEZwebNG into an AI-powered concierge platform.
 | Doc | Purpose |
 |-----|---------|
 | [AUDIT.md](./AUDIT.md) | Architecture report, component inventory, technical debt |
-| [ROADMAP.md](./ROADMAP.md) | Phased plan with effort, risk, acceptance criteria |
-| [AGENTS.md](./AGENTS.md) | 12 specialized agent briefs + copy-paste launch prompts |
+| [ROADMAP.md](./ROADMAP.md) | UX/Concierge phases P0–P7 (delivered on branch) |
+| [PLATFORM-MIGRATION-REPORT.md](./PLATFORM-MIGRATION-REPORT.md) | Marketplace content inventory — preserve-first |
+| [PLATFORM-ROADMAP.md](./PLATFORM-ROADMAP.md) | Waves M0–M7 (Life Events, search, recs, workflows) |
+| [AGENTS.md](./AGENTS.md) | 12 specialized agent briefs (P0–P7) |
 | [DEPENDENCY-GRAPH.md](./DEPENDENCY-GRAPH.md) | Mermaid graphs: booking, auth, payments, portal, admin |
 | [REUSE-CATALOG.md](./REUSE-CATALOG.md) | Components / hooks / actions to prefer for 2.0 |
 | [REFACTOR-BACKLOG.md](./REFACTOR-BACKLOG.md) | Prioritized refactor queue for Orchestrator |
@@ -30,6 +32,8 @@ Incremental evolution of SiamEZwebNG into an AI-powered concierge platform.
 10. P6 — A08 + A09 dashboards **merged**  
 11. P7 — A11 Performance + A12 Release QA **merged** · **77** tests  
 12. Reports — [SIAMEZ-2.0-RELEASE-REPORT.md](./releases/SIAMEZ-2.0-RELEASE-REPORT.md) · [P7-PERF.md](./releases/P7-PERF.md)  
-13. Next — **human smoke** then promote (keep `BYPASS_ADMIN_AUTH` off in prod) 
+13. P0–P7 Concierge/wizard track — **merged** on `siamez-2.0`  
+14. **Platform marketplace track** — full **M0–M7 approved**; **M0 in flight**  
+15. Reports — [PLATFORM-MIGRATION-REPORT.md](./PLATFORM-MIGRATION-REPORT.md) · [PLATFORM-ROADMAP.md](./PLATFORM-ROADMAP.md)  
 
 Feature branches merge into `siamez-2.0` after Orchestrator review.
