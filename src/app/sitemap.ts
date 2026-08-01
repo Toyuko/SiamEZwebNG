@@ -2,6 +2,11 @@ import type { MetadataRoute } from "next";
 import { site } from "@/config/site";
 import { serviceSlugs } from "@/config/services";
 import { routing } from "@/i18n/routing";
+import { analyzePublishedListings } from "@/lib/migration/analyze";
+import {
+  buildLocalizedRealEstateListingPath,
+  buildLocalizedSalesListingPath,
+} from "@/lib/migration/urls";
 
 const STATIC_PATHS = [
   "",
@@ -19,7 +24,7 @@ const STATIC_PATHS = [
   "/refund",
 ] as const;
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = site.url.replace(/\/$/, "");
   const lastModified = new Date();
   const entries: MetadataRoute.Sitemap = [];
@@ -42,6 +47,32 @@ export default function sitemap(): MetadataRoute.Sitemap {
         priority: 0.7,
       });
     }
+  }
+
+  try {
+    const { vehicles, properties } = await analyzePublishedListings();
+
+    for (const locale of routing.locales) {
+      for (const vehicle of vehicles) {
+        entries.push({
+          url: `${baseUrl}${buildLocalizedSalesListingPath(locale, vehicle)}`,
+          lastModified: vehicle.updatedAt ?? lastModified,
+          changeFrequency: "weekly",
+          priority: 0.65,
+        });
+      }
+
+      for (const property of properties) {
+        entries.push({
+          url: `${baseUrl}${buildLocalizedRealEstateListingPath(locale, property)}`,
+          lastModified: property.updatedAt ?? lastModified,
+          changeFrequency: "weekly",
+          priority: 0.65,
+        });
+      }
+    }
+  } catch (error) {
+    console.warn("sitemap: published listing URLs skipped:", error);
   }
 
   return entries;

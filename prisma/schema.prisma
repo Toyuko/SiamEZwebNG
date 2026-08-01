@@ -784,3 +784,33 @@ model SalesProperty {
   @@index([province, district])
   @@map("sales_properties")
 }
+
+/**
+ * Non-destructive SEO / AI side-store for marketplace listings (Platform Wave M1).
+ * Never overwrites SalesVehicle / SalesProperty title, description, images, or price.
+ * Linked by polymorphic listingType + listingId (cuid), not by mutating source rows.
+ */
+enum ListingEnhancementType {
+  vehicle
+  property
+}
+
+model ListingEnhancement {
+  id             String                  @id @default(cuid())
+  listingType    ListingEnhancementType  @map("listing_type")
+  listingId      String                  @map("listing_id")
+  aiSummary      String?                 @map("ai_summary") @db.Text
+  seoTitle       String?                 @map("seo_title")
+  seoDescription String?                 @map("seo_description")
+  /** string[] keywords for SEO / search hints */
+  keywords       Json?
+  schemaJsonLd   Json?                   @map("schema_json_ld")
+  enhancedAt     DateTime?               @map("enhanced_at")
+  createdAt      DateTime                @default(now()) @map("created_at")
+  updatedAt      DateTime                @updatedAt @map("updated_at")
+
+  @@unique([listingType, listingId])
+  @@index([listingId])
+  @@index([listingType, enhancedAt])
+  @@map("listing_enhancements")
+}

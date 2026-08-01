@@ -1,9 +1,47 @@
 /**
- * Platform 2.0 Migration Engine types (Wave M0).
+ * Platform 2.0 Migration Engine types (Wave M0–M1).
  * Snapshots are read-only inventories — never mutate listing source fields.
+ * Enhancements write only to ListingEnhancement side rows.
  */
 
 export type ListingDivision = "sales" | "real-estate";
+
+/** Matches Prisma `ListingEnhancementType`. */
+export type ListingEnhancementType = "vehicle" | "property";
+
+export type EnhancementPayload = {
+  listingType: ListingEnhancementType;
+  listingId: string;
+  aiSummary: string;
+  seoTitle: string;
+  seoDescription: string;
+  keywords: string[];
+  schemaJsonLd: Record<string, unknown>;
+  enhancedAt: Date;
+};
+
+export type EnhanceListingsCounts = {
+  vehicles: number;
+  properties: number;
+  total: number;
+};
+
+export type EnhanceListingsDryRunResult = {
+  mode: "dry-run";
+  payloads: EnhancementPayload[];
+  counts: EnhanceListingsCounts;
+  usedOpenAI: boolean;
+  notes: string[];
+};
+
+export type ApplyEnhancementsResult = {
+  mode: "apply";
+  payloads: EnhancementPayload[];
+  counts: EnhanceListingsCounts;
+  upserted: number;
+  usedOpenAI: boolean;
+  notes: string[];
+};
 
 /** Point-in-time inventory row for a published (or analyzed) listing. */
 export type ListingSnapshot = {

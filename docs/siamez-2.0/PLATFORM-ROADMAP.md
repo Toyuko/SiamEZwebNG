@@ -2,7 +2,7 @@
 
 **Prerequisite:** [PLATFORM-MIGRATION-REPORT.md](./PLATFORM-MIGRATION-REPORT.md)  
 **Integration branch:** `siamez-2.0`  
-**Status:** **Full M0–M7 approved** (2026-08-02) · **M0 merged** (`7bb5925`) · Wave **M1 in flight**  
+**Status:** **Full M0–M7 approved** (2026-08-02) · **M0 merged** (`7bb5925`) · Wave **M1 in progress** (`agent/m1-listing-enhancement`)  
 **Rule:** No division rewrite. Additive engines. Preserve URLs and data.
 
 ---
@@ -143,4 +143,5 @@
 
 **Approved:** full M0–M7 (2026-08-02).  
 **M0:** Merged (`7bb5925`) — `npm run migrate:inventory-report`  
-**Active wave:** M1 — Listing enhancement (non-destructive SEO/AI side-fields).
+**Active wave:** M1 — Listing enhancement (non-destructive SEO/AI side-fields).  
+**M1 commands:** `npm run migrate:enhance-listings` (dry-run default) · `--apply` upserts `ListingEnhancement` only.

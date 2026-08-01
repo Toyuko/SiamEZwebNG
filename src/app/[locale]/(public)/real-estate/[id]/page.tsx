@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getPublicSalesPropertyById } from "@/data-access/real-estate";
@@ -8,8 +9,39 @@ import { site } from "@/config/site";
 import { Mail, MessageCircle, Phone } from "lucide-react";
 import { SalesVehicleImageGallery } from "@/components/sales/SalesVehicleImageGallery";
 import { SalesListingExportActions } from "@/components/sales/SalesListingExportActions";
+import { getListingEnhancement } from "@/lib/migration/enhance";
+import { buildPropertyJsonLd, coerceStoredSchemaJsonLd } from "@/lib/migration/jsonld";
+import { resolveListingMetadata } from "@/lib/migration/metadata";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const property = await getPublicSalesPropertyById(id);
+  if (!property) {
+    return { title: "Property" };
+  }
+
+  const enhancement = await getListingEnhancement("property", property.id);
+  const meta = resolveListingMetadata(
+    { title: property.title, description: property.description },
+    enhancement
+  );
+
+  return {
+    title: meta.title,
+    description: meta.description,
+    openGraph: {
+      title: meta.title,
+      description: meta.description,
+      images: property.heroImageUrl ? [{ url: property.heroImageUrl }] : undefined,
+    },
+  };
+}
 
 function formatPrice(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(
@@ -114,8 +146,35 @@ export default async function RealEstateDetailPage({
     ? /\.(mp4|webm|ogg)(\?.*)?$/i.test(heroVideoUrl)
     : false;
 
+  const enhancement = await getListingEnhancement("property", property.id);
+  const jsonLd =
+    coerceStoredSchemaJsonLd(enhancement?.schemaJsonLd) ??
+    buildPropertyJsonLd(
+      {
+        id: property.id,
+        title: property.title,
+        description: property.description,
+        propertyType: property.propertyType,
+        listingType: property.listingType,
+        province: property.province,
+        district: property.district,
+        neighborhood: property.neighborhood,
+        bedrooms: property.bedrooms,
+        bathrooms: property.bathrooms,
+        areaSqm: property.areaSqm,
+        priceAmount: property.priceAmount,
+        priceCurrency: property.priceCurrency,
+        heroImageUrl: property.heroImageUrl,
+      },
+      { locale, summary: enhancement?.aiSummary }
+    );
+
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Link href="/real-estate" className="text-sm font-medium text-siam-blue hover:underline">
         {t("backToInventory")}
       </Link>

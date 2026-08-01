@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getPublicSalesVehicleById } from "@/data-access/sales";
@@ -16,8 +17,39 @@ import {
   isSunsetScootersDealerMotorcycleListing,
   resolveSunsetDealerMotorcycleHeroUrl,
 } from "@/lib/sunset-dealer-motorcycle-hero";
+import { getListingEnhancement } from "@/lib/migration/enhance";
+import { buildVehicleJsonLd, coerceStoredSchemaJsonLd } from "@/lib/migration/jsonld";
+import { resolveListingMetadata } from "@/lib/migration/metadata";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const vehicle = await getPublicSalesVehicleById(id);
+  if (!vehicle) {
+    return { title: "Vehicle" };
+  }
+
+  const enhancement = await getListingEnhancement("vehicle", vehicle.id);
+  const meta = resolveListingMetadata(
+    { title: vehicle.title, description: vehicle.description },
+    enhancement
+  );
+
+  return {
+    title: meta.title,
+    description: meta.description,
+    openGraph: {
+      title: meta.title,
+      description: meta.description,
+      images: vehicle.heroImageUrl ? [{ url: vehicle.heroImageUrl }] : undefined,
+    },
+  };
+}
 
 function formatPrice(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(
@@ -143,8 +175,32 @@ export default async function SalesVehicleDetailPage({
   const heroEmbedUrl = heroVideoUrl ? getVideoEmbedUrl(heroVideoUrl) : null;
   const heroIsDirectVideo = heroVideoUrl ? /\.(mp4|webm|ogg)(\?.*)?$/i.test(heroVideoUrl) : false;
 
+  const enhancement = await getListingEnhancement("vehicle", vehicle.id);
+  const jsonLd =
+    coerceStoredSchemaJsonLd(enhancement?.schemaJsonLd) ??
+    buildVehicleJsonLd(
+      {
+        id: vehicle.id,
+        title: vehicle.title,
+        description: vehicle.description,
+        make: vehicle.make,
+        model: vehicle.model,
+        year: vehicle.year,
+        mileageKm: vehicle.mileageKm,
+        priceAmount: vehicle.priceAmount,
+        priceCurrency: vehicle.priceCurrency,
+        heroImageUrl: resolvedHeroImageUrl,
+        category: vehicle.category,
+      },
+      { locale, summary: enhancement?.aiSummary }
+    );
+
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Link href="/sales" className="text-sm font-medium text-siam-blue hover:underline">
         {t("backToInventory")}
       </Link>
