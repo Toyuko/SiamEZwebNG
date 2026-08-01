@@ -115,6 +115,19 @@
     "logout": "ออกจากระบบ",
     "realEstate": "อสังหาริมทรัพย์"
   },
+  "unifiedSearch": {
+    "openAria": "เปิดค้นหาทั้งเว็บไซต์",
+    "placeholder": "ค้นหาบริการ รถยนต์ อสังหาฯ…",
+    "empty": "ไม่พบผลลัพธ์สำหรับ \"{query}\"",
+    "loading": "กำลังโหลดดัชนีค้นหา…",
+    "shortcutHint": "กด ⌘K หรือ Ctrl+K เพื่อค้นหาทั้งเว็บไซต์",
+    "navigateHint": "เลือกรายการ",
+    "groupServices": "บริการ",
+    "groupVehicles": "ยานพาหนะ",
+    "groupProperties": "อสังหาริมทรัพย์",
+    "groupHelp": "ความช่วยเหลือ",
+    "close": "ปิด"
+  },
   "adminNav": {
     "dashboard": "แดชบอร์ด",
     "groupOperations": "การดำเนินงาน",

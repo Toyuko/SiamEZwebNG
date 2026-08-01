@@ -6,3 +6,4 @@ export * from "@/lib/ai/rule-replies";
 export * from "@/lib/ai/stream";
 export * from "@/lib/ai/chat";
 export * from "@/lib/ai/tools/search-services";
+export * from "@/lib/ai/tools/search-unified";

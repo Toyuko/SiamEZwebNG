@@ -205,6 +205,7 @@ export function ServicesPageClient({
         voiceLang={voiceLang}
         open={paletteOpen}
         onOpenChange={setPaletteOpen}
+        disableGlobalShortcut
       />
 
       <ServicesStickyBar

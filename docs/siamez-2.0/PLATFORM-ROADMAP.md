@@ -2,7 +2,7 @@
 
 **Prerequisite:** [PLATFORM-MIGRATION-REPORT.md](./PLATFORM-MIGRATION-REPORT.md)  
 **Integration branch:** `siamez-2.0`  
-**Status:** **Full M0–M7 approved** (2026-08-02) · **M0–M1 merged** · **M2 on branch** `agent/m2-marketplace-engagement` (saved / recently viewed / compare)  
+**Status:** **Full M0–M7 approved** (2026-08-02) · **M0–M2 at** `e563b69` · Wave **M3** on `agent/m3-unified-search` (unified search)  
 **Rule:** No division rewrite. Additive engines. Preserve URLs and data.
 
 ---
@@ -144,13 +144,13 @@
 **Approved:** full M0–M7 (2026-08-02).  
 **M0:** Merged (`7bb5925`) — `npm run migrate:inventory-report`  
 **M1:** Merged (`2eb0534`) — `ListingEnhancement` + `migrate:enhance-listings`  
-**M2:** Landed on `agent/m2-marketplace-engagement` — `SavedListing` / `ListingView` / `CompareItem` + portal hub `/portal/saved` (not yet merged to `siamez-2.0`).  
-**Active wave:** M3 — Unified Search (after M2 merge).  
+**M2:** At base `e563b69` — `SavedListing` / `ListingView` / `CompareItem` + portal hub `/portal/saved`.  
+**Active wave:** M3 — Unified Search on `agent/m3-unified-search`.  
 **M1 commands:** `npm run migrate:enhance-listings` (dry-run default) · `--apply` upserts `ListingEnhancement` only.
 
 ---
 
-## M2 note (this branch)
+## M2 note (merged at e563b69)
 
 Wave M2 adds marketplace engagement without mutating listing source content:
 
@@ -161,3 +161,18 @@ Wave M2 adds marketplace engagement without mutating listing source content:
 | `CompareItem` | Compare tray ≤3; vehicle + property mix allowed |
 
 Anonymous cookie `siamez_mp_sid` merges into the Auth.js user on login (best-effort) and on the next engagement Server Action. Public cuid URLs unchanged (`/sales/{id}`, `/real-estate/{id}`).
+
+---
+
+## M3 note (this branch)
+
+Wave M3 adds **unified search** across divisions without redesigning marketplace pages:
+
+| Piece | Location |
+|-------|----------|
+| Search projection / Fuse query | `src/lib/search/**` |
+| Concierge tool (no OpenAI required) | `src/lib/ai/tools/search-unified.ts` |
+| Grouped results UI | `src/components/search/UnifiedSearchPalette.tsx` (+ header ⌘K) |
+| Service palette | Kept on `/services` (`disableGlobalShortcut` so site search owns ⌘K) |
+
+URL contracts preserved: vehicles → `/sales/{cuid}`, properties → `/real-estate/{cuid}`, services → `/services/{slug}` (book: `/book/{slug}`). Listing description fields are never written by search.

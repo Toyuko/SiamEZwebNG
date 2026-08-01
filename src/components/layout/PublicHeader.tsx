@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { Menu, X, Languages, ChevronDown, LogOut, LayoutDashboard, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UnifiedSearchHeaderControl } from "@/components/search";
 import { publicNav, site, type PublicNavLink } from "@/config/site";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -126,6 +127,7 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
         </nav>
 
         <div className="flex items-center gap-2">
+          <UnifiedSearchHeaderControl className="shrink-0" />
           <ThemeSwitcher className="shrink-0" />
           <div className="relative flex items-center gap-1 rounded-lg border border-border bg-card p-1">
             <Languages className="h-4 w-4 text-muted" aria-hidden />

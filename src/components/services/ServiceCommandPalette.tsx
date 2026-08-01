@@ -42,6 +42,8 @@ interface ServiceCommandPaletteProps {
   voiceLang?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** When true, skip ⌘K / Ctrl+K (site-wide unified search owns that shortcut). */
+  disableGlobalShortcut?: boolean;
 }
 
 export function ServiceCommandPalette({
@@ -53,6 +55,7 @@ export function ServiceCommandPalette({
   voiceLang = "en-US",
   open,
   onOpenChange,
+  disableGlobalShortcut = false,
 }: ServiceCommandPaletteProps) {
   const router = useRouter();
   const [internalQuery, setInternalQuery] = useState(query);
@@ -85,7 +88,7 @@ export function ServiceCommandPalette({
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+      if (!disableGlobalShortcut && e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         onOpenChange(!open);
       }
@@ -95,7 +98,7 @@ export function ServiceCommandPalette({
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, onOpenChange]);
+  }, [open, onOpenChange, disableGlobalShortcut]);
 
   useEffect(() => {
     if (!open) return;

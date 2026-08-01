@@ -115,6 +115,19 @@
     "logout": "Logout",
     "realEstate": "Real Estate"
   },
+  "unifiedSearch": {
+    "openAria": "Open site search",
+    "placeholder": "Search services, vehicles, properties…",
+    "empty": "No results found for \"{query}\"",
+    "loading": "Loading search index…",
+    "shortcutHint": "Press ⌘K or Ctrl+K anytime to search the whole site",
+    "navigateHint": "navigate",
+    "groupServices": "Services",
+    "groupVehicles": "Vehicles",
+    "groupProperties": "Properties",
+    "groupHelp": "Help",
+    "close": "close"
+  },
   "adminNav": {
     "dashboard": "Dashboard",
     "groupOperations": "Operations",
