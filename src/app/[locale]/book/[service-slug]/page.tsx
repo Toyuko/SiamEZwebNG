@@ -1,12 +1,30 @@
+import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getOrEnsureServiceBySlug } from "@/data-access/service";
 import { Button } from "@/components/ui/button";
-import { WizardEngine } from "@/components/wizard";
 import { getWizardConfig } from "@/config/wizards";
 import { getSession } from "@/lib/auth";
+
+/**
+ * Defer the WizardEngine client graph (RHF, step renderers, documents) so the
+ * book route shell paints first. Props contract unchanged vs direct import.
+ */
+const WizardEngine = dynamic(
+  () =>
+    import("@/components/wizard/WizardEngine").then((m) => m.WizardEngine),
+  {
+    loading: () => (
+      <div
+        className="min-h-[28rem] animate-pulse rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/40"
+        aria-busy="true"
+        aria-label="Loading booking form"
+      />
+    ),
+  }
+);
 
 /**
  * All seeded service slugs book via Universal Wizard Engine (P3 / A06).

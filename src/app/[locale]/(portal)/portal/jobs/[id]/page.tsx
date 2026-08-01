@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
@@ -94,9 +95,11 @@ export default async function JobTrackingPage({
               <div className="flex flex-col gap-1">
                 <span className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                   {job.freelancer.image ? (
-                    <img
+                    <Image
                       src={job.freelancer.image}
                       alt=""
+                      width={32}
+                      height={32}
                       className="h-8 w-8 rounded-full object-cover"
                     />
                   ) : (

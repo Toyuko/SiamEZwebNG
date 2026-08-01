@@ -1,12 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { StaffModal } from "./StaffModal";
 import { StaffTable } from "./StaffTable";
 import { StaffSearch } from "./StaffSearch";
+
+const StaffModal = dynamic(() =>
+  import("./StaffModal").then((m) => m.StaffModal)
+);
 
 type StaffUser = {
   id: string;

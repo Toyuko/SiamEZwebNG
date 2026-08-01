@@ -9,6 +9,37 @@ import { getPublicServicesList } from "@/data-access/service";
 import { serviceSlugs } from "@/config/services";
 import { getTranslations } from "next-intl/server";
 import { getSession } from "@/lib/auth";
+import { site } from "@/config/site";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "home" });
+  const baseUrl = site.url.replace(/\/$/, "");
+
+  return {
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+    alternates: {
+      canonical: `${baseUrl}/${locale}`,
+      languages: {
+        en: `${baseUrl}/en`,
+        th: `${baseUrl}/th`,
+      },
+    },
+    openGraph: {
+      title: `${t("metaTitle")} | ${site.name}`,
+      description: t("metaDescription"),
+      url: `${baseUrl}/${locale}`,
+      siteName: site.name,
+      locale: locale === "th" ? "th_TH" : "en_US",
+      type: "website",
+    },
+  };
+}
 
 export default async function HomePage({
   params,

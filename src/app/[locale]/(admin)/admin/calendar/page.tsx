@@ -1,6 +1,19 @@
+import dynamic from "next/dynamic";
 import { Card, CardContent } from "@/components/ui/card";
 import { getEvents, getCases, getStaffUsers } from "@/actions/admin";
-import { CalendarView } from "./CalendarView";
+
+const CalendarView = dynamic(
+  () => import("./CalendarView").then((m) => m.CalendarView),
+  {
+    loading: () => (
+      <div
+        className="min-h-[28rem] animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800/60"
+        aria-busy="true"
+        aria-label="Loading calendar"
+      />
+    ),
+  }
+);
 
 export default async function AdminCalendarPage({
   searchParams,

@@ -1,13 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ServiceModal } from "./ServiceModal";
 import { ServiceTable } from "./ServiceTable";
 import { ServiceSearch } from "./ServiceSearch";
 import type { Service } from "@prisma/client";
+
+const ServiceModal = dynamic(() =>
+  import("./ServiceModal").then((m) => m.ServiceModal)
+);
 
 type ServicesPageClientProps = {
   services: Service[];

@@ -15,6 +15,8 @@ type Props = {
   placement?: "default" | "stacked";
 };
 
+export const CONCIERGE_PANEL_ID = "siamez-concierge-panel";
+
 export function ConciergeFab({
   open,
   onToggle,
@@ -28,6 +30,8 @@ export function ConciergeFab({
       onClick={onToggle}
       aria-label={open ? closeLabel : label}
       aria-expanded={open}
+      aria-controls={CONCIERGE_PANEL_ID}
+      aria-haspopup="dialog"
       className={cn(
         "fixed z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-siam-blue text-white shadow-lg transition-all hover:scale-110 hover:bg-siam-blue-light hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-siam-yellow focus-visible:ring-offset-2",
         placement === "stacked" ? "bottom-24 right-6" : "bottom-6 right-6"

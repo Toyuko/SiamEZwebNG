@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { ConciergeComposer } from "@/components/ai/ConciergeComposer";
+import { CONCIERGE_PANEL_ID } from "@/components/ai/ConciergeFab";
 import { ConciergeMessageList } from "@/components/ai/ConciergeMessageList";
 import { ConciergeQuickActions } from "@/components/ai/ConciergeQuickActions";
 import { fadeInUp, motionTransition, scaleIn } from "@/components/ui/motion";
@@ -13,6 +14,7 @@ type Labels = {
   subtitle: string;
   offlineHint: string;
   clear: string;
+  closeLabel: string;
   book: string;
   empty: string;
   placeholder: string;
@@ -61,9 +63,10 @@ export function ConciergePanel({
           animate="visible"
           exit="exit"
           transition={motionTransition}
+          id={CONCIERGE_PANEL_ID}
           className="fixed bottom-40 right-4 z-[60] flex h-[min(34rem,calc(100vh-11rem))] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-siam-blue/15 bg-white shadow-2xl dark:border-white/10 dark:bg-gray-950 sm:right-6"
           role="dialog"
-          aria-modal="false"
+          aria-modal="true"
           aria-label={labels.title}
         >
           <motion.header
@@ -96,7 +99,7 @@ export function ConciergePanel({
               type="button"
               onClick={onClose}
               className="rounded-lg p-1.5 text-white/80 hover:bg-white/10 hover:text-white"
-              aria-label="Close"
+              aria-label={labels.closeLabel}
             >
               <X className="h-4 w-4" aria-hidden />
             </button>

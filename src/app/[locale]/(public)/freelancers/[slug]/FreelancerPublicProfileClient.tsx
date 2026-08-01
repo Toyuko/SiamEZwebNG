@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { BadgeCheck, Mail, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -43,11 +44,13 @@ export function FreelancerPublicProfileClient({ profile }: { profile: ProfileVie
           <header className="flex flex-col gap-5 sm:flex-row sm:items-start">
             <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-siam-blue/10 ring-4 ring-white dark:ring-gray-900">
               {profile.user.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   src={profile.user.image}
                   alt={displayName}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="96px"
+                  className="object-cover"
+                  priority
                 />
               ) : (
                 <span className="flex h-full w-full items-center justify-center text-2xl font-semibold text-siam-blue">
