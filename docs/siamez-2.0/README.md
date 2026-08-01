@@ -27,6 +27,6 @@ Incremental evolution of SiamEZwebNG into an AI-powered concierge platform.
 7. P3 — A06 Service Migration **merged** (all 13 slugs; 46 tests)  
 8. P4 — A03 Concierge + A04 Signup **merged**  
 9. P5 — A07 Documents **merged**  
-10. Next — P6 Customer + Staff dashboards (A08, A09) · 70 tests green  
+10. P6 — A08 Customer dashboard **merged**; A09 Staff in flight · 73 tests green  
 
 Feature branches merge into `siamez-2.0` after Orchestrator review.

@@ -172,7 +172,8 @@ flowchart LR
 | P4 Signup (A04) | **Merged** (`6e761fc`) |
 | P4 Concierge (A03) | **Merged** (`5dd29c2`) |
 | P5 Documents (A07) | **Merged** (`1034d8d`) |
-| P6 Customer + Staff dashboards (A08, A09) | In flight |
+| P6 Customer dashboard (A08) | **Merged** (`92737cc`) |
+| P6 Staff dashboard (A09) | In flight |
 | P7 Perf & QA | Queued |
 
 Blockers, risks, and agent status live on the Orchestrator canvas.
