@@ -163,7 +163,8 @@ flowchart LR
 | Audit | Done |
 | Roadmap approval | **Approved** |
 | P0 Security (A10+A12) | In flight |
-| P1 Design system (A01+A02) | In flight |
+| P1 Analyst docs (A01) | **Merged** (`a06b468`) |
+| P1 Design system (A02) | In flight |
 | P2–P7 | Queued |
 
 Blockers, risks, and agent status live on the Orchestrator canvas.
