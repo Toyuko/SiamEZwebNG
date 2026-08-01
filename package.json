@@ -17,7 +17,8 @@
     "postinstall": "prisma generate",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "migrate:inventory-report": "tsx scripts/migrate-inventory-report.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
