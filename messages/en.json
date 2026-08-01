@@ -1892,5 +1892,28 @@
       "heroRequired": "Select a hero image.",
       "descriptionShort": "Description must be at least 20 characters."
     }
+  },
+  "concierge": {
+    "title": "SiamEZ Concierge",
+    "subtitle": "Find the right service and start booking",
+    "offlineHint": "Catalog mode — AI replies unavailable without an API key",
+    "openLabel": "Open SiamEZ Concierge",
+    "closeLabel": "Close Concierge",
+    "clear": "Clear conversation",
+    "book": "Book",
+    "empty": "Ask what you need in Thailand — visas, licenses, translations, and more.",
+    "placeholder": "What do you need help with?",
+    "send": "Send message",
+    "listening": "Listening…",
+    "voiceAria": "Dictate with voice",
+    "voiceUnsupported": "Voice input is not supported in this browser.",
+    "voicePermissionDenied": "Microphone access was denied.",
+    "voiceNoSpeech": "No speech detected. Try again.",
+    "voiceError": "Voice input failed. Please try again.",
+    "quickActions": {
+      "popular": "Popular services",
+      "startBooking": "Start booking",
+      "help": "Help"
+    }
   }
 }

@@ -1,3 +1,4 @@
+import { AiConciergeShell } from "@/components/ai";
 import { PublicHeaderWithAuth } from "@/components/layout/PublicHeaderWithAuth";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 
@@ -11,6 +12,7 @@ export default function PublicLayout({
       <PublicHeaderWithAuth />
       <main className="flex-1">{children}</main>
       <PublicFooter />
+      <AiConciergeShell placement="stacked" />
     </div>
   );
 }

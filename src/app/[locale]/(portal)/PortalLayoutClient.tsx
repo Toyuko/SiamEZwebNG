@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
+import { AiConciergeShell } from "@/components/ai";
 import { PortalSidebar } from "@/components/layout/PortalSidebar";
 import { PortalTopBar } from "@/components/portal/PortalTopBar";
 import { usePathname } from "@/i18n/navigation";
@@ -78,6 +79,7 @@ export function PortalLayoutClient({
           {children}
         </main>
       </div>
+      <AiConciergeShell placement="default" />
     </div>
   );
 }

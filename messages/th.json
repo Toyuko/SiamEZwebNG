@@ -1892,5 +1892,28 @@
       "heroRequired": "เลือกรูปหลัก",
       "descriptionShort": "รายละเอียดต้องยาวอย่างน้อย 20 ตัวอักษร"
     }
+  },
+  "concierge": {
+    "title": "SiamEZ Concierge",
+    "subtitle": "ค้นหาบริการที่ใช่แล้วเริ่มจอง",
+    "offlineHint": "โหมดแคตตาล็อก — ไม่มีคีย์ API จึงยังไม่ใช้ AI",
+    "openLabel": "เปิด SiamEZ Concierge",
+    "closeLabel": "ปิด Concierge",
+    "clear": "ล้างการสนทนา",
+    "book": "จอง",
+    "empty": "บอกสิ่งที่ต้องการในไทยได้เลย — วีซ่า ใบขับขี่ แปลเอกสาร และอื่น ๆ",
+    "placeholder": "ต้องการความช่วยเหลือเรื่องอะไร?",
+    "send": "ส่งข้อความ",
+    "listening": "กำลังฟัง…",
+    "voiceAria": "พูดเพื่อพิมพ์",
+    "voiceUnsupported": "เบราว์เซอร์นี้ไม่รองรับการสั่งงานด้วยเสียง",
+    "voicePermissionDenied": "ไม่อนุญาตให้ใช้ไมโครโฟน",
+    "voiceNoSpeech": "ไม่พบเสียงพูด ลองอีกครั้ง",
+    "voiceError": "ใช้เสียงไม่สำเร็จ ลองอีกครั้ง",
+    "quickActions": {
+      "popular": "บริการยอดนิยม",
+      "startBooking": "เริ่มจอง",
+      "help": "ช่วยเหลือ"
+    }
   }
 }
