@@ -142,6 +142,26 @@ export const {
           where: { id: user.id },
           data: { lastLoginAt: new Date() },
         });
+        // Wave M2: best-effort anonymous marketplace cookie → user merge
+        try {
+          const { cookies } = await import("next/headers");
+          const { MARKETPLACE_ANON_COOKIE } = await import(
+            "@/lib/marketplace-engagement/constants"
+          );
+          const { mergeAnonymousEngagementToUser } = await import(
+            "@/lib/marketplace-engagement/merge"
+          );
+          const jar = await cookies();
+          const anonId = jar.get(MARKETPLACE_ANON_COOKIE)?.value?.trim();
+          if (anonId) {
+            await mergeAnonymousEngagementToUser(prisma, {
+              userId: user.id,
+              anonymousSessionId: anonId,
+            });
+          }
+        } catch {
+          // never block sign-in
+        }
       }
     },
     async createUser({ user }) {

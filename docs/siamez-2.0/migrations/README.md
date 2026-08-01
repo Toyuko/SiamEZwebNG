@@ -1,6 +1,8 @@
-# Platform 2.0 — Migration reports (Wave M0–M1)
+# Platform 2.0 — Migration reports (Wave M0–M2)
 
 Dry-run inventory tooling and non-destructive listing enhancements for published marketplace listings. **Non-destructive:** the Migration Engine never updates or deletes listing source fields (title, description, images, price, etc.). SEO/AI text lands only in the `ListingEnhancement` side table.
+
+**M2 (marketplace engagement)** lives on branch `agent/m2-marketplace-engagement`: additive Prisma models `SavedListing`, `ListingView`, `CompareItem` (migration `20260802030000_add_marketplace_engagement`). Does not alter `sales_vehicles` / `sales_properties` content.
 
 ## Generate an inventory report (M0)
 

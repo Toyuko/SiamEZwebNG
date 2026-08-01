@@ -1415,7 +1415,35 @@
       "genericError": "เกิดข้อผิดพลาด โปรดลองอีกครั้ง"
     },
     "publicProfile": "โปรไฟล์สาธารณะ",
-    "myRealEstate": "อสังหาฯ ของฉัน"
+    "myRealEstate": "อสังหาฯ ของฉัน",
+    "savedListings": "รายการที่บันทึกและเปรียบเทียบ"
+  },
+  "marketplaceEngagement": {
+    "save": "บันทึก",
+    "unsave": "บันทึกแล้ว",
+    "removeSaved": "นำออก",
+    "savedToast": "บันทึกรายการแล้ว",
+    "unsavedToast": "นำออกจากรายการที่บันทึกแล้ว",
+    "addCompare": "เปรียบเทียบ",
+    "removeCompare": "อยู่ในรายการเปรียบเทียบ",
+    "compareAdded": "เพิ่มเข้ารายการเปรียบเทียบแล้ว ({count}/{max})",
+    "compareRemoved": "นำออกจากรายการเปรียบเทียบแล้ว",
+    "compareCap": "เปรียบเทียบได้สูงสุด {max} รายการ — นำรายการอื่นออกก่อน",
+    "viewHub": "รายการที่บันทึกและประวัติ",
+    "errorGeneric": "เกิดข้อผิดพลาด โปรดลองอีกครั้ง",
+    "hubTitle": "รายการที่บันทึก",
+    "hubSubtitle": "รายการตลาดที่บันทึก ประวัติการดูล่าสุด และรายการเปรียบเทียบ (สูงสุด 3)",
+    "savedSection": "ที่บันทึก",
+    "savedEmpty": "ยังไม่มีรายการที่บันทึก กดบันทึกในหน้ารายละเอียดรถหรืออสังหาฯ",
+    "recentSection": "ดูล่าสุด",
+    "recentEmpty": "ยังไม่มีประวัติการดู",
+    "compareSection": "เปรียบเทียบ",
+    "compareEmpty": "ยังไม่มีรายการเปรียบเทียบ เพิ่มได้สูงสุด 3 รายการจากหน้ารายละเอียด",
+    "compareCountLabel": "{count} จาก {max}",
+    "openListing": "ดูรายการ",
+    "typeVehicle": "ยานพาหนะ",
+    "typeProperty": "อสังหาฯ",
+    "priceContact": "สอบถามผู้ขาย"
   },
   "clientTracking": {
     "pageTitle": "ติดตามบริการของคุณ",

@@ -1415,7 +1415,35 @@
       "genericError": "Something went wrong. Please try again."
     },
     "publicProfile": "Public Profile",
-    "myRealEstate": "My Properties"
+    "myRealEstate": "My Properties",
+    "savedListings": "Saved & compare"
+  },
+  "marketplaceEngagement": {
+    "save": "Save",
+    "unsave": "Saved",
+    "removeSaved": "Remove",
+    "savedToast": "Listing saved.",
+    "unsavedToast": "Removed from saved.",
+    "addCompare": "Compare",
+    "removeCompare": "In compare",
+    "compareAdded": "Added to compare ({count}/{max}).",
+    "compareRemoved": "Removed from compare.",
+    "compareCap": "Compare is limited to {max} listings. Remove one first.",
+    "viewHub": "Saved & history",
+    "errorGeneric": "Something went wrong. Please try again.",
+    "hubTitle": "Saved listings",
+    "hubSubtitle": "Your saved marketplace listings, recently viewed history, and compare tray (up to 3).",
+    "savedSection": "Saved",
+    "savedEmpty": "No saved listings yet. Tap Save on a vehicle or property detail page.",
+    "recentSection": "Recently viewed",
+    "recentEmpty": "No recently viewed listings yet.",
+    "compareSection": "Compare",
+    "compareEmpty": "Compare tray is empty. Add up to 3 listings from detail pages.",
+    "compareCountLabel": "{count} of {max}",
+    "openListing": "View listing",
+    "typeVehicle": "Vehicle",
+    "typeProperty": "Property",
+    "priceContact": "Contact seller"
   },
   "clientTracking": {
     "pageTitle": "Track your service",

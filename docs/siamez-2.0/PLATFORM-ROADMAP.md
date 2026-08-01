@@ -2,7 +2,7 @@
 
 **Prerequisite:** [PLATFORM-MIGRATION-REPORT.md](./PLATFORM-MIGRATION-REPORT.md)  
 **Integration branch:** `siamez-2.0`  
-**Status:** **Full M0–M7 approved** (2026-08-02) · **M0 merged** (`7bb5925`) · Wave **M1 in progress** (`agent/m1-listing-enhancement`)  
+**Status:** **Full M0–M7 approved** (2026-08-02) · **M0–M1 merged** · **M2 on branch** `agent/m2-marketplace-engagement` (saved / recently viewed / compare)  
 **Rule:** No division rewrite. Additive engines. Preserve URLs and data.
 
 ---
@@ -143,5 +143,21 @@
 
 **Approved:** full M0–M7 (2026-08-02).  
 **M0:** Merged (`7bb5925`) — `npm run migrate:inventory-report`  
-**Active wave:** M1 — Listing enhancement (non-destructive SEO/AI side-fields).  
+**M1:** Merged (`2eb0534`) — `ListingEnhancement` + `migrate:enhance-listings`  
+**M2:** Landed on `agent/m2-marketplace-engagement` — `SavedListing` / `ListingView` / `CompareItem` + portal hub `/portal/saved` (not yet merged to `siamez-2.0`).  
+**Active wave:** M3 — Unified Search (after M2 merge).  
 **M1 commands:** `npm run migrate:enhance-listings` (dry-run default) · `--apply` upserts `ListingEnhancement` only.
+
+---
+
+## M2 note (this branch)
+
+Wave M2 adds marketplace engagement without mutating listing source content:
+
+| Model | Purpose |
+|-------|---------|
+| `SavedListing` | Save/unsave keyed by `ownerKey` (`user:` / `anon:`) |
+| `ListingView` | Recently viewed (capped/pruned at 40) |
+| `CompareItem` | Compare tray ≤3; vehicle + property mix allowed |
+
+Anonymous cookie `siamez_mp_sid` merges into the Auth.js user on login (best-effort) and on the next engagement Server Action. Public cuid URLs unchanged (`/sales/{id}`, `/real-estate/{id}`).

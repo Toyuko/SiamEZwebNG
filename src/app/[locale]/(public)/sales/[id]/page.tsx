@@ -20,6 +20,7 @@ import {
 import { getListingEnhancement } from "@/lib/migration/enhance";
 import { buildVehicleJsonLd, coerceStoredSchemaJsonLd } from "@/lib/migration/jsonld";
 import { resolveListingMetadata } from "@/lib/migration/metadata";
+import { ListingEngagementBar } from "@/components/marketplace/ListingEngagementBar";
 
 export const dynamic = "force-dynamic";
 
@@ -313,6 +314,7 @@ export default async function SalesVehicleDetailPage({
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {vehicle.year} {vehicle.make} {vehicle.model}
             </h1>
+            <ListingEngagementBar listingType="vehicle" listingId={vehicle.id} />
             <p>
               <span
                 className={

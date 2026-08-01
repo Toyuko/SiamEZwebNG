@@ -12,6 +12,7 @@ import { SalesListingExportActions } from "@/components/sales/SalesListingExport
 import { getListingEnhancement } from "@/lib/migration/enhance";
 import { buildPropertyJsonLd, coerceStoredSchemaJsonLd } from "@/lib/migration/jsonld";
 import { resolveListingMetadata } from "@/lib/migration/metadata";
+import { ListingEngagementBar } from "@/components/marketplace/ListingEngagementBar";
 
 export const dynamic = "force-dynamic";
 
@@ -281,6 +282,7 @@ export default async function RealEstateDetailPage({
               </span>
             ) : null}
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{property.title}</h1>
+            <ListingEngagementBar listingType="property" listingId={property.id} />
             <div className="flex flex-wrap gap-2">
               <span className="inline-block rounded-full bg-siam-blue/15 px-3 py-1 text-xs font-semibold text-siam-blue dark:bg-siam-blue/25 dark:text-siam-blue-light">
                 {t(`listingType.${property.listingType}`)}

@@ -60,6 +60,9 @@ model User {
   jobApplications     JobApplication[]   @relation("JobApplicationFreelancer")
   reviewsAsClient     Review[]           @relation("ReviewClient")
   reviewsAsFreelancer Review[]           @relation("ReviewFreelancer")
+  savedListings       SavedListing[]
+  listingViews        ListingView[]
+  compareItems        CompareItem[]
 }
 
 enum FreelancerVerificationStatus {
@@ -813,4 +816,70 @@ model ListingEnhancement {
   @@index([listingId])
   @@index([listingType, enhancedAt])
   @@map("listing_enhancements")
+}
+
+/**
+ * Platform Wave M2 — marketplace engagement (saved / recently viewed / compare).
+ * Additive only; never mutates SalesVehicle / SalesProperty source content.
+ * ownerKey is "user:<id>" or "anon:<sessionId>" for a single unique constraint.
+ */
+enum MarketplaceListingType {
+  vehicle
+  property
+}
+
+model SavedListing {
+  id                   String                  @id @default(cuid())
+  /// "user:<userId>" or "anon:<anonymousSessionId>"
+  ownerKey             String                  @map("owner_key")
+  userId               String?                 @map("user_id")
+  anonymousSessionId   String?                 @map("anonymous_session_id")
+  listingType          MarketplaceListingType  @map("listing_type")
+  listingId            String                  @map("listing_id")
+  createdAt            DateTime                @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([ownerKey, listingType, listingId])
+  @@index([userId, createdAt])
+  @@index([anonymousSessionId, createdAt])
+  @@index([listingType, listingId])
+  @@map("saved_listings")
+}
+
+model ListingView {
+  id                   String                  @id @default(cuid())
+  ownerKey             String                  @map("owner_key")
+  userId               String?                 @map("user_id")
+  anonymousSessionId   String?                 @map("anonymous_session_id")
+  listingType          MarketplaceListingType  @map("listing_type")
+  listingId            String                  @map("listing_id")
+  viewedAt             DateTime                @default(now()) @map("viewed_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([ownerKey, listingType, listingId])
+  @@index([ownerKey, viewedAt])
+  @@index([userId, viewedAt])
+  @@index([anonymousSessionId, viewedAt])
+  @@map("listing_views")
+}
+
+/** Compare tray item — application enforces ≤3 per ownerKey; vehicle + property mix allowed. */
+model CompareItem {
+  id                   String                  @id @default(cuid())
+  ownerKey             String                  @map("owner_key")
+  userId               String?                 @map("user_id")
+  anonymousSessionId   String?                 @map("anonymous_session_id")
+  listingType          MarketplaceListingType  @map("listing_type")
+  listingId            String                  @map("listing_id")
+  createdAt            DateTime                @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([ownerKey, listingType, listingId])
+  @@index([ownerKey, createdAt])
+  @@index([userId])
+  @@index([anonymousSessionId])
+  @@map("compare_items")
 }
