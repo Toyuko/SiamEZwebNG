@@ -287,6 +287,7 @@ export interface CreateInvoiceFromQuoteInput {
  */
 export async function createInvoiceFromQuote(input: CreateInvoiceFromQuoteInput) {
   try {
+    await requireStaff();
     const created = await invoiceDA.createInvoice({
       caseId: input.caseId,
       quoteId: input.quoteId,

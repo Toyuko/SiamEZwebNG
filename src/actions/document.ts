@@ -25,19 +25,37 @@ export interface UploadDocumentMetadataResult {
   error?: string;
 }
 
+async function assertCanAttachDocumentToCase(caseId: string, userId: string, role: string) {
+  if (role === "admin" || role === "staff") return;
+  const caseRecord = await prisma.case.findUnique({
+    where: { id: caseId },
+    select: { userId: true },
+  });
+  if (!caseRecord) {
+    throw new Error("Case not found");
+  }
+  if (caseRecord.userId !== userId) {
+    throw new Error("Forbidden");
+  }
+}
+
 /**
  * Creates a document record (metadata only). The actual file must be uploaded to
  * storage (e.g. Vercel Blob, S3) separately; pass the storage key here.
+ * Requires auth; callers may only attach to cases they own (or staff/admin).
  */
 export async function uploadDocumentMetadataAction(
   input: UploadDocumentMetadataInput
 ): Promise<UploadDocumentMetadataResult> {
   try {
+    const session = await requireAuth();
+    await assertCanAttachDocumentToCase(input.caseId, session.user.id, session.user.role);
+
     const doc = await createDocumentMetadataDomain({
       caseId: input.caseId,
       name: input.name,
       storageKey: input.storageKey,
-      uploadedBy: input.uploadedBy,
+      uploadedBy: session.user.id,
       mimeType: input.mimeType,
       size: input.size,
       documentType: input.documentType,
