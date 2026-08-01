@@ -3,9 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { createEvent } from "@/actions/admin";
-import { getCases } from "@/actions/admin";
-import { getStaffUsers } from "@/actions/admin";
+import { createEvent, getCaseById, getCases, getStaffUsers } from "@/actions/admin";
 import { EventForm } from "../EventForm";
 
 export default async function AdminNewEventPage({
@@ -31,10 +29,22 @@ export default async function AdminNewEventPage({
     defaultDate = new Date(year, month - 1, 1);
   }
 
-  const [cases, staff] = await Promise.all([
+  const [casesData, staff, prefacedCase] = await Promise.all([
     getCases({ status: "all", page: 1 }),
     getStaffUsers(),
+    params.caseId ? getCaseById(params.caseId) : Promise.resolve(null),
   ]);
+
+  const caseOptions = casesData.cases.map((c) => ({
+    id: c.id,
+    caseNumber: c.caseNumber,
+  }));
+  if (prefacedCase && !caseOptions.some((c) => c.id === prefacedCase.id)) {
+    caseOptions.unshift({
+      id: prefacedCase.id,
+      caseNumber: prefacedCase.caseNumber,
+    });
+  }
 
   async function handleSubmit(formData: FormData) {
     "use server";
@@ -84,7 +94,20 @@ export default async function AdminNewEventPage({
             defaultDate={defaultDate}
             defaultStart={defaultStart}
             defaultEnd={defaultEnd}
-            cases={cases.cases}
+            defaultValues={
+              params.caseId
+                ? {
+                    title: "",
+                    start: defaultStart ?? defaultDate,
+                    end:
+                      defaultEnd ??
+                      new Date((defaultStart ?? defaultDate).getTime() + 60 * 60 * 1000),
+                    type: "appointment",
+                    caseId: params.caseId,
+                  }
+                : undefined
+            }
+            cases={caseOptions}
             staff={staff}
           />
         </CardContent>

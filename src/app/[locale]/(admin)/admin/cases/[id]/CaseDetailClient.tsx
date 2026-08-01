@@ -2,14 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { Link } from "@/i18n/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { updateCaseStatus, assignStaff, addCaseNote } from "@/actions/case";
 import { createInvoice } from "@/actions/admin";
+import { formatCurrency } from "@/lib/utils";
 import type { CaseStatus } from "@prisma/client";
-import type { Case, CaseNote, User, StaffAssignment, Payment, Invoice } from "@prisma/client";
+import type { Case, CaseNote, User, StaffAssignment, Payment, Invoice, Quote } from "@prisma/client";
 
 const STATUS_OPTIONS: { value: CaseStatus; label: string }[] = [
   { value: "new", label: "New" },
@@ -26,7 +28,7 @@ const STATUS_OPTIONS: { value: CaseStatus; label: string }[] = [
 type CaseWithRelations = Case & {
   user: User | null;
   service: { name: string; priceAmount: number | null };
-  quotes: { amount: number }[];
+  quotes: Quote[];
   staffAssignments: (StaffAssignment & { user: User })[];
   caseNotes: (CaseNote & { user: { name: string | null; email: string } })[];
   documents: { id: string; name: string; documentType: string | null }[];
@@ -36,21 +38,62 @@ type CaseWithRelations = Case & {
 
 type StaffUser = { id: string; name: string | null; email: string };
 
-function formatCurrency(cents: number) {
-  return new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", minimumFractionDigits: 0 }).format(cents / 100);
-}
+type Labels = {
+  actions: string;
+  status: string;
+  assignStaff: string;
+  selectStaff: string;
+  createInvoiceQuick: string;
+  createInvoiceWizard: string;
+  payments: string;
+  noPayments: string;
+  invoices: string;
+  noInvoices: string;
+  notes: string;
+  noNotes: string;
+  addNoteAs: string;
+  notePlaceholder: string;
+  addNote: string;
+  noStaffNotes: string;
+  quotes: string;
+  noQuotes: string;
+};
+
+const DEFAULT_LABELS: Labels = {
+  actions: "Actions",
+  status: "Status",
+  assignStaff: "Assign staff",
+  selectStaff: "— Select —",
+  createInvoiceQuick: "Quick invoice (from quote/service)",
+  createInvoiceWizard: "Invoice wizard",
+  payments: "Payments",
+  noPayments: "No payments yet.",
+  invoices: "Invoices",
+  noInvoices: "No invoices yet.",
+  notes: "Notes",
+  noNotes: "No notes yet.",
+  addNoteAs: "Add note as…",
+  notePlaceholder: "Add internal note…",
+  addNote: "Add note",
+  noStaffNotes: "No staff users to add notes. Seed admin first.",
+  quotes: "Quotes",
+  noQuotes: "No quotes yet.",
+};
 
 export function CaseDetailClient({
   caseId,
   caseNotes,
   staffUsers,
   caseData,
+  labels: labelsProp,
 }: {
   caseId: string;
   caseNotes: (CaseNote & { user: { name: string | null; email: string } })[];
   staffUsers: StaffUser[];
   caseData?: CaseWithRelations;
+  labels?: Partial<Labels>;
 }) {
+  const labels = { ...DEFAULT_LABELS, ...labelsProp };
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -99,33 +142,34 @@ export function CaseDetailClient({
 
   return (
     <div className="space-y-6">
-      {/* Actions panel */}
       {caseData && (
         <Card>
           <CardHeader>
-            <CardTitle>Actions</CardTitle>
+            <CardTitle>{labels.actions}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">Status</label>
+              <label className="mb-1 block text-sm font-medium">{labels.status}</label>
               <Select
                 defaultValue={caseData.status}
                 onChange={(e) => handleStatusChange(e.target.value as CaseStatus)}
                 disabled={pending}
               >
                 {STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
                 ))}
               </Select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Assign staff</label>
+              <label className="mb-1 block text-sm font-medium">{labels.assignStaff}</label>
               <Select
                 defaultValue={caseData.staffAssignments[0]?.userId ?? ""}
                 onChange={(e) => handleAssignStaff(e.target.value)}
                 disabled={pending}
               >
-                <option value="">— Select —</option>
+                <option value="">{labels.selectStaff}</option>
                 {staffUsers.map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.name ?? u.email}
@@ -133,32 +177,40 @@ export function CaseDetailClient({
                 ))}
               </Select>
             </div>
-            <Button
-              onClick={handleCreateInvoice}
-              disabled={pending || staffUsers.length === 0}
-              variant="outline"
-            >
-              Create invoice
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={handleCreateInvoice}
+                disabled={pending || staffUsers.length === 0}
+                variant="outline"
+              >
+                {labels.createInvoiceQuick}
+              </Button>
+              <Button variant="default" asChild>
+                <Link href={`/admin/invoices/new?caseId=${encodeURIComponent(caseId)}`}>
+                  {labels.createInvoiceWizard}
+                </Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Payments & Invoices */}
       {caseData && (
         <>
           <Card>
             <CardHeader>
-              <CardTitle>Payments</CardTitle>
+              <CardTitle>{labels.quotes}</CardTitle>
             </CardHeader>
             <CardContent>
-              {caseData.payments.length === 0 ? (
-                <p className="text-gray-500">No payments yet.</p>
+              {caseData.quotes.length === 0 ? (
+                <p className="text-sm text-gray-500">{labels.noQuotes}</p>
               ) : (
                 <ul className="space-y-2">
-                  {caseData.payments.map((p) => (
-                    <li key={p.id} className="flex justify-between text-sm">
-                      <span>{formatCurrency(p.amount)} • {p.status}</span>
+                  {caseData.quotes.map((q) => (
+                    <li key={q.id} className="flex justify-between text-sm">
+                      <span>
+                        {formatCurrency(q.amount, q.currency)} · {q.status}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -167,16 +219,41 @@ export function CaseDetailClient({
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Invoices</CardTitle>
+              <CardTitle>{labels.payments}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {caseData.payments.length === 0 ? (
+                <p className="text-sm text-gray-500">{labels.noPayments}</p>
+              ) : (
+                <ul className="space-y-2">
+                  {caseData.payments.map((p) => (
+                    <li key={p.id} className="flex justify-between text-sm">
+                      <span>
+                        {formatCurrency(p.amount, p.currency)} · {p.status}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>{labels.invoices}</CardTitle>
             </CardHeader>
             <CardContent>
               {caseData.invoices.length === 0 ? (
-                <p className="text-gray-500">No invoices yet.</p>
+                <p className="text-sm text-gray-500">{labels.noInvoices}</p>
               ) : (
                 <ul className="space-y-2">
                   {caseData.invoices.map((inv) => (
                     <li key={inv.id} className="flex justify-between text-sm">
-                      <span>{formatCurrency(inv.amount)} • {inv.status}</span>
+                      <Link
+                        href={`/admin/invoices/${inv.id}`}
+                        className="text-siam-blue hover:underline"
+                      >
+                        {formatCurrency(inv.amount, inv.currency)} · {inv.status}
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -186,41 +263,49 @@ export function CaseDetailClient({
         </>
       )}
 
-      {/* Notes */}
-      <div>
-        <h3 className="mb-2 font-semibold">Notes</h3>
-        {caseNotes.length === 0 ? (
-          <p className="text-sm text-gray-500">No notes yet.</p>
-        ) : (
-          <ul className="mb-4 space-y-2">
-            {caseNotes.map((n) => (
-              <li key={n.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-800 dark:bg-gray-900/50">
-                <p className="text-gray-700 dark:text-gray-300">{n.content}</p>
-                <p className="mt-1 text-xs text-gray-500">
-                  {n.user.name ?? n.user.email} • {new Date(n.createdAt).toLocaleString()}
-                  {n.isInternal && " • Internal"}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-        {staffUsers.length > 0 ? (
-          <form onSubmit={handleAddNote} className="flex flex-col gap-2">
-            <Select name="userId" required>
-              <option value="">Add note as…</option>
-              {staffUsers.map((u) => (
-                <option key={u.id} value={u.id}>{u.name ?? u.email}</option>
+      <Card>
+        <CardHeader>
+          <CardTitle>{labels.notes}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {caseNotes.length === 0 ? (
+            <p className="mb-4 text-sm text-gray-500">{labels.noNotes}</p>
+          ) : (
+            <ul className="mb-4 space-y-2">
+              {caseNotes.map((n) => (
+                <li
+                  key={n.id}
+                  className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-800 dark:bg-gray-900/50"
+                >
+                  <p className="text-gray-700 dark:text-gray-300">{n.content}</p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {n.user.name ?? n.user.email} · {new Date(n.createdAt).toLocaleString()}
+                    {n.isInternal ? " · Internal" : ""}
+                  </p>
+                </li>
               ))}
-            </Select>
-            <Input name="content" placeholder="Add internal note…" required />
-            <Button type="submit" size="sm" disabled={pending}>
-              Add note
-            </Button>
-          </form>
-        ) : (
-          <p className="text-sm text-gray-500">No staff users to add notes. Seed admin first.</p>
-        )}
-      </div>
+            </ul>
+          )}
+          {staffUsers.length > 0 ? (
+            <form onSubmit={handleAddNote} className="flex flex-col gap-2">
+              <Select name="userId" required>
+                <option value="">{labels.addNoteAs}</option>
+                {staffUsers.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name ?? u.email}
+                  </option>
+                ))}
+              </Select>
+              <Input name="content" placeholder={labels.notePlaceholder} required />
+              <Button type="submit" size="sm" disabled={pending}>
+                {labels.addNote}
+              </Button>
+            </form>
+          ) : (
+            <p className="text-sm text-gray-500">{labels.noStaffNotes}</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

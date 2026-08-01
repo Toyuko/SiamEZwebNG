@@ -40,16 +40,41 @@ function formatCaseLabel(c: CaseHit): string {
   return `${c.caseNumber} — ${who}`;
 }
 
-export function CreateInvoiceWizard({ services }: { services: ServiceOption[] }) {
+export function CreateInvoiceWizard({
+  services,
+  initialCase,
+}: {
+  services: ServiceOption[];
+  /** Prefill from /admin/invoices/new?caseId=… (case workspace entry). */
+  initialCase?: {
+    id: string;
+    caseNumber: string;
+    guestName: string | null;
+    guestEmail: string | null;
+    user: { name: string | null; email: string } | null;
+  } | null;
+}) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   const [mode, setMode] = useState<"existing_case" | "new_case">("existing_case");
-  const [caseQuery, setCaseQuery] = useState("");
-  const [caseHits, setCaseHits] = useState<CaseHit[]>([]);
-  const [caseId, setCaseId] = useState<string | null>(null);
+  const [caseQuery, setCaseQuery] = useState(initialCase?.caseNumber ?? "");
+  const [caseHits, setCaseHits] = useState<CaseHit[]>(
+    initialCase
+      ? [
+          {
+            id: initialCase.id,
+            caseNumber: initialCase.caseNumber,
+            guestName: initialCase.guestName,
+            guestEmail: initialCase.guestEmail,
+            user: initialCase.user,
+          },
+        ]
+      : []
+  );
+  const [caseId, setCaseId] = useState<string | null>(initialCase?.id ?? null);
 
   const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
   const [clientType, setClientType] = useState<"registered" | "guest">("registered");
@@ -223,6 +248,27 @@ export function CreateInvoiceWizard({ services }: { services: ServiceOption[] })
             {mode === "existing_case" && (
               <div className="space-y-2">
                 <Label htmlFor="case-search">Search case</Label>
+                {initialCase && caseId === initialCase.id ? (
+                  <div className="rounded-lg border border-siam-blue/30 bg-siam-blue/5 px-3 py-2 text-sm">
+                    <p className="font-medium text-siam-blue">
+                      Prefilled from case workspace
+                    </p>
+                    <p className="mt-0.5 font-mono text-xs text-gray-700 dark:text-gray-300">
+                      {formatCaseLabel(initialCase)}
+                    </p>
+                    <button
+                      type="button"
+                      className="mt-2 text-xs text-gray-600 underline hover:text-siam-blue dark:text-gray-400"
+                      onClick={() => {
+                        setCaseId(null);
+                        setCaseQuery("");
+                        setCaseHits([]);
+                      }}
+                    >
+                      Choose a different case
+                    </button>
+                  </div>
+                ) : null}
                 <Input
                   id="case-search"
                   placeholder="Case number, email, or name"
