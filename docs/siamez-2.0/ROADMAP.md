@@ -168,7 +168,9 @@ flowchart LR
 | P1 Analyst docs (A01) | **Merged** (`a06b468`) |
 | P1 Design system (A02) | **Merged** (`14b8a92`) |
 | P2 Wizard engine (A05) | **Merged** (`42f2453`; slug `marriage-registration`) |
-| P3 Service migration (A06) | In flight |
-| P4–P7 | Queued |
+| P3 Service migration (A06) | **Merged** (`b27f566`; 13/13 slugs) |
+| P4 Concierge + Signup (A03, A04) | In flight |
+| P5 Documents (A07) | In flight |
+| P6–P7 | Queued |
 
 Blockers, risks, and agent status live on the Orchestrator canvas.
