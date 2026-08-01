@@ -32,6 +32,7 @@ async function ensureStaffAccess() {
 // ----- Dashboard -----
 
 export async function getAdminStats() {
+  await ensureStaffAccess();
   const [
     openCases,
     totalClients,
@@ -80,6 +81,7 @@ export async function getAdminStats() {
 }
 
 export async function getRecentActivity() {
+  await ensureStaffAccess();
   const [recentCases, recentPayments] = await Promise.all([
     prisma.case.findMany({
       take: 5,
@@ -106,6 +108,7 @@ export async function getRecentActivity() {
 }
 
 export async function getRecentFreelancerJobs() {
+  await ensureStaffAccess();
   return prisma.job.findMany({
     take: 5,
     include: {
@@ -662,6 +665,7 @@ export async function forceCloseJobPostingAdmin(jobPostingId: string) {
 // ----- Clients -----
 
 export async function getClients(options?: { search?: string; page?: number }) {
+  await ensureStaffAccess();
   const page = options?.page ?? 1;
   const skip = (page - 1) * ITEMS_PER_PAGE;
   const where = options?.search
@@ -688,6 +692,7 @@ export async function getClients(options?: { search?: string; page?: number }) {
 }
 
 export async function getClientById(id: string) {
+  await ensureStaffAccess();
   return prisma.user.findUnique({
     where: { id },
     include: {
@@ -704,6 +709,7 @@ export async function createClient(data: {
   phone?: string | null;
   password?: string;
 }) {
+  await ensureStaffAccess();
   const passwordHash = data.password ? await bcrypt.hash(data.password, 10) : null;
   return prisma.user.create({
     data: {
@@ -720,16 +726,19 @@ export async function updateClient(
   id: string,
   data: { email?: string; name?: string | null; phone?: string | null; active?: boolean }
 ) {
+  await ensureStaffAccess();
   return prisma.user.update({ where: { id }, data });
 }
 
 export async function deactivateClient(id: string) {
+  await ensureStaffAccess();
   return prisma.user.update({ where: { id }, data: { active: false } });
 }
 
 // ----- Services -----
 
 export async function getServices(options?: { search?: string }) {
+  await ensureStaffAccess();
   const where = options?.search
     ? {
         OR: [
@@ -746,6 +755,7 @@ export async function getServices(options?: { search?: string }) {
 }
 
 export async function getServiceById(id: string) {
+  await ensureStaffAccess();
   return prisma.service.findUnique({ where: { id } });
 }
 
@@ -759,6 +769,7 @@ export async function createService(data: {
   sortOrder?: number;
   active?: boolean;
 }) {
+  await ensureStaffAccess();
   const slug = data.slug.toLowerCase().replace(/\s+/g, "-");
   return prisma.service.create({
     data: {
@@ -783,11 +794,13 @@ export async function updateService(
     active?: boolean;
   }
 ) {
+  await ensureStaffAccess();
   if (data.slug) data.slug = data.slug.toLowerCase().replace(/\s+/g, "-");
   return prisma.service.update({ where: { id }, data });
 }
 
 export async function deleteService(id: string) {
+  await ensureStaffAccess();
   return prisma.service.delete({ where: { id } });
 }
 
@@ -799,6 +812,7 @@ export async function getCases(options?: {
   search?: string;
   page?: number;
 }) {
+  await ensureStaffAccess();
   const page = options?.page ?? 1;
   const skip = (page - 1) * ITEMS_PER_PAGE;
 
@@ -835,6 +849,7 @@ export async function getCases(options?: {
 
 /** Recent cases for admin dropdowns (e.g. document upload). */
 export async function getCaseSelectOptions() {
+  await ensureStaffAccess();
   return prisma.case.findMany({
     select: { id: true, caseNumber: true },
     orderBy: { createdAt: "desc" },
@@ -843,6 +858,7 @@ export async function getCaseSelectOptions() {
 }
 
 export async function getCaseById(id: string) {
+  await ensureStaffAccess();
   return prisma.case.findUnique({
     where: { id },
     include: {
@@ -862,10 +878,12 @@ export async function getCaseById(id: string) {
 }
 
 export async function updateCase(id: string, data: Partial<{ status: CaseStatus; userId: string; guestName: string | null; guestEmail: string | null; guestPhone: string | null }>) {
+  await ensureStaffAccess();
   return prisma.case.update({ where: { id }, data });
 }
 
 export async function assignStaff(caseId: string, userId: string, role: string = "support") {
+  await ensureStaffAccess();
   return prisma.staffAssignment.upsert({
     where: { caseId_userId: { caseId, userId } },
     create: { caseId, userId, role },
@@ -874,18 +892,21 @@ export async function assignStaff(caseId: string, userId: string, role: string =
 }
 
 export async function removeStaffAssignment(caseId: string, userId: string) {
+  await ensureStaffAccess();
   return prisma.staffAssignment.delete({
     where: { caseId_userId: { caseId, userId } },
   });
 }
 
 export async function addCaseNote(caseId: string, userId: string, content: string, isInternal = true) {
+  await ensureStaffAccess();
   return prisma.caseNote.create({ data: { caseId, userId, content, isInternal } });
 }
 
 // ----- Invoices -----
 
 export async function getInvoices(options?: { status?: InvoiceStatus | "all"; page?: number }) {
+  await ensureStaffAccess();
   const page = options?.page ?? 1;
   const skip = (page - 1) * ITEMS_PER_PAGE;
   const where =
@@ -910,6 +931,7 @@ export async function getInvoices(options?: { status?: InvoiceStatus | "all"; pa
 }
 
 export async function getInvoiceById(id: string) {
+  await ensureStaffAccess();
   return prisma.invoice.findUnique({
     where: { id },
     include: {
@@ -928,6 +950,7 @@ export async function createInvoice(data: {
   currency?: string;
   dueDate?: Date | null;
 }) {
+  await ensureStaffAccess();
   return prisma.invoice.create({
     data: {
       caseId: data.caseId,
@@ -949,6 +972,7 @@ export async function updateInvoice(
     clientAddress?: string | null;
   }
 ) {
+  await ensureStaffAccess();
   const dueDate =
     data.dueDate === undefined
       ? undefined
@@ -1005,6 +1029,7 @@ function resolvePaymentStatusFilter(tab?: string, legacyStatus?: string) {
 }
 
 export async function getPaymentStats() {
+  await ensureStaffAccess();
   const [approvedSum, totalCount, pendingCount, paidCount] = await Promise.all([
     prisma.payment.aggregate({ where: { status: "approved" }, _sum: { amount: true } }),
     prisma.payment.count(),
@@ -1027,6 +1052,7 @@ export async function getPayments(options?: {
   q?: string;
   method?: string;
 }) {
+  await ensureStaffAccess();
   const page = options?.page ?? 1;
   const skip = (page - 1) * ITEMS_PER_PAGE;
 
@@ -1087,6 +1113,7 @@ export type InvoiceForManualPayment = {
 };
 
 export async function getInvoicesForManualPayment(): Promise<InvoiceForManualPayment[]> {
+  await ensureStaffAccess();
   const rows = await prisma.invoice.findMany({
     where: {
       status: { in: ["draft", "unpaid", "pending_verification"] },
@@ -1189,6 +1216,7 @@ export async function recordManualPayment(
 }
 
 export async function approvePayment(id: string) {
+  await ensureStaffAccess();
   const payment = await prisma.payment.update({
     where: { id },
     data: { status: "approved", approvedAt: new Date() },
@@ -1206,6 +1234,7 @@ export async function approvePayment(id: string) {
 }
 
 export async function rejectPayment(id: string) {
+  await ensureStaffAccess();
   const payment = await prisma.payment.update({
     where: { id },
     data: { status: "rejected" },
@@ -1226,6 +1255,7 @@ export async function getDocuments(options?: {
   search?: string;
   page?: number;
 }) {
+  await ensureStaffAccess();
   const page = options?.page ?? 1;
   const skip = (page - 1) * ITEMS_PER_PAGE;
   const where: Record<string, unknown> = {};
@@ -1257,6 +1287,7 @@ export async function createDocument(data: {
   documentType?: string | null;
   uploadedBy?: string | null;
 }) {
+  await ensureStaffAccess();
   return prisma.document.create({
     data: {
       caseId: data.caseId ?? null,
@@ -1271,15 +1302,18 @@ export async function createDocument(data: {
 }
 
 export async function deleteDocument(id: string) {
+  await ensureStaffAccess();
   return prisma.document.delete({ where: { id } });
 }
 
 export async function reassignDocument(id: string, caseId: string) {
+  await ensureStaffAccess();
   return prisma.document.update({ where: { id }, data: { caseId } });
 }
 
 /** Documents with no case yet (for attaching from case detail). */
 export async function getUnassignedDocuments(limit = 150) {
+  await ensureStaffAccess();
   return prisma.document.findMany({
     where: { caseId: null },
     select: { id: true, name: true, createdAt: true },
@@ -1291,6 +1325,7 @@ export async function getUnassignedDocuments(limit = 150) {
 // ----- Staff -----
 
 export async function getStaffUsersAdmin(options?: { search?: string }) {
+  await ensureStaffAccess();
   const where = options?.search
     ? {
         role: { in: ["admin", "staff"] as UserRole[] },
@@ -1314,6 +1349,7 @@ export async function createStaffUser(data: {
   password: string;
   role: UserRole;
 }) {
+  await ensureStaffAccess();
   const passwordHash = await bcrypt.hash(data.password, 10);
   return prisma.user.create({
     data: {
@@ -1329,6 +1365,7 @@ export async function updateStaffUser(
   id: string,
   data: { name?: string | null; role?: UserRole; active?: boolean; password?: string }
 ) {
+  await ensureStaffAccess();
   const update: Record<string, unknown> = { name: data.name, role: data.role, active: data.active };
   if (data.password) update.passwordHash = await bcrypt.hash(data.password, 10);
   return prisma.user.update({ where: { id }, data: update });
@@ -1337,6 +1374,7 @@ export async function updateStaffUser(
 // ----- Events (Calendar) -----
 
 export async function getEvents(options?: { start?: Date; end?: Date; caseId?: string; staffId?: string }) {
+  await ensureStaffAccess();
   const where: Record<string, unknown> = {};
   if (options?.start && options?.end) {
     where.OR = [
@@ -1370,6 +1408,7 @@ export async function createEvent(data: {
   userId?: string | null;
   staffId?: string | null;
 }) {
+  await ensureStaffAccess();
   return prisma.event.create({ data });
 }
 
@@ -1388,15 +1427,18 @@ export async function updateEvent(
     staffId?: string | null;
   }
 ) {
+  await ensureStaffAccess();
   return prisma.event.update({ where: { id }, data });
 }
 
 export async function deleteEvent(id: string) {
+  await ensureStaffAccess();
   return prisma.event.delete({ where: { id } });
 }
 
 // Simple staff list for dropdowns
 export async function getStaffUsers() {
+  await ensureStaffAccess();
   return prisma.user.findMany({
     where: { role: { in: ["admin", "staff"] }, active: true },
     select: { id: true, name: true, email: true },
@@ -1414,6 +1456,7 @@ export async function getServiceJobs(options?: {
   dateTo?: Date | string;
   page?: number;
 }) {
+  await ensureStaffAccess();
   const page = options?.page ?? 1;
   const skip = (page - 1) * ITEMS_PER_PAGE;
 
@@ -1479,6 +1522,7 @@ export async function createServiceJob(data: {
   status?: CaseStatus;
   staffIds?: string[];
 }) {
+  await ensureStaffAccess();
   const caseNumber = nextCaseNumber();
   const status = data.status ?? "new";
   const c = await prisma.case.create({
@@ -1517,6 +1561,7 @@ export async function updateServiceJob(
     staffIds?: string[];
   }
 ) {
+  await ensureStaffAccess();
   if (data.status !== undefined) {
     await prisma.case.update({ where: { id }, data: { status: data.status } });
   }

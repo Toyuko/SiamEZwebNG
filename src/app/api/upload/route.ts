@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
-import { auth } from "@/auth";
 import { getJobChatParticipant } from "@/data-access/job-chat";
 import { resolveApiUserId } from "@/lib/auth/resolveApiUserId";
 import { validateChatAttachment } from "@/lib/uploads/chat-attachment";
@@ -16,7 +15,8 @@ function safeFileSegment(name: string) {
 
 /**
  * POST /api/upload
- * - Default: public image/video upload for sales listings (no auth).
+ * - Default (sales listings / payment proofs): image/video upload — requires
+ *   authenticated web session or mobile Bearer JWT.
  * - Track & Trace: pass `jobId` + `purpose=tracking` — requires freelancer session,
  *   accepts JPG/PNG/PDF up to 5MB, returns { url, key, name }.
  * - Job chat: pass `jobId` + `purpose=chat` — requires client or freelancer on the job,
@@ -35,30 +35,35 @@ export async function POST(request: NextRequest) {
 
     if (typeof jobId === "string" && jobId.length > 0) {
       if (purpose === "tracking") {
-        return handleTrackingUpload(file, jobId);
+        return handleTrackingUpload(request, file, jobId);
       }
       if (purpose === "chat") {
         return handleChatUpload(request, file, jobId);
       }
     }
 
-    return handleGeneralUpload(file);
+    return handleGeneralUpload(request, file);
   } catch (e) {
     console.error("Upload error:", e);
     const message = e instanceof Error ? e.message : "Upload failed";
-    const status = message === "Forbidden" || message === "Unauthorized" ? 403 : 500;
+    const status =
+      message === "Unauthorized"
+        ? 401
+        : message === "Forbidden"
+          ? 403
+          : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }
 
-async function handleTrackingUpload(file: File, jobId: string) {
-  const session = await auth();
-  if (!session?.user?.id) {
+async function handleTrackingUpload(request: NextRequest, file: File, jobId: string) {
+  const userId = await resolveApiUserId(request);
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    await assertFreelancerCanUpdateJobTracking(session.user.id, jobId);
+    await assertFreelancerCanUpdateJobTracking(userId, jobId);
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -124,7 +129,12 @@ async function handleChatUpload(request: NextRequest, file: File, jobId: string)
   });
 }
 
-async function handleGeneralUpload(file: File) {
+async function handleGeneralUpload(request: NextRequest, file: File) {
+  const userId = await resolveApiUserId(request);
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const mimeType = file.type.toLowerCase();
   const isImage = mimeType.startsWith("image/");
   const isVideo = mimeType.startsWith("video/");
@@ -149,7 +159,7 @@ async function handleGeneralUpload(file: File) {
     );
   }
 
-  const pathname = `sales-listings/${Date.now()}-${file.name}`;
+  const pathname = `sales-listings/${Date.now()}-${safeFileSegment(file.name)}`;
   const blob = await put(pathname, file, {
     access: "public",
     addRandomSuffix: true,
