@@ -58,6 +58,7 @@ All phases preserve existing business functionality. Prefer reuse over rewrite.
 |-------|--------|
 | **Objective** | Convert all 13 services onto the wizard engine |
 | **Agents** | A06 |
+| **Status** | In progress on `agent/06-service-migration` — see `docs/siamez-2.0/A06-SERVICE-MIGRATION.md` |
 | **Files affected** | Wizard JSON configs, seed/`formConfig`, book page switch, retire `src/components/booking/*Wizard.tsx` after parity |
 | **Dependencies** | P2 complete |
 | **Effort** | 2–3 weeks |

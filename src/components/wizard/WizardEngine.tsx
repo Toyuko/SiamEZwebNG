@@ -44,7 +44,13 @@ function defaultValuesFromConfig(
   for (const step of config.steps) {
     for (const field of step.fields ?? []) {
       if (defaults[field.name] !== undefined) continue;
-      defaults[field.name] = field.type === "checkbox" ? false : "";
+      if (field.type === "checkbox") {
+        defaults[field.name] = false;
+      } else if (field.type === "multiselect") {
+        defaults[field.name] = [];
+      } else {
+        defaults[field.name] = "";
+      }
     }
   }
   return defaults;
@@ -169,11 +175,20 @@ export function WizardEngine({
   );
 
   const handleSubmit = useCallback(async () => {
+    const requiresDocs = config.steps.some(
+      (s) => s.type === "documents" && s.documentsRequired
+    );
+    if (requiresDocs && documents.length < 1) {
+      setError("Please upload at least one document to continue.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     const values = getValues() as Record<string, unknown>;
+    const shaped = config.buildFormData ? config.buildFormData(values) : values;
     const payload = {
-      ...values,
+      ...shaped,
       documents: documents.map((d) => ({
         name: d.name,
         size: d.size,
@@ -218,6 +233,7 @@ export function WizardEngine({
     }
     setError(result.error ?? "Submission failed.");
   }, [
+    config,
     documents,
     getValues,
     isGuest,
@@ -246,6 +262,13 @@ export function WizardEngine({
       clearErrors();
     }
 
+    if (currentStep.type === "documents" && currentStep.documentsRequired) {
+      if (documents.length < 1) {
+        setError("Please upload at least one document to continue.");
+        return;
+      }
+    }
+
     if (isLastStep) {
       await handleSubmit();
       return;
@@ -255,6 +278,7 @@ export function WizardEngine({
     applyFieldErrors,
     clearErrors,
     currentStep,
+    documents.length,
     getValues,
     handleSubmit,
     isLastStep,

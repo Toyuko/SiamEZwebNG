@@ -37,11 +37,20 @@ export function ReviewStep({ service, config, values, documents }: ReviewStepPro
     for (const field of step.fields ?? []) {
       const raw = values[field.name];
       if (raw === undefined || raw === null || raw === "") continue;
+      if (Array.isArray(raw) && raw.length === 0) continue;
       if (field.type === "checkbox") {
+        if (!raw) continue;
         fieldEntries.push({
           label: field.label,
-          value: raw ? "Yes" : "No",
+          value: "Yes",
         });
+        continue;
+      }
+      if (field.type === "multiselect" && Array.isArray(raw)) {
+        const labels = (raw as string[]).map((v) =>
+          optionLabel(config, field.name, v)
+        );
+        fieldEntries.push({ label: field.label, value: labels.join(", ") });
         continue;
       }
       const str = String(raw);

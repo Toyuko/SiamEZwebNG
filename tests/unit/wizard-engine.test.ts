@@ -9,7 +9,16 @@ import {
   saveAutosave,
   type WizardAutosavePayload,
 } from "@/components/wizard/lib/autosave";
-import { getWizardConfig, hasWizardEngine, marriageRegistrationWizard } from "@/config/wizards";
+import { serviceSlugs } from "@/config/services";
+import {
+  assertAllServicesHaveWizardConfigs,
+  getWizardConfig,
+  hasWizardEngine,
+  marriageRegistrationWizard,
+} from "@/config/wizards";
+import { buildDriverLicenseFormData } from "@/config/wizards/driver-license";
+import { buildVehicleFinderFormData } from "@/config/wizards/car-motorbike-finder-selling-service";
+import { buildRealEstateFormData } from "@/config/wizards/real-estate-services";
 import type { WizardStepConfig } from "@/config/wizards/types";
 
 describe("wizard conditionals", () => {
@@ -43,6 +52,17 @@ describe("wizard conditionals", () => {
         needsTranslation: false,
       })
     ).toBe(false);
+  });
+
+  it("treats empty arrays as falsy", () => {
+    expect(
+      evaluateCondition({ field: "vehicleTypes", truthy: true }, { vehicleTypes: [] })
+    ).toBe(false);
+    expect(
+      evaluateCondition({ field: "vehicleTypes", truthy: true }, {
+        vehicleTypes: ["cars"],
+      })
+    ).toBe(true);
   });
 });
 
@@ -118,6 +138,28 @@ describe("wizard step validation", () => {
     const schema = buildStepSchema(questionsStep, { marriageType: "thai_thai" });
     expect(Object.keys(schema.shape)).toEqual(["marriageType"]);
   });
+
+  it("requires at least one multiselect value", () => {
+    const step: WizardStepConfig = {
+      id: "types",
+      type: "fields",
+      label: "Types",
+      fields: [
+        {
+          name: "vehicleTypes",
+          type: "multiselect",
+          label: "Vehicle types",
+          required: true,
+          options: [
+            { value: "cars", label: "Cars" },
+            { value: "vans", label: "Vans" },
+          ],
+        },
+      ],
+    };
+    expect(validateStep(step, { vehicleTypes: [] }).success).toBe(false);
+    expect(validateStep(step, { vehicleTypes: ["cars"] }).success).toBe(true);
+  });
 });
 
 describe("resolveVisibleSteps", () => {
@@ -146,13 +188,119 @@ describe("resolveVisibleSteps", () => {
 });
 
 describe("wizard registry", () => {
+  it("covers every seeded service slug", () => {
+    const coverage = assertAllServicesHaveWizardConfigs();
+    expect(coverage.ok).toBe(true);
+    expect(coverage.missing).toEqual([]);
+    expect(serviceSlugs).toHaveLength(13);
+
+    for (const slug of serviceSlugs) {
+      expect(hasWizardEngine(slug)).toBe(true);
+      expect(getWizardConfig(slug)?.serviceSlug).toBe(slug);
+    }
+  });
+
   it("wires marriage-registration to the engine", () => {
     expect(hasWizardEngine("marriage-registration")).toBe(true);
     expect(getWizardConfig("marriage-registration")?.serviceSlug).toBe(
       "marriage-registration"
     );
-    expect(hasWizardEngine("driver-license")).toBe(false);
-    expect(hasWizardEngine("police-clearance")).toBe(false);
+  });
+});
+
+describe("specialty formData transforms", () => {
+  it("builds nested driverLicense payload with prices", () => {
+    const payload = buildDriverLicenseFormData({
+      name: "Ada",
+      email: "ada@example.com",
+      phone: "+66",
+      notes: "  hello  ",
+      category: "conversion",
+      vehicleType: "bike",
+      addonFastTrack: true,
+      addonTranslationLetter: false,
+      addonAddressCertificate: false,
+      appointmentDate: "2026-08-10",
+    });
+
+    expect(payload.name).toBe("Ada");
+    expect(payload.notes).toBe("hello");
+    const dl = payload.driverLicense as {
+      category: string;
+      vehicleType: string;
+      basePriceThb: number;
+      addonsTotalThb: number;
+      totalThb: number;
+      currency: string;
+      addons: { fastTrack: boolean };
+    };
+    expect(dl.category).toBe("conversion");
+    expect(dl.vehicleType).toBe("bike");
+    expect(dl.basePriceThb).toBe(4500);
+    expect(dl.addonsTotalThb).toBe(1500);
+    expect(dl.totalThb).toBe(6000);
+    expect(dl.currency).toBe("THB");
+    expect(dl.addons.fastTrack).toBe(true);
+  });
+
+  it("nulls vehicleType for IDP", () => {
+    const payload = buildDriverLicenseFormData({
+      name: "Ada",
+      email: "ada@example.com",
+      phone: "+66",
+      category: "idp",
+      vehicleType: "car",
+      appointmentDate: "2026-08-10",
+    });
+    const dl = payload.driverLicense as { vehicleType: null; basePriceThb: number };
+    expect(dl.vehicleType).toBeNull();
+    expect(dl.basePriceThb).toBe(3500);
+  });
+
+  it("builds nested vehicleFinder payload", () => {
+    const payload = buildVehicleFinderFormData({
+      name: "Ada",
+      email: "ada@example.com",
+      phone: "+66",
+      requestType: "both",
+      vehicleTypes: ["cars", "vans"],
+      preferredModels: "Toyota",
+      sellVehicleDetails: "Honda 2019",
+      interestedInSalesListing: true,
+      timeline: "soon",
+    });
+    const vf = payload.vehicleFinder as {
+      requestType: string;
+      vehicleTypes: string[];
+      buy?: { preferredModels: string };
+      sell?: { vehicleDetails: string };
+      interestedInSalesListing: boolean;
+    };
+    expect(vf.requestType).toBe("both");
+    expect(vf.vehicleTypes).toEqual(["cars", "vans"]);
+    expect(vf.buy?.preferredModels).toBe("Toyota");
+    expect(vf.sell?.vehicleDetails).toBe("Honda 2019");
+    expect(vf.interestedInSalesListing).toBe(true);
+  });
+
+  it("builds nested realEstate payload", () => {
+    const payload = buildRealEstateFormData({
+      name: "Ada",
+      email: "ada@example.com",
+      phone: "+66",
+      requestType: "buy",
+      propertyTypes: ["condo"],
+      preferredAreas: "Sukhumvit",
+      interestedInListing: false,
+    });
+    const re = payload.realEstate as {
+      requestType: string;
+      seeker?: { preferredAreas: string };
+      sell?: unknown;
+    };
+    expect(re.requestType).toBe("buy");
+    expect(re.seeker?.preferredAreas).toBe("Sukhumvit");
+    expect(re.sell).toBeUndefined();
   });
 });
 

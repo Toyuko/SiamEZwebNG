@@ -1,5 +1,5 @@
 /**
- * JSON-driven Universal Wizard Engine config types (SiamEZ 2.0 P2).
+ * JSON-driven Universal Wizard Engine config types (SiamEZ 2.0 P2/P3).
  * Configs live under `src/config/wizards/` and are resolved by service slug.
  */
 
@@ -10,9 +10,13 @@ export type WizardFieldType =
   | "phone"
   | "tel"
   | "select"
+  | "multiselect"
   | "checkbox"
   | "date"
   | "number";
+
+/** Named custom validators beyond Zod primitives (kept small; prefer schema). */
+export type WizardFieldCustomValidate = "driverLicenseAppointment";
 
 /** Simple equality / presence checks for conditional visibility. */
 export type WizardCondition =
@@ -45,6 +49,10 @@ export interface WizardFieldConfig {
   /** Extra zod constraints */
   minLength?: number;
   maxLength?: number;
+  /** Optional HTML min for date inputs (YYYY-MM-DD). Ignored for custom validators that compute min. */
+  min?: string;
+  /** Named custom validation (e.g. weekday + lead-time for driver license). */
+  customValidate?: WizardFieldCustomValidate;
 }
 
 export type WizardStepType =
@@ -63,6 +71,8 @@ export interface WizardStepConfig {
   fields?: WizardFieldConfig[];
   /** Hide entire step when condition fails */
   showWhen?: WizardCondition;
+  /** When type is documents, require at least one file before continuing */
+  documentsRequired?: boolean;
 }
 
 export interface WizardConfig {
@@ -73,4 +83,10 @@ export interface WizardConfig {
   steps: WizardStepConfig[];
   /** Show marketplace toggle on review step (default true) */
   showMarketplaceToggle?: boolean;
+  /**
+   * Optional transform from flat wizard values → Case.formData shape.
+   * Documents are merged by the engine after this runs.
+   * Use for specialty nested payloads (driverLicense, vehicleFinder, realEstate).
+   */
+  buildFormData?: (values: Record<string, unknown>) => Record<string, unknown>;
 }

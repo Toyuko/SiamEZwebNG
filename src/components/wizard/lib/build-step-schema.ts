@@ -1,20 +1,43 @@
 import { z } from "zod";
 import type { WizardFieldConfig, WizardStepConfig } from "@/config/wizards/types";
+import {
+  getMinimumAppointmentDateString,
+  isValidDriverLicenseAppointmentDate,
+} from "@/lib/driver-license-booking";
 import { evaluateCondition } from "./conditionals";
+
+function applyCustomValidate(
+  field: WizardFieldConfig,
+  schema: z.ZodTypeAny
+): z.ZodTypeAny {
+  if (field.customValidate === "driverLicenseAppointment") {
+    return schema.superRefine((val, ctx) => {
+      const dateStr = typeof val === "string" ? val : "";
+      const minYmd = getMinimumAppointmentDateString();
+      const result = isValidDriverLicenseAppointmentDate(dateStr, minYmd);
+      if (result === "ok") return;
+      const message =
+        result === "required"
+          ? `${field.label} is required`
+          : result === "weekend"
+            ? "Please choose a weekday (Monday–Friday)"
+            : "Please choose a date at least 3 days ahead (weekdays only)";
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+    });
+  }
+  return schema;
+}
 
 function fieldSchema(field: WizardFieldConfig): z.ZodTypeAny {
   switch (field.type) {
     case "email": {
-      if (field.required) {
-        return z
-          .string()
-          .min(1, `${field.label} is required`)
-          .email("Please enter a valid email");
-      }
-      return z
-        .string()
-        .email("Please enter a valid email")
-        .or(z.literal(""));
+      const base = field.required
+        ? z
+            .string()
+            .min(1, `${field.label} is required`)
+            .email("Please enter a valid email")
+        : z.string().email("Please enter a valid email").or(z.literal(""));
+      return applyCustomValidate(field, base);
     }
     case "checkbox":
       return field.required
@@ -22,6 +45,13 @@ function fieldSchema(field: WizardFieldConfig): z.ZodTypeAny {
             errorMap: () => ({ message: `${field.label} is required` }),
           })
         : z.boolean().optional().default(false);
+    case "multiselect": {
+      const base = z.array(z.string());
+      if (field.required) {
+        return base.min(1, `Select at least one ${field.label.toLowerCase()}`);
+      }
+      return base.optional().default([]);
+    }
     case "number": {
       const base = z.coerce.number({
         invalid_type_error: `${field.label} must be a number`,
@@ -45,8 +75,8 @@ function fieldSchema(field: WizardFieldConfig): z.ZodTypeAny {
       if (field.maxLength != null) {
         s = s.max(field.maxLength, `${field.label} is too long`);
       }
-      if (field.required) return s;
-      return s.optional().or(z.literal(""));
+      const withOptional = field.required ? s : s.optional().or(z.literal(""));
+      return applyCustomValidate(field, withOptional);
     }
   }
 }
@@ -85,6 +115,15 @@ export function validateStep(
     const fieldErrors: Record<string, string> = {};
     for (const [k, v] of Object.entries(result.error.flatten().fieldErrors)) {
       if (v?.[0]) fieldErrors[k] = v[0];
+    }
+    // Custom refine issues land in formErrors when not field-bound; map to first field
+    if (Object.keys(fieldErrors).length === 0 && result.error.issues.length > 0) {
+      for (const issue of result.error.issues) {
+        const key = issue.path[0];
+        if (typeof key === "string" && !fieldErrors[key]) {
+          fieldErrors[key] = issue.message;
+        }
+      }
     }
     return { success: false, fieldErrors };
   }

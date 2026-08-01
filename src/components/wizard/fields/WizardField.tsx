@@ -4,6 +4,7 @@ import type { Control, FieldErrors, FieldValues, Path } from "react-hook-form";
 import { Controller, useWatch } from "react-hook-form";
 import type { WizardFieldConfig } from "@/config/wizards/types";
 import { evaluateCondition } from "@/components/wizard/lib/conditionals";
+import { getMinimumAppointmentDateString } from "@/lib/driver-license-booking";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -71,6 +72,64 @@ export function WizardField<T extends FieldValues>({
     );
   }
 
+  if (field.type === "multiselect") {
+    const options = field.options ?? [];
+    return (
+      <Field>
+        <FieldLabel required={field.required}>{field.label}</FieldLabel>
+        {field.description ? <FieldDescription>{field.description}</FieldDescription> : null}
+        <Controller
+          name={name}
+          control={control}
+          render={({ field: rhf }) => {
+            const selected = Array.isArray(rhf.value) ? (rhf.value as string[]) : [];
+            const toggle = (value: string) => {
+              const next = selected.includes(value)
+                ? selected.filter((v) => v !== value)
+                : [...selected, value];
+              rhf.onChange(next);
+            };
+            return (
+              <div className="grid gap-3 sm:grid-cols-2" role="group" aria-labelledby={inputId}>
+                <span id={inputId} className="sr-only">
+                  {field.label}
+                </span>
+                {options.map((opt) => {
+                  const optId = `${inputId}-${opt.value}`;
+                  return (
+                    <label
+                      key={opt.value}
+                      htmlFor={optId}
+                      className="flex cursor-pointer items-center gap-3 rounded-lg border border-border px-4 py-3 text-sm"
+                    >
+                      <input
+                        id={optId}
+                        type="checkbox"
+                        checked={selected.includes(opt.value)}
+                        onChange={() => toggle(opt.value)}
+                        onBlur={rhf.onBlur}
+                        className="h-4 w-4 rounded border-border text-siam-blue focus:ring-siam-blue"
+                      />
+                      <span className="font-medium text-foreground">{opt.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            );
+          }}
+        />
+        <FieldError error={errorMessage} />
+      </Field>
+    );
+  }
+
+  const dateMin =
+    field.type === "date"
+      ? field.customValidate === "driverLicenseAppointment"
+        ? getMinimumAppointmentDateString()
+        : field.min
+      : undefined;
+
   return (
     <Field>
       <FieldLabel htmlFor={inputId} required={field.required}>
@@ -119,7 +178,7 @@ export function WizardField<T extends FieldValues>({
                     ? "number"
                     : "text";
 
-          return <Input {...common} type={inputType} />;
+          return <Input {...common} type={inputType} min={dateMin} />;
         }}
       />
       {field.description ? <FieldDescription>{field.description}</FieldDescription> : null}

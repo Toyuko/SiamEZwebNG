@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * @deprecated P3/A06 — superseded by `src/config/wizards/real-estate-services.ts` + WizardEngine.
+ * Kept until Orchestrator confirms formData/UI parity and deletes legacy wizards.
+ */
+
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";

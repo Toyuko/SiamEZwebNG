@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * @deprecated P3/A06 — book page uses WizardEngine for all seeded slugs.
+ * Kept for reference/parity comparison until Orchestrator deletes legacy wizards.
+ */
+
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
