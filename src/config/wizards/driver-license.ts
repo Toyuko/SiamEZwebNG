@@ -147,8 +147,16 @@ export const driverLicenseWizard: WizardConfig = {
       type: "documents",
       label: "Payment receipt",
       description:
-        "Upload your bank transfer / PromptPay receipt (required). Metadata is saved now; file storage may be completed later.",
+        "Upload your bank transfer / PromptPay receipt (required). Signed-in uploads are linked to your booking via document IDs.",
       documentsRequired: true,
+      requiredDocuments: [
+        {
+          id: "payment_receipt",
+          label: "Payment receipt / bank slip",
+          documentType: "payment_receipt",
+          required: true,
+        },
+      ],
     },
     {
       id: "review",

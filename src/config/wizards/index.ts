@@ -15,7 +15,13 @@ import { driverLicenseWizard } from "./driver-license";
 import { carMotorbikeFinderWizard } from "./car-motorbike-finder-selling-service";
 import { realEstateServicesWizard } from "./real-estate-services";
 
-export type { WizardConfig, WizardStepConfig, WizardFieldConfig, WizardCondition } from "./types";
+export type {
+  WizardConfig,
+  WizardStepConfig,
+  WizardFieldConfig,
+  WizardCondition,
+  WizardRequiredDocument,
+} from "./types";
 
 /** Full registry: every seeded ServiceSlug books via Universal Wizard Engine. */
 const WIZARD_REGISTRY: Record<ServiceSlug, WizardConfig> = {

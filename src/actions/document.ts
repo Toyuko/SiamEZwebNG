@@ -142,6 +142,19 @@ export interface UploadUserSalesBoostProofResult {
   error?: string;
 }
 
+export interface UploadWizardDocumentResult {
+  success: boolean;
+  documentId?: string;
+  storageKey?: string;
+  name?: string;
+  mimeType?: string;
+  size?: number;
+  documentType?: string;
+  error?: string;
+  /** True when Blob token missing and mock:// storage was used. */
+  usedMockStorage?: boolean;
+}
+
 /**
  * Logged-in user: upload bank slip for a sales listing boost (no case required).
  * Expects FormData: `file` (File).
@@ -167,6 +180,64 @@ export async function uploadUserSalesBoostProofAction(
     return { success: true, documentId: doc.id };
   } catch (e) {
     console.error("uploadUserSalesBoostProofAction", e);
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Upload failed",
+    };
+  }
+}
+
+/**
+ * Authenticated booking wizard upload (pre-case). Reuses Vercel Blob helpers;
+ * falls back to mock:// storage keys when BLOB_READ_WRITE_TOKEN is unset.
+ * Expects FormData: `file` (File), optional `documentType`.
+ */
+export async function uploadWizardDocumentAction(
+  formData: FormData
+): Promise<UploadWizardDocumentResult> {
+  try {
+    const session = await requireAuth();
+    const file = formData.get("file") as File | null;
+    const documentTypeRaw = (formData.get("documentType") as string | null)?.trim();
+    const documentType = documentTypeRaw || undefined;
+
+    if (!file || file.size === 0) {
+      return { success: false, error: "Choose a file to upload." };
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return { success: false, error: "File is too large (max 10 MB)." };
+    }
+
+    const mime = (file.type || "").toLowerCase();
+    const allowed = new Set(["image/jpeg", "image/png", "application/pdf"]);
+    const extOk = /\.(jpe?g|png|pdf)$/i.test(file.name);
+    if (mime && !allowed.has(mime) && !extOk) {
+      return { success: false, error: "Only PDF, JPG, and PNG files are allowed." };
+    }
+    if (!mime && !extOk) {
+      return { success: false, error: "Only PDF, JPG, and PNG files are allowed." };
+    }
+
+    const usedMockStorage = !process.env.BLOB_READ_WRITE_TOKEN;
+    const doc = await uploadAndCreateDocument({
+      file,
+      caseId: null,
+      uploadedBy: session.user.id,
+      documentType,
+    });
+
+    return {
+      success: true,
+      documentId: doc.id,
+      storageKey: doc.storageKey,
+      name: doc.name,
+      mimeType: doc.mimeType ?? undefined,
+      size: doc.size ?? undefined,
+      documentType: doc.documentType ?? undefined,
+      usedMockStorage,
+    };
+  } catch (e) {
+    console.error("uploadWizardDocumentAction", e);
     return {
       success: false,
       error: e instanceof Error ? e.message : "Upload failed",

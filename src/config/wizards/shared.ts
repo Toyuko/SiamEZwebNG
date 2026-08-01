@@ -47,6 +47,9 @@ type GenericWizardOptions = {
   summaryDescription?: string;
   documentsDescription?: string;
   showMarketplaceToggle?: boolean;
+  /** Missing-document checklist for the documents step. */
+  requiredDocuments?: WizardStepConfig["requiredDocuments"];
+  documentsRequired?: boolean;
 };
 
 /**
@@ -88,7 +91,9 @@ export function createGenericBookingWizard(
       labelKey: "steps.documents",
       description:
         options.documentsDescription ??
-        "Upload required documents if you have them. Metadata is saved now; file storage may be completed later.",
+        "Upload supporting documents if you have them. Signed-in users store files for the booking; guests can attach metadata and finish uploads after login.",
+      documentsRequired: options.documentsRequired,
+      requiredDocuments: options.requiredDocuments,
     },
     {
       id: "review",
