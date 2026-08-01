@@ -3,7 +3,7 @@
  * Run: npm run db:seed (requires DATABASE_URL and prisma migrate/deploy or db push).
  */
 
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
 import {
   BENELLI_TRK_502X_IMAGE_URLS,
@@ -724,6 +724,135 @@ async function main() {
     });
     console.log("Sales listing upserted:", listing.slug, `(${listing.imageUrls.length} photos)`);
   }
+
+  // Platform Wave M4 — example life event journey (admin-editable after seed).
+  await seedMovingToThailandLifeEvent();
+}
+
+/**
+ * "Moving to Thailand" checklist:
+ * property → translation → driver license → vehicle finder → vehicle registration
+ * Links existing service slugs / marketplace directories (cuid listing URLs when listingId set).
+ */
+async function seedMovingToThailandLifeEvent() {
+  const key = "moving-to-thailand";
+  const event = await prisma.lifeEvent.upsert({
+    where: { key },
+    create: {
+      key,
+      titleEn: "Moving to Thailand",
+      titleTh: "ย้ายมาอยู่ประเทศไทย",
+      descriptionEn:
+        "A guided checklist for settling in: find a home, translate documents, get a Thai driver's license, source a vehicle, and complete registration.",
+      descriptionTh:
+        "เช็กลิสต์สำหรับตั้งถิ่นฐาน: หาที่อยู่ แปลเอกสาร ทำใบขับขี่ไทย หารถ และจดทะเบียน",
+      active: true,
+      sortOrder: 1,
+    },
+    update: {
+      titleEn: "Moving to Thailand",
+      titleTh: "ย้ายมาอยู่ประเทศไทย",
+      descriptionEn:
+        "A guided checklist for settling in: find a home, translate documents, get a Thai driver's license, source a vehicle, and complete registration.",
+      descriptionTh:
+        "เช็กลิสต์สำหรับตั้งถิ่นฐาน: หาที่อยู่ แปลเอกสาร ทำใบขับขี่ไทย หารถ และจดทะเบียน",
+      active: true,
+      sortOrder: 1,
+    },
+  });
+
+  const steps: Array<{
+    titleEn: string;
+    titleTh: string;
+    descriptionEn: string;
+    descriptionTh: string;
+    sortOrder: number;
+    target: Prisma.InputJsonValue;
+  }> = [
+    {
+      titleEn: "Find a place to live",
+      titleTh: "หาที่อยู่อาศัย",
+      descriptionEn: "Browse property listings for sale or rent.",
+      descriptionTh: "ค้นหารายการอสังหาริมทรัพย์เพื่อซื้อหรือเช่า",
+      sortOrder: 1,
+      target: {
+        listingType: "property",
+        listingFilters: { listingType: "rent" },
+        serviceSlug: "real-estate-services",
+      },
+    },
+    {
+      titleEn: "Translate official documents",
+      titleTh: "แปลเอกสารราชการ",
+      descriptionEn: "Book certified translation for visas, contracts, and DLT paperwork.",
+      descriptionTh: "จองบริการแปลเอกสารรับรองสำหรับวีซ่า สัญญา และเอกสารกรมขนส่ง",
+      sortOrder: 2,
+      target: { serviceSlug: "translation-services" },
+    },
+    {
+      titleEn: "Get a Thai driver's license",
+      titleTh: "ทำใบขับขี่ไทย",
+      descriptionEn: "Conversion, renewal, or new license with DLT support.",
+      descriptionTh: "เปลี่ยนใบขับขี่ ต่ออายุ หรือทำใหม่พร้อมช่วยเหลือที่กรมขนส่ง",
+      sortOrder: 3,
+      target: { serviceSlug: "driver-license" },
+    },
+    {
+      titleEn: "Find a car or motorbike",
+      titleTh: "หารถยนต์หรือมอเตอร์ไซค์",
+      descriptionEn: "Browse marketplace vehicles or book the finder service.",
+      descriptionTh: "ค้นหารถในตลาด หรือจองบริการหาซื้อรถ",
+      sortOrder: 4,
+      target: {
+        listingType: "vehicle",
+        serviceSlug: "car-motorbike-finder-selling-service",
+      },
+    },
+    {
+      titleEn: "Register your vehicle",
+      titleTh: "จดทะเบียนรถ",
+      descriptionEn: "Ownership transfer, plates, and tax renewals.",
+      descriptionTh: "โอนกรรมสิทธิ์ ป้ายทะเบียน และต่อภาษี",
+      sortOrder: 5,
+      target: { serviceSlug: "vehicle-registration" },
+    },
+  ];
+
+  const existing = await prisma.lifeEventStep.findMany({
+    where: { lifeEventId: event.id },
+    select: { id: true, sortOrder: true },
+  });
+
+  // Upsert by sortOrder within this event (seed-stable).
+  for (const step of steps) {
+    const match = existing.find((e) => e.sortOrder === step.sortOrder);
+    if (match) {
+      await prisma.lifeEventStep.update({
+        where: { id: match.id },
+        data: {
+          titleEn: step.titleEn,
+          titleTh: step.titleTh,
+          descriptionEn: step.descriptionEn,
+          descriptionTh: step.descriptionTh,
+          target: step.target,
+        },
+      });
+    } else {
+      await prisma.lifeEventStep.create({
+        data: {
+          lifeEventId: event.id,
+          titleEn: step.titleEn,
+          titleTh: step.titleTh,
+          descriptionEn: step.descriptionEn,
+          descriptionTh: step.descriptionTh,
+          sortOrder: step.sortOrder,
+          target: step.target,
+        },
+      });
+    }
+  }
+
+  console.log("Life event seeded:", key, `(${steps.length} steps)`);
 }
 
 main()

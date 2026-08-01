@@ -145,6 +145,7 @@
     "companyJobs": "Company Jobs",
     "adCampaigns": "Ad Campaigns",
     "services": "Services",
+    "lifeEvents": "Life Events",
     "sales": "Sales",
     "invoices": "Invoices",
     "paymentsOrders": "Payments & Orders",
@@ -1429,7 +1430,29 @@
     },
     "publicProfile": "Public Profile",
     "myRealEstate": "My Properties",
-    "savedListings": "Saved & compare"
+    "savedListings": "Saved & compare",
+    "goalsLifeEvents": "Goals & journeys"
+  },
+  "goalsLifeEvents": {
+    "pageTitle": "Goals & life events",
+    "pageSubtitle": "Start a guided journey checklist or capture a personal goal.",
+    "lifeEventsSection": "Life events",
+    "goalsSection": "Your goals",
+    "startEvent": "Start journey",
+    "started": "In progress",
+    "markStarted": "Start step",
+    "markDone": "Mark done",
+    "markPending": "Reset",
+    "openLink": "Open",
+    "createGoal": "Add goal",
+    "goalPlaceholder": "e.g. Find a condo in Bangkok",
+    "completeGoal": "Complete",
+    "reopenGoal": "Reopen",
+    "deleteGoal": "Delete",
+    "progressLabel": "{percent}% · {completed}/{total} steps",
+    "noSteps": "This journey has no steps yet.",
+    "linkLifeEvent": "Link life event",
+    "noEvents": "No active life events are available yet."
   },
   "marketplaceEngagement": {
     "save": "Save",

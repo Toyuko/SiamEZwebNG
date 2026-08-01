@@ -2,7 +2,7 @@
 
 **Prerequisite:** [PLATFORM-MIGRATION-REPORT.md](./PLATFORM-MIGRATION-REPORT.md)  
 **Integration branch:** `siamez-2.0`  
-**Status:** **Full M0–M7 approved** (2026-08-02) · **M0–M2 at** `e563b69` · Wave **M3** on `agent/m3-unified-search` (unified search)  
+**Status:** **Full M0–M7 approved** (2026-08-02) · **M0–M3 at** `01218f1` · Wave **M4** landed on `agent/m4-goals-life-events` (not yet merged) · Wave **M5** next  
 **Rule:** No division rewrite. Additive engines. Preserve URLs and data.
 
 ---
@@ -144,8 +144,10 @@
 **Approved:** full M0–M7 (2026-08-02).  
 **M0:** Merged (`7bb5925`) — `npm run migrate:inventory-report`  
 **M1:** Merged (`2eb0534`) — `ListingEnhancement` + `migrate:enhance-listings`  
-**M2:** At base `e563b69` — `SavedListing` / `ListingView` / `CompareItem` + portal hub `/portal/saved`.  
-**Active wave:** M3 — Unified Search on `agent/m3-unified-search`.  
+**M2:** Merged (`e563b69`) — `SavedListing` / `ListingView` / `CompareItem` + portal hub `/portal/saved`.  
+**M3:** Merged (`01218f1`) — unified search (`src/lib/search/**` + header ⌘K + Concierge tool).  
+**M4:** Landed on branch `agent/m4-goals-life-events` — Goals + Life Events Engines (not merged to `siamez-2.0` yet).  
+**Active wave:** M5 — Recommendations + Concierge orchestration (after M4 merge).  
 **M1 commands:** `npm run migrate:enhance-listings` (dry-run default) · `--apply` upserts `ListingEnhancement` only.
 
 ---
@@ -164,7 +166,7 @@ Anonymous cookie `siamez_mp_sid` merges into the Auth.js user on login (best-eff
 
 ---
 
-## M3 note (this branch)
+## M3 note (merged)
 
 Wave M3 adds **unified search** across divisions without redesigning marketplace pages:
 
@@ -176,3 +178,20 @@ Wave M3 adds **unified search** across divisions without redesigning marketplace
 | Service palette | Kept on `/services` (`disableGlobalShortcut` so site search owns ⌘K) |
 
 URL contracts preserved: vehicles → `/sales/{cuid}`, properties → `/real-estate/{cuid}`, services → `/services/{slug}` (book: `/book/{slug}`). Listing description fields are never written by search.
+
+---
+
+## M4 note (branch `agent/m4-goals-life-events`)
+
+Wave M4 adds **configurable Life Events + Goals** without hard-coded journey pages:
+
+| Piece | Location |
+|-------|----------|
+| Prisma models | `LifeEvent`, `LifeEventStep`, `LifeEventProgress`, `LifeEventStepProgress`, `Goal` |
+| Migration folder | `prisma/migrations/20260802040000_add_goals_life_events/` (prefer `npx prisma db push` locally if older migrations fail) |
+| Engines | `src/lib/life-events/**`, `src/lib/goals/**` |
+| Admin CRUD | `/admin/life-events` |
+| Customer checklist | `/portal/goals` |
+| Seed example | `moving-to-thailand` → property → translation → DL → vehicle → registration |
+
+Listing deep links in step targets use **cuid** via Migration Engine helpers (`/sales/{cuid}`, `/real-estate/{cuid}`). SalesVehicle / SalesProperty content is never mutated.

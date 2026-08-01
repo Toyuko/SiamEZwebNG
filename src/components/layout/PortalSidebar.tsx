@@ -17,6 +17,7 @@ import {
   UserRound,
   Bell,
   Bookmark,
+  Flag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
@@ -29,6 +30,7 @@ const clientNav = [
   { labelKey: "mySales", href: "/portal/sales", icon: Car },
   { labelKey: "myRealEstate", href: "/portal/real-estate", icon: Home },
   { labelKey: "savedListings", href: "/portal/saved", icon: Bookmark },
+  { labelKey: "goalsLifeEvents", href: "/portal/goals", icon: Flag },
   { labelKey: "invoices", href: "/portal/invoices", icon: CreditCard },
   { labelKey: "documents", href: "/portal/documents", icon: FileText },
   { labelKey: "notifications", href: "/portal/notifications", icon: Bell },

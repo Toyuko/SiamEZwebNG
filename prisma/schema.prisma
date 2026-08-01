@@ -63,6 +63,8 @@ model User {
   savedListings       SavedListing[]
   listingViews        ListingView[]
   compareItems        CompareItem[]
+  goals               Goal[]
+  lifeEventProgress   LifeEventProgress[]
 }
 
 enum FreelancerVerificationStatus {
@@ -882,4 +884,142 @@ model CompareItem {
   @@index([userId])
   @@index([anonymousSessionId])
   @@map("compare_items")
+}
+
+/**
+ * Platform Wave M4 — Goals + Life Events Engines.
+ * Configurable journeys (admin-editable). Additive only; never mutates listing source content.
+ */
+
+enum LifeEventRunStatus {
+  active
+  completed
+  abandoned
+}
+
+enum LifeEventStepStatus {
+  pending
+  started
+  completed
+  skipped
+}
+
+enum GoalStatus {
+  active
+  completed
+  cancelled
+}
+
+/** Admin-editable life event definition (e.g. "Moving to Thailand"). */
+model LifeEvent {
+  id            String   @id @default(cuid())
+  /// Stable slug/key for seeds and deep links (e.g. moving-to-thailand).
+  key           String   @unique
+  titleEn       String   @map("title_en")
+  titleTh       String?  @map("title_th")
+  descriptionEn String?  @map("description_en") @db.Text
+  descriptionTh String?  @map("description_th") @db.Text
+  active        Boolean  @default(true)
+  sortOrder     Int      @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  steps    LifeEventStep[]
+  progress LifeEventProgress[]
+  goals    Goal[]
+
+  @@index([active, sortOrder])
+  @@map("life_events")
+}
+
+/**
+ * Ordered step within a life event.
+ * `target` JSON shape (flexible):
+ *   {
+ *     serviceSlug?: string,
+ *     listingType?: "vehicle" | "property",
+ *     listingFilters?: { category?, listingType?, province? },
+ *     listingId?: string,  // cuid deep link — never slug
+ *     href?: string        // optional path override (locale-agnostic)
+ *   }
+ */
+model LifeEventStep {
+  id            String   @id @default(cuid())
+  lifeEventId   String   @map("life_event_id")
+  titleEn       String   @map("title_en")
+  titleTh       String?  @map("title_th")
+  descriptionEn String?  @map("description_en") @db.Text
+  descriptionTh String?  @map("description_th") @db.Text
+  sortOrder     Int      @default(0) @map("sort_order")
+  target        Json     @default("{}")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  lifeEvent    LifeEvent              @relation(fields: [lifeEventId], references: [id], onDelete: Cascade)
+  stepProgress LifeEventStepProgress[]
+
+  @@index([lifeEventId, sortOrder])
+  @@map("life_event_steps")
+}
+
+/** Customer run of a life event (one active/completed run per user + event). */
+model LifeEventProgress {
+  id          String             @id @default(cuid())
+  userId      String             @map("user_id")
+  lifeEventId String             @map("life_event_id")
+  status      LifeEventRunStatus @default(active)
+  startedAt   DateTime           @default(now()) @map("started_at")
+  completedAt DateTime?          @map("completed_at")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  user      User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lifeEvent LifeEvent              @relation(fields: [lifeEventId], references: [id], onDelete: Cascade)
+  steps     LifeEventStepProgress[]
+
+  @@unique([userId, lifeEventId])
+  @@index([userId, status])
+  @@index([lifeEventId])
+  @@map("life_event_progress")
+}
+
+/** Per-step progress within a customer life event run. */
+model LifeEventStepProgress {
+  id          String              @id @default(cuid())
+  progressId  String              @map("progress_id")
+  stepId      String              @map("step_id")
+  status      LifeEventStepStatus @default(pending)
+  startedAt   DateTime?           @map("started_at")
+  completedAt DateTime?           @map("completed_at")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  progress LifeEventProgress @relation(fields: [progressId], references: [id], onDelete: Cascade)
+  step     LifeEventStep     @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@unique([progressId, stepId])
+  @@index([stepId])
+  @@map("life_event_step_progress")
+}
+
+/** Customer goal capture — optional link to a life event. */
+model Goal {
+  id           String     @id @default(cuid())
+  userId       String     @map("user_id")
+  title        String
+  status       GoalStatus @default(active)
+  lifeEventId  String?    @map("life_event_id")
+  /** 0–100 derived or manually set progress. */
+  progressPct  Int        @default(0) @map("progress_pct")
+  notes        String?    @db.Text
+  completedAt  DateTime?  @map("completed_at")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lifeEvent LifeEvent? @relation(fields: [lifeEventId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([lifeEventId])
+  @@map("goals")
 }

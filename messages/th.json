@@ -145,6 +145,7 @@
     "companyJobs": "งานบริษัท",
     "adCampaigns": "แคมเปญโฆษณา",
     "services": "บริการ",
+    "lifeEvents": "เหตุการณ์สำคัญ",
     "sales": "ซื้อขายรถ",
     "invoices": "ใบแจ้งหนี้",
     "paymentsOrders": "การชำระเงินและออเดอร์",
@@ -1429,7 +1430,29 @@
     },
     "publicProfile": "โปรไฟล์สาธารณะ",
     "myRealEstate": "อสังหาฯ ของฉัน",
-    "savedListings": "รายการที่บันทึกและเปรียบเทียบ"
+    "savedListings": "รายการที่บันทึกและเปรียบเทียบ",
+    "goalsLifeEvents": "เป้าหมายและการย้ายถิ่น"
+  },
+  "goalsLifeEvents": {
+    "pageTitle": "เป้าหมายและเหตุการณ์สำคัญ",
+    "pageSubtitle": "เริ่มเช็กลิสต์การเดินทางแบบมีคำแนะนำ หรือบันทึกเป้าหมายส่วนตัว",
+    "lifeEventsSection": "เหตุการณ์สำคัญ",
+    "goalsSection": "เป้าหมายของคุณ",
+    "startEvent": "เริ่มเส้นทาง",
+    "started": "กำลังดำเนินการ",
+    "markStarted": "เริ่มขั้นตอน",
+    "markDone": "ทำเสร็จแล้ว",
+    "markPending": "รีเซ็ต",
+    "openLink": "เปิด",
+    "createGoal": "เพิ่มเป้าหมาย",
+    "goalPlaceholder": "เช่น หาคอนโดในกรุงเทพฯ",
+    "completeGoal": "เสร็จสิ้น",
+    "reopenGoal": "เปิดใหม่",
+    "deleteGoal": "ลบ",
+    "progressLabel": "{percent}% · {completed}/{total} ขั้นตอน",
+    "noSteps": "เส้นทางนี้ยังไม่มีขั้นตอน",
+    "linkLifeEvent": "เชื่อมเหตุการณ์สำคัญ",
+    "noEvents": "ยังไม่มีเหตุการณ์สำคัญที่เปิดใช้งาน"
   },
   "marketplaceEngagement": {
     "save": "บันทึก",
