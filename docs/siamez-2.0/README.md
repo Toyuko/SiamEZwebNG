@@ -23,6 +23,7 @@ Incremental evolution of SiamEZwebNG into an AI-powered concierge platform.
 3. Integration branch — `siamez-2.0`  
 4. Wave 1 — A01 + A10 + A12 **merged** (P0 complete)  
 5. Wave 2 — A02 Design System **merged**  
-6. Next — P2 Universal Wizard Engine (A05)  
+6. P2 — A05 Wizard Engine **merged** (`marriage-registration` live; 39 tests)  
+7. Next — P3 Service Migration (A06)  
 
 Feature branches merge into `siamez-2.0` after Orchestrator review.

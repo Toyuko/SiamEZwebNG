@@ -166,7 +166,8 @@ flowchart LR
 | P0 QA gates (A12) | **Merged** (`2e785b8`; 32 tests green) |
 | P1 Analyst docs (A01) | **Merged** (`a06b468`) |
 | P1 Design system (A02) | **Merged** (`14b8a92`) |
-| P2 Wizard engine (A05) | Ready to launch |
-| P3–P7 | Queued |
+| P2 Wizard engine (A05) | **Merged** (`42f2453`; slug `marriage-registration`) |
+| P3 Service migration (A06) | In flight |
+| P4–P7 | Queued |
 
 Blockers, risks, and agent status live on the Orchestrator canvas.
