@@ -4,3 +4,8 @@ export { LanguageSwitcher } from "./LanguageSwitcher";
 export { SummaryCard } from "./SummaryCard";
 export { ActivityFeed, type ActivityItem } from "./ActivityFeed";
 export { PortalFooter } from "./PortalFooter";
+export { NextSteps } from "./NextSteps";
+export { CaseTimeline } from "./CaseTimeline";
+export { AiRecommendations } from "./AiRecommendations";
+export { NotificationsList } from "./NotificationsList";
+export { QuickLinks } from "./QuickLinks";

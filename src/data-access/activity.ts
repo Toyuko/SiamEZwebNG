@@ -31,7 +31,7 @@ export async function getRecentActivityForUser(
 
   const items: ActivityItem[] = [];
 
-  cases.slice(0, 5).forEach((c) => {
+  cases.slice(0, 8).forEach((c) => {
     items.push({
       id: `case-${c.id}`,
       type: "case",
@@ -39,21 +39,28 @@ export async function getRecentActivityForUser(
       timestamp: formatRelativeTime(c.updatedAt),
       action: getCaseAction(c.status),
       status: getCaseStatus(c.status),
+      href: `/portal/cases/${c.id}`,
     });
   });
 
-  invoices.slice(0, 3).forEach((inv) => {
+  invoices.slice(0, 6).forEach((inv) => {
     items.push({
       id: `invoice-${inv.id}`,
       type: "invoice",
       title: `Invoice: ${inv.case.service.name}`,
       timestamp: formatRelativeTime(inv.createdAt),
       action: inv.status === "unpaid" ? "Pending Payment" : inv.status,
-      status: inv.status === "unpaid" ? "pending" : inv.status === "paid" ? "completed" : "info",
+      status:
+        inv.status === "unpaid"
+          ? "pending"
+          : inv.status === "paid"
+            ? "completed"
+            : "info",
+      href: `/portal/invoices/${inv.id}`,
     });
   });
 
-  documents.slice(0, 3).forEach((doc) => {
+  documents.slice(0, 6).forEach((doc) => {
     items.push({
       id: `doc-${doc.id}`,
       type: "document",
@@ -61,10 +68,11 @@ export async function getRecentActivityForUser(
       timestamp: formatRelativeTime(doc.createdAt),
       action: "Document",
       status: "info",
+      href: doc.caseId ? `/portal/cases/${doc.caseId}` : "/portal/documents",
     });
   });
 
-  serviceJobs.slice(0, 5).forEach((job) => {
+  serviceJobs.slice(0, 8).forEach((job) => {
     items.push({
       id: `job-${job.id}`,
       type: "job",
@@ -72,10 +80,10 @@ export async function getRecentActivityForUser(
       timestamp: formatRelativeTime(job.updatedAt),
       action: getJobAction(job.status),
       status: getJobActivityStatus(job.status),
+      href: `/portal/client/jobs/${job.id}`,
     });
   });
 
-  // Sort by date desc
   const dateMap = new Map<string, Date>();
   cases.forEach((c) => dateMap.set(`case-${c.id}`, c.updatedAt));
   invoices.forEach((i) => dateMap.set(`invoice-${i.id}`, i.createdAt));

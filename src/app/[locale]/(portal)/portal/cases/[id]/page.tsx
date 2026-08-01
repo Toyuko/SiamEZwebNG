@@ -6,18 +6,33 @@ import { Link } from "@/i18n/navigation";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { CaseTimeline } from "@/components/portal/CaseTimeline";
+import { buildCaseTimeline } from "@/lib/portal/case-timeline";
 import type { CaseStatus } from "@prisma/client";
 
-const statusLabels: Record<CaseStatus, string> = {
-  new: "New",
-  under_review: "Under Review",
-  quoted: "Quoted",
-  awaiting_payment: "Awaiting Payment",
-  paid: "Paid",
-  in_progress: "In Progress",
-  pending_docs: "Pending Documents",
-  completed: "Completed",
-  cancelled: "Cancelled",
+const statusLabels: Record<CaseStatus, { en: string; th: string }> = {
+  new: { en: "New", th: "ใหม่" },
+  under_review: { en: "Under Review", th: "กำลังตรวจสอบ" },
+  quoted: { en: "Quoted", th: "มีใบเสนอราคา" },
+  awaiting_payment: { en: "Awaiting Payment", th: "รอชำระเงิน" },
+  paid: { en: "Paid", th: "ชำระแล้ว" },
+  in_progress: { en: "In Progress", th: "กำลังดำเนินการ" },
+  pending_docs: { en: "Pending Documents", th: "รอเอกสาร" },
+  completed: { en: "Completed", th: "เสร็จสิ้น" },
+  cancelled: { en: "Cancelled", th: "ยกเลิก" },
+};
+
+const statusBadgeClass: Record<CaseStatus, string> = {
+  new: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+  under_review: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+  quoted: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+  awaiting_payment:
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+  paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+  in_progress: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300",
+  pending_docs: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
+  completed: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
+  cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
 };
 
 export default async function PortalCaseDetailPage({
@@ -33,8 +48,39 @@ export default async function PortalCaseDetailPage({
   const caseData = await getCaseByIdForUser(id, session.user.id);
   if (!caseData) notFound();
 
+  const statusLabel =
+    statusLabels[caseData.status][locale === "th" ? "th" : "en"];
+
+  const timeline = buildCaseTimeline({
+    caseNumber: caseData.caseNumber,
+    status: caseData.status,
+    createdAt: caseData.createdAt,
+    updatedAt: caseData.updatedAt,
+    completedAt: caseData.completedAt,
+    statusLabel,
+    notes: caseData.caseNotes,
+    documents: caseData.documents,
+    invoices: caseData.invoices,
+    quotes: caseData.quotes,
+    labels: {
+      caseOpened: t("timeline.caseOpened"),
+      caseOpenedDesc: (caseNumber) => t("timeline.caseOpenedDesc", { caseNumber }),
+      statusUpdate: (status) => t("timeline.statusUpdate", { status }),
+      statusUpdateDesc: t("timeline.statusUpdateDesc"),
+      completed: t("timeline.completed"),
+      noteFromTeam: t("timeline.noteFromTeam"),
+      documentAdded: (name) => t("timeline.documentAdded", { name }),
+      invoiceLabel: (status, amount) => t("timeline.invoiceLabel", { status, amount }),
+      quoteSent: (amount) => t("timeline.quoteSent", { amount }),
+    },
+  });
+
+  const unpaidInvoices = caseData.invoices.filter((inv) =>
+    ["unpaid", "pending_verification"].includes(inv.status)
+  );
+
   return (
-    <div>
+    <div className="max-w-5xl">
       <div className="mb-6 flex items-center gap-4">
         <Link
           href="/portal/cases"
@@ -43,69 +89,131 @@ export default async function PortalCaseDetailPage({
           ← {t("myCases")}
         </Link>
       </div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-        {caseData.caseNumber}
-      </h1>
-      <p className="mt-1 text-gray-600 dark:text-gray-400">{caseData.service.name}</p>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <h2 className="text-lg font-semibold">Case Details</h2>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm text-gray-500">Status</p>
-              <p className="font-medium">{statusLabels[caseData.status]}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Created</p>
-              <p>{new Date(caseData.createdAt).toLocaleDateString()}</p>
-            </div>
-            {caseData.completedAt && (
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {caseData.caseNumber}
+          </h1>
+          <p className="mt-1 text-gray-600 dark:text-gray-400">{caseData.service.name}</p>
+        </div>
+        <span
+          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass[caseData.status]}`}
+        >
+          {statusLabel}
+        </span>
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Button asChild variant="outline" size="sm">
+          <Link href="/portal/documents">{t("documents")}</Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/portal/invoices">{t("invoices")}</Link>
+        </Button>
+        {unpaidInvoices[0] && (
+          <Button asChild variant="primary" size="sm">
+            <Link href={`/portal/invoices/${unpaidInvoices[0].id}`}>
+              {t("caseDetail.payInvoice")}
+            </Link>
+          </Button>
+        )}
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-5">
+        <div className="space-y-6 lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">{t("caseDetail.details")}</h2>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500">Completed</p>
-                <p>{new Date(caseData.completedAt).toLocaleDateString()}</p>
+                <p className="text-sm text-gray-500">{t("caseDetail.status")}</p>
+                <p className="font-medium">{statusLabel}</p>
               </div>
-            )}
-            {caseData.invoices.length > 0 && (
               <div>
-                <p className="mb-2 text-sm text-gray-500">Invoices</p>
-                <ul className="space-y-1">
+                <p className="text-sm text-gray-500">{t("caseDetail.created")}</p>
+                <p>
+                  {new Date(caseData.createdAt).toLocaleDateString(
+                    locale === "th" ? "th-TH" : "en-GB"
+                  )}
+                </p>
+              </div>
+              {caseData.completedAt && (
+                <div>
+                  <p className="text-sm text-gray-500">{t("caseDetail.completed")}</p>
+                  <p>
+                    {new Date(caseData.completedAt).toLocaleDateString(
+                      locale === "th" ? "th-TH" : "en-GB"
+                    )}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">{t("invoices")}</h2>
+            </CardHeader>
+            <CardContent>
+              {caseData.invoices.length === 0 ? (
+                <p className="text-sm text-gray-500">{t("caseDetail.noInvoices")}</p>
+              ) : (
+                <ul className="space-y-2">
                   {caseData.invoices.map((inv) => (
-                    <li key={inv.id} className="text-sm">
-                      {inv.status} – {(inv.amount / 100).toFixed(2)} THB
+                    <li key={inv.id}>
+                      <Link
+                        href={`/portal/invoices/${inv.id}`}
+                        className="text-sm font-medium text-siam-blue hover:underline"
+                      >
+                        {inv.status} – {(inv.amount / 100).toFixed(2)} {inv.currency}
+                      </Link>
                     </li>
                   ))}
                 </ul>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <h2 className="text-lg font-semibold">Documents</h2>
-          </CardHeader>
-          <CardContent>
-            {caseData.documents.length === 0 ? (
-              <p className="text-sm text-gray-500">No documents yet.</p>
-            ) : (
-              <ul className="space-y-2">
-                {caseData.documents.map((doc) => (
-                  <li key={doc.id} className="text-sm">
-                    {doc.name}
-                  </li>
-                ))}
-              </ul>
-            )}
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">{t("documents")}</h2>
+            </CardHeader>
+            <CardContent>
+              {caseData.documents.length === 0 ? (
+                <p className="text-sm text-gray-500">{t("caseDetail.noDocuments")}</p>
+              ) : (
+                <ul className="space-y-2">
+                  {caseData.documents.map((doc) => (
+                    <li key={doc.id} className="text-sm text-gray-900 dark:text-white">
+                      {doc.name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <Button asChild variant="outline" size="sm" className="mt-4">
+                <Link href="/portal/documents">{t("caseDetail.viewAllDocuments")}</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="lg:col-span-3">
+          <CardContent className="p-6">
+            <CaseTimeline
+              title={t("timeline.title")}
+              emptyLabel={t("timeline.empty")}
+              items={timeline}
+              locale={locale}
+            />
           </CardContent>
         </Card>
       </div>
 
       <div className="mt-8">
         <Button asChild variant="primary">
-          <Link href="/services">Book a New Service</Link>
+          <Link href="/services">{t("bookNewService")}</Link>
         </Button>
       </div>
     </div>
