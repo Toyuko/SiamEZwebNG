@@ -170,8 +170,9 @@ flowchart LR
 | P2 Wizard engine (A05) | **Merged** (`42f2453`; slug `marriage-registration`) |
 | P3 Service migration (A06) | **Merged** (`b27f566`; 13/13 slugs) |
 | P4 Signup (A04) | **Merged** (`6e761fc`) |
-| P4 Concierge (A03) | In flight |
+| P4 Concierge (A03) | **Merged** (`5dd29c2`) |
 | P5 Documents (A07) | **Merged** (`1034d8d`) |
-| P6–P7 | Queued |
+| P6 Customer + Staff dashboards (A08, A09) | In flight |
+| P7 Perf & QA | Queued |
 
 Blockers, risks, and agent status live on the Orchestrator canvas.
