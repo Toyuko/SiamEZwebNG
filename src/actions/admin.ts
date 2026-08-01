@@ -869,12 +869,84 @@ export async function getCaseById(id: string) {
         include: { user: { select: { id: true, name: true, email: true } } },
         orderBy: { createdAt: "desc" },
       },
-      documents: true,
+      documents: { orderBy: { createdAt: "desc" } },
       payments: { orderBy: { createdAt: "desc" } },
       invoices: { include: { quote: true }, orderBy: { createdAt: "desc" } },
       quotes: { orderBy: { createdAt: "desc" } },
+      events: {
+        include: { staff: { select: { name: true } } },
+        orderBy: { start: "asc" },
+      },
     },
   });
+}
+
+/** Analytics for /admin/reports — Prisma aggregates only. */
+export async function getAdminReportMetrics() {
+  await ensureStaffAccess();
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const [
+    casesByStatus,
+    invoicesByStatus,
+    paymentsByStatus,
+    revenueAllTime,
+    revenueLast30,
+    casesLast30,
+    casesLast7,
+    documentCount,
+    upcomingEvents,
+    openCases,
+    quotesByStatus,
+  ] = await Promise.all([
+    prisma.case.groupBy({ by: ["status"], _count: { _all: true } }),
+    prisma.invoice.groupBy({ by: ["status"], _count: { _all: true }, _sum: { amount: true } }),
+    prisma.payment.groupBy({ by: ["status"], _count: { _all: true }, _sum: { amount: true } }),
+    prisma.payment.aggregate({ where: { status: "approved" }, _sum: { amount: true }, _count: true }),
+    prisma.payment.aggregate({
+      where: { status: "approved", approvedAt: { gte: thirtyDaysAgo } },
+      _sum: { amount: true },
+      _count: true,
+    }),
+    prisma.case.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
+    prisma.case.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
+    prisma.document.count(),
+    prisma.event.count({ where: { start: { gte: now } } }),
+    prisma.case.count({ where: { status: { notIn: ["completed", "cancelled"] } } }),
+    prisma.quote.groupBy({ by: ["status"], _count: { _all: true }, _sum: { amount: true } }),
+  ]);
+
+  return {
+    casesByStatus: casesByStatus.map((r) => ({ status: r.status, count: r._count._all })),
+    invoicesByStatus: invoicesByStatus.map((r) => ({
+      status: r.status,
+      count: r._count._all,
+      amount: r._sum.amount ?? 0,
+    })),
+    paymentsByStatus: paymentsByStatus.map((r) => ({
+      status: r.status,
+      count: r._count._all,
+      amount: r._sum.amount ?? 0,
+    })),
+    quotesByStatus: quotesByStatus.map((r) => ({
+      status: r.status,
+      count: r._count._all,
+      amount: r._sum.amount ?? 0,
+    })),
+    revenueAllTime: revenueAllTime._sum.amount ?? 0,
+    approvedPaymentCount: revenueAllTime._count,
+    revenueLast30: revenueLast30._sum.amount ?? 0,
+    approvedPaymentsLast30: revenueLast30._count,
+    casesLast30,
+    casesLast7,
+    documentCount,
+    upcomingEvents,
+    openCases,
+  };
 }
 
 export async function updateCase(id: string, data: Partial<{ status: CaseStatus; userId: string; guestName: string | null; guestEmail: string | null; guestPhone: string | null }>) {

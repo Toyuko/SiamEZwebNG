@@ -1,9 +1,14 @@
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
-import { getServices } from "@/actions/admin";
+import { getServices, getCaseById } from "@/actions/admin";
 import { CreateInvoiceWizard } from "./CreateInvoiceWizard";
 
-export default async function AdminNewInvoicePage() {
+export default async function AdminNewInvoicePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ caseId?: string }>;
+}) {
+  const params = await searchParams;
   const services = await getServices();
   if (services.length === 0) {
     return (
@@ -18,5 +23,29 @@ export default async function AdminNewInvoicePage() {
       </div>
     );
   }
-  return <CreateInvoiceWizard services={services} />;
+
+  let initialCase: {
+    id: string;
+    caseNumber: string;
+    guestName: string | null;
+    guestEmail: string | null;
+    user: { name: string | null; email: string } | null;
+  } | null = null;
+
+  if (params.caseId) {
+    const c = await getCaseById(params.caseId);
+    if (c) {
+      initialCase = {
+        id: c.id,
+        caseNumber: c.caseNumber,
+        guestName: c.guestName,
+        guestEmail: c.guestEmail,
+        user: c.user
+          ? { name: c.user.name, email: c.user.email }
+          : null,
+      };
+    }
+  }
+
+  return <CreateInvoiceWizard services={services} initialCase={initialCase} />;
 }
