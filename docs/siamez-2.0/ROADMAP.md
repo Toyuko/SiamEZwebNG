@@ -171,7 +171,7 @@ flowchart LR
 | P3 Service migration (A06) | **Merged** (`b27f566`; 13/13 slugs) |
 | P4 Signup (A04) | **Merged** (`6e761fc`) |
 | P4 Concierge (A03) | In flight |
-| P5 Documents (A07) | In flight |
+| P5 Documents (A07) | **Merged** (`1034d8d`) |
 | P6–P7 | Queued |
 
 Blockers, risks, and agent status live on the Orchestrator canvas.
