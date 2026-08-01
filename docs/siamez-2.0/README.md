@@ -33,7 +33,7 @@ Incremental evolution of SiamEZwebNG into an AI-powered concierge platform.
 11. P7 — A11 Performance + A12 Release QA **merged** · **77** tests  
 12. Reports — [SIAMEZ-2.0-RELEASE-REPORT.md](./releases/SIAMEZ-2.0-RELEASE-REPORT.md) · [P7-PERF.md](./releases/P7-PERF.md)  
 13. P0–P7 Concierge/wizard track — **merged** on `siamez-2.0`  
-14. **Platform marketplace track** — full **M0–M7 approved**; **M0 in flight**  
+14. **Platform marketplace track** — M0 **merged**; **M1 in flight** · 84 tests  
 15. Reports — [PLATFORM-MIGRATION-REPORT.md](./PLATFORM-MIGRATION-REPORT.md) · [PLATFORM-ROADMAP.md](./PLATFORM-ROADMAP.md)  
 
 Feature branches merge into `siamez-2.0` after Orchestrator review.

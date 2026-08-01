@@ -2,7 +2,7 @@
 
 **Prerequisite:** [PLATFORM-MIGRATION-REPORT.md](./PLATFORM-MIGRATION-REPORT.md)  
 **Integration branch:** `siamez-2.0`  
-**Status:** **Full M0–M7 approved** (2026-08-02) · Wave **M0 in flight**  
+**Status:** **Full M0–M7 approved** (2026-08-02) · **M0 merged** (`7bb5925`) · Wave **M1 in flight**  
 **Rule:** No division rewrite. Additive engines. Preserve URLs and data.
 
 ---
@@ -142,5 +142,5 @@
 ## Approval gate
 
 **Approved:** full M0–M7 (2026-08-02).  
-**Active wave:** M0 — Migration Engine scaffold + URL contract tests.  
-Subsequent waves launch after Orchestrator merge of the prior wave.
+**M0:** Merged (`7bb5925`) — `npm run migrate:inventory-report`  
+**Active wave:** M1 — Listing enhancement (non-destructive SEO/AI side-fields).
