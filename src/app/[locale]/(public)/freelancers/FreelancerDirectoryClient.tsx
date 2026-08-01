@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Image from "next/image";
 import { Search, BadgeCheck, Star } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
@@ -153,11 +154,12 @@ export function FreelancerDirectoryClient({
               <div className="mb-4 flex items-start gap-3">
                 <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-siam-blue/10">
                   {freelancer.user.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={freelancer.user.image}
                       alt={freelancer.user.name ?? freelancer.slug}
-                      className="h-full w-full object-cover"
+                      fill
+                      sizes="56px"
+                      className="object-cover"
                     />
                   ) : (
                     <span className="flex h-full w-full items-center justify-center text-sm font-semibold text-siam-blue">

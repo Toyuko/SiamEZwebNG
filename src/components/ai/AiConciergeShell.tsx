@@ -64,6 +64,7 @@ export function AiConciergeShell({
       subtitle: t("subtitle"),
       offlineHint: t("offlineHint"),
       clear: t("clear"),
+      closeLabel: t("closeLabel"),
       book: t("book"),
       empty: t("empty"),
       placeholder: t("placeholder"),
@@ -78,7 +79,6 @@ export function AiConciergeShell({
       startBooking: t("quickActions.startBooking"),
       help: t("quickActions.help"),
       openLabel: t("openLabel"),
-      closeLabel: t("closeLabel"),
     }),
     [t]
   );
@@ -110,7 +110,26 @@ export function AiConciergeShell({
         messages={messages}
         isStreaming={isStreaming}
         llmEnabled={llmEnabled}
-        labels={labels}
+        labels={{
+          title: labels.title,
+          subtitle: labels.subtitle,
+          offlineHint: labels.offlineHint,
+          clear: labels.clear,
+          closeLabel: labels.closeLabel,
+          book: labels.book,
+          empty: labels.empty,
+          placeholder: labels.placeholder,
+          send: labels.send,
+          listening: labels.listening,
+          voiceAria: labels.voiceAria,
+          voiceUnsupported: labels.voiceUnsupported,
+          voicePermissionDenied: labels.voicePermissionDenied,
+          voiceNoSpeech: labels.voiceNoSpeech,
+          voiceError: labels.voiceError,
+          popular: labels.popular,
+          startBooking: labels.startBooking,
+          help: labels.help,
+        }}
         onClose={() => setOpen(false)}
         onSend={sendMessage}
         onClear={clearHistory}

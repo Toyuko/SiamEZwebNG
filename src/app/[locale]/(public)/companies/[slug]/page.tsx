@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { BadgeCheck, ExternalLink, MapPin } from "lucide-react";
@@ -56,11 +57,13 @@ export default async function PublicCompanyProfilePage({
       <section className="relative">
         <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-siam-blue to-[#1a3569] md:h-64">
           {company.bannerImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={company.bannerImage}
               alt=""
-              className="h-full w-full object-cover"
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority
             />
           ) : null}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -70,11 +73,12 @@ export default async function PublicCompanyProfilePage({
           <div className="-mt-12 flex flex-col gap-4 sm:-mt-14 sm:flex-row sm:items-end sm:gap-6">
             <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border-4 border-white bg-white shadow-md dark:border-gray-900 sm:h-28 sm:w-28">
               {company.logo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   src={company.logo}
                   alt={company.companyName}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="112px"
+                  className="object-cover"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-siam-blue/10 text-2xl font-bold text-siam-blue">

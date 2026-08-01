@@ -1,15 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { Link } from "@/i18n/navigation";
 import { ChevronLeft, ChevronRight, Plus, Calendar } from "lucide-react";
-import { EventModal } from "./EventModal";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { getEventColorClass } from "./eventColors";
 import { updateEvent } from "@/actions/admin";
+
+const EventModal = dynamic(() =>
+  import("./EventModal").then((m) => m.EventModal)
+);
 
 type EventWithRelations = {
   id: string;

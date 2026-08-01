@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { ChevronDown, User, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
@@ -56,7 +57,13 @@ export function UserMenu({ userName, userRole, userAvatar }: UserMenuProps) {
           <span className="text-xs text-gray-500 dark:text-gray-400">{userRole}</span>
         </div>
         {userAvatar ? (
-          <img src={userAvatar} alt={userName} className="h-10 w-10 rounded-full" />
+          <Image
+            src={userAvatar}
+            alt={userName}
+            width={40}
+            height={40}
+            className="h-10 w-10 rounded-full object-cover"
+          />
         ) : (
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-siam-blue text-sm font-semibold text-white">
             {getInitials(userName)}
