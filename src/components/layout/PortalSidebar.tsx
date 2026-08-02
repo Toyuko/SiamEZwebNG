@@ -18,6 +18,7 @@ import {
   Bell,
   Bookmark,
   Flag,
+  Workflow,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
@@ -31,6 +32,7 @@ const clientNav = [
   { labelKey: "myRealEstate", href: "/portal/real-estate", icon: Home },
   { labelKey: "savedListings", href: "/portal/saved", icon: Bookmark },
   { labelKey: "goalsLifeEvents", href: "/portal/goals", icon: Flag },
+  { labelKey: "workflows", href: "/portal/workflows", icon: Workflow },
   { labelKey: "invoices", href: "/portal/invoices", icon: CreditCard },
   { labelKey: "documents", href: "/portal/documents", icon: FileText },
   { labelKey: "notifications", href: "/portal/notifications", icon: Bell },

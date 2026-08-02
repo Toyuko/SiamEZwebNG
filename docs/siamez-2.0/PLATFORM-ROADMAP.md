@@ -2,7 +2,7 @@
 
 **Prerequisite:** [PLATFORM-MIGRATION-REPORT.md](./PLATFORM-MIGRATION-REPORT.md)  
 **Integration branch:** `siamez-2.0`  
-**Status:** **Full M0–M7 approved** (2026-08-02) · **M0–M5 merged** (`8516a3a`) · Wave **M6** landed on `agent/m6-unified-dashboards` (not merged) · Wave **M7** next  
+**Status:** **Full M0–M7 approved** (2026-08-02) · **M0–M6 merged** · Wave **M7** landed on `agent/m7-workflow-templates` (platform track complete on this branch)  
 **Rule:** No division rewrite. Additive engines. Preserve URLs and data.
 
 ---
@@ -148,8 +148,9 @@
 **M3:** Merged (`01218f1`) — unified search (`src/lib/search/**` + header ⌘K + Concierge tool).  
 **M4:** Landed on branch `agent/m4-goals-life-events` — Goals + Life Events Engines (not merged to `siamez-2.0` yet).  
 **M5:** Merged (`8516a3a`) — Recommendations engine + Concierge orchestration.  
-**M6:** Landed on branch `agent/m6-unified-dashboards` — Unified customer workspace + seller views stub (not merged to `siamez-2.0` yet).  
-**Active wave:** M7 — Universal Workflow templates (after M6 merge).  
+**M6:** Merged (`33f123c`) — Unified customer workspace + seller views stub.  
+**M7:** Landed on branch `agent/m7-workflow-templates` — Universal Workflow templates (not merged to `siamez-2.0` yet).  
+**Platform track:** M0–M7 complete on feature branches / merges as noted; M7 awaits Orchestrator merge.  
 **M1 commands:** `npm run migrate:enhance-listings` (dry-run default) · `--apply` upserts `ListingEnhancement` only.
 
 ---
@@ -229,4 +230,24 @@ Wave M6 extends the **customer portal home** into a single workspace shell (addi
 | Role redirects | Freelancer → `/portal/freelancer`, company → `/portal/company` (unchanged) |
 
 Listing cuid URLs and description fields are never rewritten. Unit tests: `tests/unit/portal-workspace-sections.test.ts`.
+
+---
+
+## M7 note (branch `agent/m7-workflow-templates`)
+
+Wave M7 adds **Universal Workflow templates** beyond booking wizards (additive engine; WizardEngine untouched):
+
+| Piece | Location |
+|-------|----------|
+| Prisma models | `WorkflowTemplate`, `WorkflowTemplateStep`, `WorkflowRun`, `WorkflowStepRun` |
+| Migration folder | `prisma/migrations/20260802050000_add_workflow_templates/` (prefer `npx prisma db push` locally if older migrations fail) |
+| Engine | `src/lib/workflows/**` — start/advance, staff approve/reject gates, deterministic next-steps (+ AI polish stub) |
+| Admin CRUD + approvals | `/admin/workflows`, `/admin/workflows/approvals` |
+| Customer timeline | `/portal/workflows` |
+| Seed templates | `vehicle-inspection-booking`, `property-viewing-booking` |
+| Case linkage | `WorkflowRun.linkedCaseId` via `linkCaseToRun` after existing `submitBooking` (no booking API contract changes) |
+
+Listing deep links use **cuid** via Migration Engine helpers (`/sales/{cuid}`, `/real-estate/{cuid}`). SalesVehicle / SalesProperty content is never mutated. Unit tests: `tests/unit/workflows.test.ts`.
+
+**Platform track complete** on this branch note (M0–M7 delivered as additive waves).
 

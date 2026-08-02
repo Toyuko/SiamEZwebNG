@@ -727,6 +727,9 @@ async function main() {
 
   // Platform Wave M4 — example life event journey (admin-editable after seed).
   await seedMovingToThailandLifeEvent();
+
+  // Platform Wave M7 — universal workflow templates (inspection + viewing).
+  await seedWorkflowTemplates();
 }
 
 /**
@@ -853,6 +856,194 @@ async function seedMovingToThailandLifeEvent() {
   }
 
   console.log("Life event seeded:", key, `(${steps.length} steps)`);
+}
+
+/**
+ * Platform Wave M7 — seed reusable workflow templates:
+ * 1) Vehicle inspection booking-style
+ * 2) Real-estate viewing booking-style
+ * Deep links use cuid helpers when listingId is set; directories use /sales and /real-estate.
+ */
+async function seedWorkflowTemplates() {
+  await seedOneWorkflowTemplate({
+    key: "vehicle-inspection-booking",
+    titleEn: "Vehicle inspection booking",
+    titleTh: "จองตรวจสภาพรถ",
+    descriptionEn:
+      "Browse a vehicle, book related registration/inspection support, and wait for staff confirmation.",
+    descriptionTh:
+      "เลือกรถ จองบริการที่เกี่ยวข้องกับการจดทะเบียน/ตรวจสภาพ และรอเจ้าหน้าที่ยืนยัน",
+    sortOrder: 1,
+    steps: [
+      {
+        key: "browse-vehicle",
+        titleEn: "Choose a vehicle listing",
+        titleTh: "เลือกรายการรถ",
+        descriptionEn: "Open the sales marketplace (cuid deep links when a specific listing is attached).",
+        descriptionTh: "เปิดตลาดรถ (ลิงก์ cuid เมื่อระบุรายการเฉพาะ)",
+        sortOrder: 1,
+        kind: "action" as const,
+        requiresApproval: false,
+        target: { listingType: "vehicle" },
+      },
+      {
+        key: "book-inspection-support",
+        titleEn: "Book inspection / registration support",
+        titleTh: "จองบริการตรวจสภาพ / จดทะเบียน",
+        descriptionEn: "Book the vehicle-registration service for inspection-related paperwork.",
+        descriptionTh: "จองบริการจดทะเบียนรถสำหรับเอกสารที่เกี่ยวข้องกับการตรวจสภาพ",
+        sortOrder: 2,
+        kind: "booking" as const,
+        requiresApproval: false,
+        target: { serviceSlug: "vehicle-registration" },
+      },
+      {
+        key: "staff-confirm-inspection",
+        titleEn: "Staff confirm inspection slot",
+        titleTh: "เจ้าหน้าที่ยืนยันคิวตรวจสภาพ",
+        descriptionEn: "Staff review and approve the inspection booking before completion.",
+        descriptionTh: "เจ้าหน้าที่ตรวจสอบและอนุมัติการจองตรวจสภาพก่อนเสร็จสิ้น",
+        sortOrder: 3,
+        kind: "approval" as const,
+        requiresApproval: true,
+        target: {},
+      },
+    ],
+  });
+
+  await seedOneWorkflowTemplate({
+    key: "property-viewing-booking",
+    titleEn: "Property viewing booking",
+    titleTh: "จองชมทรัพย์",
+    descriptionEn:
+      "Browse properties, book real-estate support for a viewing, and wait for staff confirmation.",
+    descriptionTh:
+      "เลือกอสังหาฯ จองบริการอสังหาฯ สำหรับนัดชม และรอเจ้าหน้าที่ยืนยัน",
+    sortOrder: 2,
+    steps: [
+      {
+        key: "browse-property",
+        titleEn: "Choose a property listing",
+        titleTh: "เลือกรายการอสังหาฯ",
+        descriptionEn: "Browse real-estate listings (cuid deep links when a specific listing is attached).",
+        descriptionTh: "ค้นหารายการอสังหาฯ (ลิงก์ cuid เมื่อระบุรายการเฉพาะ)",
+        sortOrder: 1,
+        kind: "action" as const,
+        requiresApproval: false,
+        target: {
+          listingType: "property",
+          listingFilters: { listingType: "sale" },
+        },
+      },
+      {
+        key: "book-viewing-support",
+        titleEn: "Book viewing support",
+        titleTh: "จองบริการนัดชม",
+        descriptionEn: "Book real-estate-services to arrange a property viewing.",
+        descriptionTh: "จองบริการอสังหาฯ เพื่อจัดนัดชมทรัพย์",
+        sortOrder: 2,
+        kind: "booking" as const,
+        requiresApproval: false,
+        target: { serviceSlug: "real-estate-services" },
+      },
+      {
+        key: "staff-confirm-viewing",
+        titleEn: "Staff confirm viewing appointment",
+        titleTh: "เจ้าหน้าที่ยืนยันนัดชม",
+        descriptionEn: "Staff approve the viewing appointment before the workflow completes.",
+        descriptionTh: "เจ้าหน้าที่อนุมัตินัดชมก่อนเวิร์กโฟลว์เสร็จสิ้น",
+        sortOrder: 3,
+        kind: "approval" as const,
+        requiresApproval: true,
+        target: {},
+      },
+    ],
+  });
+}
+
+async function seedOneWorkflowTemplate(input: {
+  key: string;
+  titleEn: string;
+  titleTh: string;
+  descriptionEn: string;
+  descriptionTh: string;
+  sortOrder: number;
+  steps: Array<{
+    key: string;
+    titleEn: string;
+    titleTh: string;
+    descriptionEn: string;
+    descriptionTh: string;
+    sortOrder: number;
+    kind: "info" | "action" | "booking" | "approval";
+    requiresApproval: boolean;
+    target: Prisma.InputJsonValue;
+  }>;
+}) {
+  const template = await prisma.workflowTemplate.upsert({
+    where: { key: input.key },
+    create: {
+      key: input.key,
+      titleEn: input.titleEn,
+      titleTh: input.titleTh,
+      descriptionEn: input.descriptionEn,
+      descriptionTh: input.descriptionTh,
+      active: true,
+      sortOrder: input.sortOrder,
+    },
+    update: {
+      titleEn: input.titleEn,
+      titleTh: input.titleTh,
+      descriptionEn: input.descriptionEn,
+      descriptionTh: input.descriptionTh,
+      active: true,
+      sortOrder: input.sortOrder,
+    },
+  });
+
+  const existing = await prisma.workflowTemplateStep.findMany({
+    where: { templateId: template.id },
+    select: { id: true, sortOrder: true, key: true },
+  });
+
+  for (const step of input.steps) {
+    const match =
+      existing.find((e) => e.key === step.key) ??
+      existing.find((e) => e.sortOrder === step.sortOrder);
+    if (match) {
+      await prisma.workflowTemplateStep.update({
+        where: { id: match.id },
+        data: {
+          key: step.key,
+          titleEn: step.titleEn,
+          titleTh: step.titleTh,
+          descriptionEn: step.descriptionEn,
+          descriptionTh: step.descriptionTh,
+          sortOrder: step.sortOrder,
+          kind: step.kind,
+          requiresApproval: step.requiresApproval,
+          target: step.target,
+        },
+      });
+    } else {
+      await prisma.workflowTemplateStep.create({
+        data: {
+          templateId: template.id,
+          key: step.key,
+          titleEn: step.titleEn,
+          titleTh: step.titleTh,
+          descriptionEn: step.descriptionEn,
+          descriptionTh: step.descriptionTh,
+          sortOrder: step.sortOrder,
+          kind: step.kind,
+          requiresApproval: step.requiresApproval,
+          target: step.target,
+        },
+      });
+    }
+  }
+
+  console.log("Workflow template seeded:", input.key, `(${input.steps.length} steps)`);
 }
 
 main()

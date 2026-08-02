@@ -146,6 +146,7 @@
     "adCampaigns": "แคมเปญโฆษณา",
     "services": "บริการ",
     "lifeEvents": "เหตุการณ์สำคัญ",
+    "workflows": "เวิร์กโฟลว์",
     "sales": "ซื้อขายรถ",
     "invoices": "ใบแจ้งหนี้",
     "paymentsOrders": "การชำระเงินและออเดอร์",
@@ -1453,7 +1454,26 @@
     "publicProfile": "โปรไฟล์สาธารณะ",
     "myRealEstate": "อสังหาฯ ของฉัน",
     "savedListings": "รายการที่บันทึกและเปรียบเทียบ",
-    "goalsLifeEvents": "เป้าหมายและการย้ายถิ่น"
+    "goalsLifeEvents": "เป้าหมายและการย้ายถิ่น",
+    "workflows": "เวิร์กโฟลว์"
+  },
+  "workflows": {
+    "pageTitle": "เวิร์กโฟลว์",
+    "pageSubtitle": "เริ่มเวิร์กโฟลว์การจองแบบมีคำแนะนำ และติดตามไทม์ไลน์การอนุมัติ",
+    "templatesSection": "เวิร์กโฟลว์ที่ใช้ได้",
+    "runsSection": "รายการที่คุณเริ่มแล้ว",
+    "startWorkflow": "เริ่ม",
+    "advance": "ดำเนินการขั้นต่อไป",
+    "openLink": "เปิด",
+    "cancelRun": "ยกเลิก",
+    "linkCase": "เชื่อมเคสการจอง",
+    "caseIdPlaceholder": "รหัสเคสจากการจองของคุณ",
+    "progressLabel": "{percent}% · {completed}/{total} ขั้นตอน",
+    "awaitingApproval": "รอการอนุมัติ",
+    "nextSteps": "ขั้นตอนถัดไป",
+    "noTemplates": "ยังไม่มีเทมเพลตเวิร์กโฟลว์ที่เปิดใช้งาน",
+    "noRuns": "คุณยังไม่ได้เริ่มเวิร์กโฟลว์",
+    "linkedCase": "เคสที่เชื่อมโยง"
   },
   "goalsLifeEvents": {
     "pageTitle": "เป้าหมายและเหตุการณ์สำคัญ",

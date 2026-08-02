@@ -146,6 +146,7 @@
     "adCampaigns": "Ad Campaigns",
     "services": "Services",
     "lifeEvents": "Life Events",
+    "workflows": "Workflows",
     "sales": "Sales",
     "invoices": "Invoices",
     "paymentsOrders": "Payments & Orders",
@@ -1453,7 +1454,26 @@
     "publicProfile": "Public Profile",
     "myRealEstate": "My Properties",
     "savedListings": "Saved & compare",
-    "goalsLifeEvents": "Goals & journeys"
+    "goalsLifeEvents": "Goals & journeys",
+    "workflows": "Workflows"
+  },
+  "workflows": {
+    "pageTitle": "Workflows",
+    "pageSubtitle": "Start guided booking workflows and track approval timelines.",
+    "templatesSection": "Available workflows",
+    "runsSection": "Your runs",
+    "startWorkflow": "Start",
+    "advance": "Advance step",
+    "openLink": "Open",
+    "cancelRun": "Cancel",
+    "linkCase": "Link booking case",
+    "caseIdPlaceholder": "Case id from your booking",
+    "progressLabel": "{percent}% · {completed}/{total} steps",
+    "awaitingApproval": "Awaiting approval",
+    "nextSteps": "Next steps",
+    "noTemplates": "No active workflow templates yet.",
+    "noRuns": "You have not started a workflow yet.",
+    "linkedCase": "Linked case"
   },
   "goalsLifeEvents": {
     "pageTitle": "Goals & life events",

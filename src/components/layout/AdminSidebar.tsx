@@ -24,6 +24,7 @@ import {
   Megaphone,
   ChevronDown,
   Route,
+  Workflow,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -85,6 +86,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "services", href: "/admin/services", icon: Package },
       { label: "lifeEvents", href: "/admin/life-events", icon: Route },
+      { label: "workflows", href: "/admin/workflows", icon: Workflow },
       { label: "sales", href: "/admin/sales", icon: Car },
       { label: "realEstate", href: "/admin/real-estate", icon: Home },
     ],

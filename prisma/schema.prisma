@@ -65,6 +65,8 @@ model User {
   compareItems        CompareItem[]
   goals               Goal[]
   lifeEventProgress   LifeEventProgress[]
+  workflowRuns        WorkflowRun[]
+  workflowStepApprovals WorkflowStepRun[] @relation("WorkflowStepApprover")
 }
 
 enum FreelancerVerificationStatus {
@@ -439,6 +441,7 @@ model Case {
   invoices        Invoice[]
   events          Event[]
   marketplaceJob  MarketplaceJob?
+  workflowRuns    WorkflowRun[] @relation("WorkflowRunLinkedCase")
 }
 
 enum MarketplaceJobStatus {
@@ -1022,4 +1025,133 @@ model Goal {
   @@index([userId, status])
   @@index([lifeEventId])
   @@map("goals")
+}
+
+// ----- Platform Wave M7: Universal Workflow templates -----
+
+enum WorkflowRunStatus {
+  active
+  completed
+  cancelled
+  rejected
+}
+
+enum WorkflowStepRunStatus {
+  pending
+  in_progress
+  awaiting_approval
+  approved
+  rejected
+  completed
+  skipped
+}
+
+enum WorkflowStepKind {
+  info
+  action
+  booking
+  approval
+}
+
+/** Reusable cross-division workflow template (additive; does not replace wizards). */
+model WorkflowTemplate {
+  id            String   @id @default(cuid())
+  /// Stable key for seeds / deep links (e.g. vehicle-inspection-booking).
+  key           String   @unique
+  titleEn       String   @map("title_en")
+  titleTh       String?  @map("title_th")
+  descriptionEn String?  @map("description_en") @db.Text
+  descriptionTh String?  @map("description_th") @db.Text
+  active        Boolean  @default(true)
+  sortOrder     Int      @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  steps WorkflowTemplateStep[]
+  runs  WorkflowRun[]
+
+  @@index([active, sortOrder])
+  @@map("workflow_templates")
+}
+
+/**
+ * Ordered step within a workflow template.
+ * `target` JSON (flexible):
+ *   {
+ *     serviceSlug?: string,
+ *     listingType?: "vehicle" | "property",
+ *     listingFilters?: { category?, listingType?, province? },
+ *     listingId?: string,  // cuid deep link — never slug
+ *     href?: string
+ *   }
+ */
+model WorkflowTemplateStep {
+  id               String           @id @default(cuid())
+  templateId       String           @map("template_id")
+  key              String?
+  titleEn          String           @map("title_en")
+  titleTh          String?          @map("title_th")
+  descriptionEn    String?          @map("description_en") @db.Text
+  descriptionTh    String?          @map("description_th") @db.Text
+  sortOrder        Int              @default(0) @map("sort_order")
+  kind             WorkflowStepKind @default(action)
+  requiresApproval Boolean          @default(false) @map("requires_approval")
+  target           Json             @default("{}")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  template WorkflowTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  stepRuns WorkflowStepRun[]
+
+  @@index([templateId, sortOrder])
+  @@map("workflow_template_steps")
+}
+
+/** Customer (or staff-started) run of a workflow template. */
+model WorkflowRun {
+  id           String            @id @default(cuid())
+  userId       String            @map("user_id")
+  templateId   String            @map("template_id")
+  status       WorkflowRunStatus @default(active)
+  /// Optional Case created from a booking step — set without changing booking API contracts.
+  linkedCaseId String?           @map("linked_case_id")
+  startedAt    DateTime          @default(now()) @map("started_at")
+  completedAt  DateTime?         @map("completed_at")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template   WorkflowTemplate     @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  linkedCase Case?                @relation("WorkflowRunLinkedCase", fields: [linkedCaseId], references: [id], onDelete: SetNull)
+  steps      WorkflowStepRun[]
+
+  @@index([userId, status])
+  @@index([templateId])
+  @@index([linkedCaseId])
+  @@map("workflow_runs")
+}
+
+/** Per-step status within a workflow run (includes staff approval gate). */
+model WorkflowStepRun {
+  id              String                 @id @default(cuid())
+  runId           String                 @map("run_id")
+  templateStepId  String                 @map("template_step_id")
+  status          WorkflowStepRunStatus  @default(pending)
+  approvedById    String?                @map("approved_by_id")
+  approvedAt      DateTime?              @map("approved_at")
+  rejectedAt      DateTime?              @map("rejected_at")
+  rejectionReason String?                @map("rejection_reason") @db.Text
+  startedAt       DateTime?              @map("started_at")
+  completedAt     DateTime?              @map("completed_at")
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+
+  run          WorkflowRun          @relation(fields: [runId], references: [id], onDelete: Cascade)
+  templateStep WorkflowTemplateStep @relation(fields: [templateStepId], references: [id], onDelete: Cascade)
+  approvedBy   User?                @relation("WorkflowStepApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@unique([runId, templateStepId])
+  @@index([templateStepId])
+  @@index([status])
+  @@map("workflow_step_runs")
 }
