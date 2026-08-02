@@ -19,6 +19,12 @@ export async function listGoalsForUser(userId: string) {
   });
 }
 
+export async function countActiveGoalsForUser(userId: string): Promise<number> {
+  return prisma.goal.count({
+    where: { userId, status: "active" },
+  });
+}
+
 export type GoalCreateInput = {
   title: string;
   lifeEventId?: string | null;

@@ -2,7 +2,7 @@
 
 **Prerequisite:** [PLATFORM-MIGRATION-REPORT.md](./PLATFORM-MIGRATION-REPORT.md)  
 **Integration branch:** `siamez-2.0`  
-**Status:** **Full M0–M7 approved** (2026-08-02) · **M0–M3 at** `01218f1` · Wave **M4** landed on `agent/m4-goals-life-events` · Wave **M5** landed on `agent/m5-recommendations-concierge` (not yet merged) · Wave **M6** next  
+**Status:** **Full M0–M7 approved** (2026-08-02) · **M0–M5 merged** (`8516a3a`) · Wave **M6** landed on `agent/m6-unified-dashboards` (not merged) · Wave **M7** next  
 **Rule:** No division rewrite. Additive engines. Preserve URLs and data.
 
 ---
@@ -147,8 +147,9 @@
 **M2:** Merged (`e563b69`) — `SavedListing` / `ListingView` / `CompareItem` + portal hub `/portal/saved`.  
 **M3:** Merged (`01218f1`) — unified search (`src/lib/search/**` + header ⌘K + Concierge tool).  
 **M4:** Landed on branch `agent/m4-goals-life-events` — Goals + Life Events Engines (not merged to `siamez-2.0` yet).  
-**M5:** Landed on branch `agent/m5-recommendations-concierge` — Recommendations engine + Concierge orchestration (not merged to `siamez-2.0` yet).  
-**Active wave:** M6 — Unified dashboards (after M5 merge).  
+**M5:** Merged (`8516a3a`) — Recommendations engine + Concierge orchestration.  
+**M6:** Landed on branch `agent/m6-unified-dashboards` — Unified customer workspace + seller views stub (not merged to `siamez-2.0` yet).  
+**Active wave:** M7 — Universal Workflow templates (after M6 merge).  
 **M1 commands:** `npm run migrate:enhance-listings` (dry-run default) · `--apply` upserts `ListingEnhancement` only.
 
 ---
@@ -212,4 +213,20 @@ Wave M5 adds **data-driven cross-sell + Concierge orchestration** across divisio
 | UI (lean) | Portal suggestion slot; sales detail related packages; Concierge deep-link chips + Find vehicles quick action |
 
 **Acceptance:** Viewing/saving a motorcycle surfaces `vehicle-registration` (and related finder/license packages). No invented insurance slug — registration covers tax/insurance renewals in catalog copy. Concierge can open `/sales/[id]` via `openListingTool` / search deep links. Listing title/description/images/price are never overwritten.
+
+---
+
+## M6 note (branch `agent/m6-unified-dashboards`)
+
+Wave M6 extends the **customer portal home** into a single workspace shell (additive cards/sections — no marketplace redesign):
+
+| Piece | Location |
+|-------|----------|
+| Section visibility (role + seller gate) | `src/lib/portal/workspace-sections.ts` |
+| Portal home shell | `src/app/[locale]/(portal)/portal/page.tsx` — goals, bookings/cases, saved/compare, docs, invoices + M5 recommendation slot |
+| Buyer hub discoverability | Quick links + sidebar (`/portal/saved`, `/portal/goals`) |
+| Seller analytics stub | `src/data-access/seller-analytics.ts` + `SellerAnalyticsStub` (ListingView counts when user owns listings) |
+| Role redirects | Freelancer → `/portal/freelancer`, company → `/portal/company` (unchanged) |
+
+Listing cuid URLs and description fields are never rewritten. Unit tests: `tests/unit/portal-workspace-sections.test.ts`.
 

@@ -1268,7 +1268,7 @@
   "portal": {
     "portalName": "SiamEZ Portal",
     "dashboard": "Dashboard",
-    "dashboardSubtitle": "Welcome back! Manage your legal cases and administrative documents in one place.",
+    "dashboardSubtitle": "Your workspace — goals, bookings, saved listings, documents, and invoices in one place.",
     "myCases": "My Cases",
     "mySales": "My Sales",
     "invoices": "Invoices",
@@ -1279,6 +1279,22 @@
     "viewCases": "View cases →",
     "viewInvoices": "View invoices",
     "viewDocuments": "View documents",
+    "workspace": {
+      "goalsTitle": "Goals & life events",
+      "goalsDescription": "**{goals} active goals** and **{events} journeys** in progress. Open your checklist.",
+      "viewGoals": "Open goals",
+      "savedTitle": "Saved & compare",
+      "savedDescription": "**{saved} saved listings** and **{compare} in compare**. Continue browsing the marketplace.",
+      "viewSaved": "Open saved hub"
+    },
+    "sellerAnalytics": {
+      "title": "Your listing views",
+      "subtitle": "Lightweight view counts for vehicles and properties you listed.",
+      "empty": "No views recorded yet. Counts appear when buyers open your listings.",
+      "views": "{count} views",
+      "manageSales": "Manage vehicles",
+      "manageRealEstate": "Manage properties"
+    },
     "casesDescription": "You have **{count} active cases and service jobs**. View status updates and upload necessary documentation.",
     "casesPageSubtitle": "Track your bookings, service jobs, and upload documents.",
     "noCasesYet": "You have no cases or service jobs yet.",
@@ -1305,6 +1321,8 @@
     "quickLinksTitle": "Quick links",
     "quickLinks": {
       "casesHint": "{count} active",
+      "goalsHint": "{count} in progress",
+      "savedHint": "{count} saved",
       "invoicesHint": "{count} pending",
       "documentsHint": "{count} files",
       "notificationsHint": "{count} need attention"

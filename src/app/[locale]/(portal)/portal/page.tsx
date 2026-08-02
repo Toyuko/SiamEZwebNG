@@ -5,6 +5,7 @@ import { ActivityFeed } from "@/components/portal/ActivityFeed";
 import { NextSteps } from "@/components/portal/NextSteps";
 import { QuickLinks } from "@/components/portal/QuickLinks";
 import { AiRecommendations } from "@/components/portal/AiRecommendations";
+import { SellerAnalyticsStub } from "@/components/portal/SellerAnalyticsStub";
 import { SuggestionSlot } from "@/components/recommendations/SuggestionSlot";
 import { PortalFooter } from "@/components/portal/PortalFooter";
 import { getTranslations } from "next-intl/server";
@@ -14,7 +15,15 @@ import { getJobsByClientId } from "@/data-access/job";
 import { getInvoicesByUserId } from "@/data-access/invoice";
 import { getDocumentsByUserId } from "@/data-access/document";
 import { getRecentActivityForUser } from "@/data-access/activity";
+import { countActiveGoalsForUser } from "@/data-access/goals";
+import { countActiveLifeEventProgressForUser } from "@/data-access/life-events";
+import { countBuyerHubEngagement } from "@/data-access/marketplace-engagement";
+import { getSellerListingViewStats } from "@/data-access/seller-analytics";
 import { buildCustomerNextSteps } from "@/lib/portal/next-steps";
+import {
+  portalHomeRedirectForRole,
+  resolveCustomerWorkspaceSections,
+} from "@/lib/portal/workspace-sections";
 import { getPopularRecommendations, getServiceBySlug } from "@/lib/ai/recommend";
 import type { ConciergeLocale } from "@/lib/ai/types";
 import { buildUserOwner } from "@/lib/marketplace-engagement";
@@ -29,23 +38,45 @@ export default async function PortalDashboardPage({
   setRequestLocale(locale);
   const session = await requireAuth();
 
-  if (session.user.role === "company") {
+  const homeRedirect = portalHomeRedirectForRole(session.user.role);
+  if (homeRedirect === "company") {
     redirect(`/${locale}/portal/company`);
   }
-  if (session.user.role === "freelancer") {
+  if (homeRedirect === "freelancer") {
     redirect(`/${locale}/portal/freelancer`);
   }
 
   const t = await getTranslations("portal");
   const conciergeLocale: ConciergeLocale = locale === "th" ? "th" : "en";
+  const owner = buildUserOwner(session.user.id);
 
-  const [cases, invoices, documents, serviceJobs, activities] = await Promise.all([
+  const [
+    cases,
+    invoices,
+    documents,
+    serviceJobs,
+    activities,
+    hubCounts,
+    activeGoalsCount,
+    activeEventsCount,
+    sellerStats,
+  ] = await Promise.all([
     getCasesByUserId(session.user.id),
     getInvoicesByUserId(session.user.id),
     getDocumentsByUserId(session.user.id),
     getJobsByClientId(session.user.id),
     getRecentActivityForUser(session.user.id, 8),
+    countBuyerHubEngagement(owner),
+    countActiveGoalsForUser(session.user.id),
+    countActiveLifeEventProgressForUser(session.user.id),
+    getSellerListingViewStats(session.user.id),
   ]);
+
+  const sections = resolveCustomerWorkspaceSections({
+    listingCount: sellerStats.listingCount,
+  });
+  const showSeller = sections.includes("seller");
+  const showRecommendations = sections.includes("recommendations");
 
   const activeCasesCount =
     cases.filter((c) => !["cancelled", "completed"].includes(c.status)).length +
@@ -57,6 +88,8 @@ export default async function PortalDashboardPage({
   const attentionCount = activities.filter(
     (a) => a.status === "required" || a.status === "pending"
   ).length;
+  const goalsHubCount = activeGoalsCount + activeEventsCount;
+  const savedHubCount = hubCounts.savedCount + hubCounts.compareCount;
 
   const nextSteps = buildCustomerNextSteps({
     cases,
@@ -77,7 +110,6 @@ export default async function PortalDashboardPage({
     },
   });
 
-  const owner = buildUserOwner(session.user.id);
   const recContext = await loadRecommendationContext({
     locale: conciergeLocale,
     owner,
@@ -117,6 +149,20 @@ export default async function PortalDashboardPage({
             badge: activeCasesCount,
           },
           {
+            href: "/portal/goals",
+            label: t("goalsLifeEvents"),
+            hint: t("quickLinks.goalsHint", { count: goalsHubCount }),
+            icon: "goals",
+            badge: goalsHubCount,
+          },
+          {
+            href: "/portal/saved",
+            label: t("savedListings"),
+            hint: t("quickLinks.savedHint", { count: hubCounts.savedCount }),
+            icon: "saved",
+            badge: savedHubCount,
+          },
+          {
             href: "/portal/invoices",
             label: t("invoices"),
             hint: t("quickLinks.invoicesHint", { count: pendingInvoicesCount }),
@@ -146,7 +192,19 @@ export default async function PortalDashboardPage({
         steps={nextSteps}
       />
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <SummaryCard
+          iconName="Flag"
+          title={t("workspace.goalsTitle")}
+          description={t("workspace.goalsDescription", {
+            goals: activeGoalsCount,
+            events: activeEventsCount,
+          })}
+          count={goalsHubCount}
+          href="/portal/goals"
+          buttonLabel={t("workspace.viewGoals")}
+          buttonVariant="outline"
+        />
         <SummaryCard
           iconName="FolderOpen"
           title={t("myCases")}
@@ -155,6 +213,18 @@ export default async function PortalDashboardPage({
           href="/portal/cases"
           buttonLabel={t("viewCases")}
           buttonVariant="default"
+        />
+        <SummaryCard
+          iconName="Bookmark"
+          title={t("workspace.savedTitle")}
+          description={t("workspace.savedDescription", {
+            saved: hubCounts.savedCount,
+            compare: hubCounts.compareCount,
+          })}
+          count={savedHubCount}
+          href="/portal/saved"
+          buttonLabel={t("workspace.viewSaved")}
+          buttonVariant="outline"
         />
         <SummaryCard
           iconName="CreditCard"
@@ -176,22 +246,39 @@ export default async function PortalDashboardPage({
         />
       </div>
 
+      {showSeller ? (
+        <SellerAnalyticsStub
+          title={t("sellerAnalytics.title")}
+          subtitle={t("sellerAnalytics.subtitle")}
+          emptyLabel={t("sellerAnalytics.empty")}
+          viewsLabel={(count) => t("sellerAnalytics.views", { count })}
+          manageSalesLabel={t("sellerAnalytics.manageSales")}
+          manageRealEstateLabel={t("sellerAnalytics.manageRealEstate")}
+          totalViews={sellerStats.totalViews}
+          rows={sellerStats.rows}
+        />
+      ) : null}
+
       <ActivityFeed items={activities} viewAllHref="/portal/notifications" />
 
-      <AiRecommendations
-        title={t("aiRecommendations.title")}
-        subtitle={t("aiRecommendations.subtitle")}
-        askConciergeLabel={t("aiRecommendations.askConcierge")}
-        bookLabel={t("aiRecommendations.book")}
-        recommendations={recommendations}
-      />
+      {showRecommendations ? (
+        <>
+          <AiRecommendations
+            title={t("aiRecommendations.title")}
+            subtitle={t("aiRecommendations.subtitle")}
+            askConciergeLabel={t("aiRecommendations.askConcierge")}
+            bookLabel={t("aiRecommendations.book")}
+            recommendations={recommendations}
+          />
 
-      <SuggestionSlot
-        title={t("aiRecommendations.title")}
-        subtitle={t("aiRecommendations.subtitle")}
-        ctaLabel={t("aiRecommendations.cta")}
-        suggestions={crossDivision}
-      />
+          <SuggestionSlot
+            title={t("aiRecommendations.title")}
+            subtitle={t("aiRecommendations.subtitle")}
+            ctaLabel={t("aiRecommendations.cta")}
+            suggestions={crossDivision}
+          />
+        </>
+      ) : null}
 
       <PortalFooter />
     </div>

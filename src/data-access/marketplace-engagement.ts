@@ -344,6 +344,18 @@ async function hydrateListings(
   return cards;
 }
 
+/** Lightweight buyer-hub counts for portal home badges. */
+export async function countBuyerHubEngagement(owner: EngagementOwner): Promise<{
+  savedCount: number;
+  compareCount: number;
+}> {
+  const [savedCount, compareCount] = await Promise.all([
+    prisma.savedListing.count({ where: { ownerKey: owner.ownerKey } }),
+    prisma.compareItem.count({ where: { ownerKey: owner.ownerKey } }),
+  ]);
+  return { savedCount, compareCount };
+}
+
 export async function listSavedListingsForHub(
   owner: EngagementOwner,
   limit = 50

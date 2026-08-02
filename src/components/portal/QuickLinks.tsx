@@ -1,12 +1,27 @@
 import { Link } from "@/i18n/navigation";
-import { CreditCard, FileText, FolderOpen, Bell } from "lucide-react";
+import {
+  Bell,
+  Bookmark,
+  CreditCard,
+  FileText,
+  Flag,
+  FolderOpen,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+
+type QuickLinkIcon =
+  | "cases"
+  | "invoices"
+  | "documents"
+  | "notifications"
+  | "saved"
+  | "goals";
 
 type QuickLink = {
   href: string;
   label: string;
   hint: string;
-  icon: "cases" | "invoices" | "documents" | "notifications";
+  icon: QuickLinkIcon;
   badge?: number;
 };
 
@@ -15,6 +30,8 @@ const icons = {
   invoices: CreditCard,
   documents: FileText,
   notifications: Bell,
+  saved: Bookmark,
+  goals: Flag,
 };
 
 export function QuickLinks({
@@ -27,7 +44,7 @@ export function QuickLinks({
   return (
     <section className="mb-8">
       <h2 className="sr-only">{title}</h2>
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {links.map((link) => {
           const Icon = icons[link.icon];
           return (

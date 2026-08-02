@@ -204,6 +204,14 @@ export async function listUserLifeEventProgress(userId: string) {
   });
 }
 
+export async function countActiveLifeEventProgressForUser(
+  userId: string
+): Promise<number> {
+  return prisma.lifeEventProgress.count({
+    where: { userId, status: "active" },
+  });
+}
+
 export async function getUserLifeEventProgress(userId: string, progressId: string) {
   return prisma.lifeEventProgress.findFirst({
     where: { id: progressId, userId },

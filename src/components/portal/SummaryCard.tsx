@@ -3,7 +3,14 @@
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FolderOpen, CreditCard, FileText, LucideIcon } from "lucide-react";
+import {
+  Bookmark,
+  CreditCard,
+  FileText,
+  Flag,
+  FolderOpen,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Icon mapping - only use icon names that are serializable
@@ -11,6 +18,8 @@ const iconMap: Record<string, LucideIcon> = {
   FolderOpen,
   CreditCard,
   FileText,
+  Bookmark,
+  Flag,
 };
 
 interface SummaryCardProps {

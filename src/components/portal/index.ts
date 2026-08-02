@@ -9,3 +9,4 @@ export { CaseTimeline } from "./CaseTimeline";
 export { AiRecommendations } from "./AiRecommendations";
 export { NotificationsList } from "./NotificationsList";
 export { QuickLinks } from "./QuickLinks";
+export { SellerAnalyticsStub } from "./SellerAnalyticsStub";
