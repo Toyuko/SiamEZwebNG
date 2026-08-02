@@ -18,6 +18,7 @@ import { getRecentActivityForUser } from "@/data-access/activity";
 import { countActiveGoalsForUser } from "@/data-access/goals";
 import { countActiveLifeEventProgressForUser } from "@/data-access/life-events";
 import { countBuyerHubEngagement } from "@/data-access/marketplace-engagement";
+import { countNewListingEnquiriesForSeller } from "@/data-access/listing-enquiries";
 import { getSellerListingViewStats } from "@/data-access/seller-analytics";
 import { buildCustomerNextSteps } from "@/lib/portal/next-steps";
 import {
@@ -60,6 +61,7 @@ export default async function PortalDashboardPage({
     activeGoalsCount,
     activeEventsCount,
     sellerStats,
+    newEnquiriesCount,
   ] = await Promise.all([
     getCasesByUserId(session.user.id),
     getInvoicesByUserId(session.user.id),
@@ -70,6 +72,7 @@ export default async function PortalDashboardPage({
     countActiveGoalsForUser(session.user.id),
     countActiveLifeEventProgressForUser(session.user.id),
     getSellerListingViewStats(session.user.id),
+    countNewListingEnquiriesForSeller(session.user.id),
   ]);
 
   const sections = resolveCustomerWorkspaceSections({
@@ -129,6 +132,62 @@ export default async function PortalDashboardPage({
       : getPopularRecommendations(conciergeLocale, 4);
   const crossDivision = engineRecs.filter((s) => s.kind !== "service").slice(0, 3);
 
+  const quickLinks = [
+    {
+      href: "/portal/cases",
+      label: t("myCases"),
+      hint: t("quickLinks.casesHint", { count: activeCasesCount }),
+      icon: "cases" as const,
+      badge: activeCasesCount,
+    },
+    {
+      href: "/portal/goals",
+      label: t("goalsLifeEvents"),
+      hint: t("quickLinks.goalsHint", { count: goalsHubCount }),
+      icon: "goals" as const,
+      badge: goalsHubCount,
+    },
+    {
+      href: "/portal/saved",
+      label: t("savedListings"),
+      hint: t("quickLinks.savedHint", { count: hubCounts.savedCount }),
+      icon: "saved" as const,
+      badge: savedHubCount,
+    },
+    ...(showSeller || newEnquiriesCount > 0
+      ? [
+          {
+            href: "/portal/enquiries",
+            label: t("listingEnquiries"),
+            hint: t("quickLinks.enquiriesHint", { count: newEnquiriesCount }),
+            icon: "enquiries" as const,
+            badge: newEnquiriesCount,
+          },
+        ]
+      : []),
+    {
+      href: "/portal/invoices",
+      label: t("invoices"),
+      hint: t("quickLinks.invoicesHint", { count: pendingInvoicesCount }),
+      icon: "invoices" as const,
+      badge: pendingInvoicesCount,
+    },
+    {
+      href: "/portal/documents",
+      label: t("documents"),
+      hint: t("quickLinks.documentsHint", { count: documentsCount }),
+      icon: "documents" as const,
+      badge: documentsCount,
+    },
+    {
+      href: "/portal/notifications",
+      label: t("notifications"),
+      hint: t("quickLinks.notificationsHint", { count: attentionCount }),
+      icon: "notifications" as const,
+      badge: attentionCount,
+    },
+  ];
+
   return (
     <div className="max-w-7xl">
       <div className="mb-8">
@@ -138,53 +197,7 @@ export default async function PortalDashboardPage({
         <p className="mt-2 text-gray-600 dark:text-gray-400">{t("dashboardSubtitle")}</p>
       </div>
 
-      <QuickLinks
-        title={t("quickLinksTitle")}
-        links={[
-          {
-            href: "/portal/cases",
-            label: t("myCases"),
-            hint: t("quickLinks.casesHint", { count: activeCasesCount }),
-            icon: "cases",
-            badge: activeCasesCount,
-          },
-          {
-            href: "/portal/goals",
-            label: t("goalsLifeEvents"),
-            hint: t("quickLinks.goalsHint", { count: goalsHubCount }),
-            icon: "goals",
-            badge: goalsHubCount,
-          },
-          {
-            href: "/portal/saved",
-            label: t("savedListings"),
-            hint: t("quickLinks.savedHint", { count: hubCounts.savedCount }),
-            icon: "saved",
-            badge: savedHubCount,
-          },
-          {
-            href: "/portal/invoices",
-            label: t("invoices"),
-            hint: t("quickLinks.invoicesHint", { count: pendingInvoicesCount }),
-            icon: "invoices",
-            badge: pendingInvoicesCount,
-          },
-          {
-            href: "/portal/documents",
-            label: t("documents"),
-            hint: t("quickLinks.documentsHint", { count: documentsCount }),
-            icon: "documents",
-            badge: documentsCount,
-          },
-          {
-            href: "/portal/notifications",
-            label: t("notifications"),
-            hint: t("quickLinks.notificationsHint", { count: attentionCount }),
-            icon: "notifications",
-            badge: attentionCount,
-          },
-        ]}
-      />
+      <QuickLinks title={t("quickLinksTitle")} links={quickLinks} />
 
       <NextSteps
         title={t("nextSteps.title")}

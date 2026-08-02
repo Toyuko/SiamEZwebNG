@@ -61,6 +61,15 @@ export function getHelpSearchStubs(locale: "en" | "th" = "en"): HelpSearchDocume
       keywords: ["real estate", "property", "condo", "house", "อสังหา"],
       href: "/real-estate",
     },
+    {
+      id: "help-goals",
+      titleEn: "Goals & life event journeys",
+      titleTh: "เป้าหมายและเส้นทางชีวิต",
+      subtitleEn: "Track goals and guided checklists in your portal",
+      subtitleTh: "ติดตามเป้าหมายและเช็กลิสต์ใน Portal",
+      keywords: ["goals", "life event", "journey", "checklist", "portal", "เป้าหมาย"],
+      href: "/portal/goals",
+    },
   ];
 
   return stubs.map((s) => {

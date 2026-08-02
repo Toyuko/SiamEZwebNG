@@ -19,6 +19,7 @@ import {
   Bookmark,
   Flag,
   Workflow,
+  Inbox,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
@@ -30,6 +31,7 @@ const clientNav = [
   { labelKey: "myCases", href: "/portal/cases", icon: FolderOpen },
   { labelKey: "mySales", href: "/portal/sales", icon: Car },
   { labelKey: "myRealEstate", href: "/portal/real-estate", icon: Home },
+  { labelKey: "listingEnquiries", href: "/portal/enquiries", icon: Inbox },
   { labelKey: "savedListings", href: "/portal/saved", icon: Bookmark },
   { labelKey: "goalsLifeEvents", href: "/portal/goals", icon: Flag },
   { labelKey: "workflows", href: "/portal/workflows", icon: Workflow },

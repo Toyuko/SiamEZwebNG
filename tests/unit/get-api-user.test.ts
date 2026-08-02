@@ -41,11 +41,16 @@ describe("getApiUser", () => {
     mockedFindUser.mockReset();
   });
 
-  it("uses cached x-api-user-id without JWT verification", async () => {
+  it("uses cached x-api-user-id and loads role from DB", async () => {
+    mockedFindUser.mockResolvedValue({
+      id: "cached_user",
+      active: true,
+      role: "customer",
+    } as never);
     const user = await getApiUser(
       requestWith({ "x-api-user-id": "cached_user" })
     );
-    expect(user).toEqual({ userId: "cached_user" });
+    expect(user).toEqual({ userId: "cached_user", role: "customer" });
     expect(mockedVerify).not.toHaveBeenCalled();
   });
 
@@ -62,24 +67,32 @@ describe("getApiUser", () => {
       email: "a@b.com",
       role: "customer",
     });
-    mockedFindUser.mockResolvedValue({ id: "u1", active: false } as never);
+    mockedFindUser.mockResolvedValue({
+      id: "u1",
+      active: false,
+      role: "customer",
+    } as never);
 
     await expect(
       getApiUser(requestWith({ authorization: "Bearer good.token.value" }))
     ).rejects.toThrow("Unauthorized");
   });
 
-  it("returns userId for active JWT users", async () => {
+  it("returns userId and role for active JWT users", async () => {
     mockedVerify.mockResolvedValue({
       userId: "u1",
       email: "a@b.com",
       role: "customer",
     });
-    mockedFindUser.mockResolvedValue({ id: "u1", active: true } as never);
+    mockedFindUser.mockResolvedValue({
+      id: "u1",
+      active: true,
+      role: "customer",
+    } as never);
 
     await expect(
       getApiUser(requestWith({ authorization: "Bearer good.token.value" }))
-    ).resolves.toEqual({ userId: "u1" });
+    ).resolves.toEqual({ userId: "u1", role: "customer" });
   });
 });
 

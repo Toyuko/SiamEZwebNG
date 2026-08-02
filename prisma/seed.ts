@@ -730,6 +730,9 @@ async function main() {
 
   // Platform Wave M7 — universal workflow templates (inspection + viewing).
   await seedWorkflowTemplates();
+
+  // Platform 2.0 — configurable recommendation graph defaults.
+  await seedRecommendationEdges();
 }
 
 /**
@@ -1044,6 +1047,119 @@ async function seedOneWorkflowTemplate(input: {
   }
 
   console.log("Workflow template seeded:", input.key, `(${input.steps.length} steps)`);
+}
+
+/** Configurable recommendation graph — matches src/config/recommendation-graph.ts defaults. */
+async function seedRecommendationEdges() {
+  const edges: Array<{
+    key: string;
+    triggerKey: string;
+    targetKind: string;
+    targetKey: string;
+    score: number;
+    reasonEn: string;
+    reasonTh: string;
+    sortOrder: number;
+  }> = [
+    {
+      key: "motorcycle-registration",
+      triggerKey: "motorcycle",
+      targetKind: "service",
+      targetKey: "vehicle-registration",
+      score: 100,
+      reasonEn: "You viewed a motorcycle — register or transfer ownership with DLT support.",
+      reasonTh: "คุณกำลังดูมอเตอร์ไซค์ — จดทะเบียนหรือโอนกรรมสิทธิ์พร้อมช่วยเหลือที่กรมขนส่ง",
+      sortOrder: 0,
+    },
+    {
+      key: "motorcycle-finder",
+      triggerKey: "motorcycle",
+      targetKind: "service",
+      targetKey: "car-motorbike-finder-selling-service",
+      score: 99,
+      reasonEn: "Need help buying or selling a bike? Our Auto & Bike Finder handles paperwork.",
+      reasonTh: "ต้องการซื้อ/ขายมอเตอร์ไซค์? บริการหาซื้อรถช่วยเจรจาและเอกสาร",
+      sortOrder: 1,
+    },
+    {
+      key: "motorcycle-license",
+      triggerKey: "motorcycle",
+      targetKind: "service",
+      targetKey: "driver-license",
+      score: 98,
+      reasonEn: "A Thai driver's license (including motorcycle classes) pairs well with a new bike.",
+      reasonTh: "ใบขับขี่ไทย (รวมรถจักรยานยนต์) เหมาะกับรถคันใหม่ของคุณ",
+      sortOrder: 2,
+    },
+    {
+      key: "vehicle-registration",
+      triggerKey: "vehicle",
+      targetKind: "service",
+      targetKey: "vehicle-registration",
+      score: 92,
+      reasonEn: "Complete registration, plates, and tax renewals for your vehicle.",
+      reasonTh: "จดทะเบียน ป้ายทะเบียน และต่อภาษีรถให้ครบ",
+      sortOrder: 0,
+    },
+    {
+      key: "vehicle-finder",
+      triggerKey: "vehicle",
+      targetKind: "service",
+      targetKey: "car-motorbike-finder-selling-service",
+      score: 91,
+      reasonEn: "Source, negotiate, and transfer vehicles with SiamEZ support.",
+      reasonTh: "หา เจรจา และโอนรถพร้อมสนับสนุนจาก SiamEZ",
+      sortOrder: 1,
+    },
+    {
+      key: "property-services",
+      triggerKey: "property",
+      targetKind: "service",
+      targetKey: "real-estate-services",
+      score: 90,
+      reasonEn: "Property viewing, contracts, and buyer/seller support.",
+      reasonTh: "ช่วยดูบ้าน สัญญา และสนับสนุนผู้ซื้อ/ผู้ขาย",
+      sortOrder: 0,
+    },
+    {
+      key: "property-translation",
+      triggerKey: "property",
+      targetKind: "service",
+      targetKey: "translation-services",
+      score: 89,
+      reasonEn: "Certified translation for leases, title deeds, and contracts.",
+      reasonTh: "แปลเอกสารรับรองสำหรับสัญญาเช่า โฉนด และสัญญา",
+      sortOrder: 1,
+    },
+    {
+      key: "property-moving-event",
+      triggerKey: "property",
+      targetKind: "life_event",
+      targetKey: "moving-to-thailand",
+      score: 88,
+      reasonEn: "Settling in? Follow the Moving to Thailand checklist (home → docs → vehicle).",
+      reasonTh: "กำลังย้ายมาอยู่ไทย? ตามเช็กลิสต์ย้ายมาอยู่ประเทศไทย",
+      sortOrder: 2,
+    },
+  ];
+
+  for (const edge of edges) {
+    await prisma.recommendationEdge.upsert({
+      where: { key: edge.key },
+      create: { ...edge, active: true },
+      update: {
+        triggerKey: edge.triggerKey,
+        targetKind: edge.targetKind,
+        targetKey: edge.targetKey,
+        score: edge.score,
+        reasonEn: edge.reasonEn,
+        reasonTh: edge.reasonTh,
+        sortOrder: edge.sortOrder,
+        active: true,
+      },
+    });
+  }
+  console.log("Recommendation edges seeded:", edges.length);
 }
 
 main()

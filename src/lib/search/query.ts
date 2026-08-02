@@ -4,8 +4,11 @@
 
 import Fuse, { type IFuseOptions } from "fuse.js";
 import type {
+  BookingSearchDocument,
+  GoalSearchDocument,
   GroupedSearchResults,
   HelpSearchDocument,
+  LifeEventSearchDocument,
   PropertySearchDocument,
   SearchDocument,
   ServiceSearchDocument,
@@ -32,6 +35,9 @@ export function emptyGroupedSearchResults(): GroupedSearchResults {
     vehicles: [],
     properties: [],
     help: [],
+    lifeEvents: [],
+    goals: [],
+    bookings: [],
   };
 }
 
@@ -52,6 +58,15 @@ export function groupSearchDocuments(docs: SearchDocument[]): GroupedSearchResul
       case "help":
         groups.help.push(doc);
         break;
+      case "life_event":
+        groups.lifeEvents.push(doc);
+        break;
+      case "goal":
+        groups.goals.push(doc);
+        break;
+      case "booking":
+        groups.bookings.push(doc);
+        break;
       default:
         break;
     }
@@ -68,6 +83,9 @@ function truncateGroups(
     vehicles: groups.vehicles.slice(0, limitPerGroup) as VehicleSearchDocument[],
     properties: groups.properties.slice(0, limitPerGroup) as PropertySearchDocument[],
     help: groups.help.slice(0, limitPerGroup) as HelpSearchDocument[],
+    lifeEvents: groups.lifeEvents.slice(0, limitPerGroup) as LifeEventSearchDocument[],
+    goals: groups.goals.slice(0, limitPerGroup) as GoalSearchDocument[],
+    bookings: groups.bookings.slice(0, limitPerGroup) as BookingSearchDocument[],
   };
 }
 
@@ -108,6 +126,9 @@ export function countGroupedResults(groups: GroupedSearchResults): number {
     groups.services.length +
     groups.vehicles.length +
     groups.properties.length +
-    groups.help.length
+    groups.help.length +
+    groups.lifeEvents.length +
+    groups.goals.length +
+    groups.bookings.length
   );
 }

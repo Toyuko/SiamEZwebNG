@@ -1,3 +1,5 @@
+export { assertCanAttachDocumentToCase } from "./authz";
+
 export {
   WIZARD_DOCUMENT_MAX_BYTES,
   isAllowedWizardDocument,

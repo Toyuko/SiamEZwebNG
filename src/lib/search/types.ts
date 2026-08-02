@@ -3,7 +3,14 @@
  * Additive only: never mutates listing description / public ids.
  */
 
-export type SearchDivision = "service" | "vehicle" | "property" | "help";
+export type SearchDivision =
+  | "service"
+  | "vehicle"
+  | "property"
+  | "help"
+  | "life_event"
+  | "goal"
+  | "booking";
 
 export type SearchDocumentBase = {
   /** Stable document key within the index (not necessarily a DB id). */
@@ -39,11 +46,30 @@ export type HelpSearchDocument = SearchDocumentBase & {
   division: "help";
 };
 
+export type LifeEventSearchDocument = SearchDocumentBase & {
+  division: "life_event";
+  key: string;
+};
+
+export type GoalSearchDocument = SearchDocumentBase & {
+  division: "goal";
+  goalId: string;
+};
+
+export type BookingSearchDocument = SearchDocumentBase & {
+  division: "booking";
+  caseId: string;
+  caseNumber: string;
+};
+
 export type SearchDocument =
   | ServiceSearchDocument
   | VehicleSearchDocument
   | PropertySearchDocument
-  | HelpSearchDocument;
+  | HelpSearchDocument
+  | LifeEventSearchDocument
+  | GoalSearchDocument
+  | BookingSearchDocument;
 
 /** Grouped query result shape consumed by UI + Concierge tool. */
 export type GroupedSearchResults = {
@@ -51,6 +77,9 @@ export type GroupedSearchResults = {
   vehicles: VehicleSearchDocument[];
   properties: PropertySearchDocument[];
   help: HelpSearchDocument[];
+  lifeEvents: LifeEventSearchDocument[];
+  goals: GoalSearchDocument[];
+  bookings: BookingSearchDocument[];
 };
 
 export type UnifiedSearchQueryOptions = {
@@ -90,4 +119,25 @@ export type PropertySearchSource = {
   neighborhood?: string | null;
   priceAmount?: number;
   priceCurrency?: string;
+};
+
+export type LifeEventSearchSource = {
+  key: string;
+  titleEn: string;
+  titleTh?: string | null;
+  descriptionEn?: string | null;
+  descriptionTh?: string | null;
+};
+
+export type GoalSearchSource = {
+  id: string;
+  title: string;
+  status?: string;
+};
+
+export type BookingSearchSource = {
+  id: string;
+  caseNumber: string;
+  serviceName: string;
+  status?: string;
 };

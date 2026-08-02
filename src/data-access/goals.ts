@@ -5,13 +5,18 @@ import {
   decideGoalTransition,
   goalTimestampPatch,
   progressPctForStatus,
+  syncGoalPctFromLifeEvent,
 } from "@/lib/goals";
+import { summarizeStepStatuses } from "@/lib/life-events";
 
 export async function listGoalsForUser(userId: string) {
   return prisma.goal.findMany({
     where: { userId },
     include: {
       lifeEvent: {
+        select: { id: true, key: true, titleEn: true, titleTh: true },
+      },
+      workflowTemplate: {
         select: { id: true, key: true, titleEn: true, titleTh: true },
       },
     },
@@ -28,6 +33,7 @@ export async function countActiveGoalsForUser(userId: string): Promise<number> {
 export type GoalCreateInput = {
   title: string;
   lifeEventId?: string | null;
+  workflowTemplateId?: string | null;
   notes?: string | null;
   progressPct?: number;
 };
@@ -40,12 +46,16 @@ export async function createGoal(userId: string, data: GoalCreateInput) {
       userId,
       title,
       lifeEventId: data.lifeEventId || null,
+      workflowTemplateId: data.workflowTemplateId || null,
       notes: data.notes?.trim() || null,
       progressPct: clampProgressPct(data.progressPct ?? 0),
       status: "active",
     },
     include: {
       lifeEvent: {
+        select: { id: true, key: true, titleEn: true, titleTh: true },
+      },
+      workflowTemplate: {
         select: { id: true, key: true, titleEn: true, titleTh: true },
       },
     },
@@ -60,6 +70,7 @@ export async function updateGoal(
     notes?: string | null;
     progressPct?: number;
     lifeEventId?: string | null;
+    workflowTemplateId?: string | null;
   }
 ) {
   const existing = await prisma.goal.findFirst({ where: { id: goalId, userId } });
@@ -80,12 +91,20 @@ export async function updateGoal(
       ? { connect: { id: data.lifeEventId } }
       : { disconnect: true };
   }
+  if (data.workflowTemplateId !== undefined) {
+    patch.workflowTemplate = data.workflowTemplateId
+      ? { connect: { id: data.workflowTemplateId } }
+      : { disconnect: true };
+  }
 
   return prisma.goal.update({
     where: { id: goalId },
     data: patch,
     include: {
       lifeEvent: {
+        select: { id: true, key: true, titleEn: true, titleTh: true },
+      },
+      workflowTemplate: {
         select: { id: true, key: true, titleEn: true, titleTh: true },
       },
     },
@@ -118,6 +137,9 @@ export async function transitionGoal(
       lifeEvent: {
         select: { id: true, key: true, titleEn: true, titleTh: true },
       },
+      workflowTemplate: {
+        select: { id: true, key: true, titleEn: true, titleTh: true },
+      },
     },
   });
 }
@@ -126,4 +148,24 @@ export async function deleteGoal(userId: string, goalId: string) {
   const existing = await prisma.goal.findFirst({ where: { id: goalId, userId } });
   if (!existing) throw new Error("Goal not found");
   return prisma.goal.delete({ where: { id: goalId } });
+}
+
+/** Sync active goals linked to a life event from step completion percent. */
+export async function syncLinkedGoalsFromLifeEvent(
+  userId: string,
+  lifeEventId: string
+): Promise<void> {
+  const progress = await prisma.lifeEventProgress.findUnique({
+    where: { userId_lifeEventId: { userId, lifeEventId } },
+    include: { steps: true },
+  });
+  if (!progress) return;
+
+  const summary = summarizeStepStatuses(progress.steps.map((s) => s.status));
+  const pct = syncGoalPctFromLifeEvent(summary.percent);
+
+  await prisma.goal.updateMany({
+    where: { userId, lifeEventId, status: "active" },
+    data: { progressPct: pct },
+  });
 }

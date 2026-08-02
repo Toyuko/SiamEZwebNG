@@ -117,7 +117,7 @@
   },
   "unifiedSearch": {
     "openAria": "เปิดค้นหาทั้งเว็บไซต์",
-    "placeholder": "ค้นหาบริการ รถยนต์ อสังหาฯ…",
+    "placeholder": "ค้นหาบริการ รถยนต์ อสังหาฯ เป้าหมาย…",
     "empty": "ไม่พบผลลัพธ์สำหรับ \"{query}\"",
     "loading": "กำลังโหลดดัชนีค้นหา…",
     "shortcutHint": "กด ⌘K หรือ Ctrl+K เพื่อค้นหาทั้งเว็บไซต์",
@@ -126,7 +126,35 @@
     "groupVehicles": "ยานพาหนะ",
     "groupProperties": "อสังหาริมทรัพย์",
     "groupHelp": "ความช่วยเหลือ",
+    "groupLifeEvents": "เส้นทางชีวิต",
+    "groupGoals": "เป้าหมายของคุณ",
+    "groupBookings": "การจองของคุณ",
     "close": "ปิด"
+  },
+  "listingEnquiry": {
+    "title": "ส่งข้อความสอบถาม",
+    "subtitle": "ติดต่อผู้ขายเกี่ยวกับ {listing} เราจะส่งรายละเอียดของคุณให้",
+    "name": "ชื่อของคุณ",
+    "email": "อีเมล",
+    "phone": "โทรศัพท์ (ไม่บังคับ)",
+    "message": "ข้อความ",
+    "messagePlaceholder": "สนใจดูรายการนี้…",
+    "submit": "ส่งข้อความ",
+    "submitting": "กำลังส่ง…",
+    "success": "ขอบคุณ — ส่งข้อความถึงผู้ขายแล้ว",
+    "error": "ส่งไม่สำเร็จ ลองอีกครั้งหรือใช้ WhatsApp",
+    "inboxTitle": "ข้อความสอบถามจากผู้ซื้อ",
+    "inboxSubtitle": "ข้อความจากผู้ซื้อเกี่ยวกับรถและอสังหาที่คุณลงประกาศ",
+    "inboxEmpty": "ยังไม่มีข้อความ เมื่อผู้ซื้อติดต่อผ่านประกาศจะแสดงที่นี่",
+    "fromBuyer": "{name} · {email}",
+    "unknownListing": "ประกาศ",
+    "viewListing": "ดูประกาศ",
+    "markRead": "ทำเครื่องหมายว่าอ่านแล้ว",
+    "status": {
+      "new": "ใหม่",
+      "read": "อ่านแล้ว",
+      "closed": "ปิดแล้ว"
+    }
   },
   "adminNav": {
     "dashboard": "แดชบอร์ด",
@@ -147,6 +175,7 @@
     "services": "บริการ",
     "lifeEvents": "เหตุการณ์สำคัญ",
     "workflows": "เวิร์กโฟลว์",
+    "recommendations": "คำแนะนำ",
     "sales": "ซื้อขายรถ",
     "invoices": "ใบแจ้งหนี้",
     "paymentsOrders": "การชำระเงินและออเดอร์",
@@ -230,6 +259,7 @@
     "perPageLabel": "ต่อหน้า",
     "backToInventory": "กลับไปหน้ารายการรถ",
     "categoryLabel": "หมวดหมู่",
+    "aiSummaryTitle": "สรุปโดยย่อ",
     "videos": "วิดีโอ",
     "specifications": "สเปก",
     "copyDescription": "คัดลอกคำอธิบาย",
@@ -382,9 +412,11 @@
     "contactSupport": "ติดต่อฝ่ายสนับสนุน"
   },
   "hero": {
-    "badge": "บริการมืออาชีพในไทย",
-    "headline": "บริการผู้เชี่ยวชาญในประเทศไทย",
-    "subline": "พันธมิตรที่ไว้ใจได้สำหรับการจดทะเบียนสมรส การแปล ใบขับขี่ หนังสือรับรองความประพฤติ และอื่นๆ"
+    "badge": "เป้าหมายของคุณ ความเชี่ยวชาญของเรา",
+    "headline": "วันนี้คุณต้องการทำอะไร?",
+    "subline": "บอกเป้าหมายของคุณ — เราจะช่วยนำทางตั้งแต่ย้ายถิ่น วีซ่า รถ อสังหา และทุกขั้นตอนในไทย",
+    "primaryCta": "สำรวจเป้าหมาย",
+    "secondaryCta": "ดูบริการทั้งหมด"
   },
   "home": {
     "servicesTitle": "บริการของเรา",
@@ -392,7 +424,28 @@
     "ctaTitle": "ติดต่อเรา",
     "ctaSubtitle": "พร้อมเริ่มต้นแล้ว? ติดต่อเราวันนี้!",
     "metaTitle": "บริการมืออาชีพในประเทศไทย",
-    "metaDescription": "วีซ่า ใบขับขี่ แปลเอกสาร ย้ายถิ่นฐาน และอื่นๆ SiamEZ ทำให้ชีวิตในไทยง่ายขึ้นด้วยความช่วยเหลือที่เชื่อถือได้"
+    "metaDescription": "วีซ่า ใบขับขี่ แปลเอกสาร ย้ายถิ่นฐาน และอื่นๆ SiamEZ ทำให้ชีวิตในไทยง่ายขึ้นด้วยความช่วยเหลือที่เชื่อถือได้",
+    "goalsSection": {
+      "title": "วันนี้คุณต้องการทำอะไร?",
+      "subtitle": "เลือกเป้าหมาย เริ่มเส้นทางแนะนำ หรือถาม Concierge — เราจะพาไปยังบริการและรายการที่เหมาะสม",
+      "popularGoals": "เป้าหมายยอดนิยม",
+      "lifeEvents": "เส้นทางแนะนำ",
+      "marketplace": "ไฮไลท์ตลาด",
+      "viewAllGoals": "ดูเป้าหมายทั้งหมด",
+      "viewJourney": "เริ่ม",
+      "viewAllVehicles": "รถยนต์",
+      "viewAllProperties": "อสังหา",
+      "conciergeLabel": "ถาม Concierge",
+      "conciergeHint": "ไม่แน่ใจว่าจะเริ่มจากไหน? อธิบายเป้าหมายแล้วรับขั้นตอนถัดไป",
+      "conciergePrompt": "คุณต้องการทำอะไรในไทย?",
+      "stepsLabel": "ขั้นตอน",
+      "prompts": {
+        "moving": "ฉันกำลังย้ายมาอยู่ไทย",
+        "license": "ทำใบขับขี่ไทย",
+        "vehicle": "จดทะเบียนรถ",
+        "property": "หาบ้านหรือคอนโด"
+      }
+    }
   },
   "whyChoose": {
     "title": "ทำไมต้อง SiamEZ",
@@ -1326,7 +1379,8 @@
       "savedHint": "{count} รายการที่บันทึก",
       "invoicesHint": "{count} รายการรอชำระ",
       "documentsHint": "{count} ไฟล์",
-      "notificationsHint": "{count} รายการที่ต้องดำเนินการ"
+      "notificationsHint": "{count} รายการที่ต้องดำเนินการ",
+      "enquiriesHint": "{count} ใหม่"
     },
     "nextSteps": {
       "title": "ขั้นตอนถัดไปของคุณ",
@@ -1453,6 +1507,7 @@
     },
     "publicProfile": "โปรไฟล์สาธารณะ",
     "myRealEstate": "อสังหาฯ ของฉัน",
+    "listingEnquiries": "ข้อความจากผู้ซื้อ",
     "savedListings": "รายการที่บันทึกและเปรียบเทียบ",
     "goalsLifeEvents": "เป้าหมายและการย้ายถิ่น",
     "workflows": "เวิร์กโฟลว์"
@@ -1494,6 +1549,8 @@
     "progressLabel": "{percent}% · {completed}/{total} ขั้นตอน",
     "noSteps": "เส้นทางนี้ยังไม่มีขั้นตอน",
     "linkLifeEvent": "เชื่อมเหตุการณ์สำคัญ",
+    "linkWorkflow": "เชื่อมเวิร์กโฟลว์",
+    "startWorkflow": "เริ่มเวิร์กโฟลว์",
     "noEvents": "ยังไม่มีเหตุการณ์สำคัญที่เปิดใช้งาน"
   },
   "marketplaceEngagement": {
@@ -1926,6 +1983,7 @@
     },
     "perPageLabel": "ต่อหน้า",
     "backToInventory": "กลับไปรายการอสังหาฯ",
+    "aiSummaryTitle": "สรุปโดยย่อ",
     "videos": "วิดีโอ",
     "specifications": "รายละเอียดเพิ่มเติม",
     "copyDescription": "คัดลอกรายละเอียด",

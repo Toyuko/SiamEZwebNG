@@ -7,7 +7,15 @@ import {
   isConciergeLlmConfigured,
 } from "@/lib/ai/config";
 import { attachRecommendations, generateLocalConciergeReply } from "@/lib/ai/chat";
+import { detectConciergeIntent } from "@/lib/ai/intents";
+import { applyConciergeOrchestration } from "@/lib/ai/orchestrate";
 import { buildRuleBasedReply } from "@/lib/ai/rule-replies";
+import {
+  buildConciergeSystemPrompt,
+  sanitizeConciergeContent,
+} from "@/lib/ai/sanitize-reply";
+import { searchCatalogServices } from "@/lib/ai/recommend";
+import { bookingPathForSlug } from "@/lib/ai/tools/search-services";
 import { openListingTool } from "@/lib/ai/tools/open-link";
 import { recommendTool } from "@/lib/ai/tools/recommend";
 import { searchUnifiedTool } from "@/lib/ai/tools/search-unified";
@@ -95,20 +103,39 @@ export async function requestConciergeReply(input: {
   const { locale, userMessage, messages } = input;
 
   const searchDeepLinks = await buildSearchDeepLinks(userMessage, locale);
+  const intent = detectConciergeIntent(userMessage);
+
+  async function finalizeReply(reply: Awaited<ReturnType<typeof buildRuleBasedReply>>) {
+    if (!intent) return reply;
+    return applyConciergeOrchestration({
+      intent,
+      locale,
+      userMessage,
+      baseReply: reply,
+    });
+  }
 
   if (!isConciergeLlmConfigured()) {
-    return buildRuleBasedReply(userMessage, locale, { searchDeepLinks });
+    return finalizeReply(buildRuleBasedReply(userMessage, locale, { searchDeepLinks }));
   }
 
   const apiKey = getConciergeLlmApiKey();
   if (!apiKey) {
-    return buildRuleBasedReply(userMessage, locale, { searchDeepLinks });
+    return finalizeReply(buildRuleBasedReply(userMessage, locale, { searchDeepLinks }));
   }
 
-  const systemPrompt =
-    locale === "th"
-      ? "คุณคือ SiamEZ Concierge ผู้ช่วยแพลตฟอร์มในประเทศไทย แนะนำบริการจากแคตตาล็อก และลิงก์รายการรถ/อสังหาด้วย path แบบ /sales/{cuid} หรือ /real-estate/{cuid} เท่านั้น (ห้ามใช้ slug) แนะนำให้ผู้ใช้กดจองเพื่อเปิดวิซาร์ด /book/[slug] ตอบสั้น ชัด เป็นมิตร เป็นภาษาไทย"
-      : "You are the SiamEZ Concierge for the Thailand services + marketplace platform. Recommend catalog services and deep-link listings only via /sales/{cuid} or /real-estate/{cuid} (never slug). Nudge users to Book for /book/[slug]. Keep answers short, clear, and friendly.";
+  const catalogMatches = searchCatalogServices(userMessage, locale, 4);
+  const systemPrompt = buildConciergeSystemPrompt({
+    locale,
+    allowedBookPaths: catalogMatches.map((s) => ({
+      name: s.name,
+      href: bookingPathForSlug(s.slug),
+    })),
+    knownListingPaths: searchDeepLinks.map((l) => ({
+      label: l.label,
+      href: l.href,
+    })),
+  });
 
   try {
     const res = await fetch(getConciergeLlmEndpoint(), {
@@ -132,16 +159,21 @@ export async function requestConciergeReply(input: {
     });
 
     if (!res.ok) {
-      return buildRuleBasedReply(userMessage, locale, { searchDeepLinks });
+      return finalizeReply(buildRuleBasedReply(userMessage, locale, { searchDeepLinks }));
     }
 
     const data = (await res.json()) as ChatCompletionResponse;
-    const content = data.choices?.[0]?.message?.content?.trim();
-    if (!content) {
-      return buildRuleBasedReply(userMessage, locale, { searchDeepLinks });
+    const raw = data.choices?.[0]?.message?.content?.trim();
+    if (!raw) {
+      return finalizeReply(buildRuleBasedReply(userMessage, locale, { searchDeepLinks }));
     }
 
-    const reply = attachRecommendations(content, userMessage, locale);
+    const content = sanitizeConciergeContent(raw);
+    const reply = attachRecommendations(
+      content || raw,
+      userMessage,
+      locale
+    );
     const rec = recommendTool({ locale, query: userMessage, limit: 4 });
     const deepLinks: ConciergeDeepLink[] = [
       ...searchDeepLinks,
@@ -153,9 +185,9 @@ export async function requestConciergeReply(input: {
           kind: (s.kind === "listing" ? "listing" : "life_event") as ConciergeDeepLink["kind"],
         })),
     ];
-    return { ...reply, deepLinks };
+    return finalizeReply({ ...reply, deepLinks });
   } catch {
-    return buildRuleBasedReply(userMessage, locale, { searchDeepLinks });
+    return finalizeReply(buildRuleBasedReply(userMessage, locale, { searchDeepLinks }));
   }
 }
 

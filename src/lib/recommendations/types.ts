@@ -33,6 +33,24 @@ export type GoalLifeEventSignal = {
   incompleteServiceSlugs?: string[];
 };
 
+/** Configurable graph edge (config defaults or admin DB rows). */
+export type RecommendationEdgeInput = {
+  key: string;
+  triggerKey:
+    | "motorcycle"
+    | "vehicle"
+    | "property"
+    | "query:motorcycle"
+    | "query:vehicle"
+    | "query:property";
+  targetKind: "service" | "life_event";
+  targetKey: string;
+  score: number;
+  reasonEn: string;
+  reasonTh: string;
+  sortOrder?: number;
+};
+
 /**
  * Pure engine input — inject signals from engagement, bookings, goals, or chat query.
  * No Prisma dependency; callers hydrate context separately.
@@ -45,6 +63,8 @@ export type RecommendationContext = {
   /** Free-text intent (Concierge chat / search). */
   query?: string;
   limit?: number;
+  /** When omitted, engine uses DEFAULT_RECOMMENDATION_EDGES. */
+  edges?: RecommendationEdgeInput[];
 };
 
 export type RecommendationSuggestion = {

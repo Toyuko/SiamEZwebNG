@@ -50,3 +50,31 @@ export function buildLocalizedPropertySearchPath(locale: string, listingId: stri
   const localeSeg = locale.trim() || "en";
   return `/${localeSeg}${buildPropertySearchPath(listingId)}`;
 }
+
+/** Life event journey anchor on goals hub: `/portal/goals#life-event-{key}`. */
+export function buildLifeEventSearchPath(key: string): string {
+  const trimmed = key?.trim();
+  if (!trimmed) {
+    throw new Error("Life event search URL requires a non-empty key");
+  }
+  return `/portal/goals#life-event-${trimmed}`;
+}
+
+/** Customer goals hub. */
+export function buildGoalSearchPath(): string {
+  return "/portal/goals";
+}
+
+/** Single booking/case detail. */
+export function buildBookingSearchPath(caseId: string): string {
+  const trimmed = caseId?.trim();
+  if (!trimmed) {
+    throw new Error("Booking search URL requires a non-empty case id");
+  }
+  return `/portal/cases/${trimmed}`;
+}
+
+/** Bookings hub fallback. */
+export function buildBookingsHubPath(): string {
+  return "/portal/cases";
+}

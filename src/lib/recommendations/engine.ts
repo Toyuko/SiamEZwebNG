@@ -2,6 +2,7 @@
  * Recommendations engine entry — deterministic rules first, optional polish.
  */
 
+import { loadRecommendationEdges } from "./load-edges";
 import { applyRecommendationRules } from "./rules";
 import {
   polishRecommendationReasons,
@@ -27,7 +28,8 @@ export function recommendSync(context: RecommendationContext): RecommendationRes
 export async function recommend(
   context: RecommendationContext
 ): Promise<RecommendationResult> {
-  const suggestions = applyRecommendationRules(context);
+  const edges = context.edges ?? (await loadRecommendationEdges());
+  const suggestions = applyRecommendationRules({ ...context, edges });
   const polished = await polishRecommendationReasons(suggestions, {
     locale: context.locale,
   });

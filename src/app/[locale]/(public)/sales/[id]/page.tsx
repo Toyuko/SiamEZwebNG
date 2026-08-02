@@ -20,6 +20,8 @@ import {
 import { getListingEnhancement } from "@/lib/migration/enhance";
 import { buildVehicleJsonLd, coerceStoredSchemaJsonLd } from "@/lib/migration/jsonld";
 import { resolveListingMetadata } from "@/lib/migration/metadata";
+import { ListingAiSummary } from "@/components/marketplace/ListingAiSummary";
+import { ListingEnquiryForm } from "@/components/marketplace/ListingEnquiryForm";
 import { ListingEngagementBar } from "@/components/marketplace/ListingEngagementBar";
 import { SuggestionSlot } from "@/components/recommendations/SuggestionSlot";
 import { recommendSync } from "@/lib/recommendations";
@@ -349,6 +351,9 @@ export default async function SalesVehicleDetailPage({
                 ? t("priceContactSeller")
                 : formatPrice(vehicle.priceAmount, vehicle.priceCurrency)}
             </p>
+            {enhancement?.aiSummary ? (
+              <ListingAiSummary summary={enhancement.aiSummary} title={t("aiSummaryTitle")} />
+            ) : null}
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
                 <p className="text-gray-500">Mileage</p>
@@ -436,6 +441,13 @@ export default async function SalesVehicleDetailPage({
                 </Button>
               </div>
             </div>
+            <ListingEnquiryForm
+              listingType="vehicle"
+              listingId={vehicle.id}
+              listingTitle={vehicle.title}
+              defaultName={session?.user.name ?? ""}
+              defaultEmail={session?.user.email ?? ""}
+            />
             <div className="rounded-lg border border-siam-blue/25 bg-siam-blue/[0.06] p-4 dark:bg-siam-blue/10">
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("finderDetailTitle")}</p>
               <p className="mt-1 text-xs leading-relaxed text-gray-600 dark:text-gray-400">{t("finderDetailBody")}</p>

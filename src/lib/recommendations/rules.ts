@@ -1,13 +1,16 @@
 /**
- * Deterministic cross-sell rules (no LLM).
- * Only emit real seeded service slugs / life-event keys.
- *
- * Motorcycle / vehicle → registration (+ finder, driver license).
- * No standalone insurance slug exists in seed — vehicle-registration covers
- * tax/insurance renewals; do not invent packages.
+ * Deterministic cross-sell rules driven by configurable recommendation edges.
+ * Defaults live in `src/config/recommendation-graph.ts`; callers may inject
+ * admin/DB edges via `context.edges`.
  */
 
 import { getActiveCatalogEntries } from "@/config/service-catalog";
+import {
+  DEFAULT_RECOMMENDATION_EDGES,
+  edgesForTriggers,
+  type RecommendationEdgeDef,
+  type RecommendationTrigger,
+} from "@/config/recommendation-graph";
 import type {
   EngagementListingSignal,
   GoalLifeEventSignal,
@@ -23,7 +26,6 @@ import {
 
 const MOTORCYCLE_CATEGORY_RE = /motorcycle|motorbike|scooter|big[\s-]?bike|มอเตอร์ไซค์|สกู๊ตเตอร์/i;
 const VEHICLE_CATEGORY_RE = /^(car|truck|van|suv|pickup|sedan|vehicle)$/i;
-/** Avoid \\b for Thai — JS word boundaries are ASCII-only. */
 const PROPERTY_HINT_RE =
   /condo|apartment|house|villa|property|real\s*estate|คอนโด|บ้าน|อพาร์ทเมนท์|อสังหา/i;
 const MOTORCYCLE_QUERY_RE =
@@ -32,30 +34,18 @@ const VEHICLE_QUERY_RE = /car|vehicle|truck|van|รถยนต์|รถยน�
 
 const COPY = {
   en: {
-    motorcycleRegistration:
-      "You viewed a motorcycle — register or transfer ownership with DLT support.",
-    motorcycleFinder: "Need help buying or selling a bike? Our Auto & Bike Finder handles paperwork.",
-    motorcycleLicense: "A Thai driver's license (including motorcycle classes) pairs well with a new bike.",
-    vehicleRegistration: "Complete registration, plates, and tax renewals for your vehicle.",
-    vehicleFinder: "Source, negotiate, and transfer vehicles with SiamEZ support.",
-    propertyServices: "Property viewing, contracts, and buyer/seller support.",
-    propertyTranslation: "Certified translation for leases, title deeds, and contracts.",
-    movingEvent: "Settling in? Follow the Moving to Thailand checklist (home → docs → vehicle).",
     listingContinue: "Continue where you left off on this listing.",
     goalService: "Next step from your active goal / life event.",
+    movingEvent: "Settling in? Follow the Moving to Thailand checklist (home → docs → vehicle).",
+    vehicleRegistration: "Complete registration, plates, and tax renewals for your vehicle.",
+    motorcycleLicense: "A Thai driver's license (including motorcycle classes) pairs well with a new bike.",
   },
   th: {
-    motorcycleRegistration:
-      "คุณกำลังดูมอเตอร์ไซค์ — จดทะเบียนหรือโอนกรรมสิทธิ์พร้อมช่วยเหลือที่กรมขนส่ง",
-    motorcycleFinder: "ต้องการซื้อ/ขายมอเตอร์ไซค์? บริการหาซื้อรถช่วยเจรจาและเอกสาร",
-    motorcycleLicense: "ใบขับขี่ไทย (รวมรถจักรยานยนต์) เหมาะกับรถคันใหม่ของคุณ",
-    vehicleRegistration: "จดทะเบียน ป้ายทะเบียน และต่อภาษีรถให้ครบ",
-    vehicleFinder: "หา เจรจา และโอนรถพร้อมสนับสนุนจาก SiamEZ",
-    propertyServices: "ช่วยดูบ้าน สัญญา และสนับสนุนผู้ซื้อ/ผู้ขาย",
-    propertyTranslation: "แปลเอกสารรับรองสำหรับสัญญาเช่า โฉนด และสัญญา",
-    movingEvent: "กำลังย้ายมาอยู่ไทย? ตามเช็กลิสต์ย้ายมาอยู่ประเทศไทย",
     listingContinue: "กลับไปดูรายการที่คุณสนใจต่อ",
     goalService: "ขั้นตอนถัดไปจากเป้าหมาย / เหตุการณ์ชีวิตของคุณ",
+    movingEvent: "กำลังย้ายมาอยู่ไทย? ตามเช็กลิสต์ย้ายมาอยู่ประเทศไทย",
+    vehicleRegistration: "จดทะเบียน ป้ายทะเบียน และต่อภาษีรถให้ครบ",
+    motorcycleLicense: "ใบขับขี่ไทย (รวมรถจักรยานยนต์) เหมาะกับรถคันใหม่ของคุณ",
   },
 } as const;
 
@@ -156,7 +146,7 @@ export function isVehicleSignal(signal: EngagementListingSignal): boolean {
   if (signal.listingType !== "vehicle") return false;
   if (isMotorcycleSignal(signal)) return true;
   const cat = (signal.category ?? "").trim();
-  if (!cat) return true; // treat unspecified vehicle as automotive
+  if (!cat) return true;
   return VEHICLE_CATEGORY_RE.test(cat) || /car|auto|truck|van/i.test(cat);
 }
 
@@ -164,79 +154,37 @@ export function isPropertySignal(signal: EngagementListingSignal): boolean {
   return signal.listingType === "property";
 }
 
-function applyMotorcyclePackage(
+function applyGraphEdges(
   out: RecommendationSuggestion[],
   seen: Set<string>,
-  locale: RecommendationLocale,
-  baseScore: number
+  edges: RecommendationEdgeDef[],
+  triggers: RecommendationTrigger[],
+  locale: RecommendationLocale
 ) {
-  const copy = COPY[locale] ?? COPY.en;
-  pushService(out, seen, {
-    slug: "vehicle-registration",
-    reason: copy.motorcycleRegistration,
-    score: baseScore,
-    locale,
-  });
-  pushService(out, seen, {
-    slug: "car-motorbike-finder-selling-service",
-    reason: copy.motorcycleFinder,
-    score: baseScore - 1,
-    locale,
-  });
-  pushService(out, seen, {
-    slug: "driver-license",
-    reason: copy.motorcycleLicense,
-    score: baseScore - 2,
-    locale,
-  });
-}
-
-function applyVehiclePackage(
-  out: RecommendationSuggestion[],
-  seen: Set<string>,
-  locale: RecommendationLocale,
-  baseScore: number
-) {
-  const copy = COPY[locale] ?? COPY.en;
-  pushService(out, seen, {
-    slug: "vehicle-registration",
-    reason: copy.vehicleRegistration,
-    score: baseScore,
-    locale,
-  });
-  pushService(out, seen, {
-    slug: "car-motorbike-finder-selling-service",
-    reason: copy.vehicleFinder,
-    score: baseScore - 1,
-    locale,
-  });
-}
-
-function applyPropertyPackage(
-  out: RecommendationSuggestion[],
-  seen: Set<string>,
-  locale: RecommendationLocale,
-  baseScore: number
-) {
-  const copy = COPY[locale] ?? COPY.en;
-  pushService(out, seen, {
-    slug: "real-estate-services",
-    reason: copy.propertyServices,
-    score: baseScore,
-    locale,
-  });
-  pushService(out, seen, {
-    slug: "translation-services",
-    reason: copy.propertyTranslation,
-    score: baseScore - 1,
-    locale,
-  });
-  pushLifeEvent(out, seen, {
-    key: "moving-to-thailand",
-    title: locale === "th" ? "ย้ายมาอยู่ประเทศไทย" : "Moving to Thailand",
-    reason: copy.movingEvent,
-    score: baseScore - 2,
-  });
+  for (const edge of edgesForTriggers(edges, triggers)) {
+    const reason = locale === "th" ? edge.reasonTh || edge.reasonEn : edge.reasonEn;
+    if (edge.targetKind === "service") {
+      pushService(out, seen, {
+        slug: edge.targetKey,
+        reason,
+        score: edge.score,
+        locale,
+      });
+    } else if (edge.targetKind === "life_event") {
+      const title =
+        edge.targetKey === "moving-to-thailand"
+          ? locale === "th"
+            ? "ย้ายมาอยู่ประเทศไทย"
+            : "Moving to Thailand"
+          : edge.targetKey.replace(/-/g, " ");
+      pushLifeEvent(out, seen, {
+        key: edge.targetKey,
+        title,
+        reason,
+        score: edge.score,
+      });
+    }
+  }
 }
 
 function applyGoalSignals(
@@ -277,6 +225,9 @@ export function applyRecommendationRules(
 ): RecommendationSuggestion[] {
   const locale = context.locale === "th" ? "th" : "en";
   const copy = COPY[locale] ?? COPY.en;
+  const edges = context.edges?.length
+    ? context.edges
+    : DEFAULT_RECOMMENDATION_EDGES;
   const out: RecommendationSuggestion[] = [];
   const seen = new Set<string>();
   const listings = context.listings ?? [];
@@ -310,19 +261,14 @@ export function applyRecommendationRules(
     sawProperty = true;
   }
 
-  if (sawMotorcycle) {
-    applyMotorcyclePackage(out, seen, locale, 100);
-  } else if (sawVehicle) {
-    applyVehiclePackage(out, seen, locale, 92);
-  }
+  const triggers: RecommendationTrigger[] = [];
+  if (sawMotorcycle) triggers.push("motorcycle", "query:motorcycle");
+  else if (sawVehicle) triggers.push("vehicle", "query:vehicle");
+  if (sawProperty) triggers.push("property", "query:property");
 
-  if (sawProperty) {
-    applyPropertyPackage(out, seen, locale, 85);
-  }
-
+  applyGraphEdges(out, seen, edges, triggers, locale);
   applyGoalSignals(out, seen, context.goals ?? [], locale);
 
-  // Booking adjacency: vehicle registration → suggest finder / license lightly
   for (const booking of context.bookings ?? []) {
     if (booking.serviceSlug === "car-motorbike-finder-selling-service") {
       pushService(out, seen, {

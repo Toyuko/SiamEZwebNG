@@ -6,6 +6,7 @@ import {
   FileText,
   Flag,
   FolderOpen,
+  Inbox,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +16,8 @@ type QuickLinkIcon =
   | "documents"
   | "notifications"
   | "saved"
-  | "goals";
+  | "goals"
+  | "enquiries";
 
 type QuickLink = {
   href: string;
@@ -32,6 +34,7 @@ const icons = {
   notifications: Bell,
   saved: Bookmark,
   goals: Flag,
+  enquiries: Inbox,
 };
 
 export function QuickLinks({

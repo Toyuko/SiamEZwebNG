@@ -4,12 +4,15 @@ export type {
   EngagementSource,
   GoalLifeEventSignal,
   RecommendationContext,
+  RecommendationEdgeInput,
   RecommendationKind,
   RecommendationListingType,
   RecommendationLocale,
   RecommendationResult,
   RecommendationSuggestion,
 } from "./types";
+
+export { loadRecommendationEdges } from "./load-edges";
 
 export {
   applyRecommendationRules,

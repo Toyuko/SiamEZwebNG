@@ -14,7 +14,7 @@ import { useUnifiedFuseSearch } from "@/hooks/useUnifiedFuseSearch";
 import { getUnifiedSearchIndexAction } from "@/actions/unified-search";
 import type { SearchDocument } from "@/lib/search";
 import { cn } from "@/lib/utils";
-import { Building2, Car, HelpCircle, Loader2, Search, Wrench } from "lucide-react";
+import { Building2, Car, Flag, FolderOpen, HelpCircle, Loader2, Search, Target, Wrench } from "lucide-react";
 
 export interface UnifiedSearchPaletteLabels {
   placeholder: string;
@@ -26,6 +26,9 @@ export interface UnifiedSearchPaletteLabels {
   groupVehicles: string;
   groupProperties: string;
   groupHelp: string;
+  groupLifeEvents: string;
+  groupGoals: string;
+  groupBookings: string;
   close: string;
 }
 
@@ -49,6 +52,12 @@ function DivisionIcon({ division }: { division: SearchDocument["division"] }) {
       return <Building2 className={className} aria-hidden />;
     case "help":
       return <HelpCircle className={className} aria-hidden />;
+    case "life_event":
+      return <Flag className={className} aria-hidden />;
+    case "goal":
+      return <Target className={className} aria-hidden />;
+    case "booking":
+      return <FolderOpen className={className} aria-hidden />;
     default:
       return null;
   }
@@ -213,6 +222,21 @@ export function UnifiedSearchPalette({
               {groups.properties.length > 0 && (
                 <CommandGroup heading={labels.groupProperties}>
                   {renderItems(groups.properties)}
+                </CommandGroup>
+              )}
+              {groups.lifeEvents.length > 0 && (
+                <CommandGroup heading={labels.groupLifeEvents}>
+                  {renderItems(groups.lifeEvents)}
+                </CommandGroup>
+              )}
+              {groups.goals.length > 0 && (
+                <CommandGroup heading={labels.groupGoals}>
+                  {renderItems(groups.goals)}
+                </CommandGroup>
+              )}
+              {groups.bookings.length > 0 && (
+                <CommandGroup heading={labels.groupBookings}>
+                  {renderItems(groups.bookings)}
                 </CommandGroup>
               )}
               {groups.help.length > 0 && (

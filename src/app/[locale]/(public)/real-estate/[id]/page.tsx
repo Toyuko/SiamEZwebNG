@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getPublicSalesPropertyById } from "@/data-access/real-estate";
+import { getSession } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -12,6 +13,8 @@ import { SalesListingExportActions } from "@/components/sales/SalesListingExport
 import { getListingEnhancement } from "@/lib/migration/enhance";
 import { buildPropertyJsonLd, coerceStoredSchemaJsonLd } from "@/lib/migration/jsonld";
 import { resolveListingMetadata } from "@/lib/migration/metadata";
+import { ListingAiSummary } from "@/components/marketplace/ListingAiSummary";
+import { ListingEnquiryForm } from "@/components/marketplace/ListingEnquiryForm";
 import { ListingEngagementBar } from "@/components/marketplace/ListingEngagementBar";
 
 export const dynamic = "force-dynamic";
@@ -101,6 +104,8 @@ export default async function RealEstateDetailPage({
   if (!property) {
     notFound();
   }
+
+  const session = await getSession();
 
   const boostActive = Boolean(
     property.isBoosted && property.boostExpiresAt && property.boostExpiresAt > new Date()
@@ -283,6 +288,9 @@ export default async function RealEstateDetailPage({
             ) : null}
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{property.title}</h1>
             <ListingEngagementBar listingType="property" listingId={property.id} />
+            {enhancement?.aiSummary ? (
+              <ListingAiSummary summary={enhancement.aiSummary} title={t("aiSummaryTitle")} />
+            ) : null}
             <div className="flex flex-wrap gap-2">
               <span className="inline-block rounded-full bg-siam-blue/15 px-3 py-1 text-xs font-semibold text-siam-blue dark:bg-siam-blue/25 dark:text-siam-blue-light">
                 {t(`listingType.${property.listingType}`)}
@@ -438,6 +446,13 @@ export default async function RealEstateDetailPage({
                 </Button>
               </div>
             </div>
+            <ListingEnquiryForm
+              listingType="property"
+              listingId={property.id}
+              listingTitle={property.title}
+              defaultName={session?.user.name ?? ""}
+              defaultEmail={session?.user.email ?? ""}
+            />
           </CardContent>
         </Card>
       </div>

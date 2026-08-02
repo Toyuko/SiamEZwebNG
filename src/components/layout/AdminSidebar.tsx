@@ -25,6 +25,7 @@ import {
   ChevronDown,
   Route,
   Workflow,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -87,6 +88,7 @@ const navGroups: NavGroup[] = [
       { label: "services", href: "/admin/services", icon: Package },
       { label: "lifeEvents", href: "/admin/life-events", icon: Route },
       { label: "workflows", href: "/admin/workflows", icon: Workflow },
+      { label: "recommendations", href: "/admin/recommendations", icon: Sparkles },
       { label: "sales", href: "/admin/sales", icon: Car },
       { label: "realEstate", href: "/admin/real-estate", icon: Home },
     ],

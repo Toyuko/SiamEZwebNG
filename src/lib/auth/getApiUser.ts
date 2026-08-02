@@ -2,10 +2,26 @@ import { NextRequest } from "next/server";
 import { verifyApiJwt } from "@/lib/auth/api-jwt";
 import { prisma } from "@/lib/db";
 
-export async function getApiUser(request: NextRequest) {
+export type ApiUser = {
+  userId: string;
+  role: string;
+};
+
+async function loadActiveApiUser(userId: string): Promise<ApiUser> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, active: true, role: true },
+  });
+  if (!user || !user.active) {
+    throw new Error("Unauthorized");
+  }
+  return { userId: user.id, role: user.role };
+}
+
+export async function getApiUser(request: NextRequest): Promise<ApiUser> {
   const cachedUserId = request.headers.get("x-api-user-id");
   if (cachedUserId) {
-    return { userId: cachedUserId };
+    return loadActiveApiUser(cachedUserId);
   }
 
   const authHeader = request.headers.get("authorization");
@@ -18,12 +34,5 @@ export async function getApiUser(request: NextRequest) {
   }
 
   const payload = await verifyApiJwt(token);
-  const user = await prisma.user.findUnique({
-    where: { id: payload.userId },
-    select: { id: true, active: true },
-  });
-  if (!user || !user.active) {
-    throw new Error("Unauthorized");
-  }
-  return { userId: user.id };
+  return loadActiveApiUser(payload.userId);
 }

@@ -1,5 +1,6 @@
 import createMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminAuthBypassEnabled } from "@/lib/auth/admin-bypass";
 import { routing } from "./i18n/routing";
 
 // Auth.js (NextAuth v5) session cookie names
@@ -118,12 +119,8 @@ export default async function middleware(request: NextRequest) {
   }
 
   // Admin gate: /admin/* – require auth (role check in layout)
-  // Bypass: set BYPASS_ADMIN_AUTH=true to skip login for admin
-  if (
-    process.env.BYPASS_ADMIN_AUTH !== "true" &&
-    isAdminRoute(pathname) &&
-    !hasSession
-  ) {
+  // Bypass: local/dev only via isAdminAuthBypassEnabled()
+  if (!isAdminAuthBypassEnabled() && isAdminRoute(pathname) && !hasSession) {
     const locale = pathname.split("/")[1] ?? "en";
     const loginUrl = new URL(`/${locale}/login`, request.url);
     loginUrl.searchParams.set("redirect", pathname);

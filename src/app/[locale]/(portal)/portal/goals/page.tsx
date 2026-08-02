@@ -6,6 +6,7 @@ import {
   listUserLifeEventProgress,
 } from "@/data-access/life-events";
 import { listGoalsForUser } from "@/data-access/goals";
+import { listActiveTemplates } from "@/data-access/workflows";
 import { GoalsClient } from "./GoalsClient";
 
 export default async function PortalGoalsPage({
@@ -19,10 +20,11 @@ export default async function PortalGoalsPage({
   const t = await getTranslations("goalsLifeEvents");
   const loc = locale === "th" ? "th" : "en";
 
-  const [events, progressRows, goals] = await Promise.all([
+  const [events, progressRows, goals, workflowTemplates] = await Promise.all([
     listActiveLifeEvents(),
     listUserLifeEventProgress(session.user.id),
     listGoalsForUser(session.user.id),
+    listActiveTemplates(),
   ]);
 
   const startedIds = new Set(progressRows.map((p) => p.lifeEventId));
@@ -69,11 +71,22 @@ export default async function PortalGoalsPage({
         ? g.lifeEvent.titleTh
         : g.lifeEvent.titleEn
       : null,
+    workflowTemplateId: g.workflowTemplateId,
+    workflowTemplateTitle: g.workflowTemplate
+      ? loc === "th" && g.workflowTemplate.titleTh
+        ? g.workflowTemplate.titleTh
+        : g.workflowTemplate.titleEn
+      : null,
   }));
 
   const eventOptions = events.map((e) => ({
     id: e.id,
     title: loc === "th" && e.titleTh ? e.titleTh : e.titleEn,
+  }));
+
+  const workflowOptions = workflowTemplates.map((w) => ({
+    id: w.id,
+    title: loc === "th" && w.titleTh ? w.titleTh : w.titleEn,
   }));
 
   return (
@@ -89,6 +102,7 @@ export default async function PortalGoalsPage({
         availableEvents={availableEvents}
         goals={goalRows}
         eventOptions={eventOptions}
+        workflowOptions={workflowOptions}
         labels={{
           lifeEventsSection: t("lifeEventsSection"),
           goalsSection: t("goalsSection"),
@@ -106,6 +120,8 @@ export default async function PortalGoalsPage({
           progressLabel: t("progressLabel"),
           noSteps: t("noSteps"),
           linkLifeEvent: t("linkLifeEvent"),
+          linkWorkflow: t("linkWorkflow"),
+          startWorkflow: t("startWorkflow"),
           noEvents: t("noEvents"),
         }}
       />

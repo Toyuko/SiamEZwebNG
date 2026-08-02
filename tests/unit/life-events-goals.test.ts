@@ -178,6 +178,17 @@ describe("goal progress transitions", () => {
     expect(progressPctForStatus("active", 100)).toBe(0);
     expect(progressPctForStatus("active", 55)).toBe(55);
     expect(syncGoalPctFromLifeEvent(60)).toBe(60);
+    expect(syncGoalPctFromLifeEvent(100)).toBe(100);
+  });
+
+  it("mirrors life-event step percent into goal progress", () => {
+    const summary = summarizeStepStatuses([
+      "completed",
+      "completed",
+      "started",
+      "pending",
+    ]);
+    expect(syncGoalPctFromLifeEvent(summary.percent)).toBe(50);
   });
 
   it("sets completedAt on complete", () => {

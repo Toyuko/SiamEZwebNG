@@ -6,12 +6,18 @@
 import { getServiceSearchMeta } from "@/config/service-search";
 import { getHelpSearchStubs } from "@/lib/search/help-stubs";
 import {
+  buildBookingSearchPath,
+  buildGoalSearchPath,
+  buildLifeEventSearchPath,
   buildPropertySearchPath,
   buildServiceSearchPath,
   buildVehicleSearchPath,
 } from "@/lib/search/urls";
 import type {
+  BookingSearchDocument,
+  GoalSearchDocument,
   HelpSearchDocument,
+  LifeEventSearchDocument,
   PropertySearchDocument,
   PropertySearchSource,
   SearchDocument,
@@ -19,6 +25,9 @@ import type {
   ServiceSearchSource,
   VehicleSearchDocument,
   VehicleSearchSource,
+  LifeEventSearchSource,
+  GoalSearchSource,
+  BookingSearchSource,
 } from "@/lib/search/types";
 
 export function buildServiceSearchDocument(
@@ -108,10 +117,94 @@ export function buildPropertySearchDocument(
   };
 }
 
+export function buildLifeEventSearchDocument(
+  source: LifeEventSearchSource,
+  locale: "en" | "th" = "en"
+): LifeEventSearchDocument {
+  const key = source.key.trim();
+  const title =
+    locale === "th" && source.titleTh?.trim() ? source.titleTh.trim() : source.titleEn;
+  const description =
+    locale === "th" && source.descriptionTh?.trim()
+      ? source.descriptionTh.trim()
+      : (source.descriptionEn ?? "");
+  const keywords = [
+    key,
+    source.titleEn,
+    source.titleTh ?? "",
+    "life event",
+    "journey",
+    "goal",
+    "checklist",
+  ].filter(Boolean);
+
+  return {
+    id: `life_event:${key}`,
+    division: "life_event",
+    key,
+    title,
+    subtitle: description ? String(description).slice(0, 160) : undefined,
+    keywords,
+    searchText: [title, key, description, ...keywords].join(" "),
+    href: buildLifeEventSearchPath(key),
+  };
+}
+
+export function buildGoalSearchDocument(source: GoalSearchSource): GoalSearchDocument {
+  const goalId = source.id.trim();
+  const title = source.title.trim();
+  const keywords = ["goal", "life event", "progress", source.status ?? "active"].filter(
+    Boolean
+  );
+
+  return {
+    id: `goal:${goalId}`,
+    division: "goal",
+    goalId,
+    title,
+    subtitle: source.status ? `Status: ${source.status}` : undefined,
+    keywords,
+    searchText: [title, ...keywords].join(" "),
+    href: buildGoalSearchPath(),
+  };
+}
+
+export function buildBookingSearchDocument(
+  source: BookingSearchSource
+): BookingSearchDocument {
+  const caseId = source.id.trim();
+  const caseNumber = source.caseNumber.trim();
+  const title = source.serviceName.trim() || caseNumber;
+  const subtitle = caseNumber !== title ? caseNumber : undefined;
+  const keywords = [
+    caseNumber,
+    source.serviceName,
+    source.status ?? "",
+    "booking",
+    "case",
+    "service",
+  ].filter(Boolean);
+
+  return {
+    id: `booking:${caseId}`,
+    division: "booking",
+    caseId,
+    caseNumber,
+    title,
+    subtitle,
+    keywords,
+    searchText: [title, caseNumber, source.serviceName, ...keywords].join(" "),
+    href: buildBookingSearchPath(caseId),
+  };
+}
+
 export type BuildSearchIndexInput = {
   services?: ServiceSearchSource[];
   vehicles?: VehicleSearchSource[];
   properties?: PropertySearchSource[];
+  lifeEvents?: LifeEventSearchSource[];
+  goals?: GoalSearchSource[];
+  bookings?: BookingSearchSource[];
   /** Include static help stubs (default true). */
   includeHelp?: boolean;
   locale?: "en" | "th";
@@ -119,11 +212,25 @@ export type BuildSearchIndexInput = {
 
 /** Build a flat index from division sources (+ optional help stubs). */
 export function buildSearchDocuments(input: BuildSearchIndexInput = {}): SearchDocument[] {
+  const locale = input.locale ?? "en";
   const services = (input.services ?? []).map(buildServiceSearchDocument);
   const vehicles = (input.vehicles ?? []).map(buildVehicleSearchDocument);
   const properties = (input.properties ?? []).map(buildPropertySearchDocument);
+  const lifeEvents = (input.lifeEvents ?? []).map((s) =>
+    buildLifeEventSearchDocument(s, locale)
+  );
+  const goals = (input.goals ?? []).map(buildGoalSearchDocument);
+  const bookings = (input.bookings ?? []).map(buildBookingSearchDocument);
   const help: HelpSearchDocument[] =
-    input.includeHelp === false ? [] : getHelpSearchStubs(input.locale ?? "en");
+    input.includeHelp === false ? [] : getHelpSearchStubs(locale);
 
-  return [...services, ...vehicles, ...properties, ...help];
+  return [
+    ...services,
+    ...vehicles,
+    ...properties,
+    ...lifeEvents,
+    ...goals,
+    ...bookings,
+    ...help,
+  ];
 }

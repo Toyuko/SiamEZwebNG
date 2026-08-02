@@ -3,7 +3,10 @@ import {
   getServiceBySlug,
   searchCatalogServices,
 } from "@/lib/ai/recommend";
+import { detectConciergeIntent } from "@/lib/ai/intents";
 import { recommendTool } from "@/lib/ai/tools/recommend";
+import { escalateHumanTool } from "@/lib/ai/tools/escalate-human";
+import { buildLifeEventRecommendationPath } from "@/lib/recommendations";
 import type {
   ConciergeDeepLink,
   ConciergeLocale,
@@ -30,7 +33,7 @@ const COPY = {
   en: {
     greeting:
       "Hi — I'm the SiamEZ Concierge. Tell me what you need in Thailand (visa, driver's license, translation, vehicles, and more) and I'll recommend the right service or listing.",
-    help: "I can search services and marketplace listings, suggest packages (e.g. motorcycle → registration), and deep-link you into booking or `/sales/{id}`. Try: “I viewed a motorcycle” or “find Honda Wave”.",
+    help: "I can search services and marketplace listings, suggest packages (e.g. motorcycle → registration), and hand you Book buttons or real listing links. Try: “I viewed a motorcycle” or “find Honda Wave”.",
     popularIntro: "Here are popular services expats book most often:",
     bookIntro: "Great — pick a service to start booking, or describe what you need:",
     found: (n: number) =>
@@ -40,7 +43,7 @@ const COPY = {
     crossSell:
       "Based on what you described, here are related packages and next steps:",
     marketplace:
-      "I can search vehicles and properties across SiamEZ. Related services and any matching listings are below — tap a link to open `/sales/{id}` or book a package.",
+      "I can search vehicles and properties across SiamEZ. Related services and any matching listings are below — tap a link to open a listing or book a package.",
     none: "I couldn't find an exact match. Browse popular services below, or try different keywords (e.g. visa, license, motorcycle, condo).",
     fallback:
       "I can help you find the right SiamEZ service or listing. Describe your need, or choose a popular option below.",
@@ -48,7 +51,7 @@ const COPY = {
   th: {
     greeting:
       "สวัสดีครับ/ค่ะ — ฉันคือ Concierge ของ SiamEZ บอกความต้องการในไทยได้เลย (วีซ่า ใบขับขี่ แปลเอกสาร รถ ฯลฯ) แล้วฉันจะแนะนำบริการหรือรายการที่เหมาะสม",
-    help: "ฉันค้นหาบริการและรายการในตลาด แนะนำแพ็กเกจ (เช่น มอเตอร์ไซค์ → จดทะเบียน) และพาไปหน้าจองหรือ `/sales/{id}` ได้ ลองพิมพ์ เช่น “ดูมอเตอร์ไซค์” หรือ “หา Honda Wave”",
+    help: "ฉันค้นหาบริการและรายการในตลาด แนะนำแพ็กเกจ (เช่น มอเตอร์ไซค์ → จดทะเบียน) และพาไปหน้าจองหรือรายการจริงได้ ลองพิมพ์ เช่น “ดูมอเตอร์ไซค์” หรือ “หา Honda Wave”",
     popularIntro: "บริการยอดนิยมที่ลูกค้าต่างชาติจองบ่อย:",
     bookIntro: "เลือกบริการเพื่อเริ่มจอง หรืออธิบายสิ่งที่ต้องการ:",
     found: (n: number) =>
@@ -57,7 +60,7 @@ const COPY = {
         : `พบ ${n} บริการที่เกี่ยวข้อง กดจองเพื่อเปิดวิซาร์ด:`,
     crossSell: "จากที่คุณบอก นี่คือแพ็กเกจและขั้นตอนที่เกี่ยวข้อง:",
     marketplace:
-      "ฉันค้นหารถและอสังหาใน SiamEZ ได้ บริการที่เกี่ยวข้องและรายการที่ตรงกันอยู่ด้านล่าง — กดลิงก์เพื่อเปิด `/sales/{id}` หรือจองแพ็กเกจ",
+      "ฉันค้นหารถและอสังหาใน SiamEZ ได้ บริการที่เกี่ยวข้องและรายการที่ตรงกันอยู่ด้านล่าง — กดลิงก์เพื่อเปิดรายการหรือจองแพ็กเกจ",
     none: "ไม่พบบริการที่ตรงเป๊ะ ลองดูบริการยอดนิยมด้านล่าง หรือใช้คำอื่น เช่น วีซ่า ใบขับขี่ มอเตอร์ไซค์ คอนโด",
     fallback:
       "ฉันช่วยหาบริการหรือรายการ SiamEZ ที่เหมาะกับคุณได้ อธิบายความต้องการ หรือเลือกจากตัวเลือกยอดนิยมด้านล่าง",
@@ -113,6 +116,78 @@ export type RuleReplyExtras = {
  * Rule / catalog-based replies used when no LLM API key is configured.
  * Pure and unit-testable. Uses M5 recommendations engine for cross-sell.
  */
+/** True when server-side orchestration should run (mutations / auth-gated links). */
+export function hasOrchestrationIntent(userMessage: string): boolean {
+  return detectConciergeIntent(userMessage) !== null;
+}
+
+function orchestrationHintReply(
+  userMessage: string,
+  locale: ConciergeLocale,
+  searchDeepLinks: ConciergeDeepLink[]
+): ConciergeReply | null {
+  const intent = detectConciergeIntent(userMessage);
+  if (!intent) return null;
+
+  if (intent.kind === "escalate") {
+    const escalation = escalateHumanTool({ context: userMessage, locale });
+    return {
+      content:
+        locale === "th"
+          ? "ฉันจะเชื่อมต่อคุณกับผู้ประสานงาน — กด WhatsApp หรือ LINE ด้านล่าง"
+          : "I'll connect you with a coordinator — tap WhatsApp or LINE below.",
+      recommendations: getPopularRecommendations(locale, 2),
+      deepLinks: [
+        {
+          href: escalation.whatsappUrl,
+          label: escalation.whatsappLabel,
+          kind: "search",
+        },
+        {
+          href: escalation.lineUrl,
+          label: escalation.lineLabel,
+          kind: "search",
+        },
+        ...searchDeepLinks,
+      ],
+      mode: "rule",
+    };
+  }
+
+  if (intent.kind === "start_life_event") {
+    const goalsPath = buildLifeEventRecommendationPath(intent.lifeEventKey);
+    return {
+      content:
+        locale === "th"
+          ? "กำลังเริ่มเช็กลิสต์ให้คุณ…"
+          : "Starting your journey checklist…",
+      recommendations: getPopularRecommendations(locale, 2),
+      deepLinks: [
+        { href: goalsPath, label: locale === "th" ? "เป้าหมาย" : "Goals", kind: "life_event" },
+        ...searchDeepLinks,
+      ],
+      mode: "rule",
+    };
+  }
+
+  return {
+    content:
+      locale === "th"
+        ? "กำลังเริ่มเวิร์กโฟลว์ให้คุณ…"
+        : "Starting your workflow…",
+    recommendations: getPopularRecommendations(locale, 2),
+    deepLinks: [
+      {
+        href: "/portal/workflows",
+        label: locale === "th" ? "เวิร์กโฟลว์" : "Workflows",
+        kind: "search",
+      },
+      ...searchDeepLinks,
+    ],
+    mode: "rule",
+  };
+}
+
 export function buildRuleBasedReply(
   userMessage: string,
   locale: ConciergeLocale,
@@ -121,6 +196,11 @@ export function buildRuleBasedReply(
   const copy = COPY[locale] ?? COPY.en;
   const text = userMessage.trim();
   const searchDeepLinks = extras?.searchDeepLinks ?? [];
+
+  const orchestrationHint = orchestrationHintReply(text, locale, searchDeepLinks);
+  if (orchestrationHint) {
+    return orchestrationHint;
+  }
 
   if (!text || GREETING_RE.test(text)) {
     const recommendations = getPopularRecommendations(locale, 4);

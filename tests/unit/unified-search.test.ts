@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { searchUnifiedSync } from "@/lib/ai/tools/search-unified";
 import {
+  buildBookingSearchDocument,
+  buildGoalSearchDocument,
+  buildLifeEventSearchDocument,
   buildPropertySearchDocument,
   buildSearchDocuments,
   buildServiceSearchDocument,
@@ -10,6 +13,9 @@ import {
   queryUnifiedSearch,
 } from "@/lib/search";
 import {
+  buildBookingSearchPath,
+  buildGoalSearchPath,
+  buildLifeEventSearchPath,
   buildLocalizedPropertySearchPath,
   buildLocalizedServiceSearchPath,
   buildLocalizedVehicleSearchPath,
@@ -21,6 +27,8 @@ import {
 
 const vehicleId = "clxyz0123456789abcdefgh";
 const propertyId = "clprop9876543210zyxwvuts";
+const caseId = "clcase111111111111111111";
+const goalId = "clgoal222222222222222222";
 
 const sampleDocs = buildSearchDocuments({
   services: [
@@ -58,6 +66,28 @@ const sampleDocs = buildSearchDocuments({
       neighborhood: "Sukhumvit",
     },
   ],
+  lifeEvents: [
+    {
+      key: "moving-to-thailand",
+      titleEn: "Moving to Thailand",
+      descriptionEn: "Relocation checklist for expats",
+    },
+  ],
+  goals: [
+    {
+      id: goalId,
+      title: "Get Thai driving license",
+      status: "active",
+    },
+  ],
+  bookings: [
+    {
+      id: caseId,
+      caseNumber: "SE-2026-00042",
+      serviceName: "Driver License",
+      status: "in_progress",
+    },
+  ],
   includeHelp: true,
   locale: "en",
 });
@@ -84,6 +114,14 @@ describe("unified search URL builders", () => {
     expect(buildLocalizedPropertySearchPath("th", propertyId)).toBe(
       `/th/real-estate/${propertyId}`
     );
+  });
+
+  it("builds portal paths for life events, goals, and bookings", () => {
+    expect(buildLifeEventSearchPath("moving-to-thailand")).toBe(
+      "/portal/goals#life-event-moving-to-thailand"
+    );
+    expect(buildGoalSearchPath()).toBe("/portal/goals");
+    expect(buildBookingSearchPath(caseId)).toBe(`/portal/cases/${caseId}`);
   });
 
   it("document builders embed cuid hrefs for listings", () => {
@@ -127,9 +165,14 @@ describe("unified search grouping", () => {
     expect(groups.services.length).toBeGreaterThanOrEqual(2);
     expect(groups.vehicles).toHaveLength(1);
     expect(groups.properties).toHaveLength(1);
+    expect(groups.lifeEvents).toHaveLength(1);
+    expect(groups.goals).toHaveLength(1);
+    expect(groups.bookings).toHaveLength(1);
     expect(groups.help.length).toBeGreaterThan(0);
     expect(groups.vehicles[0]?.listingId).toBe(vehicleId);
     expect(groups.properties[0]?.href).toBe(`/real-estate/${propertyId}`);
+    expect(groups.lifeEvents[0]?.href).toBe("/portal/goals#life-event-moving-to-thailand");
+    expect(groups.bookings[0]?.caseId).toBe(caseId);
   });
 
   it("query returns typed groups for a cross-division term", () => {
@@ -139,12 +182,38 @@ describe("unified search grouping", () => {
     expect(groups.properties.every((p) => p.division === "property")).toBe(true);
   });
 
-  it("finds services and help stubs", () => {
+  it("finds life events, goals, bookings, services and help stubs", () => {
+    const moving = queryUnifiedSearch(sampleDocs, "moving thailand relocation");
+    expect(moving.lifeEvents.some((e) => e.key === "moving-to-thailand")).toBe(true);
+
+    const goalHit = queryUnifiedSearch(sampleDocs, "driving license goal");
+    expect(goalHit.goals.some((g) => g.goalId === goalId)).toBe(true);
+
+    const bookingHit = queryUnifiedSearch(sampleDocs, "SE-2026-00042");
+    expect(bookingHit.bookings.some((b) => b.caseNumber === "SE-2026-00042")).toBe(true);
+
     const license = queryUnifiedSearch(sampleDocs, "driver license bangkok");
     expect(license.services.some((s) => s.slug === "driver-license")).toBe(true);
 
     const contact = queryUnifiedSearch(sampleDocs, "contact support");
     expect(contact.help.some((h) => h.href === "/contact")).toBe(true);
+  });
+
+  it("builds life event, goal, and booking documents with expected hrefs", () => {
+    const lifeEvent = buildLifeEventSearchDocument({
+      key: "retirement",
+      titleEn: "Retiring in Thailand",
+    });
+    const goal = buildGoalSearchDocument({ id: goalId, title: "Open bank account" });
+    const booking = buildBookingSearchDocument({
+      id: caseId,
+      caseNumber: "SE-2026-00099",
+      serviceName: "Visa extension",
+    });
+
+    expect(lifeEvent.href).toBe("/portal/goals#life-event-retirement");
+    expect(goal.href).toBe("/portal/goals");
+    expect(booking.href).toBe(`/portal/cases/${caseId}`);
   });
 });
 
@@ -171,6 +240,8 @@ describe("unified search empty / no-crash", () => {
     expect(result.groups).toEqual(emptyGroupedSearchResults());
     expect(result.pathTemplates.vehicle).toBe("/sales/[id]");
     expect(result.pathTemplates.property).toBe("/real-estate/[id]");
+    expect(result.pathTemplates.lifeEvent).toBe("/portal/goals#life-event-[key]");
+    expect(result.pathTemplates.booking).toBe("/portal/cases/[id]");
   });
 
   it("concierge sync tool returns listing cuid paths", () => {

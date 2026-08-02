@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { createMyGoal, deleteMyGoal, updateMyGoalStatus } from "@/actions/goals";
 import { startLifeEvent, updateMyStepStatus } from "@/actions/life-events";
+import { startMyWorkflow } from "@/actions/workflows";
 import type { LifeEventStepStatus } from "@prisma/client";
 
 type ChecklistStep = {
@@ -38,6 +39,8 @@ type GoalRow = {
   status: string;
   progressPct: number;
   lifeEventTitle: string | null;
+  workflowTemplateId: string | null;
+  workflowTemplateTitle: string | null;
 };
 
 type Labels = {
@@ -57,6 +60,8 @@ type Labels = {
   progressLabel: string;
   noSteps: string;
   linkLifeEvent: string;
+  linkWorkflow: string;
+  startWorkflow: string;
   noEvents: string;
 };
 
@@ -65,12 +70,14 @@ export function GoalsClient({
   availableEvents,
   goals,
   eventOptions,
+  workflowOptions,
   labels,
 }: {
   checklists: Checklist[];
   availableEvents: AvailableEvent[];
   goals: GoalRow[];
   eventOptions: { id: string; title: string }[];
+  workflowOptions: { id: string; title: string }[];
   labels: Labels;
 }) {
   const router = useRouter();
@@ -291,6 +298,21 @@ export function GoalsClient({
               ))}
             </select>
           </label>
+          <label className="block space-y-1 text-sm sm:w-56">
+            <span className="font-medium">{labels.linkWorkflow}</span>
+            <select
+              name="workflowTemplateId"
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-900"
+              defaultValue=""
+            >
+              <option value="">—</option>
+              {workflowOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.title}
+                </option>
+              ))}
+            </select>
+          </label>
           <Button type="submit" disabled={pending}>
             {labels.createGoal}
           </Button>
@@ -309,9 +331,30 @@ export function GoalsClient({
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {goal.status} · {goal.progressPct}%
                   {goal.lifeEventTitle ? ` · ${goal.lifeEventTitle}` : ""}
+                  {goal.workflowTemplateTitle ? ` · ${goal.workflowTemplateTitle}` : ""}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
+                {goal.workflowTemplateId && goal.status === "active" ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={pending}
+                    onClick={() => {
+                      setError(null);
+                      startTransition(async () => {
+                        try {
+                          await startMyWorkflow(goal.workflowTemplateId!);
+                          refresh();
+                        } catch (e) {
+                          setError(e instanceof Error ? e.message : "Failed");
+                        }
+                      });
+                    }}
+                  >
+                    {labels.startWorkflow}
+                  </Button>
+                ) : null}
                 {goal.status === "active" ? (
                   <Button
                     size="sm"

@@ -7,6 +7,7 @@ import { ConciergePanel } from "@/components/ai/ConciergePanel";
 import { useConciergeChat } from "@/hooks/ai/useConciergeChat";
 import { useConciergeSession } from "@/hooks/ai/useConciergeSession";
 import { getConciergeCapability } from "@/lib/ai/actions";
+import { CONCIERGE_OPEN_EVENT, type ConciergeOpenDetail } from "@/lib/ai/concierge-events";
 import type { ConciergeLocale } from "@/lib/ai/types";
 
 export type AiConciergeShellProps = {
@@ -43,6 +44,18 @@ export function AiConciergeShell({
     updateMessage,
     preferLlm: true,
   });
+
+  useEffect(() => {
+    function onOpenConcierge(event: Event) {
+      const detail = (event as CustomEvent<ConciergeOpenDetail>).detail;
+      setOpen(true);
+      if (detail?.prompt?.trim()) {
+        void sendMessage(detail.prompt);
+      }
+    }
+    window.addEventListener(CONCIERGE_OPEN_EVENT, onOpenConcierge);
+    return () => window.removeEventListener(CONCIERGE_OPEN_EVENT, onOpenConcierge);
+  }, [sendMessage]);
 
   useEffect(() => {
     let cancelled = false;

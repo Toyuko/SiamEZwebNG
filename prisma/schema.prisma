@@ -67,6 +67,7 @@ model User {
   lifeEventProgress   LifeEventProgress[]
   workflowRuns        WorkflowRun[]
   workflowStepApprovals WorkflowStepRun[] @relation("WorkflowStepApprover")
+  listingEnquiries    ListingEnquiry[]
 }
 
 enum FreelancerVerificationStatus {
@@ -1007,23 +1008,26 @@ model LifeEventStepProgress {
 
 /** Customer goal capture — optional link to a life event. */
 model Goal {
-  id           String     @id @default(cuid())
-  userId       String     @map("user_id")
-  title        String
-  status       GoalStatus @default(active)
-  lifeEventId  String?    @map("life_event_id")
+  id                 String     @id @default(cuid())
+  userId             String     @map("user_id")
+  title              String
+  status             GoalStatus @default(active)
+  lifeEventId        String?    @map("life_event_id")
+  workflowTemplateId String?    @map("workflow_template_id")
   /** 0–100 derived or manually set progress. */
-  progressPct  Int        @default(0) @map("progress_pct")
-  notes        String?    @db.Text
-  completedAt  DateTime?  @map("completed_at")
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
+  progressPct        Int        @default(0) @map("progress_pct")
+  notes              String?    @db.Text
+  completedAt        DateTime?  @map("completed_at")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
 
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lifeEvent LifeEvent? @relation(fields: [lifeEventId], references: [id], onDelete: SetNull)
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lifeEvent        LifeEvent?        @relation(fields: [lifeEventId], references: [id], onDelete: SetNull)
+  workflowTemplate WorkflowTemplate? @relation(fields: [workflowTemplateId], references: [id], onDelete: SetNull)
 
   @@index([userId, status])
   @@index([lifeEventId])
+  @@index([workflowTemplateId])
   @@map("goals")
 }
 
@@ -1069,6 +1073,7 @@ model WorkflowTemplate {
 
   steps WorkflowTemplateStep[]
   runs  WorkflowRun[]
+  goals Goal[]
 
   @@index([active, sortOrder])
   @@map("workflow_templates")
@@ -1154,4 +1159,49 @@ model WorkflowStepRun {
   @@index([templateStepId])
   @@index([status])
   @@map("workflow_step_runs")
+}
+
+// ----- Platform 2.0: Marketplace listing enquiries -----
+
+model ListingEnquiry {
+  id          String   @id @default(cuid())
+  listingType String   @map("listing_type") // vehicle | property
+  listingId   String   @map("listing_id")
+  userId      String?  @map("user_id")
+  name        String
+  email       String
+  phone       String?
+  message     String   @db.Text
+  status      String   @default("new") // new | read | closed
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([listingType, listingId])
+  @@index([userId])
+  @@map("listing_enquiries")
+}
+
+/**
+ * Admin-editable recommendation relationships (Platform 2.0).
+ * Defaults also live in src/config/recommendation-graph.ts for offline/tests.
+ */
+model RecommendationEdge {
+  id         String   @id @default(cuid())
+  /// Stable seed / upsert key (e.g. motorcycle-registration).
+  key        String   @unique
+  triggerKey String   @map("trigger_key")
+  targetKind String   @map("target_kind") // service | life_event
+  targetKey  String   @map("target_key")
+  score      Int      @default(50)
+  reasonEn   String   @map("reason_en") @db.Text
+  reasonTh   String?  @map("reason_th") @db.Text
+  active     Boolean  @default(true)
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([triggerKey, active])
+  @@map("recommendation_edges")
 }

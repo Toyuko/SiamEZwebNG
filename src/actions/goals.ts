@@ -15,10 +15,13 @@ export async function createMyGoal(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   if (!title) throw new Error("Title is required");
   const lifeEventId = String(formData.get("lifeEventId") ?? "").trim() || null;
+  const workflowTemplateId =
+    String(formData.get("workflowTemplateId") ?? "").trim() || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const goal = await goalsDA.createGoal(session.user.id, {
     title,
     lifeEventId,
+    workflowTemplateId,
     notes,
   });
   revalidatePath("/portal/goals");

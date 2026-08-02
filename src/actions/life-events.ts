@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAuth, requireStaff } from "@/lib/auth";
 import type { LifeEventRunStatus, LifeEventStepStatus } from "@prisma/client";
 import * as lifeEventsDA from "@/data-access/life-events";
+import { syncLinkedGoalsFromLifeEvent } from "@/data-access/goals";
 import type { LifeEventStepTarget } from "@/lib/life-events";
 import { parseStepTarget } from "@/lib/life-events";
 
@@ -150,6 +151,7 @@ export async function startLifeEvent(lifeEventId: string) {
     session.user.id,
     lifeEventId
   );
+  await syncLinkedGoalsFromLifeEvent(session.user.id, lifeEventId);
   revalidatePath("/portal/goals");
   return progress;
 }
@@ -171,6 +173,9 @@ export async function updateMyStepStatus(
     stepId,
     status
   );
+  if (result) {
+    await syncLinkedGoalsFromLifeEvent(session.user.id, result.lifeEventId);
+  }
   revalidatePath("/portal/goals");
   return result;
 }
@@ -185,6 +190,9 @@ export async function updateMyRunStatus(
     progressId,
     status
   );
+  if (result) {
+    await syncLinkedGoalsFromLifeEvent(session.user.id, result.lifeEventId);
+  }
   revalidatePath("/portal/goals");
   return result;
 }

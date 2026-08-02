@@ -4,6 +4,7 @@ import { Bell } from "lucide-react";
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { getSession } from "@/lib/auth";
+import { isAdminAuthBypassEnabled } from "@/lib/auth/admin-bypass";
 import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
 
@@ -12,8 +13,8 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Bypass: set BYPASS_ADMIN_AUTH=true to skip login for admin
-  const bypassAuth = process.env.BYPASS_ADMIN_AUTH === "true";
+  // Local/dev only — ignored in production / Vercel preview (see isAdminAuthBypassEnabled)
+  const bypassAuth = isAdminAuthBypassEnabled();
 
   if (!bypassAuth) {
     const session = await getSession();

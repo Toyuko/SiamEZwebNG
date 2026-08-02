@@ -23,6 +23,9 @@ export function UnifiedSearchHeaderControl({ className }: { className?: string }
         groupVehicles: t("groupVehicles"),
         groupProperties: t("groupProperties"),
         groupHelp: t("groupHelp"),
+        groupLifeEvents: t("groupLifeEvents"),
+        groupGoals: t("groupGoals"),
+        groupBookings: t("groupBookings"),
         close: t("close"),
         openAria: t("openAria"),
       }}

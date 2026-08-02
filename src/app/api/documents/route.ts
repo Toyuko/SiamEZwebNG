@@ -1,6 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createDocument } from "@/data-access/document";
+import { createDocument, getDocumentsByUserId } from "@/data-access/document";
 import { prisma } from "@/lib/db";
+import { requireBearerApiUser } from "@/lib/auth/requireBearerApiUser";
+
+/**
+ * GET /api/documents
+ * List documents for the authenticated mobile/API user.
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const { userId } = await requireBearerApiUser(request);
+    const docs = await getDocumentsByUserId(userId);
+    const mapped = docs.map((doc) => ({
+      id: doc.id,
+      name: doc.name,
+      type: doc.documentType ?? doc.mimeType ?? "document",
+      uploadedAt: doc.createdAt.toISOString(),
+      status: "PENDING" as const,
+    }));
+    return NextResponse.json({ success: true, data: mapped });
+  } catch (e) {
+    if (e instanceof Error && e.message === "Unauthorized") {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    console.error("GET /api/documents error", e);
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Failed to list documents" },
+      { status: 500 }
+    );
+  }
+}
 
 /**
  * POST /api/documents

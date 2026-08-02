@@ -117,7 +117,7 @@
   },
   "unifiedSearch": {
     "openAria": "Open site search",
-    "placeholder": "Search services, vehicles, properties…",
+    "placeholder": "Search services, vehicles, properties, goals…",
     "empty": "No results found for \"{query}\"",
     "loading": "Loading search index…",
     "shortcutHint": "Press ⌘K or Ctrl+K anytime to search the whole site",
@@ -126,9 +126,36 @@
     "groupVehicles": "Vehicles",
     "groupProperties": "Properties",
     "groupHelp": "Help",
+    "groupLifeEvents": "Life event journeys",
+    "groupGoals": "Your goals",
+    "groupBookings": "Your bookings",
     "close": "close"
   },
-  "adminNav": {
+  "listingEnquiry": {
+    "title": "Send an enquiry",
+    "subtitle": "Message the seller about {listing}. We will forward your details.",
+    "name": "Your name",
+    "email": "Email",
+    "phone": "Phone (optional)",
+    "message": "Message",
+    "messagePlaceholder": "I'm interested in viewing this listing…",
+    "submit": "Send enquiry",
+    "submitting": "Sending…",
+    "success": "Thank you — your enquiry was sent to the seller.",
+    "error": "Could not send your enquiry. Please try again or use WhatsApp.",
+    "inboxTitle": "Listing enquiries",
+    "inboxSubtitle": "Messages from buyers about your vehicle and property listings.",
+    "inboxEmpty": "No enquiries yet. When buyers contact you through a listing, they appear here.",
+    "fromBuyer": "{name} · {email}",
+    "unknownListing": "Listing",
+    "viewListing": "View listing",
+    "markRead": "Mark as read",
+    "status": {
+      "new": "New",
+      "read": "Read",
+      "closed": "Closed"
+    }
+  },
     "dashboard": "Dashboard",
     "groupOperations": "Operations",
     "groupPeople": "People",
@@ -147,6 +174,7 @@
     "services": "Services",
     "lifeEvents": "Life Events",
     "workflows": "Workflows",
+    "recommendations": "Recommendations",
     "sales": "Sales",
     "invoices": "Invoices",
     "paymentsOrders": "Payments & Orders",
@@ -230,6 +258,7 @@
     "perPageLabel": "Per page",
     "backToInventory": "Back to inventory",
     "categoryLabel": "Category",
+    "aiSummaryTitle": "At a glance",
     "videos": "Videos",
     "specifications": "Specifications",
     "copyDescription": "Copy description",
@@ -382,9 +411,11 @@
     "contactSupport": "Contact Support"
   },
   "hero": {
-    "badge": "Professional Thai Services",
-    "headline": "Expert Thai Services",
-    "subline": "Your trusted partner for marriage registration, translations, driver's licenses, police clearance, and more"
+    "badge": "Your goals, our expertise",
+    "headline": "What are you trying to accomplish today?",
+    "subline": "Tell us your goal — we'll guide you through settling in, visas, vehicles, property, and every step in between.",
+    "primaryCta": "Explore your goals",
+    "secondaryCta": "Browse services"
   },
   "home": {
     "servicesTitle": "Our Services",
@@ -392,7 +423,28 @@
     "ctaTitle": "Get In Touch",
     "ctaSubtitle": "Ready to get started? Contact us today!",
     "metaTitle": "Professional Services in Thailand",
-    "metaDescription": "Visas, driver's license, translation, relocation, and more. SiamEZ makes life in Thailand EZ with trusted professional help."
+    "metaDescription": "Visas, driver's license, translation, relocation, and more. SiamEZ makes life in Thailand EZ with trusted professional help.",
+    "goalsSection": {
+      "title": "What are you trying to accomplish today?",
+      "subtitle": "Pick a goal, start a guided journey, or ask our Concierge — we'll point you to the right services and listings.",
+      "popularGoals": "Popular goals",
+      "lifeEvents": "Guided journeys",
+      "marketplace": "Featured marketplace",
+      "viewAllGoals": "View all goals",
+      "viewJourney": "Start",
+      "viewAllVehicles": "Vehicles",
+      "viewAllProperties": "Properties",
+      "conciergeLabel": "Ask the Concierge",
+      "conciergeHint": "Not sure where to start? Describe your goal and get personalized next steps.",
+      "conciergePrompt": "What are you trying to accomplish in Thailand?",
+      "stepsLabel": "steps",
+      "prompts": {
+        "moving": "I'm moving to Thailand",
+        "license": "Get a Thai driver's license",
+        "vehicle": "Register my vehicle",
+        "property": "Find a home or condo"
+      }
+    }
   },
   "whyChoose": {
     "title": "Why Choose SiamEZ",
@@ -1326,7 +1378,8 @@
       "savedHint": "{count} saved",
       "invoicesHint": "{count} pending",
       "documentsHint": "{count} files",
-      "notificationsHint": "{count} need attention"
+      "notificationsHint": "{count} need attention",
+      "enquiriesHint": "{count} new"
     },
     "nextSteps": {
       "title": "Your next steps",
@@ -1453,6 +1506,7 @@
     },
     "publicProfile": "Public Profile",
     "myRealEstate": "My Properties",
+    "listingEnquiries": "Buyer enquiries",
     "savedListings": "Saved & compare",
     "goalsLifeEvents": "Goals & journeys",
     "workflows": "Workflows"
@@ -1494,6 +1548,8 @@
     "progressLabel": "{percent}% · {completed}/{total} steps",
     "noSteps": "This journey has no steps yet.",
     "linkLifeEvent": "Link life event",
+    "linkWorkflow": "Link workflow",
+    "startWorkflow": "Start workflow",
     "noEvents": "No active life events are available yet."
   },
   "marketplaceEngagement": {
@@ -1926,6 +1982,7 @@
     },
     "perPageLabel": "Per page",
     "backToInventory": "Back to properties",
+    "aiSummaryTitle": "At a glance",
     "videos": "Videos",
     "specifications": "Specifications",
     "copyDescription": "Copy description",

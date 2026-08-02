@@ -5,10 +5,8 @@ vi.mock("@/lib/auth", () => ({
   getSession: vi.fn(),
 }));
 
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    case: { findUnique: vi.fn() },
-  },
+vi.mock("@/lib/documents/authz", () => ({
+  assertCanAttachDocumentToCase: vi.fn(),
 }));
 
 vi.mock("@/lib/domain/documents", () => ({
@@ -17,18 +15,18 @@ vi.mock("@/lib/domain/documents", () => ({
 }));
 
 import { requireAuth } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { assertCanAttachDocumentToCase } from "@/lib/documents/authz";
 import { createDocumentMetadata } from "@/lib/domain/documents";
 import { uploadDocumentMetadataAction } from "@/actions/document";
 
 const mockedRequireAuth = vi.mocked(requireAuth);
-const mockedFindCase = vi.mocked(prisma.case.findUnique);
+const mockedAssert = vi.mocked(assertCanAttachDocumentToCase);
 const mockedCreateMeta = vi.mocked(createDocumentMetadata);
 
 describe("uploadDocumentMetadataAction authz", () => {
   beforeEach(() => {
     mockedRequireAuth.mockReset();
-    mockedFindCase.mockReset();
+    mockedAssert.mockReset();
     mockedCreateMeta.mockReset();
     vi.spyOn(console, "error").mockImplementation(() => {});
   });
@@ -38,7 +36,7 @@ describe("uploadDocumentMetadataAction authz", () => {
       user: { id: "cust_1", role: "customer", email: "c@x.com", name: "C" },
       expires: "2099-01-01T00:00:00.000Z",
     } as never);
-    mockedFindCase.mockResolvedValue({ userId: "other_user" } as never);
+    mockedAssert.mockRejectedValue(new Error("Forbidden"));
 
     const result = await uploadDocumentMetadataAction({
       caseId: "case_1",
@@ -50,11 +48,12 @@ describe("uploadDocumentMetadataAction authz", () => {
     expect(mockedCreateMeta).not.toHaveBeenCalled();
   });
 
-  it("allows staff to attach without ownership check", async () => {
+  it("allows staff when ownership assert passes", async () => {
     mockedRequireAuth.mockResolvedValue({
       user: { id: "staff_1", role: "staff", email: "s@x.com", name: "S" },
       expires: "2099-01-01T00:00:00.000Z",
     } as never);
+    mockedAssert.mockResolvedValue(undefined);
     mockedCreateMeta.mockResolvedValue({ id: "doc_1" } as never);
 
     const result = await uploadDocumentMetadataAction({
@@ -64,7 +63,7 @@ describe("uploadDocumentMetadataAction authz", () => {
     });
 
     expect(result).toEqual({ success: true, documentId: "doc_1" });
-    expect(mockedFindCase).not.toHaveBeenCalled();
+    expect(mockedAssert).toHaveBeenCalledWith("case_1", "staff_1", "staff");
     expect(mockedCreateMeta).toHaveBeenCalledWith(
       expect.objectContaining({
         caseId: "case_1",

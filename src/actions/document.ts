@@ -1,7 +1,9 @@
 "use server";
 
 import { getSession, requireAuth } from "@/lib/auth";
+import { isAdminAuthBypassEnabled } from "@/lib/auth/admin-bypass";
 import { prisma } from "@/lib/db";
+import { assertCanAttachDocumentToCase } from "@/lib/documents/authz";
 import {
   createDocumentMetadata as createDocumentMetadataDomain,
   uploadAndCreateDocument,
@@ -23,20 +25,6 @@ export interface UploadDocumentMetadataResult {
   success: boolean;
   documentId?: string;
   error?: string;
-}
-
-async function assertCanAttachDocumentToCase(caseId: string, userId: string, role: string) {
-  if (role === "admin" || role === "staff") return;
-  const caseRecord = await prisma.case.findUnique({
-    where: { id: caseId },
-    select: { userId: true },
-  });
-  if (!caseRecord) {
-    throw new Error("Case not found");
-  }
-  if (caseRecord.userId !== userId) {
-    throw new Error("Forbidden");
-  }
 }
 
 /**
@@ -84,7 +72,7 @@ export interface AdminUploadDocumentResult {
 export async function adminUploadDocumentAction(
   formData: FormData
 ): Promise<AdminUploadDocumentResult> {
-  const bypass = process.env.BYPASS_ADMIN_AUTH === "true";
+  const bypass = isAdminAuthBypassEnabled();
   let uploadedBy: string | undefined;
 
   if (!bypass) {

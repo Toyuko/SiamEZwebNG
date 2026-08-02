@@ -8,6 +8,8 @@ Incremental evolution of SiamEZwebNG into an AI-powered concierge platform.
 | [ROADMAP.md](./ROADMAP.md) | UX/Concierge phases P0–P7 (delivered on branch) |
 | [PLATFORM-MIGRATION-REPORT.md](./PLATFORM-MIGRATION-REPORT.md) | Marketplace content inventory — preserve-first |
 | [PLATFORM-ROADMAP.md](./PLATFORM-ROADMAP.md) | Waves M0–M7 (Life Events, search, recs, workflows) |
+| [AUDIT-IMPLEMENTATION.md](./AUDIT-IMPLEMENTATION.md) | CTO audit priorities implemented (P0–P3) |
+| [API-CONTRACTS.md](./API-CONTRACTS.md) | App 2.0 / agent API contract map |
 | [AGENTS.md](./AGENTS.md) | 12 specialized agent briefs (P0–P7) |
 | [DEPENDENCY-GRAPH.md](./DEPENDENCY-GRAPH.md) | Mermaid graphs: booking, auth, payments, portal, admin |
 | [REUSE-CATALOG.md](./REUSE-CATALOG.md) | Components / hooks / actions to prefer for 2.0 |
@@ -33,7 +35,20 @@ Incremental evolution of SiamEZwebNG into an AI-powered concierge platform.
 11. P7 — A11 Performance + A12 Release QA **merged** · **77** tests  
 12. Reports — [SIAMEZ-2.0-RELEASE-REPORT.md](./releases/SIAMEZ-2.0-RELEASE-REPORT.md) · [P7-PERF.md](./releases/P7-PERF.md)  
 13. P0–P7 Concierge/wizard track — **merged** on `siamez-2.0`  
-14. **Platform marketplace track** — M0 **merged**; **M1 in flight** · 84 tests  
+14. **Platform marketplace track** — **M0–M7 complete** on `siamez-2.0` (`baeb99e`) · **149** tests · M1 emoji-safe truncate fix still uncommitted  
+
+
+
+
+
+
+
+
+
+
+
+
+
 15. Reports — [PLATFORM-MIGRATION-REPORT.md](./PLATFORM-MIGRATION-REPORT.md) · [PLATFORM-ROADMAP.md](./PLATFORM-ROADMAP.md)  
 
 Feature branches merge into `siamez-2.0` after Orchestrator review.

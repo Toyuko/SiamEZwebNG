@@ -1,6 +1,12 @@
 export type {
+  BookingSearchDocument,
+  BookingSearchSource,
+  GoalSearchDocument,
+  GoalSearchSource,
   GroupedSearchResults,
   HelpSearchDocument,
+  LifeEventSearchDocument,
+  LifeEventSearchSource,
   PropertySearchDocument,
   PropertySearchSource,
   SearchDivision,
@@ -14,6 +20,9 @@ export type {
 } from "@/lib/search/types";
 
 export {
+  buildBookingSearchDocument,
+  buildGoalSearchDocument,
+  buildLifeEventSearchDocument,
   buildPropertySearchDocument,
   buildSearchDocuments,
   buildServiceSearchDocument,
@@ -36,6 +45,10 @@ export {
   buildLocalizedPropertySearchPath,
   buildLocalizedServiceSearchPath,
   buildLocalizedVehicleSearchPath,
+  buildBookingSearchPath,
+  buildBookingsHubPath,
+  buildGoalSearchPath,
+  buildLifeEventSearchPath,
   buildPropertySearchPath,
   buildServiceBookPath,
   buildServiceSearchPath,

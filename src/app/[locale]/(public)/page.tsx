@@ -1,11 +1,19 @@
 import { setRequestLocale } from "next-intl/server";
 import { HeroSection } from "@/components/sections/HeroSection";
+import {
+  HomeGoalsSection,
+  mapFeaturedProperty,
+  mapFeaturedVehicle,
+} from "@/components/sections/HomeGoalsSection";
 import { StatsBar } from "@/components/sections/StatsBar";
 import { DisclaimerBanner } from "@/components/sections/DisclaimerBanner";
 import { ServiceGrid } from "@/components/sections/ServiceGrid";
 import { WhyChooseSection } from "@/components/sections/WhyChooseSection";
 import { CTASection } from "@/components/sections/CTASection";
 import { getPublicServicesList } from "@/data-access/service";
+import { listActiveLifeEvents } from "@/data-access/life-events";
+import { getPublicFeaturedBoostedSalesVehicles } from "@/data-access/sales";
+import { getPublicFeaturedBoostedSalesProperties } from "@/data-access/real-estate";
 import { serviceSlugs } from "@/config/services";
 import { getTranslations } from "next-intl/server";
 import { getSession } from "@/lib/auth";
@@ -50,9 +58,25 @@ export default async function HomePage({
   setRequestLocale(locale);
   const session = await getSession();
   const isLoggedIn = !!session?.user;
+  const loc = locale === "th" ? "th" : "en";
 
-  const [services, t, tCommon, tHero, tSite, tWhy, tDisclaimer, tServices] = await Promise.all([
+  const [
+    services,
+    lifeEvents,
+    featuredVehicles,
+    featuredProperties,
+    t,
+    tCommon,
+    tHero,
+    tSite,
+    tWhy,
+    tDisclaimer,
+    tServices,
+  ] = await Promise.all([
     getPublicServicesList().catch(() => []),
+    listActiveLifeEvents().catch(() => []),
+    getPublicFeaturedBoostedSalesVehicles().catch(() => []),
+    getPublicFeaturedBoostedSalesProperties().catch(() => []),
     getTranslations("home"),
     getTranslations("common"),
     getTranslations("hero"),
@@ -61,6 +85,7 @@ export default async function HomePage({
     getTranslations("disclaimer"),
     getTranslations("services"),
   ]);
+
   const displayServices = services.map((s) => ({
     id: s.id,
     name: s.name,
@@ -71,6 +96,50 @@ export default async function HomePage({
     priceCurrency: s.priceCurrency,
   }));
 
+  const goalsHref = isLoggedIn ? "/portal/goals" : `/login?redirect=/${locale}/portal/goals`;
+
+  const popularGoals = [
+    {
+      id: "moving",
+      label: t("goalsSection.prompts.moving"),
+      prompt: t("goalsSection.prompts.moving"),
+      href: isLoggedIn
+        ? "/portal/goals?event=moving-to-thailand"
+        : `/login?redirect=/${locale}/portal/goals%3Fevent%3Dmoving-to-thailand`,
+    },
+    {
+      id: "license",
+      label: t("goalsSection.prompts.license"),
+      prompt: t("goalsSection.prompts.license"),
+    },
+    {
+      id: "vehicle",
+      label: t("goalsSection.prompts.vehicle"),
+      prompt: t("goalsSection.prompts.vehicle"),
+    },
+    {
+      id: "property",
+      label: t("goalsSection.prompts.property"),
+      prompt: t("goalsSection.prompts.property"),
+    },
+  ];
+
+  const lifeEventTeasers = lifeEvents.map((event) => ({
+    id: event.id,
+    key: event.key,
+    title: loc === "th" && event.titleTh ? event.titleTh : event.titleEn,
+    description:
+      loc === "th" && event.descriptionTh
+        ? event.descriptionTh
+        : event.descriptionEn,
+    stepCount: event.steps.length,
+  }));
+
+  const featuredListings = [
+    ...featuredVehicles.map(mapFeaturedVehicle),
+    ...featuredProperties.map(mapFeaturedProperty),
+  ];
+
   return (
     <>
       <HeroSection
@@ -78,10 +147,35 @@ export default async function HomePage({
         headline={tHero("headline")}
         subline={tHero("subline")}
         primaryCta={{
-          label: tCommon("getStarted"),
-          href: isLoggedIn ? "/portal" : "/register",
+          label: tHero("primaryCta"),
+          href: "#home-goals",
         }}
-        secondaryCta={{ label: tCommon("learnMore"), href: "/services" }}
+        secondaryCta={{
+          label: tHero("secondaryCta"),
+          href: "/services",
+        }}
+      />
+      <HomeGoalsSection
+        labels={{
+          title: t("goalsSection.title"),
+          subtitle: t("goalsSection.subtitle"),
+          popularGoals: t("goalsSection.popularGoals"),
+          lifeEvents: t("goalsSection.lifeEvents"),
+          marketplace: t("goalsSection.marketplace"),
+          viewAllGoals: t("goalsSection.viewAllGoals"),
+          viewJourney: t("goalsSection.viewJourney"),
+          viewAllVehicles: t("goalsSection.viewAllVehicles"),
+          viewAllProperties: t("goalsSection.viewAllProperties"),
+          conciergeLabel: t("goalsSection.conciergeLabel"),
+          conciergeHint: t("goalsSection.conciergeHint"),
+          conciergePrompt: t("goalsSection.conciergePrompt"),
+          stepsLabel: t("goalsSection.stepsLabel"),
+        }}
+        popularGoals={popularGoals}
+        lifeEvents={lifeEventTeasers}
+        featuredListings={featuredListings}
+        isLoggedIn={isLoggedIn}
+        goalsHref={goalsHref}
       />
       <StatsBar
         labels={{

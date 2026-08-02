@@ -19,6 +19,8 @@ export type SearchUnifiedToolInput = {
   limitPerGroup?: number;
   /** Inject a prebuilt index (unit tests / offline). */
   documents?: SearchDocument[];
+  /** Include signed-in user's goals and bookings when loading index. */
+  userId?: string;
 };
 
 export type SearchUnifiedToolResult = {
@@ -29,6 +31,9 @@ export type SearchUnifiedToolResult = {
     book: "/book/[slug]";
     vehicle: "/sales/[id]";
     property: "/real-estate/[id]";
+    lifeEvent: "/portal/goals#life-event-[key]";
+    goal: "/portal/goals";
+    booking: "/portal/cases/[id]";
   };
 };
 
@@ -37,6 +42,9 @@ const PATH_TEMPLATES = {
   book: "/book/[slug]",
   vehicle: "/sales/[id]",
   property: "/real-estate/[id]",
+  lifeEvent: "/portal/goals#life-event-[key]",
+  goal: "/portal/goals",
+  booking: "/portal/cases/[id]",
 } as const;
 
 /**
@@ -80,6 +88,7 @@ export async function searchUnifiedTool(
       (await loadSearchDocuments({
         locale: input.locale,
         includeHelp: true,
+        userId: input.userId,
       }));
     return searchUnifiedSync(documents, input);
   } catch {

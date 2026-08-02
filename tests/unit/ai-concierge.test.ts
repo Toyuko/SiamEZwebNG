@@ -14,6 +14,11 @@ import {
   searchServicesTool,
 } from "@/lib/ai/tools/search-services";
 import { generateLocalConciergeReply } from "@/lib/ai/chat";
+import {
+  buildConciergeSystemPrompt,
+  containsPlaceholderUrl,
+  sanitizeConciergeContent,
+} from "@/lib/ai/sanitize-reply";
 
 describe("ai concierge recommend", () => {
   it("returns popular services when query is empty", () => {
@@ -114,5 +119,38 @@ describe("ai concierge session store", () => {
     expect(loaded?.messages).toHaveLength(1);
     expect(loaded?.locale).toBe("en");
     expect(loaded?.version).toBe(1);
+  });
+});
+
+describe("ai concierge URL sanitization", () => {
+  it("strips invented {cuid} markdown listing links", () => {
+    const raw =
+      'Need a license? Check services [here](https://siamez.com/sales/{cuid}). Tap Book below.';
+    const cleaned = sanitizeConciergeContent(raw);
+    expect(cleaned).not.toMatch(/\{cuid\}/i);
+    expect(cleaned).not.toContain("siamez.com/sales");
+    expect(cleaned.toLowerCase()).toContain("tap book");
+    expect(containsPlaceholderUrl(cleaned)).toBe(false);
+  });
+
+  it("strips bare placeholder listing paths", () => {
+    const raw =
+      "Browse real estate /real-estate/{cuid} or vehicles /sales/{id} today.";
+    const cleaned = sanitizeConciergeContent(raw);
+    expect(cleaned).not.toMatch(/\{cuid\}|\{id\}/i);
+    expect(cleaned).toContain("Browse real estate");
+  });
+
+  it("system prompt forbids placeholder listing templates", () => {
+    const prompt = buildConciergeSystemPrompt({
+      locale: "en",
+      allowedBookPaths: [
+        { name: "Driver's License", href: "/book/driver-license" },
+      ],
+      knownListingPaths: [],
+    });
+    expect(prompt).toContain("/book/driver-license");
+    expect(prompt).toMatch(/NEVER invent URLs/i);
+    expect(prompt).toMatch(/do not invent any \/sales/i);
   });
 });
