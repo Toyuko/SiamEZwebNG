@@ -28,6 +28,8 @@ type Labels = {
   popular: string;
   startBooking: string;
   help: string;
+  findVehicles: string;
+  openLink: string;
 };
 
 type Props = {
@@ -109,6 +111,7 @@ export function ConciergePanel({
             messages={messages}
             bookLabel={labels.book}
             emptyLabel={labels.empty}
+            openLinkLabel={labels.openLink}
           />
 
           <ConciergeQuickActions
@@ -119,6 +122,7 @@ export function ConciergePanel({
               popular: labels.popular,
               startBooking: labels.startBooking,
               help: labels.help,
+              findVehicles: labels.findVehicles,
               book: labels.book,
             }}
           />

@@ -5,6 +5,7 @@ import { ActivityFeed } from "@/components/portal/ActivityFeed";
 import { NextSteps } from "@/components/portal/NextSteps";
 import { QuickLinks } from "@/components/portal/QuickLinks";
 import { AiRecommendations } from "@/components/portal/AiRecommendations";
+import { SuggestionSlot } from "@/components/recommendations/SuggestionSlot";
 import { PortalFooter } from "@/components/portal/PortalFooter";
 import { getTranslations } from "next-intl/server";
 import { requireAuth } from "@/lib/auth";
@@ -14,8 +15,10 @@ import { getInvoicesByUserId } from "@/data-access/invoice";
 import { getDocumentsByUserId } from "@/data-access/document";
 import { getRecentActivityForUser } from "@/data-access/activity";
 import { buildCustomerNextSteps } from "@/lib/portal/next-steps";
-import { getPopularRecommendations } from "@/lib/ai/recommend";
+import { getPopularRecommendations, getServiceBySlug } from "@/lib/ai/recommend";
 import type { ConciergeLocale } from "@/lib/ai/types";
+import { buildUserOwner } from "@/lib/marketplace-engagement";
+import { loadRecommendationContext, recommendSync } from "@/lib/recommendations";
 
 export default async function PortalDashboardPage({
   params,
@@ -74,7 +77,25 @@ export default async function PortalDashboardPage({
     },
   });
 
-  const recommendations = getPopularRecommendations(conciergeLocale, 4);
+  const owner = buildUserOwner(session.user.id);
+  const recContext = await loadRecommendationContext({
+    locale: conciergeLocale,
+    owner,
+    userId: session.user.id,
+    limit: 6,
+  });
+  const engineRecs = recommendSync(recContext).suggestions;
+  const serviceChips =
+    engineRecs
+      .filter((s) => s.kind === "service")
+      .map((s) => getServiceBySlug(s.id, conciergeLocale))
+      .filter((s): s is NonNullable<typeof s> => Boolean(s))
+      .slice(0, 4);
+  const recommendations =
+    serviceChips.length > 0
+      ? serviceChips
+      : getPopularRecommendations(conciergeLocale, 4);
+  const crossDivision = engineRecs.filter((s) => s.kind !== "service").slice(0, 3);
 
   return (
     <div className="max-w-7xl">
@@ -163,6 +184,13 @@ export default async function PortalDashboardPage({
         askConciergeLabel={t("aiRecommendations.askConcierge")}
         bookLabel={t("aiRecommendations.book")}
         recommendations={recommendations}
+      />
+
+      <SuggestionSlot
+        title={t("aiRecommendations.title")}
+        subtitle={t("aiRecommendations.subtitle")}
+        ctaLabel={t("aiRecommendations.cta")}
+        suggestions={crossDivision}
       />
 
       <PortalFooter />

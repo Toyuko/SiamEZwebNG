@@ -2,7 +2,7 @@
 
 **Prerequisite:** [PLATFORM-MIGRATION-REPORT.md](./PLATFORM-MIGRATION-REPORT.md)  
 **Integration branch:** `siamez-2.0`  
-**Status:** **Full M0–M7 approved** (2026-08-02) · **M0–M3 at** `01218f1` · Wave **M4** landed on `agent/m4-goals-life-events` (not yet merged) · Wave **M5** next  
+**Status:** **Full M0–M7 approved** (2026-08-02) · **M0–M3 at** `01218f1` · Wave **M4** landed on `agent/m4-goals-life-events` · Wave **M5** landed on `agent/m5-recommendations-concierge` (not yet merged) · Wave **M6** next  
 **Rule:** No division rewrite. Additive engines. Preserve URLs and data.
 
 ---
@@ -147,7 +147,8 @@
 **M2:** Merged (`e563b69`) — `SavedListing` / `ListingView` / `CompareItem` + portal hub `/portal/saved`.  
 **M3:** Merged (`01218f1`) — unified search (`src/lib/search/**` + header ⌘K + Concierge tool).  
 **M4:** Landed on branch `agent/m4-goals-life-events` — Goals + Life Events Engines (not merged to `siamez-2.0` yet).  
-**Active wave:** M5 — Recommendations + Concierge orchestration (after M4 merge).  
+**M5:** Landed on branch `agent/m5-recommendations-concierge` — Recommendations engine + Concierge orchestration (not merged to `siamez-2.0` yet).  
+**Active wave:** M6 — Unified dashboards (after M5 merge).  
 **M1 commands:** `npm run migrate:enhance-listings` (dry-run default) · `--apply` upserts `ListingEnhancement` only.
 
 ---
@@ -195,3 +196,20 @@ Wave M4 adds **configurable Life Events + Goals** without hard-coded journey pag
 | Seed example | `moving-to-thailand` → property → translation → DL → vehicle → registration |
 
 Listing deep links in step targets use **cuid** via Migration Engine helpers (`/sales/{cuid}`, `/real-estate/{cuid}`). SalesVehicle / SalesProperty content is never mutated.
+
+---
+
+## M5 note (branch `agent/m5-recommendations-concierge`)
+
+Wave M5 adds **data-driven cross-sell + Concierge orchestration** across divisions:
+
+| Piece | Location |
+|-------|----------|
+| Recommendations engine | `src/lib/recommendations/**` (deterministic rules; optional polish degrades without `OPENAI_API_KEY`) |
+| Inputs | ListingView / SavedListing engagement, lightweight bookings/cases, goals / life-event progress |
+| Outputs | Typed suggestions: services (slug), listings (cuid URLs), life events |
+| Concierge tools | `search-unified.ts` wired into replies; `tools/recommend.ts`; `tools/open-link.ts` (`/sales/{cuid}`) |
+| UI (lean) | Portal suggestion slot; sales detail related packages; Concierge deep-link chips + Find vehicles quick action |
+
+**Acceptance:** Viewing/saving a motorcycle surfaces `vehicle-registration` (and related finder/license packages). No invented insurance slug — registration covers tax/insurance renewals in catalog copy. Concierge can open `/sales/[id]` via `openListingTool` / search deep links. Listing title/description/images/price are never overwritten.
+

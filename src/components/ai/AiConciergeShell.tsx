@@ -78,6 +78,8 @@ export function AiConciergeShell({
       popular: t("quickActions.popular"),
       startBooking: t("quickActions.startBooking"),
       help: t("quickActions.help"),
+      findVehicles: t("quickActions.findVehicles"),
+      openLink: t("openLink"),
       openLabel: t("openLabel"),
     }),
     [t]
@@ -129,6 +131,8 @@ export function AiConciergeShell({
           popular: labels.popular,
           startBooking: labels.startBooking,
           help: labels.help,
+          findVehicles: labels.findVehicles,
+          openLink: labels.openLink,
         }}
         onClose={() => setOpen(false)}
         onSend={sendMessage}

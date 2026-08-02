@@ -11,6 +11,7 @@ type Props = {
     popular: string;
     startBooking: string;
     help: string;
+    findVehicles: string;
     book: string;
   };
   onPrompt: (prompt: string) => void;
@@ -57,6 +58,20 @@ export function ConciergeQuickActions({
           className="rounded-full border border-siam-blue/20 bg-siam-blue/5 px-2.5 py-1 text-[11px] font-medium text-siam-blue hover:bg-siam-blue/10 disabled:opacity-50"
         >
           {labels.help}
+        </button>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() =>
+            onPrompt(
+              locale === "th"
+                ? "หามอเตอร์ไซค์และบริการจดทะเบียน"
+                : "Find motorcycle listings and registration"
+            )
+          }
+          className="rounded-full border border-siam-blue/20 bg-siam-blue/5 px-2.5 py-1 text-[11px] font-medium text-siam-blue hover:bg-siam-blue/10 disabled:opacity-50"
+        >
+          {labels.findVehicles}
         </button>
       </div>
       <div className="flex flex-wrap gap-1.5">

@@ -21,6 +21,9 @@ import { getListingEnhancement } from "@/lib/migration/enhance";
 import { buildVehicleJsonLd, coerceStoredSchemaJsonLd } from "@/lib/migration/jsonld";
 import { resolveListingMetadata } from "@/lib/migration/metadata";
 import { ListingEngagementBar } from "@/components/marketplace/ListingEngagementBar";
+import { SuggestionSlot } from "@/components/recommendations/SuggestionSlot";
+import { recommendSync } from "@/lib/recommendations";
+import type { RecommendationLocale } from "@/lib/recommendations";
 
 export const dynamic = "force-dynamic";
 
@@ -195,6 +198,21 @@ export default async function SalesVehicleDetailPage({
       },
       { locale, summary: enhancement?.aiSummary }
     );
+
+  const recLocale: RecommendationLocale = locale === "th" ? "th" : "en";
+  const listingSuggestions = recommendSync({
+    locale: recLocale,
+    listings: [
+      {
+        listingType: "vehicle",
+        listingId: vehicle.id,
+        category: vehicle.category,
+        title: vehicle.title,
+        source: "view",
+      },
+    ],
+    limit: 4,
+  }).suggestions.filter((s) => s.kind === "service");
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
@@ -430,6 +448,13 @@ export default async function SalesVehicleDetailPage({
                 </Button>
               </div>
             </div>
+            <SuggestionSlot
+              compact
+              title={t("suggestionsTitle")}
+              subtitle={t("suggestionsSubtitle")}
+              ctaLabel={t("suggestionsCta")}
+              suggestions={listingSuggestions}
+            />
           </CardContent>
         </Card>
       </div>

@@ -7,3 +7,5 @@ export * from "@/lib/ai/stream";
 export * from "@/lib/ai/chat";
 export * from "@/lib/ai/tools/search-services";
 export * from "@/lib/ai/tools/search-unified";
+export * from "@/lib/ai/tools/recommend";
+export * from "@/lib/ai/tools/open-link";

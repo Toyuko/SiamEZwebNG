@@ -251,7 +251,10 @@
     "emptyStateFinderBody": "Try adjusting filters, browse our vehicle finder service to source the right car or bike, or book a consultation.",
     "finderDetailTitle": "Looking for something else?",
     "finderDetailBody": "We can help you find, inspect, negotiate, and complete transfer for vehicles that are not listed here — or help you sell through our network.",
-    "priceContactSeller": "Contact seller for price"
+    "priceContactSeller": "Contact seller for price",
+    "suggestionsTitle": "Related packages",
+    "suggestionsSubtitle": "Services that pair with this vehicle — registration, finder support, and more.",
+    "suggestionsCta": "Open"
   },
   "salesAdmin": {
     "title": "Sales Dashboard",
@@ -1322,9 +1325,10 @@
     },
     "aiRecommendations": {
       "title": "Suggested for you",
-      "subtitle": "Popular services other customers book — or ask the Concierge (chat button) for tailored help.",
+      "subtitle": "Based on your saved and recently viewed listings, bookings, and goals — or ask the Concierge for tailored help.",
       "askConcierge": "Tip: use the Concierge chat for personalized recommendations.",
-      "book": "Book"
+      "book": "Book",
+      "cta": "View"
     },
     "timeline": {
       "title": "Case timeline",
@@ -2041,10 +2045,12 @@
     "voicePermissionDenied": "Microphone access was denied.",
     "voiceNoSpeech": "No speech detected. Try again.",
     "voiceError": "Voice input failed. Please try again.",
+    "openLink": "Open",
     "quickActions": {
       "popular": "Popular services",
       "startBooking": "Start booking",
-      "help": "Help"
+      "help": "Help",
+      "findVehicles": "Find vehicles"
     }
   },
   "adminCase": {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { ConciergeDeepLinkChips } from "@/components/ai/ConciergeDeepLinkChips";
 import { ConciergeServiceChips } from "@/components/ai/ConciergeServiceChips";
 import type { ConciergeMessage } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
@@ -9,9 +10,15 @@ type Props = {
   messages: ConciergeMessage[];
   bookLabel: string;
   emptyLabel: string;
+  openLinkLabel?: string;
 };
 
-export function ConciergeMessageList({ messages, bookLabel, emptyLabel }: Props) {
+export function ConciergeMessageList({
+  messages,
+  bookLabel,
+  emptyLabel,
+  openLinkLabel = "Open",
+}: Props) {
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -53,6 +60,12 @@ export function ConciergeMessageList({ messages, bookLabel, emptyLabel }: Props)
                 <ConciergeServiceChips
                   recommendations={message.recommendations}
                   bookLabel={bookLabel}
+                />
+              ) : null}
+              {!isUser && message.deepLinks?.length ? (
+                <ConciergeDeepLinkChips
+                  links={message.deepLinks}
+                  openLabel={openLinkLabel}
                 />
               ) : null}
             </div>

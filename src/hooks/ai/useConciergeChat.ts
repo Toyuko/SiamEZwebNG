@@ -77,8 +77,12 @@ export function useConciergeChat({
             content: streamed,
             streaming: true,
             recommendations: reply.recommendations,
+            deepLinks: reply.deepLinks,
             kind:
-              reply.recommendations.length > 0 ? "recommendations" : "text",
+              reply.recommendations.length > 0 ||
+              (reply.deepLinks?.length ?? 0) > 0
+                ? "recommendations"
+                : "text",
           });
         }
 
@@ -86,7 +90,12 @@ export function useConciergeChat({
           content: streamed || reply.content,
           streaming: false,
           recommendations: reply.recommendations,
-          kind: reply.recommendations.length > 0 ? "recommendations" : "text",
+          deepLinks: reply.deepLinks,
+          kind:
+            reply.recommendations.length > 0 ||
+            (reply.deepLinks?.length ?? 0) > 0
+              ? "recommendations"
+              : "text",
         });
       } catch (e) {
         if (generation !== abortRef.current) return;

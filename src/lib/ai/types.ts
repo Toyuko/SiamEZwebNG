@@ -13,6 +13,13 @@ export type ConciergeServiceRecommendation = {
   score?: number;
 };
 
+/** Cross-division deep links (listings use cuid paths). */
+export type ConciergeDeepLink = {
+  href: string;
+  label: string;
+  kind: "listing" | "service" | "life_event" | "search";
+};
+
 export type ConciergeMessage = {
   id: string;
   role: ConciergeRole;
@@ -20,6 +27,7 @@ export type ConciergeMessage = {
   createdAt: string;
   kind?: ConciergeMessageKind;
   recommendations?: ConciergeServiceRecommendation[];
+  deepLinks?: ConciergeDeepLink[];
   /** True while tokens are still arriving */
   streaming?: boolean;
 };
@@ -36,6 +44,7 @@ export type ConciergeSession = {
 export type ConciergeReply = {
   content: string;
   recommendations: ConciergeServiceRecommendation[];
+  deepLinks?: ConciergeDeepLink[];
   mode: "rule" | "llm" | "mock-stream";
 };
 
