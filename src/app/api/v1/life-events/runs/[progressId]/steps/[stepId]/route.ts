@@ -40,6 +40,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       stepId,
       body.status
     );
+    if (!result) {
+      return apiBadRequest("Unable to update step");
+    }
     if (result.lifeEventId) {
       await syncLinkedGoalsFromLifeEvent(userId, result.lifeEventId).catch(
         () => undefined
