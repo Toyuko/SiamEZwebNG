@@ -68,6 +68,8 @@ model User {
   workflowRuns        WorkflowRun[]
   workflowStepApprovals WorkflowStepRun[] @relation("WorkflowStepApprover")
   listingEnquiries    ListingEnquiry[]
+  savedSearches       SavedSearch[]
+  featureFlagsUpdated FeatureFlag[] @relation("FeatureFlagUpdater")
 }
 
 enum FreelancerVerificationStatus {
@@ -696,10 +698,14 @@ model SalesVehicle {
   year             Int
   mileageKm        Int                @map("mileage_km")
   priceAmount      Int                @map("price_amount")
+  /** Prior price when reduced — enables Reduced Price badge (Platform 2.1). */
+  previousPriceAmount Int?            @map("previous_price_amount")
   priceCurrency    String             @default("THB") @map("price_currency")
   category         VehicleCategory
   sellerKind       SalesSellerKind    @default(private) @map("seller_kind")
   status           SalesListingStatus @default(available)
+  /** Staff/seller verification badge (Platform 2.1). */
+  isVerified       Boolean            @default(false) @map("is_verified")
   heroMediaType    String             @default("image") @map("hero_media_type")
   heroImageUrl     String             @map("hero_image_url")
   heroVideoUrl     String?            @map("hero_video_url")
@@ -724,6 +730,7 @@ model SalesVehicle {
   @@index([category, status, published])
   @@index([sellerKind, status, published])
   @@index([make, model, year])
+  @@index([isVerified])
   @@map("sales_vehicles")
 }
 
@@ -765,9 +772,11 @@ model SalesProperty {
   district         String?
   neighborhood     String?
   priceAmount      Int                 @map("price_amount")
+  previousPriceAmount Int?             @map("previous_price_amount")
   priceCurrency    String              @default("THB") @map("price_currency")
   sellerKind       SalesSellerKind     @default(private) @map("seller_kind")
   status           SalesListingStatus  @default(available)
+  isVerified       Boolean             @default(false) @map("is_verified")
   furnished        PropertyFurnished   @default(not_applicable)
   heroMediaType    String              @default("image") @map("hero_media_type")
   heroImageUrl     String              @map("hero_image_url")
@@ -791,6 +800,7 @@ model SalesProperty {
   @@index([listingType, status, published])
   @@index([sellerKind, status, published])
   @@index([province, district])
+  @@index([isVerified])
   @@map("sales_properties")
 }
 
@@ -1204,4 +1214,60 @@ model RecommendationEdge {
 
   @@index([triggerKey, active])
   @@map("recommendation_edges")
+}
+
+// ----- Platform 2.1: Saved searches, feature flags, analytics events -----
+
+/** Customer-saved marketplace filter presets (Phase 3). */
+model SavedSearch {
+  id                 String                 @id @default(cuid())
+  ownerKey           String                 @map("owner_key")
+  userId             String?                @map("user_id")
+  anonymousSessionId String?                @map("anonymous_session_id")
+  listingType        MarketplaceListingType @map("listing_type")
+  name               String
+  /// Serialized filter/sort query params (JSON object).
+  query              Json
+  createdAt          DateTime               @default(now()) @map("created_at")
+  updatedAt          DateTime               @updatedAt @map("updated_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([ownerKey, updatedAt])
+  @@index([userId, updatedAt])
+  @@index([listingType])
+  @@map("saved_searches")
+}
+
+/** Runtime feature flags — toggle without redeploy (Phase 7). */
+model FeatureFlag {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  enabled     Boolean  @default(false)
+  description String?  @db.Text
+  updatedById String?  @map("updated_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  updatedBy User? @relation("FeatureFlagUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([enabled])
+  @@map("feature_flags")
+}
+
+/**
+ * Lightweight product analytics events (Phase 6).
+ * kind examples: concierge_chat | search_query | listing_enquiry
+ */
+model PlatformMetricEvent {
+  id        String   @id @default(cuid())
+  kind      String
+  locale    String?
+  userId    String?  @map("user_id")
+  meta      Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([kind, createdAt])
+  @@index([userId, createdAt])
+  @@map("platform_metric_events")
 }

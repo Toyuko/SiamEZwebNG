@@ -13,12 +13,15 @@ import { PUBLIC_REAL_ESTATE_INVENTORY_STATUSES } from "@/data-access/real-estate
 import { PUBLIC_SALES_INVENTORY_STATUSES } from "@/data-access/sales";
 import { buildPropertyJsonLd, buildVehicleJsonLd } from "@/lib/migration/jsonld";
 import { sliceDescriptionForMeta } from "@/lib/migration/metadata";
+import { stripUnpairedSurrogates, truncate } from "@/lib/migration/text";
 import type {
   ApplyEnhancementsResult,
   EnhanceListingsDryRunResult,
   EnhancementPayload,
   ListingEnhancementType,
 } from "@/lib/migration/types";
+
+export { stripUnpairedSurrogates, truncate } from "@/lib/migration/text";
 
 function asInputJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
@@ -90,12 +93,6 @@ export type EnhanceListingsOptions = {
     summary: string;
   }) => Promise<string>;
 };
-
-function truncate(text: string, max: number): string {
-  const collapsed = text.replace(/\s+/g, " ").trim();
-  if (collapsed.length <= max) return collapsed;
-  return `${collapsed.slice(0, max - 1).trimEnd()}…`;
-}
 
 function uniqueKeywords(values: Array<string | null | undefined>): string[] {
   const seen = new Set<string>();

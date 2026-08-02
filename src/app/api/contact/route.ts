@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import {
+  checkRateLimit,
+  clientKeyFromRequest,
+  rateLimitResponse,
+} from "@/lib/security/rate-limit";
 
 const contactSchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -11,6 +16,15 @@ const contactSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const rl = checkRateLimit(
+      clientKeyFromRequest(request, "contact"),
+      8,
+      60_000
+    );
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfterSec);
+    }
+
     const json = await request.json();
     const parsed = contactSchema.safeParse(json);
     if (!parsed.success) {

@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { ListingBadges } from "@/components/marketplace/ListingBadges";
 
 export type PublicSalesPropertyCard = {
   id: string;
@@ -23,6 +24,10 @@ export type PublicSalesPropertyCard = {
   sellerKind: "dealer" | "private";
   isBoosted?: boolean;
   boostActive?: boolean;
+  boostExpiresAt?: Date | null;
+  createdAt?: Date;
+  previousPriceAmount?: number | null;
+  isVerified?: boolean;
 };
 
 function formatPrice(amount: number, currency: string) {
@@ -57,10 +62,18 @@ export function RealEstateListingCard({ property }: RealEstateListingCardProps) 
             sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
             className="object-cover transition-transform group-hover:scale-105"
           />
-          {boosted ? (
-            <span className="absolute right-2 top-2 rounded-md bg-yellow-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-900 shadow-sm">
-              {t("featuredBadge")}
-            </span>
+          {property.createdAt ? (
+            <ListingBadges
+              className="absolute right-2 top-2 justify-end"
+              createdAt={property.createdAt}
+              isBoosted={Boolean(property.isBoosted)}
+              boostExpiresAt={property.boostExpiresAt}
+              previousPriceAmount={property.previousPriceAmount}
+              priceAmount={property.priceAmount}
+              isVerified={property.isVerified}
+            />
+          ) : boosted ? (
+            <span className="absolute right-2 top-2 rounded-md bg-yellow-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-900 shadow-sm">{t("featuredBadge")}</span>
           ) : null}
           <span className="absolute left-2 top-2 rounded-md bg-black/65 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
             {t(`listingType.${property.listingType}`)}

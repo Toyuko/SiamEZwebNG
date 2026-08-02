@@ -184,7 +184,11 @@
     "staff": "พนักงาน",
     "reports": "รายงาน",
     "settings": "ตั้งค่า",
-    "realEstate": "อสังหาริมทรัพย์"
+    "realEstate": "อสังหาริมทรัพย์",
+    "workQueue": "คิวงาน",
+    "staffActivity": "กิจกรรมพนักงาน",
+    "analytics": "การวิเคราะห์",
+    "featureFlags": "ฟีเจอร์แฟล็ก"
   },
   "sales": {
     "inventoryTitle": "คลังรถสำหรับขาย",
@@ -1995,7 +1999,10 @@
     "contactLine": "แชท LINE",
     "contactCall": "โทรเลย",
     "contactEmail": "ส่งอีเมล",
-    "studio": "สตูดิโอ"
+    "studio": "สตูดิโอ",
+    "suggestionsTitle": "แพ็กเกจที่เกี่ยวข้อง",
+    "suggestionsSubtitle": "บริการที่เข้ากับอสังหานี้ — ช่วยดูบ้าน แปลเอกสาร และเช็กลิสต์ย้ายมาอยู่ไทย",
+    "suggestionsCta": "เปิด"
   },
   "realEstateAdmin": {
     "title": "แดชบอร์ดอสังหาริมทรัพย์",

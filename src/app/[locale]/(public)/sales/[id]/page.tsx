@@ -26,6 +26,8 @@ import { ListingEngagementBar } from "@/components/marketplace/ListingEngagement
 import { SuggestionSlot } from "@/components/recommendations/SuggestionSlot";
 import { recommendSync } from "@/lib/recommendations";
 import type { RecommendationLocale } from "@/lib/recommendations";
+import { getRelatedListings } from "@/lib/marketplace/related-listings";
+import { getPeopleAlsoViewed } from "@/lib/marketplace/people-also-viewed";
 
 export const dynamic = "force-dynamic";
 
@@ -172,9 +174,9 @@ export default async function SalesVehicleDetailPage({
       ? (vehicle.specifications as Record<string, string>)
       : {};
   const descriptionLines = formatDescription(vehicle.description);
-  const videoUrls = Array.isArray(vehicle.videoUrls)
-    ? vehicle.videoUrls.filter((url): url is string => typeof url === "string")
-    : [];
+  const videoUrls = (
+    Array.isArray(vehicle.videoUrls) ? vehicle.videoUrls : []
+  ).flatMap((url) => (typeof url === "string" ? [url] : []));
   const heroMediaType = vehicle.heroMediaType === "video" ? "video" : "image";
   const heroVideoUrl =
     heroMediaType === "video" && typeof vehicle.heroVideoUrl === "string" ? vehicle.heroVideoUrl : null;
@@ -215,6 +217,10 @@ export default async function SalesVehicleDetailPage({
     ],
     limit: 4,
   }).suggestions.filter((s) => s.kind === "service");
+  const [relatedListings, alsoViewed] = await Promise.all([
+    getRelatedListings("vehicle", vehicle.id),
+    getPeopleAlsoViewed("vehicle", vehicle.id),
+  ]);
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
@@ -470,6 +476,12 @@ export default async function SalesVehicleDetailPage({
           </CardContent>
         </Card>
       </div>
+      {(relatedListings.length > 0 || alsoViewed.length > 0) ? (
+        <div className="mt-10 grid gap-6 md:grid-cols-2">
+          {relatedListings.length > 0 ? <section><h2 className="text-lg font-semibold">Related listings</h2><ul className="mt-3 space-y-2">{relatedListings.map((item) => <li key={item.id}><Link className="text-sm text-siam-blue hover:underline" href={item.href}>{item.title}</Link></li>)}</ul></section> : null}
+          {alsoViewed.length > 0 ? <section><h2 className="text-lg font-semibold">People also viewed</h2><ul className="mt-3 space-y-2">{alsoViewed.map((item) => <li key={`${item.listingType}:${item.id}`}><Link className="text-sm text-siam-blue hover:underline" href={item.href}>{item.title}</Link></li>)}</ul></section> : null}
+        </div>
+      ) : null}
     </div>
   );
 }

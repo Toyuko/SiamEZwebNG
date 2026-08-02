@@ -6,7 +6,10 @@ import {
 import { detectConciergeIntent } from "@/lib/ai/intents";
 import { recommendTool } from "@/lib/ai/tools/recommend";
 import { escalateHumanTool } from "@/lib/ai/tools/escalate-human";
-import { buildLifeEventRecommendationPath } from "@/lib/recommendations";
+import {
+  buildLifeEventRecommendationPath,
+  type RecommendationSuggestion,
+} from "@/lib/recommendations";
 import type {
   ConciergeDeepLink,
   ConciergeLocale,
@@ -82,18 +85,19 @@ function dedupeRecommendations(
 
 function suggestionsToServiceRecs(
   locale: ConciergeLocale,
-  slugs: string[]
+  suggestions: RecommendationSuggestion[]
 ): ConciergeServiceRecommendation[] {
   const out: ConciergeServiceRecommendation[] = [];
-  for (const slug of slugs) {
-    const svc = getServiceBySlug(slug, locale);
-    if (svc) out.push(svc);
+  for (const s of suggestions) {
+    if (s.kind !== "service") continue;
+    const svc = getServiceBySlug(s.id, locale);
+    if (svc) out.push({ ...svc, reason: s.reason, score: s.score });
   }
   return out;
 }
 
 function suggestionsToDeepLinks(
-  suggestions: ReturnType<typeof recommendTool>["suggestions"]
+  suggestions: RecommendationSuggestion[]
 ): ConciergeDeepLink[] {
   const links: ConciergeDeepLink[] = [];
   for (const s of suggestions) {
@@ -102,6 +106,7 @@ function suggestionsToDeepLinks(
       href: s.href,
       label: s.title,
       kind: s.kind === "listing" ? "listing" : "life_event",
+      reason: s.reason,
     });
   }
   return links;
@@ -110,6 +115,10 @@ function suggestionsToDeepLinks(
 export type RuleReplyExtras = {
   /** Precomputed listing deep links from unified search (server). */
   searchDeepLinks?: ConciergeDeepLink[];
+  /** Precomputed engine suggestions (with configurable reasons). */
+  engineSuggestions?: RecommendationSuggestion[];
+  /** Optional journey summary (unused in pure rule path; reserved). */
+  journeySummary?: string;
 };
 
 /**
@@ -240,10 +249,12 @@ export function buildRuleBasedReply(
   }
 
   // Cross-sell / marketplace orchestration via recommendations engine
-  const rec = recommendTool({ locale, query: text, limit: 6 });
-  const engineServices = suggestionsToServiceRecs(locale, rec.serviceSlugs);
+  const engineSuggestions =
+    extras?.engineSuggestions ??
+    recommendTool({ locale, query: text, limit: 6 }).suggestions;
+  const engineServices = suggestionsToServiceRecs(locale, engineSuggestions);
   const engineLinks = [
-    ...suggestionsToDeepLinks(rec.suggestions),
+    ...suggestionsToDeepLinks(engineSuggestions),
     ...searchDeepLinks,
   ];
 

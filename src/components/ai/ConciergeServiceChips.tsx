@@ -21,7 +21,11 @@ export function ConciergeServiceChips({ recommendations, bookLabel }: Props) {
             <p className="text-sm font-semibold text-siam-blue-dark dark:text-white">
               {service.name}
             </p>
-            {service.shortDescription ? (
+            {service.reason ? (
+              <p className="mt-0.5 line-clamp-2 text-xs text-siam-blue/90 dark:text-sky-300/90">
+                {service.reason}
+              </p>
+            ) : service.shortDescription ? (
               <p className="mt-0.5 line-clamp-2 text-xs text-gray-600 dark:text-gray-300">
                 {service.shortDescription}
               </p>

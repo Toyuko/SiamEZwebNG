@@ -11,11 +11,13 @@ export type SellerListingViewRow = {
   title: string;
   href: string;
   viewCount: number;
+  enquiryCount: number;
 };
 
 export type SellerListingViewStats = {
   listingCount: number;
   totalViews: number;
+  totalEnquiries: number;
   rows: SellerListingViewRow[];
 };
 
@@ -42,13 +44,13 @@ export async function getSellerListingViewStats(
 
   const listingCount = vehicles.length + properties.length;
   if (listingCount === 0) {
-    return { listingCount: 0, totalViews: 0, rows: [] };
+    return { listingCount: 0, totalViews: 0, totalEnquiries: 0, rows: [] };
   }
 
   const vehicleIds = vehicles.map((v) => v.id);
   const propertyIds = properties.map((p) => p.id);
 
-  const groups = await prisma.listingView.groupBy({
+  const [groups, enquiryGroups] = await Promise.all([prisma.listingView.groupBy({
     by: ["listingType", "listingId"],
     where: {
       OR: [
@@ -66,7 +68,16 @@ export async function getSellerListingViewStats(
       ],
     },
     _count: { _all: true },
-  });
+  }), prisma.listingEnquiry.groupBy({
+    by: ["listingType", "listingId"],
+    where: {
+      OR: [
+        ...(vehicleIds.length ? [{ listingType: "vehicle", listingId: { in: vehicleIds } }] : []),
+        ...(propertyIds.length ? [{ listingType: "property", listingId: { in: propertyIds } }] : []),
+      ],
+    },
+    _count: { _all: true },
+  })]);
 
   const countByKey = new Map<string, number>();
   let totalViews = 0;
@@ -75,6 +86,13 @@ export async function getSellerListingViewStats(
     const n = g._count._all;
     countByKey.set(key, n);
     totalViews += n;
+  }
+  const enquiriesByKey = new Map<string, number>();
+  let totalEnquiries = 0;
+  for (const group of enquiryGroups) {
+    const n = group._count._all;
+    enquiriesByKey.set(`${group.listingType}:${group.listingId}`, n);
+    totalEnquiries += n;
   }
 
   const meta = new Map<
@@ -105,10 +123,11 @@ export async function getSellerListingViewStats(
         title: m.title,
         href: m.href,
         viewCount: countByKey.get(key) ?? 0,
+        enquiryCount: enquiriesByKey.get(key) ?? 0,
       };
     })
     .sort((a, b) => b.viewCount - a.viewCount || a.title.localeCompare(b.title))
     .slice(0, limit);
 
-  return { listingCount, totalViews, rows };
+  return { listingCount, totalViews, totalEnquiries, rows };
 }

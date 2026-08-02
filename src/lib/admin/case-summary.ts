@@ -19,6 +19,8 @@ export type CaseSummaryInput = {
   staffNames: string[];
   latestNotePreview?: string | null;
   formDataKeys?: string[];
+  goalCount?: number;
+  enquiryCount?: number;
   locale?: "en" | "th";
 };
 
@@ -80,6 +82,8 @@ export function summarizeCase(input: CaseSummaryInput): CaseSummary {
     );
     if (input.quoteCount > 0) bullets.push(`ใบเสนอราคา: ${input.quoteCount}`);
     if (input.eventCount > 0) bullets.push(`นัดหมาย/กำหนดการ: ${input.eventCount}`);
+    if (input.goalCount) bullets.push(`เป้าหมายที่เกี่ยวข้อง: ${input.goalCount}`);
+    if (input.enquiryCount) bullets.push(`คำถาม/ความสนใจ: ${input.enquiryCount}`);
     if (input.formDataKeys && input.formDataKeys.length > 0) {
       bullets.push(`ฟิลด์ฟอร์ม: ${input.formDataKeys.slice(0, 8).join(", ")}`);
     }
@@ -95,6 +99,8 @@ export function summarizeCase(input: CaseSummaryInput): CaseSummary {
     );
     if (input.quoteCount > 0) bullets.push(`Quotes on file: ${input.quoteCount}`);
     if (input.eventCount > 0) bullets.push(`Scheduled events: ${input.eventCount}`);
+    if (input.goalCount) bullets.push(`Related goals: ${input.goalCount}`);
+    if (input.enquiryCount) bullets.push(`Related enquiries: ${input.enquiryCount}`);
     if (input.formDataKeys && input.formDataKeys.length > 0) {
       bullets.push(`Form fields: ${input.formDataKeys.slice(0, 8).join(", ")}`);
     }

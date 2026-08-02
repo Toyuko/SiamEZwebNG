@@ -34,8 +34,15 @@ export function AiConciergeShell({
   const [open, setOpen] = useState(false);
   const [llmEnabled, setLlmEnabled] = useState(llmEnabledProp);
 
-  const { messages, hydrated, appendMessage, updateMessage, clearHistory } =
-    useConciergeSession({ locale });
+  const {
+    messages,
+    journey,
+    hydrated,
+    appendMessage,
+    updateMessage,
+    setJourney,
+    clearHistory,
+  } = useConciergeSession({ locale });
 
   const { sendMessage, isStreaming } = useConciergeChat({
     locale,
@@ -43,6 +50,8 @@ export function AiConciergeShell({
     appendMessage,
     updateMessage,
     preferLlm: true,
+    journey,
+    onJourneyUpdate: setJourney,
   });
 
   useEffect(() => {

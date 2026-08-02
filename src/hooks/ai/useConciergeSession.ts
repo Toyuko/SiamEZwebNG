@@ -101,13 +101,22 @@ export function useConciergeSession({
     setSession(fresh);
   }, [locale, session, store, withWelcome]);
 
+  const setJourney = useCallback(
+    (journey: NonNullable<ConciergeSession["journey"]>) => {
+      persist((prev) => ({ ...prev, journey }));
+    },
+    [persist]
+  );
+
   return {
     session,
     messages: session?.messages ?? [],
+    journey: session?.journey,
     hydrated,
     setMessages,
     appendMessage,
     updateMessage,
+    setJourney,
     clearHistory,
   };
 }

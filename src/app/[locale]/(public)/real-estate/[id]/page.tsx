@@ -16,6 +16,11 @@ import { resolveListingMetadata } from "@/lib/migration/metadata";
 import { ListingAiSummary } from "@/components/marketplace/ListingAiSummary";
 import { ListingEnquiryForm } from "@/components/marketplace/ListingEnquiryForm";
 import { ListingEngagementBar } from "@/components/marketplace/ListingEngagementBar";
+import { SuggestionSlot } from "@/components/recommendations/SuggestionSlot";
+import { recommendSync } from "@/lib/recommendations";
+import type { RecommendationLocale } from "@/lib/recommendations";
+import { getRelatedListings } from "@/lib/marketplace/related-listings";
+import { getPeopleAlsoViewed } from "@/lib/marketplace/people-also-viewed";
 
 export const dynamic = "force-dynamic";
 
@@ -153,6 +158,25 @@ export default async function RealEstateDetailPage({
     : false;
 
   const enhancement = await getListingEnhancement("property", property.id);
+  const recLocale: RecommendationLocale = locale === "th" ? "th" : "en";
+  const listingSuggestions = recommendSync({
+    locale: recLocale,
+    listings: [
+      {
+        listingType: "property",
+        listingId: property.id,
+        category: property.propertyType,
+        title: property.title,
+        source: "view",
+      },
+    ],
+    limit: 4,
+  }).suggestions.filter((s) => s.kind === "service" || s.kind === "life_event");
+  const [relatedListings, alsoViewed] = await Promise.all([
+    getRelatedListings("property", property.id),
+    getPeopleAlsoViewed("property", property.id),
+  ]);
+
   const jsonLd =
     coerceStoredSchemaJsonLd(enhancement?.schemaJsonLd) ??
     buildPropertyJsonLd(
@@ -453,9 +477,22 @@ export default async function RealEstateDetailPage({
               defaultName={session?.user.name ?? ""}
               defaultEmail={session?.user.email ?? ""}
             />
+            <SuggestionSlot
+              compact
+              title={t("suggestionsTitle")}
+              subtitle={t("suggestionsSubtitle")}
+              ctaLabel={t("suggestionsCta")}
+              suggestions={listingSuggestions}
+            />
           </CardContent>
         </Card>
       </div>
+      {(relatedListings.length > 0 || alsoViewed.length > 0) ? (
+        <div className="mt-10 grid gap-6 md:grid-cols-2">
+          {relatedListings.length > 0 ? <section><h2 className="text-lg font-semibold">Related listings</h2><ul className="mt-3 space-y-2">{relatedListings.map((item) => <li key={item.id}><Link className="text-sm text-siam-blue hover:underline" href={item.href}>{item.title}</Link></li>)}</ul></section> : null}
+          {alsoViewed.length > 0 ? <section><h2 className="text-lg font-semibold">People also viewed</h2><ul className="mt-3 space-y-2">{alsoViewed.map((item) => <li key={`${item.listingType}:${item.id}`}><Link className="text-sm text-siam-blue hover:underline" href={item.href}>{item.title}</Link></li>)}</ul></section> : null}
+        </div>
+      ) : null}
     </div>
   );
 }

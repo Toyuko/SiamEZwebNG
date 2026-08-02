@@ -7,6 +7,7 @@ import {
   createUserMessage,
   generateLocalConciergeReply,
 } from "@/lib/ai/chat";
+import type { ConciergeJourneyContext } from "@/lib/ai/journey-context";
 import { mockTokenStream } from "@/lib/ai/stream";
 import type { ConciergeLocale, ConciergeMessage } from "@/lib/ai/types";
 
@@ -17,6 +18,9 @@ export type UseConciergeChatOptions = {
   updateMessage: (id: string, patch: Partial<ConciergeMessage>) => void;
   /** Prefer server LLM when available; still mock-streams tokens locally */
   preferLlm?: boolean;
+  /** Platform 2.1 journey memory snapshot */
+  journey?: ConciergeJourneyContext | null;
+  onJourneyUpdate?: (journey: ConciergeJourneyContext) => void;
 };
 
 export function useConciergeChat({
@@ -25,6 +29,8 @@ export function useConciergeChat({
   appendMessage,
   updateMessage,
   preferLlm = true,
+  journey = null,
+  onJourneyUpdate,
 }: UseConciergeChatOptions) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +64,11 @@ export function useConciergeChat({
               locale,
               messages: history,
               userMessage: content,
+              journey,
             });
+            if (reply.journey) {
+              onJourneyUpdate?.(reply.journey);
+            }
           } catch {
             // keep local rule reply
           }
@@ -118,8 +128,10 @@ export function useConciergeChat({
     [
       appendMessage,
       isStreaming,
+      journey,
       locale,
       messages,
+      onJourneyUpdate,
       preferLlm,
       updateMessage,
     ]

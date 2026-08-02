@@ -2,7 +2,7 @@
 
 **Prerequisite:** [PLATFORM-MIGRATION-REPORT.md](./PLATFORM-MIGRATION-REPORT.md)  
 **Integration branch:** `siamez-2.0`  
-**Status:** **Full M0–M7 approved** (2026-08-02) · **M0–M6 merged** · Wave **M7** landed on `agent/m7-workflow-templates` (platform track complete on this branch)  
+**Status:** **Full M0–M7 approved** (2026-08-02) · **M0–M7 merged** · Platform marketplace track **complete** · M1 emoji-safe truncate still local/uncommitted  
 **Rule:** No division rewrite. Additive engines. Preserve URLs and data.
 
 ---
@@ -144,18 +144,18 @@
 **Approved:** full M0–M7 (2026-08-02).  
 **M0:** Merged (`7bb5925`) — `npm run migrate:inventory-report`  
 **M1:** Merged (`2eb0534`) — `ListingEnhancement` + `migrate:enhance-listings`  
-**M2:** Merged (`e563b69`) — `SavedListing` / `ListingView` / `CompareItem` + portal hub `/portal/saved`.  
-**M3:** Merged (`01218f1`) — unified search (`src/lib/search/**` + header ⌘K + Concierge tool).  
-**M4:** Landed on branch `agent/m4-goals-life-events` — Goals + Life Events Engines (not merged to `siamez-2.0` yet).  
-**M5:** Merged (`8516a3a`) — Recommendations engine + Concierge orchestration.  
-**M6:** Merged (`33f123c`) — Unified customer workspace + seller views stub.  
-**M7:** Landed on branch `agent/m7-workflow-templates` — Universal Workflow templates (not merged to `siamez-2.0` yet).  
-**Platform track:** M0–M7 complete on feature branches / merges as noted; M7 awaits Orchestrator merge.  
+**M2:** Merged (`e563b69`) — `SavedListing` / `ListingView` / `CompareItem` + portal hub `/portal/saved`  
+**M3:** Merged (`01218f1`) — unified search (`src/lib/search/**` + header ⌘K + Concierge tool)  
+**M4:** Merged (`d55a521`) — Goals + Life Events (`/admin/life-events`, `/portal/goals`)  
+**M5:** Merged (`8516a3a`) — Recommendations + Concierge orchestration  
+**M6:** Merged (`33f123c`) — Unified customer workspace + seller views stub  
+**M7:** Merged (`baeb99e`) — Universal Workflow templates (`/admin/workflows`, `/portal/workflows`)  
+**Platform track:** **M0–M7 complete** on `siamez-2.0`.  
 **M1 commands:** `npm run migrate:enhance-listings` (dry-run default) · `--apply` upserts `ListingEnhancement` only.
 
 ---
 
-## M2 note (merged at e563b69)
+## M2 note (merged)
 
 Wave M2 adds marketplace engagement without mutating listing source content:
 
@@ -184,7 +184,7 @@ URL contracts preserved: vehicles → `/sales/{cuid}`, properties → `/real-est
 
 ---
 
-## M4 note (branch `agent/m4-goals-life-events`)
+## M4 note (merged)
 
 Wave M4 adds **configurable Life Events + Goals** without hard-coded journey pages:
 
@@ -201,7 +201,7 @@ Listing deep links in step targets use **cuid** via Migration Engine helpers (`/
 
 ---
 
-## M5 note (branch `agent/m5-recommendations-concierge`)
+## M5 note (merged)
 
 Wave M5 adds **data-driven cross-sell + Concierge orchestration** across divisions:
 
@@ -217,7 +217,7 @@ Wave M5 adds **data-driven cross-sell + Concierge orchestration** across divisio
 
 ---
 
-## M6 note (branch `agent/m6-unified-dashboards`)
+## M6 note (merged)
 
 Wave M6 extends the **customer portal home** into a single workspace shell (additive cards/sections — no marketplace redesign):
 
@@ -233,7 +233,7 @@ Listing cuid URLs and description fields are never rewritten. Unit tests: `tests
 
 ---
 
-## M7 note (branch `agent/m7-workflow-templates`)
+## M7 note (merged)
 
 Wave M7 adds **Universal Workflow templates** beyond booking wizards (additive engine; WizardEngine untouched):
 

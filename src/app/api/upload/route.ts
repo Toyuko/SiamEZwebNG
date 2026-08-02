@@ -5,6 +5,15 @@ import { resolveApiUserId } from "@/lib/auth/resolveApiUserId";
 import { validateChatAttachment } from "@/lib/uploads/chat-attachment";
 import { validateTrackingAttachment } from "@/lib/uploads/tracking-attachment";
 import { assertFreelancerCanUpdateJobTracking } from "@/lib/jobs/tracking-access";
+import {
+  isAllowedUploadKind,
+  sniffFileHead,
+} from "@/lib/security/magic-bytes";
+import {
+  checkRateLimit,
+  clientKeyFromRequest,
+  rateLimitResponse,
+} from "@/lib/security/rate-limit";
 
 const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
 const MAX_VIDEO_UPLOAD_BYTES = 100 * 1024 * 1024;
@@ -24,6 +33,15 @@ function safeFileSegment(name: string) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const rl = checkRateLimit(
+      clientKeyFromRequest(request, "upload"),
+      40,
+      60_000
+    );
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfterSec);
+    }
+
     const formData = await request.formData();
     const file = formData.get("file");
     if (!(file instanceof File) || file.size <= 0) {
@@ -141,6 +159,14 @@ async function handleGeneralUpload(request: NextRequest, file: File) {
   if (!isImage && !isVideo) {
     return NextResponse.json(
       { error: "Unsupported file type. Please upload an image or video file." },
+      { status: 400 }
+    );
+  }
+
+  const sniffed = await sniffFileHead(file);
+  if (!isAllowedUploadKind(sniffed, "media")) {
+    return NextResponse.json(
+      { error: "File content does not match an allowed image/video type." },
       { status: 400 }
     );
   }

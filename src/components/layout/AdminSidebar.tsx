@@ -26,6 +26,9 @@ import {
   Route,
   Workflow,
   Sparkles,
+  ListChecks,
+  Activity,
+  Flag,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -57,6 +60,7 @@ const navGroups: NavGroup[] = [
       { label: "serviceJobs", href: "/admin/service-jobs", icon: Briefcase },
       { label: "cases", href: "/admin/cases", icon: FolderOpen },
       { label: "calendar", href: "/admin/calendar", icon: Calendar },
+      { label: "workQueue", href: "/admin/work-queue", icon: ListChecks },
     ],
   },
   {
@@ -107,7 +111,12 @@ const navGroups: NavGroup[] = [
     id: "insights",
     label: "groupInsights",
     icon: BarChart3,
-    items: [{ label: "reports", href: "/admin/reports", icon: BarChart3 }],
+    items: [
+      { label: "reports", href: "/admin/reports", icon: BarChart3 },
+      { label: "staffActivity", href: "/admin/staff-activity", icon: Activity },
+      { label: "analytics", href: "/admin/analytics", icon: BarChart3 },
+      { label: "featureFlags", href: "/admin/feature-flags", icon: Flag },
+    ],
   },
 ];
 

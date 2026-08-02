@@ -2,6 +2,10 @@ import {
   CONCIERGE_SESSION_ID_KEY,
   CONCIERGE_SESSION_STORAGE_KEY,
 } from "@/lib/ai/config";
+import {
+  emptyJourneyContext,
+  isConciergeJourneyContext,
+} from "@/lib/ai/journey-context";
 import type {
   ConciergeLocale,
   ConciergeSession,
@@ -23,6 +27,7 @@ export function createEmptySession(locale: ConciergeLocale, id?: string): Concie
     messages: [],
     updatedAt: now,
     version: 1,
+    journey: emptyJourneyContext(),
   };
 }
 
@@ -35,6 +40,14 @@ function isConciergeSession(value: unknown): value is ConciergeSession {
     Array.isArray(v.messages) &&
     v.version === 1
   );
+}
+
+/** Normalize legacy sessions missing journey memory. */
+export function withJourney(session: ConciergeSession): ConciergeSession {
+  if (session.journey && isConciergeJourneyContext(session.journey)) {
+    return session;
+  }
+  return { ...session, journey: emptyJourneyContext() };
 }
 
 /**
@@ -75,7 +88,7 @@ export class LocalStorageConversationStore implements ConversationStore {
       const parsed: unknown = JSON.parse(raw);
       if (!isConciergeSession(parsed)) return null;
       if (parsed.id !== sessionId) return null;
-      return parsed;
+      return withJourney(parsed);
     } catch {
       return null;
     }

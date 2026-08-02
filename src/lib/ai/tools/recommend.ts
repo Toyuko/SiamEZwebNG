@@ -30,6 +30,7 @@ export function recommendTool(input: RecommendToolInput): RecommendToolResult {
     listings: input.context?.listings,
     bookings: input.context?.bookings,
     goals: input.context?.goals,
+    edges: input.context?.edges,
     limit: input.limit ?? 6,
   });
 

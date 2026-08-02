@@ -3,9 +3,23 @@ import * as bcrypt from "bcryptjs";
 import { getUserByEmail } from "@/data-access/user";
 import { createApiJwtForUser } from "@/lib/auth/api-jwt";
 import { ok, fail } from "@/lib/api-response";
+import {
+  checkRateLimit,
+  clientKeyFromRequest,
+  rateLimitResponse,
+} from "@/lib/security/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    const rl = checkRateLimit(
+      clientKeyFromRequest(request, "auth-login"),
+      20,
+      60_000
+    );
+    if (!rl.allowed) {
+      return rateLimitResponse(rl.retryAfterSec);
+    }
+
     const body = await request.json();
     const email = String(body?.email ?? "").trim().toLowerCase();
     const password = String(body?.password ?? "");

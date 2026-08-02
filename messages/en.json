@@ -156,6 +156,7 @@
       "closed": "Closed"
     }
   },
+  "adminNav": {
     "dashboard": "Dashboard",
     "groupOperations": "Operations",
     "groupPeople": "People",
@@ -183,7 +184,11 @@
     "staff": "Staff",
     "reports": "Reports",
     "settings": "Settings",
-    "realEstate": "Real Estate"
+    "realEstate": "Real Estate",
+    "workQueue": "Work queue",
+    "staffActivity": "Staff activity",
+    "analytics": "Analytics",
+    "featureFlags": "Feature flags"
   },
   "sales": {
     "inventoryTitle": "Sales Inventory",
@@ -1994,7 +1999,10 @@
     "contactLine": "Chat on LINE",
     "contactCall": "Call now",
     "contactEmail": "Email us",
-    "studio": "Studio"
+    "studio": "Studio",
+    "suggestionsTitle": "Related packages",
+    "suggestionsSubtitle": "Services that pair with this property — viewing support, translation, and settling-in checklists.",
+    "suggestionsCta": "Open"
   },
   "realEstateAdmin": {
     "title": "Real Estate Dashboard",

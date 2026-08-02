@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { ListingBadges } from "@/components/marketplace/ListingBadges";
 
 export type PublicSalesVehicleCard = {
   id: string;
@@ -21,6 +22,10 @@ export type PublicSalesVehicleCard = {
   /** Raw DB flag; prefer `boostActive` for UI (false when boost expired). */
   isBoosted?: boolean;
   boostActive?: boolean;
+  boostExpiresAt?: Date | null;
+  createdAt?: Date;
+  previousPriceAmount?: number | null;
+  isVerified?: boolean;
 };
 
 function formatPrice(amount: number, currency: string) {
@@ -54,10 +59,18 @@ export function SalesListingCard({ vehicle }: SalesListingCardProps) {
             sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
             className="object-cover transition-transform group-hover:scale-105"
           />
-          {boosted ? (
-            <span className="absolute right-2 top-2 rounded-md bg-yellow-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-900 shadow-sm">
-              {t("featuredBadge")}
-            </span>
+          {vehicle.createdAt ? (
+            <ListingBadges
+              className="absolute right-2 top-2 justify-end"
+              createdAt={vehicle.createdAt}
+              isBoosted={Boolean(vehicle.isBoosted)}
+              boostExpiresAt={vehicle.boostExpiresAt}
+              previousPriceAmount={vehicle.previousPriceAmount}
+              priceAmount={vehicle.priceAmount}
+              isVerified={vehicle.isVerified}
+            />
+          ) : boosted ? (
+            <span className="absolute right-2 top-2 rounded-md bg-yellow-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-900 shadow-sm">{t("featuredBadge")}</span>
           ) : null}
           {vehicle.sellerKind === "dealer" ? (
             <span className="absolute left-2 top-2 rounded-md bg-siam-blue/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">

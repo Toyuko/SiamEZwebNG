@@ -8,6 +8,7 @@ import {
   loadSearchDocuments,
   queryUnifiedSearch,
 } from "@/lib/search";
+import { trackPlatformEvent } from "@/lib/analytics/track";
 
 /** GET /api/v1/search?q=&locale=en|th */
 export async function GET(request: NextRequest) {
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
       return apiOk(serializeJson({ query: q, groups: {}, documents: [] }));
     }
 
+    void trackPlatformEvent("search_query", { queryLength: q.length }, userId ?? undefined, locale);
     const groups = queryUnifiedSearch(documents, q, { limitPerGroup: 8 });
     return apiOk(serializeJson({ query: q, groups }));
   });

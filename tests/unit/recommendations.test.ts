@@ -96,6 +96,28 @@ describe("recommendation URL contracts", () => {
   });
 });
 
+describe("property listing cross-sell", () => {
+  it("surfaces real-estate-services and translation for property views", () => {
+    const result = recommendSync({
+      locale: "en",
+      listings: [
+        {
+          listingType: "property",
+          listingId: propertyCuid,
+          category: "condo",
+          title: "Chiang Mai Condo",
+          source: "view",
+        },
+      ],
+      limit: 8,
+    });
+    const ids = result.suggestions.map((s) => s.id);
+    expect(ids).toContain("real-estate-services");
+    expect(ids).toContain("translation-services");
+    expect(result.suggestions.every((s) => Boolean(s.reason?.trim()))).toBe(true);
+  });
+});
+
 describe("concierge rule reply + recommendations orchestration", () => {
   it("motorcycle intent attaches registration recommendation", () => {
     const reply = buildRuleBasedReply(
@@ -105,6 +127,9 @@ describe("concierge rule reply + recommendations orchestration", () => {
     expect(reply.recommendations.some((r) => r.slug === "vehicle-registration")).toBe(
       true
     );
+    expect(
+      reply.recommendations.find((r) => r.slug === "vehicle-registration")?.reason
+    ).toBeTruthy();
   });
 
   it("attaches provided search deep links for /sales/{cuid}", () => {

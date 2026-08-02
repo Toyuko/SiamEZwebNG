@@ -11,6 +11,9 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SavedHubActions } from "./SavedHubActions";
+import { listSavedSearches } from "@/data-access/saved-searches";
+import { SavedSearchDeleteButton } from "./SavedSearchDeleteButton";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 function formatPrice(amount: number, currency: string, contactLabel: string) {
   if (amount <= 0) return contactLabel;
@@ -99,10 +102,12 @@ export default async function PortalSavedListingsPage({
   const t = await getTranslations("marketplaceEngagement");
   const owner = buildUserOwner(session.user.id);
 
-  const [saved, recent, compare] = await Promise.all([
+  const [saved, recent, compare, savedSearches, marketplaceBeta] = await Promise.all([
     listSavedListingsForHub(owner),
     listRecentViewsForHub(owner),
     listCompareForHub(owner),
+    listSavedSearches(owner),
+    isFeatureEnabled("marketplace_beta"),
   ]);
 
   return (
@@ -131,6 +136,14 @@ export default async function PortalSavedListingsPage({
           actionMode="removeCompare"
         />
       </section>
+      {marketplaceBeta ? <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Saved searches</h2>
+        {savedSearches.length ? <ul className="divide-y rounded-lg border border-gray-200 dark:border-gray-800">{savedSearches.map((search) => {
+          const query = new URLSearchParams(Object.entries(search.query as Record<string, string>)).toString();
+          const href = `${search.listingType === "vehicle" ? "/sales" : "/real-estate"}${query ? `?${query}` : ""}`;
+          return <li key={search.id} className="flex items-center justify-between gap-3 p-3"><Link className="text-sm font-medium text-siam-blue hover:underline" href={href}>{search.name}</Link><SavedSearchDeleteButton id={search.id} /></li>;
+        })}</ul> : <p className="text-sm text-gray-600 dark:text-gray-400">Save a search from marketplace filters to find it here.</p>}
+      </section> : null}
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">

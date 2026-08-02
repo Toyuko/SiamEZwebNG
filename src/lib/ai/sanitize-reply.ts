@@ -52,6 +52,8 @@ export type ConciergePromptContext = {
   locale: "en" | "th";
   allowedBookPaths: Array<{ name: string; href: string }>;
   knownListingPaths: Array<{ label: string; href: string }>;
+  /** Platform 2.1 journey memory summary for adaptive replies */
+  journeySummary?: string;
 };
 
 export function buildConciergeSystemPrompt(ctx: ConciergePromptContext): string {
@@ -65,10 +67,19 @@ export function buildConciergeSystemPrompt(ctx: ConciergePromptContext): string 
       ? ctx.knownListingPaths.map((p) => `- ${p.label}: ${p.href}`).join("\n")
       : "- (none — do not invent any /sales or /real-estate links)";
 
+  const journeyLine =
+    ctx.journeySummary?.trim() ?
+      ctx.locale === "th"
+        ? `บริบทการเดินทางของลูกค้า: ${ctx.journeySummary}`
+        : `Customer journey context: ${ctx.journeySummary}`
+    : null;
+
   if (ctx.locale === "th") {
     return [
       "คุณคือ SiamEZ Concierge ผู้ช่วยแพลตฟอร์มบริการและการจองในประเทศไทย",
       "ตอบสั้น ชัด เป็นมิตร เป็นภาษาไทย",
+      "ปรับคำตอบตามบริบทการเดินทางของลูกค้าเมื่อมี และอธิบายสั้นๆ ว่าทำไมถึงแนะนำ",
+      journeyLine,
       "",
       "กฎลิงก์ (สำคัญมาก):",
       "- ห้ามประดิษฐ์ URL และห้ามเขียน {cuid} {id} {slug} หรือ placeholder อื่นๆ",
@@ -82,12 +93,16 @@ export function buildConciergeSystemPrompt(ctx: ConciergePromptContext): string 
       "",
       "Known listings:",
       listingLines,
-    ].join("\n");
+    ]
+      .filter((line): line is string => line != null)
+      .join("\n");
   }
 
   return [
     "You are the SiamEZ Concierge for Thailand services + marketplace booking.",
     "Keep answers short, clear, and friendly.",
+    "Adapt to the customer's journey context when available and briefly explain why you recommend something.",
+    journeyLine,
     "",
     "URL rules (critical):",
     "- NEVER invent URLs. NEVER write {cuid}, {id}, {slug}, or any placeholder token.",
@@ -102,5 +117,7 @@ export function buildConciergeSystemPrompt(ctx: ConciergePromptContext): string 
     "",
     "Known listings:",
     listingLines,
-  ].join("\n");
+  ]
+    .filter((line): line is string => line != null)
+    .join("\n");
 }

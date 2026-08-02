@@ -50,6 +50,10 @@ function toPublicSalesVehicleCard(
     sellerKind: v.sellerKind,
     isBoosted: v.isBoosted,
     boostActive,
+    boostExpiresAt: v.boostExpiresAt,
+    createdAt: v.createdAt,
+    previousPriceAmount: "previousPriceAmount" in v ? v.previousPriceAmount : null,
+    isVerified: "isVerified" in v ? v.isVerified : false,
   };
 }
 

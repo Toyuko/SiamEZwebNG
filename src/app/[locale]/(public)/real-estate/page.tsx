@@ -41,6 +41,10 @@ function toPublicCard(
     sellerKind: p.sellerKind,
     isBoosted: p.isBoosted,
     boostActive,
+    boostExpiresAt: p.boostExpiresAt,
+    createdAt: p.createdAt,
+    previousPriceAmount: p.previousPriceAmount,
+    isVerified: p.isVerified,
   };
 }
 

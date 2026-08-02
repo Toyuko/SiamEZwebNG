@@ -4,6 +4,8 @@ import {
   buildDeterministicPropertyEnhancement,
   buildDeterministicVehicleEnhancement,
   enhanceListingDryRun,
+  stripUnpairedSurrogates,
+  truncate,
   type EnhancePrismaClient,
 } from "@/lib/migration/enhance";
 import { resolveListingMetadata, sliceDescriptionForMeta } from "@/lib/migration/metadata";
@@ -185,5 +187,14 @@ describe("listing metadata fallback", () => {
     expect(fallback.description).toContain("Source description");
     expect(fallback.usedEnhancementTitle).toBe(false);
     expect(fallback.usedEnhancementDescription).toBe(false);
+  });
+
+  it("truncate never leaves unpaired emoji surrogates", () => {
+    const emoji = "🔥"; // surrogate pair
+    const padded = `${"a".repeat(158)}${emoji}${emoji}`;
+    const out = truncate(padded, 160);
+    expect(out.includes("\uD83D") && !out.includes("\uDD25")).toBe(false);
+    expect(stripUnpairedSurrogates(out)).toBe(out);
+    expect(JSON.stringify({ s: out })).toContain("…");
   });
 });

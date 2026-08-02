@@ -8,6 +8,15 @@ Incremental evolution of SiamEZwebNG into an AI-powered concierge platform.
 | [ROADMAP.md](./ROADMAP.md) | UX/Concierge phases P0–P7 (delivered on branch) |
 | [PLATFORM-MIGRATION-REPORT.md](./PLATFORM-MIGRATION-REPORT.md) | Marketplace content inventory — preserve-first |
 | [PLATFORM-ROADMAP.md](./PLATFORM-ROADMAP.md) | Waves M0–M7 (Life Events, search, recs, workflows) |
+| [PLATFORM-2.1-AUDIT.md](./PLATFORM-2.1-AUDIT.md) | Platform 2.1 health audit (Phases 1–9 complete) |
+| [PLATFORM-2.1-SECURITY.md](./PLATFORM-2.1-SECURITY.md) | Security review (auth, rate limits, uploads, DR) |
+| **Guides** | |
+| [guides/ARCHITECTURE.md](./guides/ARCHITECTURE.md) | System architecture (Next.js 16, engines, Mermaid) |
+| [guides/API.md](./guides/API.md) | Server Actions + `/api/v1` route map |
+| [guides/WORKFLOWS.md](./guides/WORKFLOWS.md) | Universal Workflow Engine vs WizardEngine |
+| [guides/MARKETPLACE.md](./guides/MARKETPLACE.md) | Automotive + property, engagement, 2.1 features |
+| [guides/ADMIN.md](./guides/ADMIN.md) | Staff work queue, analytics, feature flags |
+| [guides/DEVELOPER.md](./guides/DEVELOPER.md) | Local setup, commands, ownership rules |
 | [AUDIT-IMPLEMENTATION.md](./AUDIT-IMPLEMENTATION.md) | CTO audit priorities implemented (P0–P3) |
 | [API-CONTRACTS.md](./API-CONTRACTS.md) | App 2.0 / agent API contract map |
 | [AGENTS.md](./AGENTS.md) | 12 specialized agent briefs (P0–P7) |
@@ -35,20 +44,8 @@ Incremental evolution of SiamEZwebNG into an AI-powered concierge platform.
 11. P7 — A11 Performance + A12 Release QA **merged** · **77** tests  
 12. Reports — [SIAMEZ-2.0-RELEASE-REPORT.md](./releases/SIAMEZ-2.0-RELEASE-REPORT.md) · [P7-PERF.md](./releases/P7-PERF.md)  
 13. P0–P7 Concierge/wizard track — **merged** on `siamez-2.0`  
-14. **Platform marketplace track** — **M0–M7 complete** on `siamez-2.0` (`baeb99e`) · **149** tests · M1 emoji-safe truncate fix still uncommitted  
-
-
-
-
-
-
-
-
-
-
-
-
-
+14. **Platform marketplace track** — **M0–M7 complete** on `siamez-2.0` (`baeb99e`)  
 15. Reports — [PLATFORM-MIGRATION-REPORT.md](./PLATFORM-MIGRATION-REPORT.md) · [PLATFORM-ROADMAP.md](./PLATFORM-ROADMAP.md)  
+16. **Platform 2.1** — **Phases 1–9 complete** · [PLATFORM-2.1-AUDIT.md](./PLATFORM-2.1-AUDIT.md) · [guides/](./guides/) · [PLATFORM-2.1-SECURITY.md](./PLATFORM-2.1-SECURITY.md)
 
 Feature branches merge into `siamez-2.0` after Orchestrator review.

@@ -1,5 +1,10 @@
 /** Shared AI Concierge types — storage-agnostic for localStorage now, server later. */
 
+import type {
+  ConciergeJourneyContext,
+  GoalChangeSignal,
+} from "@/lib/ai/journey-context";
+
 export type ConciergeLocale = "en" | "th";
 
 export type ConciergeRole = "user" | "assistant" | "system";
@@ -11,6 +16,8 @@ export type ConciergeServiceRecommendation = {
   name: string;
   shortDescription: string;
   score?: number;
+  /** Configurable recommendation reason (engine / admin graph). */
+  reason?: string;
 };
 
 /** Cross-division deep links (listings use cuid paths). */
@@ -18,6 +25,8 @@ export type ConciergeDeepLink = {
   href: string;
   label: string;
   kind: "listing" | "service" | "life_event" | "search";
+  /** Why this link was suggested. */
+  reason?: string;
 };
 
 export type ConciergeMessage = {
@@ -39,6 +48,8 @@ export type ConciergeSession = {
   updatedAt: string;
   /** Schema version for future server sync migrations */
   version: 1;
+  /** Platform 2.1 — durable client-side journey memory */
+  journey?: ConciergeJourneyContext;
 };
 
 export type ConciergeReply = {
@@ -46,6 +57,11 @@ export type ConciergeReply = {
   recommendations: ConciergeServiceRecommendation[];
   deepLinks?: ConciergeDeepLink[];
   mode: "rule" | "llm" | "mock-stream";
+  /** Updated journey snapshot for the client to persist */
+  journey?: ConciergeJourneyContext;
+  goalChange?: GoalChangeSignal;
+  /** Bullet explanations attached to the reply */
+  explanations?: string[];
 };
 
 export type ConciergeQuickAction = {
