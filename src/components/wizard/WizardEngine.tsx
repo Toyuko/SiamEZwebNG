@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { MarketplacePostToggle } from "@/components/booking/MarketplacePostToggle";
 import { submitBooking } from "@/actions/booking";
 import { uploadWizardDocumentAction } from "@/actions/document";
+import { getWizardConfig } from "@/config/wizards";
 import type { WizardConfig, WizardRequiredDocument } from "@/config/wizards/types";
 import {
   autosaveStorageKey,
@@ -55,7 +56,6 @@ function resolveRequiredDoc(
 }
 
 export interface WizardEngineProps {
-  config: WizardConfig;
   service: Service;
   serviceSlug: string;
   userId?: string | null;
@@ -83,14 +83,30 @@ function defaultValuesFromConfig(
   return defaults;
 }
 
-export function WizardEngine({
+/**
+ * Resolve wizard config on the client. Server Components must not pass
+ * `WizardConfig` (it may include `buildFormData`, which cannot cross the RSC boundary).
+ */
+export function WizardEngine(props: WizardEngineProps) {
+  const config = getWizardConfig(props.serviceSlug);
+  if (!config) {
+    return (
+      <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        Booking form unavailable for this service.
+      </p>
+    );
+  }
+  return <WizardEngineInner {...props} config={config} />;
+}
+
+function WizardEngineInner({
   config,
   service,
   serviceSlug,
   userId,
   userEmail,
   userName,
-}: WizardEngineProps) {
+}: WizardEngineProps & { config: WizardConfig }) {
   const router = useRouter();
   const storageKey = autosaveStorageKey(serviceSlug, config.autosaveKey);
   const hydratedRef = useRef(false);

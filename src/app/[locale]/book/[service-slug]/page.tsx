@@ -5,12 +5,13 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getOrEnsureServiceBySlug } from "@/data-access/service";
 import { Button } from "@/components/ui/button";
-import { getWizardConfig } from "@/config/wizards";
+import { hasWizardEngine } from "@/config/wizards";
 import { getSession } from "@/lib/auth";
 
 /**
  * Defer the WizardEngine client graph (RHF, step renderers, documents) so the
- * book route shell paints first. Props contract unchanged vs direct import.
+ * book route shell paints first. Do not pass WizardConfig from this RSC —
+ * it may include non-serializable `buildFormData`.
  */
 const WizardEngine = dynamic(
   () =>
@@ -45,9 +46,9 @@ export default async function BookServicePage({
     getTranslations("common"),
   ]);
   if (!service) notFound();
-
-  const engineConfig = getWizardConfig(serviceSlug);
-  if (!engineConfig) notFound();
+  // Config (incl. buildFormData) is resolved inside WizardEngine on the client —
+  // passing it from this Server Component breaks RSC serialization.
+  if (!hasWizardEngine(serviceSlug)) notFound();
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-6 sm:py-8">
@@ -60,7 +61,6 @@ export default async function BookServicePage({
         </Button>
       </div>
       <WizardEngine
-        config={engineConfig}
         service={service}
         serviceSlug={serviceSlug}
         userId={session?.user.id}
