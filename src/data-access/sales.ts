@@ -2,6 +2,12 @@ import { prisma } from "@/lib/db";
 import { resolvePublicSalesPageSize } from "@/lib/public-sales-inventory";
 import type { SalesListingStatus } from "@prisma/client";
 import { boostDaysFromTier } from "@/lib/sales-boost-packages";
+import {
+  canManageOwnedListing,
+  toListingSlug,
+  vehicleListingSchema,
+  type VehicleListingInput,
+} from "@/lib/marketplace/listing-schemas";
 
 export type VehicleCategoryFilter = "all" | "car" | "motorcycle";
 export type SalesSellerKindFilter = "all" | "dealer" | "private";
@@ -366,4 +372,88 @@ export async function getSalesVehiclesByOwner(userId: string) {
     console.warn("User sales list unavailable, returning empty list:", error);
     return [];
   }
+}
+
+async function ensureUniqueVehicleSlug(base: string, excludeId?: string) {
+  let slug = base || `listing-${Date.now()}`;
+  let suffix = 1;
+  while (true) {
+    const found = await prisma.salesVehicle.findFirst({
+      where: { slug, ...(excludeId ? { id: { not: excludeId } } : {}) },
+      select: { id: true },
+    });
+    if (!found) return slug;
+    suffix += 1;
+    slug = `${base}-${suffix}`;
+  }
+}
+
+export async function createSalesVehicleListing(
+  userId: string,
+  input: VehicleListingInput
+) {
+  const parsed = vehicleListingSchema.parse(input);
+  const slug = await ensureUniqueVehicleSlug(
+    toListingSlug(`${parsed.make}-${parsed.model}-${parsed.year}`)
+  );
+
+  return prisma.salesVehicle.create({
+    data: {
+      ...parsed,
+      slug,
+      createdById: userId,
+    },
+  });
+}
+
+export async function updateSalesVehicleListing(
+  userId: string,
+  role: string,
+  id: string,
+  input: VehicleListingInput
+) {
+  const listing = await prisma.salesVehicle.findUnique({
+    where: { id },
+    select: { createdById: true },
+  });
+  if (!listing) {
+    throw new Error("Not found");
+  }
+  if (!canManageOwnedListing(role, userId, listing.createdById)) {
+    throw new Error("Forbidden");
+  }
+
+  const parsed = vehicleListingSchema.parse(input);
+  const slug = await ensureUniqueVehicleSlug(
+    toListingSlug(`${parsed.make}-${parsed.model}-${parsed.year}`),
+    id
+  );
+
+  return prisma.salesVehicle.update({
+    where: { id },
+    data: {
+      ...parsed,
+      slug,
+    },
+  });
+}
+
+export async function deleteSalesVehicleListing(
+  userId: string,
+  role: string,
+  id: string
+) {
+  const listing = await prisma.salesVehicle.findUnique({
+    where: { id },
+    select: { createdById: true },
+  });
+  if (!listing) {
+    throw new Error("Not found");
+  }
+  if (!canManageOwnedListing(role, userId, listing.createdById)) {
+    throw new Error("Forbidden");
+  }
+
+  await prisma.salesVehicle.delete({ where: { id } });
+  return { deleted: true as const, id };
 }

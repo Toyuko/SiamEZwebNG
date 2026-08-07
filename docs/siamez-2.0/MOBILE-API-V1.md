@@ -66,6 +66,19 @@ Body: `{ name, listingType, query: Record<string,string> }` · max 20 per owner.
 | GET | `/api/v1/feature-flags` | optional |
 | GET | `/api/v1/seller/analytics` | required |
 
+## Seller listings (CRUD)
+
+Owner inventory mutate routes. Create = any Bearer user (`createdById` set server-side). Update/delete = `admin` / `staff` **or** listing owner.
+
+| Method | Path | Auth | Engine |
+|--------|------|------|--------|
+| GET/POST | `/api/v1/seller/listings/vehicles` | required | `getSalesVehiclesByOwner` / `createSalesVehicleListing` |
+| PATCH/DELETE | `/api/v1/seller/listings/vehicles/:id` | required | `updateSalesVehicleListing` / `deleteSalesVehicleListing` |
+| GET/POST | `/api/v1/seller/listings/properties` | required | `getSalesPropertiesByOwner` / `createSalesPropertyListing` |
+| PATCH/DELETE | `/api/v1/seller/listings/properties/:id` | required | `updateSalesPropertyListing` / `deleteSalesPropertyListing` |
+
+Body matches shared Zod schemas in `lib/marketplace/listing-schemas.ts` (vehicle / property listing fields). Server owns `slug` and `createdById`. Delete returns `{ deleted: true, id }`. Ownership failures → **403**; missing id → **404**.
+
 ### Concierge body (2.1)
 
 ```json

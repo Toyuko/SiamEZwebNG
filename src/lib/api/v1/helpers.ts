@@ -18,6 +18,10 @@ export function apiBadRequest(error: string) {
   return fail(error, 400);
 }
 
+export function apiForbidden(error = "Forbidden") {
+  return fail(error, 403);
+}
+
 export function apiOk(data: unknown, status = 200) {
   return ok(data, status);
 }
@@ -38,14 +42,17 @@ export async function withBearerUser(
       return apiUnauthorized();
     }
     const message = error instanceof Error ? error.message : "Request failed";
+    const lower = message.toLowerCase();
     const status =
-      message.toLowerCase().includes("not found")
-        ? 404
-        : message.toLowerCase().includes("required") ||
-            message.toLowerCase().includes("invalid") ||
-            message.toLowerCase().includes("cannot transition")
-          ? 400
-          : 500;
+      lower === "forbidden" || lower.includes("forbidden")
+        ? 403
+        : lower.includes("not found")
+          ? 404
+          : lower.includes("required") ||
+              lower.includes("invalid") ||
+              lower.includes("cannot transition")
+            ? 400
+            : 500;
     return fail(message, status);
   }
 }

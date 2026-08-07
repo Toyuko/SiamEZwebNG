@@ -1,85 +1,17 @@
 "use server";
 
-import { prisma } from "@/lib/db";
+import {
+  createSalesVehicleListing,
+  deleteSalesVehicleListing,
+  updateSalesVehicleListing,
+} from "@/data-access/sales";
 import { getSession } from "@/lib/auth";
-import { z } from "zod";
+import {
+  vehicleListingSchema,
+  type VehicleListingInput,
+} from "@/lib/marketplace/listing-schemas";
 
-/** Absolute http(s) URL or site-root path (e.g. /sales/…/photo.jpg). */
-const vehicleImageSrcSchema = z
-  .string()
-  .min(2)
-  .refine(
-    (val) => {
-      if (val.startsWith("/")) {
-        return val.length > 1 && !val.includes("..");
-      }
-      try {
-        new URL(val);
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    { message: "Image URL must be absolute http(s) or a root-relative path" }
-  );
-
-const listingSchema = z
-  .object({
-    title: z.string().min(3),
-    make: z.string().min(1),
-    model: z.string().min(1),
-    year: z.number().int().min(1950).max(new Date().getFullYear() + 1),
-    mileageKm: z.number().int().min(0),
-    priceAmount: z.number().int().min(1),
-    priceCurrency: z.string().min(3).max(3).default("THB"),
-    category: z.enum(["car", "motorcycle"]),
-    sellerKind: z.enum(["dealer", "private"]).default("private"),
-    status: z.enum(["available", "reserved", "sold", "pending_boost"]),
-    heroMediaType: z.enum(["image", "video"]).default("image"),
-    heroImageUrl: vehicleImageSrcSchema,
-    heroVideoUrl: z.string().url().nullable().optional().default(null),
-    imageUrls: z.array(vehicleImageSrcSchema).default([]),
-    videoUrls: z.array(z.string().url()).optional().default([]),
-    description: z.string().min(20),
-    specifications: z.record(z.string(), z.string()).optional(),
-    published: z.boolean().default(true),
-  })
-  .superRefine((value, ctx) => {
-    if (value.imageUrls.length === 0 && value.videoUrls.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "At least one image or video is required",
-        path: ["imageUrls"],
-      });
-    }
-
-    if (value.heroMediaType === "video" && !value.heroVideoUrl) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "heroVideoUrl is required when heroMediaType is video",
-        path: ["heroVideoUrl"],
-      });
-    }
-
-    if (value.heroMediaType === "image" && !value.heroImageUrl) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "heroImageUrl is required when heroMediaType is image",
-        path: ["heroImageUrl"],
-      });
-    }
-  });
-
-function toSlug(input: string) {
-  return input
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
-}
-
-async function ensureStaffAccess() {
+async function requireSessionUser() {
   const session = await getSession();
   if (!session) {
     throw new Error("Unauthorized");
@@ -87,77 +19,19 @@ async function ensureStaffAccess() {
   return session;
 }
 
-function canManageListing(
-  session: Awaited<ReturnType<typeof ensureStaffAccess>>,
-  createdById: string | null
-) {
-  if (session.user.role === "admin" || session.user.role === "staff") {
-    return true;
-  }
-  return createdById === session.user.id;
+export async function createSalesListing(input: VehicleListingInput) {
+  const session = await requireSessionUser();
+  const parsed = vehicleListingSchema.parse(input);
+  return createSalesVehicleListing(session.user.id, parsed);
 }
 
-async function ensureUniqueSlug(base: string, excludeId?: string) {
-  let slug = base || `listing-${Date.now()}`;
-  let suffix = 1;
-  while (true) {
-    const found = await prisma.salesVehicle.findFirst({
-      where: { slug, ...(excludeId ? { id: { not: excludeId } } : {}) },
-      select: { id: true },
-    });
-    if (!found) return slug;
-    suffix += 1;
-    slug = `${base}-${suffix}`;
-  }
-}
-
-export async function createSalesListing(input: z.infer<typeof listingSchema>) {
-  const session = await ensureStaffAccess();
-  const parsed = listingSchema.parse(input);
-  const slug = await ensureUniqueSlug(toSlug(`${parsed.make}-${parsed.model}-${parsed.year}`));
-
-  return prisma.salesVehicle.create({
-    data: {
-      ...parsed,
-      slug,
-      createdById: session.user.id,
-    },
-  });
-}
-
-export async function updateSalesListing(id: string, input: z.infer<typeof listingSchema>) {
-  const session = await ensureStaffAccess();
-  const listing = await prisma.salesVehicle.findUnique({
-    where: { id },
-    select: { createdById: true },
-  });
-  if (!listing || !canManageListing(session, listing.createdById)) {
-    throw new Error("Unauthorized");
-  }
-
-  const parsed = listingSchema.parse(input);
-  const slug = await ensureUniqueSlug(toSlug(`${parsed.make}-${parsed.model}-${parsed.year}`), id);
-
-  return prisma.salesVehicle.update({
-    where: { id },
-    data: {
-      ...parsed,
-      slug,
-    },
-  });
+export async function updateSalesListing(id: string, input: VehicleListingInput) {
+  const session = await requireSessionUser();
+  const parsed = vehicleListingSchema.parse(input);
+  return updateSalesVehicleListing(session.user.id, session.user.role, id, parsed);
 }
 
 export async function deleteSalesListing(id: string) {
-  const session = await ensureStaffAccess();
-  const listing = await prisma.salesVehicle.findUnique({
-    where: { id },
-    select: { createdById: true },
-  });
-  if (!listing || !canManageListing(session, listing.createdById)) {
-    throw new Error("Unauthorized");
-  }
-
-  return prisma.salesVehicle.delete({
-    where: { id },
-  });
+  const session = await requireSessionUser();
+  return deleteSalesVehicleListing(session.user.id, session.user.role, id);
 }

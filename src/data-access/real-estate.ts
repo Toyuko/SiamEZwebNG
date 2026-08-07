@@ -1,6 +1,12 @@
 import { prisma } from "@/lib/db";
 import { resolvePublicRealEstatePageSize } from "@/lib/public-real-estate-inventory";
 import type { PropertyListingType, PropertyType, SalesListingStatus } from "@prisma/client";
+import {
+  canManageOwnedListing,
+  propertyListingSchema,
+  toListingSlug,
+  type PropertyListingInput,
+} from "@/lib/marketplace/listing-schemas";
 
 export type PropertyTypeFilter = "all" | PropertyType;
 export type PropertyListingTypeFilter = "all" | PropertyListingType;
@@ -226,4 +232,153 @@ export async function getSalesPropertiesByOwner(userId: string) {
     console.warn("User real estate list unavailable, returning empty list:", error);
     return [];
   }
+}
+
+async function ensureUniquePropertySlug(base: string, excludeId?: string) {
+  let slug = base || `property-${Date.now()}`;
+  let suffix = 1;
+  while (true) {
+    const found = await prisma.salesProperty.findFirst({
+      where: { slug, ...(excludeId ? { id: { not: excludeId } } : {}) },
+      select: { id: true },
+    });
+    if (!found) return slug;
+    suffix += 1;
+    slug = `${base}-${suffix}`;
+  }
+}
+
+function normalizeBoostFields(parsed: PropertyListingInput) {
+  if (!parsed.isBoosted) {
+    return { isBoosted: false, boostExpiresAt: null as Date | null, boostTier: null as string | null };
+  }
+  const boostExpiresAt =
+    parsed.boostExpiresAt ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  return {
+    isBoosted: true,
+    boostExpiresAt,
+    boostTier: "manual" as string | null,
+  };
+}
+
+export async function createSalesPropertyListing(
+  userId: string,
+  input: PropertyListingInput
+) {
+  const parsed = propertyListingSchema.parse(input);
+  const slug = await ensureUniquePropertySlug(
+    toListingSlug(`${parsed.propertyType}-${parsed.province}-${parsed.title}`)
+  );
+  const boost = normalizeBoostFields(parsed);
+
+  return prisma.salesProperty.create({
+    data: {
+      title: parsed.title,
+      propertyType: parsed.propertyType,
+      listingType: parsed.listingType,
+      bedrooms: parsed.bedrooms ?? null,
+      bathrooms: parsed.bathrooms ?? null,
+      areaSqm: parsed.areaSqm,
+      landAreaSqm: parsed.landAreaSqm ?? null,
+      floor: parsed.floor ?? null,
+      yearBuilt: parsed.yearBuilt ?? null,
+      province: parsed.province,
+      district: parsed.district ?? null,
+      neighborhood: parsed.neighborhood ?? null,
+      priceAmount: parsed.priceAmount,
+      priceCurrency: parsed.priceCurrency,
+      sellerKind: parsed.sellerKind,
+      status: parsed.status,
+      furnished: parsed.furnished,
+      heroMediaType: parsed.heroMediaType,
+      heroImageUrl: parsed.heroImageUrl,
+      heroVideoUrl: parsed.heroVideoUrl ?? null,
+      imageUrls: parsed.imageUrls,
+      videoUrls: parsed.videoUrls,
+      description: parsed.description,
+      specifications: parsed.specifications ?? undefined,
+      published: parsed.published,
+      ...boost,
+      slug,
+      createdById: userId,
+    },
+  });
+}
+
+export async function updateSalesPropertyListing(
+  userId: string,
+  role: string,
+  id: string,
+  input: PropertyListingInput
+) {
+  const listing = await prisma.salesProperty.findUnique({
+    where: { id },
+    select: { createdById: true },
+  });
+  if (!listing) {
+    throw new Error("Not found");
+  }
+  if (!canManageOwnedListing(role, userId, listing.createdById)) {
+    throw new Error("Forbidden");
+  }
+
+  const parsed = propertyListingSchema.parse(input);
+  const slug = await ensureUniquePropertySlug(
+    toListingSlug(`${parsed.propertyType}-${parsed.province}-${parsed.title}`),
+    id
+  );
+  const boost = normalizeBoostFields(parsed);
+
+  return prisma.salesProperty.update({
+    where: { id },
+    data: {
+      title: parsed.title,
+      propertyType: parsed.propertyType,
+      listingType: parsed.listingType,
+      bedrooms: parsed.bedrooms ?? null,
+      bathrooms: parsed.bathrooms ?? null,
+      areaSqm: parsed.areaSqm,
+      landAreaSqm: parsed.landAreaSqm ?? null,
+      floor: parsed.floor ?? null,
+      yearBuilt: parsed.yearBuilt ?? null,
+      province: parsed.province,
+      district: parsed.district ?? null,
+      neighborhood: parsed.neighborhood ?? null,
+      priceAmount: parsed.priceAmount,
+      priceCurrency: parsed.priceCurrency,
+      sellerKind: parsed.sellerKind,
+      status: parsed.status,
+      furnished: parsed.furnished,
+      heroMediaType: parsed.heroMediaType,
+      heroImageUrl: parsed.heroImageUrl,
+      heroVideoUrl: parsed.heroVideoUrl ?? null,
+      imageUrls: parsed.imageUrls,
+      videoUrls: parsed.videoUrls,
+      description: parsed.description,
+      specifications: parsed.specifications ?? undefined,
+      published: parsed.published,
+      ...boost,
+      slug,
+    },
+  });
+}
+
+export async function deleteSalesPropertyListing(
+  userId: string,
+  role: string,
+  id: string
+) {
+  const listing = await prisma.salesProperty.findUnique({
+    where: { id },
+    select: { createdById: true },
+  });
+  if (!listing) {
+    throw new Error("Not found");
+  }
+  if (!canManageOwnedListing(role, userId, listing.createdById)) {
+    throw new Error("Forbidden");
+  }
+
+  await prisma.salesProperty.delete({ where: { id } });
+  return { deleted: true as const, id };
 }
