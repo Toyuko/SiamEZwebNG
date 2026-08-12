@@ -6,7 +6,7 @@ import { getPublicServicesList } from "@/data-access/service";
 import { serviceDirectoryCategoryKeys, serviceBadgeKeys } from "@/config/service-catalog";
 import { enrichServicesList } from "@/lib/service-display";
 import { ServicesJsonLd } from "@/components/services/ServicesJsonLd";
-import { site } from "@/config/site";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 import type { ServiceSortKey } from "@/lib/service-display";
 import type { ServiceBadgeKey } from "@/config/service-catalog";
 
@@ -19,28 +19,14 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "services" });
-  const baseUrl = site.url.replace(/\/$/, "");
 
-  return {
+  return buildPageMetadata({
+    locale,
+    path: "/services",
     title: t("metaTitle"),
     description: t("metaDescription"),
     keywords: t("metaKeywords"),
-    alternates: {
-      canonical: `${baseUrl}/${locale}/services`,
-      languages: {
-        en: `${baseUrl}/en/services`,
-        th: `${baseUrl}/th/services`,
-      },
-    },
-    openGraph: {
-      title: `${t("metaTitle")} | ${site.name}`,
-      description: t("metaDescription"),
-      url: `${baseUrl}/${locale}/services`,
-      siteName: site.name,
-      locale: locale === "th" ? "th_TH" : "en_US",
-      type: "website",
-    },
-  };
+  });
 }
 
 export default async function ServicesPage({

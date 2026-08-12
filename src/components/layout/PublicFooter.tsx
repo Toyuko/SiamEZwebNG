@@ -21,6 +21,7 @@ import Image from "next/image";
 import { Mail, Phone, MessageCircle, Facebook, Instagram, Linkedin, Youtube } from "lucide-react";
 import { site } from "@/config/site";
 import { useTranslations } from "next-intl";
+import { trackEvent } from "@/lib/analytics";
 
 const footerQuickLinks = [
   { href: "/services" },
@@ -121,6 +122,7 @@ export function PublicFooter() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
+                onClick={() => trackEvent("whatsapp_clicked", { source: "footer" })}
                 className="rounded-lg p-2 text-white/80 transition hover:bg-white/10 hover:text-white"
               >
                 <MessageCircle className="h-5 w-5" />
@@ -133,6 +135,7 @@ export function PublicFooter() {
               <li>
                 <a
                   href={`mailto:${site.email}`}
+                  onClick={() => trackEvent("email_clicked", { source: "footer" })}
                   className="flex items-center gap-2 text-sm text-white/85 transition hover:text-siam-yellow"
                 >
                   <Mail className="h-4 w-4 shrink-0" />
@@ -142,6 +145,7 @@ export function PublicFooter() {
               <li>
                 <a
                   href={`tel:${site.phone.replace(/\s/g, "")}`}
+                  onClick={() => trackEvent("phone_clicked", { source: "footer" })}
                   className="flex items-center gap-2 text-sm text-white/85 transition hover:text-siam-yellow"
                 >
                   <Phone className="h-4 w-4 shrink-0" />
@@ -153,6 +157,7 @@ export function PublicFooter() {
                   href={site.lineUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackEvent("line_clicked", { source: "footer" })}
                   className="flex items-center gap-2 text-sm text-white/85 transition hover:text-siam-yellow"
                 >
                   <MessageCircle className="h-4 w-4 shrink-0" />

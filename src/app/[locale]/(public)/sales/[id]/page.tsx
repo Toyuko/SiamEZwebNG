@@ -20,6 +20,7 @@ import {
 import { getListingEnhancement } from "@/lib/migration/enhance";
 import { buildVehicleJsonLd, coerceStoredSchemaJsonLd } from "@/lib/migration/jsonld";
 import { resolveListingMetadata } from "@/lib/migration/metadata";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 import { ListingAiSummary } from "@/components/marketplace/ListingAiSummary";
 import { ListingEnquiryForm } from "@/components/marketplace/ListingEnquiryForm";
 import { ListingEngagementBar } from "@/components/marketplace/ListingEngagementBar";
@@ -36,7 +37,7 @@ export async function generateMetadata({
 }: {
   params: Promise<{ locale: string; id: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
+  const { locale, id } = await params;
   const vehicle = await getPublicSalesVehicleById(id);
   if (!vehicle) {
     return { title: "Vehicle" };
@@ -48,15 +49,13 @@ export async function generateMetadata({
     enhancement
   );
 
-  return {
+  return buildPageMetadata({
+    locale,
+    path: `/sales/${vehicle.id}`,
     title: meta.title,
     description: meta.description,
-    openGraph: {
-      title: meta.title,
-      description: meta.description,
-      images: vehicle.heroImageUrl ? [{ url: vehicle.heroImageUrl }] : undefined,
-    },
-  };
+    ogImage: vehicle.heroImageUrl || undefined,
+  });
 }
 
 function formatPrice(amount: number, currency: string) {

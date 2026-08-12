@@ -30,6 +30,13 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "10mb",
     },
   },
+  async redirects() {
+    return [
+      { source: "/thailicense.html", destination: "/en/services/driver-license", permanent: true },
+      { source: "/en/thailicense.html", destination: "/en/services/driver-license", permanent: true },
+      { source: "/th/thailicense.html", destination: "/th/services/driver-license", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

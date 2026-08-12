@@ -5,6 +5,11 @@ import { site } from "@/config/site";
 import { Mail, Phone, MessageCircle, MapPin } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { ContactRequestForm } from "@/components/sections/ContactRequestForm";
+import { TrackedContactLink } from "@/components/seo/TrackedContactLink";
+import { JsonLdScript } from "@/components/seo/JsonLd";
+import { buildPageMetadata } from "@/lib/seo/metadata";
+import { breadcrumbListJsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
+import { canonicalUrl } from "@/lib/seo/urls";
 
 export async function generateMetadata({
   params,
@@ -13,10 +18,12 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "contact" });
-  return {
+  return buildPageMetadata({
+    locale,
+    path: "/contact",
     title: t("metaTitle"),
     description: t("metaDescription"),
-  };
+  });
 }
 
 export default async function ContactPage({
@@ -33,6 +40,20 @@ export default async function ContactPage({
 
   return (
     <>
+      <JsonLdScript
+        data={[
+          webPageJsonLd({
+            url: canonicalUrl(locale, "/contact"),
+            name: t("metaTitle"),
+            description: t("metaDescription"),
+            locale,
+          }),
+          breadcrumbListJsonLd([
+            { name: tCommon("home"), url: canonicalUrl(locale, "") },
+            { name: t("title"), url: canonicalUrl(locale, "/contact") },
+          ]),
+        ]}
+      />
       <PageHero
         title={t("title")}
         description={t("description")}
@@ -40,8 +61,10 @@ export default async function ContactPage({
       <section className="container mx-auto px-4 py-12 sm:py-16">
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
           <div className="space-y-6">
-            <a
+            <TrackedContactLink
               href={`mailto:${site.email}`}
+              event="email_clicked"
+              source="contact_page"
               className="flex items-center gap-4 rounded-xl border border-border bg-card p-5 shadow-sm transition hover:border-siam-blue hover:shadow-md"
             >
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-siam-blue/10 text-siam-blue">
@@ -51,9 +74,11 @@ export default async function ContactPage({
                 <p className="font-semibold text-foreground">{t("emailUs")}</p>
                 <p className="text-siam-blue">{site.email}</p>
               </div>
-            </a>
-            <a
+            </TrackedContactLink>
+            <TrackedContactLink
               href={`tel:${site.phone.replace(/\s/g, "")}`}
+              event="phone_clicked"
+              source="contact_page"
               className="flex items-center gap-4 rounded-xl border border-border bg-card p-5 shadow-sm transition hover:border-siam-blue hover:shadow-md"
             >
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-siam-blue/10 text-siam-blue">
@@ -63,9 +88,11 @@ export default async function ContactPage({
                 <p className="font-semibold text-foreground">{t("callUs")}</p>
                 <p className="text-siam-blue">{site.phone}</p>
               </div>
-            </a>
-            <a
+            </TrackedContactLink>
+            <TrackedContactLink
               href={site.lineUrl}
+              event="line_clicked"
+              source="contact_page"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-4 rounded-xl border border-border bg-card p-5 shadow-sm transition hover:border-siam-blue hover:shadow-md"
@@ -77,7 +104,7 @@ export default async function ContactPage({
                 <p className="font-semibold text-foreground">{t("lineOfficial")}</p>
                 <p className="text-siam-blue">{site.line}</p>
               </div>
-            </a>
+            </TrackedContactLink>
             <div className="flex items-start gap-4 rounded-xl border border-border bg-card p-5 shadow-sm">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-siam-blue/10 text-siam-blue">
                 <MapPin className="h-6 w-6" />

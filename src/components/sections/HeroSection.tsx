@@ -58,7 +58,7 @@ export function HeroSection({
           >
             <Image
               src={src}
-              alt=""
+              alt={index === 0 ? `${site.name} — Thailand services` : ""}
               fill
               sizes="100vw"
               className="object-cover contrast-110 saturate-125 brightness-95"

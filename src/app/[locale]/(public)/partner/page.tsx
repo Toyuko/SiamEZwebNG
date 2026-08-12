@@ -1,12 +1,20 @@
 import { setRequestLocale } from "next-intl/server";
 import { PageHero } from "@/components/sections/PageHero";
 import { site } from "@/config/site";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export async function generateMetadata() {
-  return {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return buildPageMetadata({
+    locale,
+    path: "/partner",
     title: "Partner Program",
-    description: "Partner with SiamEZ for client referrals and collaborations.",
-  };
+    description: "Partner with SiamEZ for client referrals and service collaborations in Thailand.",
+  });
 }
 
 export default async function PartnerPage({

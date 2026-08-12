@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -7,6 +8,12 @@ import { PortalLayoutClient } from "./PortalLayoutClient";
 import { FirstRunOnboarding } from "@/components/auth/FirstRunOnboarding";
 import { getConciergeSettings } from "@/lib/concierge-settings";
 import { isFeatureEnabled } from "@/lib/feature-flags";
+import { noindexRobots } from "@/lib/seo/metadata";
+
+export const metadata: Metadata = {
+  title: "Client portal",
+  robots: noindexRobots,
+};
 
 export default async function PortalLayout({
   children,

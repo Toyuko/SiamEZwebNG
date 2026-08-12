@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Link } from "@/i18n/navigation";
 import { Bell } from "lucide-react";
@@ -7,6 +8,12 @@ import { getSession } from "@/lib/auth";
 import { isAdminAuthBypassEnabled } from "@/lib/auth/admin-bypass";
 import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
+import { noindexRobots } from "@/lib/seo/metadata";
+
+export const metadata: Metadata = {
+  title: "Admin",
+  robots: noindexRobots,
+};
 
 export default async function AdminLayout({
   children,

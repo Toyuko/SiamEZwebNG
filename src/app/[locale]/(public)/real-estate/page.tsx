@@ -7,8 +7,24 @@ import {
 import { parsePublicRealEstatePageSizeParam } from "@/lib/public-real-estate-inventory";
 import { RealEstateInventoryClient } from "./RealEstateInventoryClient";
 import type { PublicSalesPropertyCard } from "@/components/real-estate/RealEstateListingCard";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return buildPageMetadata({
+    locale,
+    path: "/real-estate",
+    title: "Real Estate in Thailand",
+    description:
+      "Browse condos, houses, and rentals in Thailand. SiamEZ helps foreigners buy, sell, rent, or invest with local support.",
+  });
+}
 
 const PROPERTY_TYPES = ["condo", "house", "townhouse", "land", "commercial", "villa"] as const;
 

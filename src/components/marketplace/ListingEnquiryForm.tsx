@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { createEnquiryAction } from "@/actions/listing-enquiries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { trackEvent } from "@/lib/analytics";
 
 type ListingEnquiryFormProps = {
   listingType: "vehicle" | "property";
@@ -52,6 +53,7 @@ export function ListingEnquiryForm({
     }
     setStatus("success");
     setMessage("");
+    trackEvent("listing_enquiry_submitted", { listing_type: listingType, listing_id: listingId });
   }
 
   return (

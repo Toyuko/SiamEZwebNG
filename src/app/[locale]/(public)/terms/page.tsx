@@ -1,11 +1,19 @@
 import { setRequestLocale } from "next-intl/server";
 import { PageHero } from "@/components/sections/PageHero";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export async function generateMetadata() {
-  return {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return buildPageMetadata({
+    locale,
+    path: "/terms",
     title: "Terms of Service",
-    description: "Terms of service for SiamEZ website and service requests.",
-  };
+    description: "Terms of service for the SiamEZ website and professional service requests.",
+  });
 }
 
 export default async function TermsPage({

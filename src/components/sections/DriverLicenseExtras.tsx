@@ -129,18 +129,6 @@ export async function DriverLicenseExtras() {
       <p className="text-sm text-gray-600 dark:text-gray-400">
         {t("bookingEmailNote", { email: site.email })}
       </p>
-      <p className="text-xs text-gray-500 dark:text-gray-400">
-        {t("legacyWizardIntro")}{" "}
-        <a
-          href="https://siam-ez.com/thailicense.html"
-          className="text-siam-blue underline hover:no-underline dark:text-siam-blue-light"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {t("legacyWizardLinkText")}
-        </a>{" "}
-        {t("legacyWizardOutro")}
-      </p>
     </div>
   );
 }

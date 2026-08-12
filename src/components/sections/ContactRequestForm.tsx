@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { trackEvent } from "@/lib/analytics";
 
 type FormState = {
   name: string;
@@ -50,6 +51,7 @@ export function ContactRequestForm() {
       }
       setStatus("success");
       setForm(INITIAL_FORM);
+      trackEvent("contact_submitted", { service: form.service });
     } catch {
       setStatus("error");
       setErrorMessage(t("submitFailed"));

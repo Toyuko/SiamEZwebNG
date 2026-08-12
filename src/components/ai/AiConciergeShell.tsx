@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ConciergeFab } from "@/components/ai/ConciergeFab";
 import { ConciergePanel } from "@/components/ai/ConciergePanel";
@@ -9,6 +9,7 @@ import { useConciergeSession } from "@/hooks/ai/useConciergeSession";
 import { getConciergeCapability } from "@/lib/ai/actions";
 import { CONCIERGE_OPEN_EVENT, type ConciergeOpenDetail } from "@/lib/ai/concierge-events";
 import type { ConciergeLocale } from "@/lib/ai/types";
+import { trackEvent } from "@/lib/analytics";
 
 export type AiConciergeShellProps = {
   /**
@@ -33,6 +34,7 @@ export function AiConciergeShell({
   const t = useTranslations("concierge");
   const [open, setOpen] = useState(false);
   const [llmEnabled, setLlmEnabled] = useState(llmEnabledProp);
+  const startedRef = useRef(false);
 
   const {
     messages,
@@ -65,6 +67,12 @@ export function AiConciergeShell({
     window.addEventListener(CONCIERGE_OPEN_EVENT, onOpenConcierge);
     return () => window.removeEventListener(CONCIERGE_OPEN_EVENT, onOpenConcierge);
   }, [sendMessage]);
+
+  useEffect(() => {
+    if (!open || startedRef.current) return;
+    startedRef.current = true;
+    trackEvent("ai_concierge_started", { locale });
+  }, [open, locale]);
 
   useEffect(() => {
     let cancelled = false;

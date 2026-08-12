@@ -2,6 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConversionBeacon } from "@/components/seo/ConversionBeacon";
 
 export default async function PaymentSuccessPage({
   params,
@@ -15,6 +16,7 @@ export default async function PaymentSuccessPage({
 
   return (
     <div className="container mx-auto flex max-w-md flex-col items-center justify-center px-4 py-16">
+      <ConversionBeacon event="payment_completed" />
       <CheckCircle className="h-16 w-16 text-green-500" />
       <h1 className="mt-6 text-2xl font-bold text-gray-900 dark:text-white">
         Payment successful

@@ -8,7 +8,7 @@ import { ServiceDetailTabs } from "@/components/sections/ServiceDetailTabs";
 import { ServiceDetailSidebar } from "@/components/sections/ServiceDetailSidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, Clock, Shield, FileText, Car, Plane, Wrench, Handshake, ClipboardList, Bus, User, Award, Zap, CheckCircle, Landmark, CalendarCheck, Building2, Key, MapPin, TrendingUp, Users } from "lucide-react";
-import { serviceDisplayNames, serviceShortDescriptions, serviceSlugs } from "@/config/services";
+import { serviceDisplayNames, serviceShortDescriptions, serviceSlugs, serviceThumbnailImages } from "@/config/services";
 import type { ServiceSlug } from "@/config/services";
 import { MarriageRegistrationSections } from "@/components/sections/MarriageRegistrationSections";
 import { DriverLicenseExtras } from "@/components/sections/DriverLicenseExtras";
@@ -16,6 +16,13 @@ import { buildDriverLicenseServiceContent } from "@/lib/driver-license-service";
 import { buildEventPlanningServiceContent } from "@/lib/event-planning-service";
 import { EventPlanningVenueSections } from "@/components/sections/EventPlanningVenueSections";
 import { RedDoorVenueGallery } from "@/components/sections/RedDoorVenueGallery";
+import { buildPageMetadata } from "@/lib/seo/metadata";
+import { getServiceSeo } from "@/lib/seo/service-seo";
+import { JsonLdScript } from "@/components/seo/JsonLd";
+import { ServicePageExtras } from "@/components/seo/ServicePageExtras";
+import { ConversionBeacon } from "@/components/seo/ConversionBeacon";
+import { breadcrumbListJsonLd, serviceJsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
+import { canonicalUrl } from "@/lib/seo/urls";
 
 type ServiceDetailContent = {
   subtitle: string;
@@ -44,43 +51,73 @@ type ServiceDetailContent = {
   galleryDescription?: string;
 };
 
+export function generateStaticParams() {
+  return serviceSlugs.map((slug) => ({ slug }));
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string; slug: string }>;
 }) {
   const { slug, locale } = await params;
+  const seo = getServiceSeo(slug, locale);
   const service = await getServiceBySlug(slug).catch(() => null);
   const t = await getTranslations("services");
+  const poster = serviceThumbnailImages[slug as ServiceSlug];
+
+  if (seo) {
+    return buildPageMetadata({
+      locale,
+      path: `/services/${slug}`,
+      title: seo.title,
+      description: seo.description,
+      ogImage: poster,
+    });
+  }
 
   if (slug === "driver-license") {
     const tDl = await getTranslations({ locale, namespace: "driverLicensePage" });
     const title = service?.name ?? serviceDisplayNames["driver-license"];
-    return { title, description: tDl("metaDescription") };
+    return buildPageMetadata({
+      locale,
+      path: `/services/${slug}`,
+      title,
+      description: tDl("metaDescription"),
+      ogImage: poster,
+    });
   }
 
   if (slug === "event-planning-venue-services") {
     const tEv = await getTranslations({ locale, namespace: "eventPlanningVenuePage" });
-    return {
+    return buildPageMetadata({
+      locale,
+      path: `/services/${slug}`,
       title: tEv("heroTitle"),
       description: tEv("metaDescription"),
-    };
+      ogImage: poster,
+    });
   }
 
-  // Fallback to config if database unavailable
   if (!service) {
     const displayName = serviceDisplayNames[slug as ServiceSlug];
     if (!displayName) return { title: t("serviceMetaTitle") };
-    return {
+    return buildPageMetadata({
+      locale,
+      path: `/services/${slug}`,
       title: displayName,
       description: serviceShortDescriptions[slug as ServiceSlug] || "",
-    };
+      ogImage: poster,
+    });
   }
 
-  return {
+  return buildPageMetadata({
+    locale,
+    path: `/services/${slug}`,
     title: service.name,
     description: service.shortDescription ?? service.description.slice(0, 160),
-  };
+    ogImage: poster,
+  });
 }
 
 // Service-specific content (can be moved to database or config files later)
@@ -824,6 +861,50 @@ const getServiceContent = (slug: string): ServiceDetailContent => {
       },
       processingTime: "1 - 3 Business Days",
     },
+    "basic-translation": {
+      subtitle:
+        "Simple per-page document translation with a fixed price — book online and pay when you submit your pages.",
+      overview:
+        "Basic Translation is for straightforward page-by-page work when you already know how many pages you need. Upload clear scans or photos, pay the fixed per-page rate, and receive your translation. If a government office, embassy, or the MFA requires certified or legalized documents, use Translation Services instead.",
+      features: [
+        {
+          icon: Zap,
+          title: "Fixed per-page pricing",
+          description: "Know the cost before you book. Pay online when you submit your pages.",
+        },
+        {
+          icon: Clock,
+          title: "Same-day turnaround",
+          description: "Clear scans are typically completed the same day.",
+        },
+      ],
+      requirements: [
+        "Clear scan or photo of each page to translate",
+        "Source and target language",
+        "Intended use (personal, internal, or official — official filings may need certified translation)",
+      ],
+      processSteps: [
+        {
+          title: "Upload your pages",
+          description: "Book online and attach a clear scan or photo of each page.",
+        },
+        {
+          title: "Pay the fixed rate",
+          description: "Confirm the page count and pay when you submit.",
+        },
+        {
+          title: "Receive your translation",
+          description: "We return the translated pages. Ask us if you later need certification or MFA legalization.",
+        },
+      ],
+      documents: {
+        foreigner: [
+          "Clear scan or photo of each page",
+          "Notes on names, dates, or stamps that must stay exact",
+        ],
+      },
+      processingTime: "Same day",
+    },
   };
 
   return content[slug] || {
@@ -887,7 +968,7 @@ export default async function ServiceDetailPage({
     notFound();
   }
   
-  const [service, t, tCommon, tDriverLicense, tEventPlanning] = await Promise.all([
+  const [service, t, tCommon, tDriverLicense, tEventPlanning, tSeo] = await Promise.all([
     getServiceBySlug(slug).catch(() => null),
     getTranslations("services"),
     getTranslations("common"),
@@ -897,6 +978,7 @@ export default async function ServiceDetailPage({
     slug === "event-planning-venue-services"
       ? getTranslations({ locale, namespace: "eventPlanningVenuePage" })
       : Promise.resolve(null),
+    getTranslations("seo"),
   ]);
 
   const content: ServiceDetailContent = tEventPlanning
@@ -991,14 +1073,40 @@ export default async function ServiceDetailPage({
         ? t("mediaTab")
         : undefined;
 
+  const seo = getServiceSeo(slug, locale);
+  const pageUrl = canonicalUrl(locale, `/services/${slug}`);
+  const heroTitle =
+    slug === "event-planning-venue-services" && tEventPlanning
+      ? tEventPlanning("heroTitle")
+      : seo?.h1 || serviceData.name;
+
   return (
     <>
+      <ConversionBeacon event="service_viewed" payload={{ slug, locale }} />
+      <JsonLdScript
+        data={[
+          webPageJsonLd({
+            url: pageUrl,
+            name: seo?.title ?? displayName,
+            description: seo?.description ?? content.overview,
+            locale,
+          }),
+          serviceJsonLd({
+            name: displayName,
+            description: seo?.description ?? content.overview,
+            url: pageUrl,
+            priceAmount: serviceData.priceAmount,
+            priceCurrency: serviceData.priceCurrency,
+          }),
+          breadcrumbListJsonLd([
+            { name: tCommon("home") || "Home", url: canonicalUrl(locale, "") },
+            { name: t("title") || "Services", url: canonicalUrl(locale, "/services") },
+            { name: displayName, url: pageUrl },
+          ]),
+        ]}
+      />
       <ServiceDetailHero
-        title={
-          slug === "event-planning-venue-services" && tEventPlanning
-            ? tEventPlanning("heroTitle")
-            : serviceData.name
-        }
+        title={heroTitle}
         subtitle={content.subtitle}
         breadcrumbs={breadcrumbs}
         showPremiumTag={slug === "marriage-registration"}
@@ -1210,6 +1318,29 @@ export default async function ServiceDetailPage({
             />
 
             {slug === "marriage-registration" ? <MarriageRegistrationSections /> : null}
+
+            {seo ? (
+              <ServicePageExtras
+                locale={locale}
+                slug={slug}
+                audience={seo.audience}
+                areaServed={seo.areaServed}
+                relatedSlugs={seo.relatedSlugs}
+                relatedPaths={seo.relatedPaths}
+                faqs={seo.faqs}
+                showFaq={slug !== "marriage-registration"}
+                labels={{
+                  whoFor: tSeo("whoFor"),
+                  whereAvailable: tSeo("whereAvailable"),
+                  related: tSeo("relatedServices"),
+                  faq: tSeo("faqTitle"),
+                  conciergeTitle: tSeo("conciergeCtaTitle"),
+                  conciergeBody: tSeo("conciergeCtaBody"),
+                  conciergeButton: tSeo("conciergeCtaButton"),
+                  bookRelated: t("bookThisService"),
+                }}
+              />
+            ) : null}
           </div>
 
           {/* Sidebar */}

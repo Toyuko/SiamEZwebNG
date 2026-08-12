@@ -3,11 +3,12 @@
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ShoppingCart, Phone, MessageCircle, Star, HelpCircle, CheckCircle2, Car } from "lucide-react";
+import { ShoppingCart, Phone, MessageCircle, HelpCircle, CheckCircle2, Car } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { site } from "@/config/site";
-import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
+import { AskSiamEzButton } from "@/components/ai/AskSiamEzButton";
+import { trackEvent } from "@/lib/analytics";
 
 const VEHICLE_FINDER_SLUG = "car-motorbike-finder-selling-service";
 
@@ -17,8 +18,6 @@ interface ServiceDetailSidebarProps {
   processingTime?: string;
   visaDuration?: string;
   serviceSlug: string;
-  rating?: number;
-  reviewCount?: number;
   showBestValue?: boolean;
   /** Overrides default “visa experts” help blurb (e.g. marriage registration page). */
   helpDescription?: string;
@@ -30,13 +29,12 @@ export function ServiceDetailSidebar({
   processingTime,
   visaDuration,
   serviceSlug,
-  rating = 4.9,
-  reviewCount = 150,
   showBestValue = false,
   helpDescription,
 }: ServiceDetailSidebarProps) {
   const t = useTranslations("services");
   const tSales = useTranslations("sales");
+  const tSeo = useTranslations("seo");
   const whatsappUrl = `https://wa.me/${site.phone.replace(/\D/g, "")}`;
 
   return (
@@ -83,7 +81,10 @@ export function ServiceDetailSidebar({
             className="mt-6 w-full bg-siam-blue text-white hover:bg-siam-blue-light"
             size="lg"
           >
-            <Link href={`/book/${serviceSlug}`}>
+            <Link
+              href={`/book/${serviceSlug}`}
+              onClick={() => trackEvent("service_book_click", { slug: serviceSlug, source: "sidebar" })}
+            >
               <ShoppingCart className="mr-2 h-4 w-4" />
               {t("bookThisService")}
             </Link>
@@ -112,47 +113,18 @@ export function ServiceDetailSidebar({
         </CardContent>
       </Card>
 
-      {/* Rating/Trust Card */}
       <Card className="border-0 bg-white shadow-md dark:bg-gray-800">
         <CardContent className="p-6">
-          <div className="flex items-center gap-3">
+          <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-              <Star className="h-5 w-5 fill-siam-yellow text-siam-yellow" />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                {rating.toFixed(1)} / 5.0
-              </span>
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={cn(
-                      "h-4 w-4",
-                      i < Math.floor(rating)
-                        ? "fill-siam-yellow text-siam-yellow"
-                        : i < rating
-                          ? "fill-siam-yellow/50 text-siam-yellow/50"
-                          : "text-gray-300 dark:text-gray-600"
-                    )}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            {t("basedOnReviews", { count: reviewCount })}
-          </p>
-          <div className="mt-4 flex items-start gap-3 rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/50">
               <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                Expert Consultation
+                {tSeo("trustTitle")}
               </p>
-              <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400">
-                Free initial 15-min call
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                {tSeo("trustBody")}
               </p>
             </div>
           </div>
@@ -174,20 +146,38 @@ export function ServiceDetailSidebar({
           <div className="space-y-3">
             <a
               href={`tel:${site.phone.replace(/\s/g, "")}`}
+              onClick={() => trackEvent("phone_clicked", { source: "service_sidebar", slug: serviceSlug })}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-800 px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600"
             >
               <Phone className="h-4 w-4" />
               {site.phone}
             </a>
             <a
+              href={site.lineUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackEvent("line_clicked", { source: "service_sidebar", slug: serviceSlug })}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-800 px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600"
+            >
+              <MessageCircle className="h-4 w-4" />
+              LINE {site.line}
+            </a>
+            <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackEvent("whatsapp_clicked", { source: "service_sidebar", slug: serviceSlug })}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-800 px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600"
             >
               <MessageCircle className="h-4 w-4" />
               {t("chatOnWhatsApp")}
             </a>
+            <AskSiamEzButton
+              label={tSeo("conciergeCtaButton")}
+              prompt={`I have a question about ${serviceSlug.replace(/-/g, " ")} in Thailand.`}
+              size="lg"
+              className="w-full border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
+            />
           </div>
         </CardContent>
       </Card>

@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
+import { noindexRobots } from "@/lib/seo/metadata";
+
+export const metadata: Metadata = {
+  title: "Account",
+  robots: noindexRobots,
+};
 
 export default async function AuthLayout({
   children,

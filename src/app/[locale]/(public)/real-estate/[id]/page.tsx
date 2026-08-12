@@ -13,6 +13,7 @@ import { SalesListingExportActions } from "@/components/sales/SalesListingExport
 import { getListingEnhancement } from "@/lib/migration/enhance";
 import { buildPropertyJsonLd, coerceStoredSchemaJsonLd } from "@/lib/migration/jsonld";
 import { resolveListingMetadata } from "@/lib/migration/metadata";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 import { ListingAiSummary } from "@/components/marketplace/ListingAiSummary";
 import { ListingEnquiryForm } from "@/components/marketplace/ListingEnquiryForm";
 import { ListingEngagementBar } from "@/components/marketplace/ListingEngagementBar";
@@ -29,7 +30,7 @@ export async function generateMetadata({
 }: {
   params: Promise<{ locale: string; id: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
+  const { locale, id } = await params;
   const property = await getPublicSalesPropertyById(id);
   if (!property) {
     return { title: "Property" };
@@ -41,15 +42,13 @@ export async function generateMetadata({
     enhancement
   );
 
-  return {
+  return buildPageMetadata({
+    locale,
+    path: `/real-estate/${property.id}`,
     title: meta.title,
     description: meta.description,
-    openGraph: {
-      title: meta.title,
-      description: meta.description,
-      images: property.heroImageUrl ? [{ url: property.heroImageUrl }] : undefined,
-    },
-  };
+    ogImage: property.heroImageUrl || undefined,
+  });
 }
 
 function formatPrice(amount: number, currency: string) {

@@ -7,6 +7,9 @@ import { routing } from "@/i18n/routing";
 import { THEME_SCRIPT } from "@/components/theme/theme-script";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { rootFontClassName } from "@/lib/fonts";
+import { AnalyticsScripts, GtmNoscript } from "@/components/seo/AnalyticsScripts";
+import { JsonLdScript } from "@/components/seo/JsonLd";
+import { localBusinessJsonLd, organizationJsonLd, websiteJsonLd } from "@/lib/seo/jsonld";
 
 type Props = {
   children: React.ReactNode;
@@ -28,6 +31,9 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <html lang={locale} className={rootFontClassName} suppressHydrationWarning>
       <body className="min-h-screen antialiased font-sans bg-background text-foreground">
+        <GtmNoscript />
+        <AnalyticsScripts />
+        <JsonLdScript data={[organizationJsonLd(), localBusinessJsonLd(), websiteJsonLd()]} />
         <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <ThemeProvider>
           <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>

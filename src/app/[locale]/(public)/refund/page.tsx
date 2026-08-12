@@ -1,11 +1,19 @@
 import { setRequestLocale } from "next-intl/server";
 import { PageHero } from "@/components/sections/PageHero";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export async function generateMetadata() {
-  return {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return buildPageMetadata({
+    locale,
+    path: "/refund",
     title: "Refund Policy",
-    description: "Refund policy for SiamEZ professional services.",
-  };
+    description: "Refund guidelines for SiamEZ professional services, including government fees and client-initiated cancellations.",
+  });
 }
 
 export default async function RefundPage({

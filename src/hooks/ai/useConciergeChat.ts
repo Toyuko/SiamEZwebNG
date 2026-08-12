@@ -10,6 +10,7 @@ import {
 import type { ConciergeJourneyContext } from "@/lib/ai/journey-context";
 import { mockTokenStream } from "@/lib/ai/stream";
 import type { ConciergeLocale, ConciergeMessage } from "@/lib/ai/types";
+import { trackEvent } from "@/lib/analytics";
 
 export type UseConciergeChatOptions = {
   locale: ConciergeLocale;
@@ -40,6 +41,10 @@ export function useConciergeChat({
     async (raw: string) => {
       const content = raw.trim();
       if (!content || isStreaming) return;
+
+      if (!messages.some((m) => m.role === "user")) {
+        trackEvent("ai_concierge_lead", { locale });
+      }
 
       setError(null);
       const generation = ++abortRef.current;

@@ -2,7 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { listPublicFreelancers } from "@/data-access/freelancer";
 import { FreelancerDirectoryClient } from "./FreelancerDirectoryClient";
-import { site } from "@/config/site";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export async function generateMetadata({
   params,
@@ -11,27 +11,13 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "freelancersPublic" });
-  const baseUrl = site.url.replace(/\/$/, "");
 
-  return {
+  return buildPageMetadata({
+    locale,
+    path: "/freelancers",
     title: t("metaTitle"),
     description: t("metaDescription"),
-    alternates: {
-      canonical: `${baseUrl}/${locale}/freelancers`,
-      languages: {
-        en: `${baseUrl}/en/freelancers`,
-        th: `${baseUrl}/th/freelancers`,
-      },
-    },
-    openGraph: {
-      title: `${t("metaTitle")} | ${site.name}`,
-      description: t("metaDescription"),
-      url: `${baseUrl}/${locale}/freelancers`,
-      siteName: site.name,
-      locale: locale === "th" ? "th_TH" : "en_US",
-      type: "website",
-    },
-  };
+  });
 }
 
 export default async function FreelancersDirectoryPage({

@@ -7,8 +7,25 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { ApplyToJobButton } from "@/components/company/ApplyToJobButton";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}) {
+  const { locale, slug } = await params;
+  const company = await getPublicCompanyProfileBySlug(slug);
+  if (!company) return { title: "Company" };
+  return buildPageMetadata({
+    locale,
+    path: `/companies/${slug}`,
+    title: company.companyName,
+    description: company.description || `${company.companyName} on SiamEZ`,
+  });
+}
 
 function formatThb(satang: number) {
   return new Intl.NumberFormat("en-US", {

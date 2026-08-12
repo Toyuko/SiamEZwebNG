@@ -10,6 +10,7 @@ import {
   socialToDisplay,
   type DisplayTestimonial,
 } from "@/lib/testimonial-display";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export async function generateMetadata({
   params,
@@ -18,10 +19,12 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "testimonials" });
-  return {
+  return buildPageMetadata({
+    locale,
+    path: "/testimonials",
     title: t("metaTitle"),
     description: t("metaDescription"),
-  };
+  });
 }
 
 export default async function TestimonialsPage({

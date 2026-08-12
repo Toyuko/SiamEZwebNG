@@ -7,12 +7,28 @@ import {
 import { parsePublicSalesPageSizeParam } from "@/lib/public-sales-inventory";
 import { SalesInventoryClient } from "./SalesInventoryClient";
 import type { PublicSalesVehicleCard } from "@/components/sales/SalesListingCard";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 import {
   isSunsetScootersDealerMotorcycleListing,
   resolveSunsetDealerMotorcycleHeroUrl,
 } from "@/lib/sunset-dealer-motorcycle-hero";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return buildPageMetadata({
+    locale,
+    path: "/sales",
+    title: "Cars & Motorcycles for Sale in Thailand",
+    description:
+      "Browse cars and motorcycles for sale in Thailand. SiamEZ also helps with buying, selling, paperwork, and vehicle registration.",
+  });
+}
 
 function parseIntParam(value: string | undefined, fallback: number) {
   if (!value) return fallback;

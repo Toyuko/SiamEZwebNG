@@ -17,8 +17,12 @@ import { getPublicFeaturedBoostedSalesProperties } from "@/data-access/real-esta
 import { serviceSlugs } from "@/config/services";
 import { getTranslations } from "next-intl/server";
 import { getSession } from "@/lib/auth";
-import { site } from "@/config/site";
 import { softLaunch } from "@/config/soft-launch";
+import { buildPageMetadata } from "@/lib/seo/metadata";
+import { JsonLdScript } from "@/components/seo/JsonLd";
+import { CoverageSection } from "@/components/seo/CoverageSection";
+import { breadcrumbListJsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
+import { canonicalUrl } from "@/lib/seo/urls";
 
 export async function generateMetadata({
   params,
@@ -27,27 +31,20 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "home" });
-  const baseUrl = site.url.replace(/\/$/, "");
 
-  return {
+  return buildPageMetadata({
+    locale,
+    path: "",
     title: t("metaTitle"),
     description: t("metaDescription"),
-    alternates: {
-      canonical: `${baseUrl}/${locale}`,
-      languages: {
-        en: `${baseUrl}/en`,
-        th: `${baseUrl}/th`,
-      },
-    },
-    openGraph: {
-      title: `${t("metaTitle")} | ${site.name}`,
-      description: t("metaDescription"),
-      url: `${baseUrl}/${locale}`,
-      siteName: site.name,
-      locale: locale === "th" ? "th_TH" : "en_US",
-      type: "website",
-    },
-  };
+    keywords: [
+      "SiamEZ",
+      "Thailand services",
+      "services for foreigners in Thailand",
+      "Thai driver's license",
+      "marriage registration Thailand",
+    ],
+  });
 }
 
 export default async function HomePage({
@@ -73,6 +70,7 @@ export default async function HomePage({
     tWhy,
     tDisclaimer,
     tServices,
+    tSeo,
   ] = await Promise.all([
     getPublicServicesList().catch(() => []),
     listActiveLifeEvents().catch(() => []),
@@ -85,6 +83,7 @@ export default async function HomePage({
     getTranslations("whyChoose"),
     getTranslations("disclaimer"),
     getTranslations("services"),
+    getTranslations("seo"),
   ]);
 
   const displayServices = services.map((s) => ({
@@ -143,6 +142,17 @@ export default async function HomePage({
 
   return (
     <>
+      <JsonLdScript
+        data={[
+          webPageJsonLd({
+            url: canonicalUrl(locale, ""),
+            name: t("metaTitle"),
+            description: t("metaDescription"),
+            locale,
+          }),
+          breadcrumbListJsonLd([{ name: tCommon("home"), url: canonicalUrl(locale, "") }]),
+        ]}
+      />
       <HeroSection
         badge={tHero("badge")}
         headline={tHero("headline")}
@@ -202,6 +212,13 @@ export default async function HomePage({
         bookNowLabel={tServices("bookNow")}
         detailsLabel={tServices("details")}
         priceLabel={tServices("from")}
+      />
+      <CoverageSection
+        title={tSeo("coverageTitle")}
+        body={tSeo("coverageBody")}
+        officeLabel={tSeo("officeLabel")}
+        servicesLabel={tCommon("viewServices")}
+        contactLabel={tCommon("contactUs")}
       />
       <WhyChooseSection
         title={tWhy("title")}

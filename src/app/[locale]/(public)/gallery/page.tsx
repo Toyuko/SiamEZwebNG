@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { PageHero } from "@/components/sections/PageHero";
 import { PhotoGallery } from "@/components/sections/PhotoGallery";
 import { DisclaimerBanner } from "@/components/sections/DisclaimerBanner";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export async function generateMetadata({
   params,
@@ -11,10 +12,12 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "gallery" });
-  return {
+  return buildPageMetadata({
+    locale,
+    path: "/gallery",
     title: t("metaTitle"),
     description: t("metaDescription"),
-  };
+  });
 }
 
 export default async function GalleryPage({
