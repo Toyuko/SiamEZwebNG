@@ -1,6 +1,6 @@
 /**
  * Payment provider abstraction - provider-agnostic design.
- * Phase 1: Manual (QR, Bank, Wise). Phase 2: Stripe.
+ * Active: Manual (QR, Bank, Wise). Stripe deferred until STRIPE_ENABLED=true.
  */
 
 export type PaymentProviderType = "qr" | "bank" | "wise" | "stripe";

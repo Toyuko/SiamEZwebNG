@@ -44,3 +44,11 @@ export function isManualPaymentConfigured(): boolean {
       paymentConfig.wise.accountId
   );
 }
+
+/**
+ * Stripe card checkout is deferred. Set STRIPE_ENABLED=true when ready to ship it.
+ * Until then, checkout uses PromptPay / bank transfer / Wise only.
+ */
+export function isStripeEnabled(): boolean {
+  return process.env.STRIPE_ENABLED === "true";
+}

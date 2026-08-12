@@ -6,10 +6,15 @@ import { prisma } from "@/lib/db";
 import * as invoiceDA from "@/data-access/invoice";
 import * as paymentDA from "@/data-access/payment";
 import { applySalesSuperBoostForListing } from "@/data-access/sales";
+import { isStripeEnabled } from "@/config/payments";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  if (!isStripeEnabled()) {
+    return NextResponse.json({ error: "Stripe is disabled" }, { status: 503 });
+  }
+
   if (!env.STRIPE_WEBHOOK_SECRET || !env.STRIPE_SECRET_KEY) {
     console.error("Stripe webhook secret or secret key not configured");
     return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });

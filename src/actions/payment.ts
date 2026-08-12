@@ -7,6 +7,7 @@ import * as invoiceDA from "@/data-access/invoice";
 import * as paymentDA from "@/data-access/payment";
 import { getStripe } from "@/lib/stripe";
 import { submitUserPayment } from "@/lib/domain/payments";
+import { isStripeEnabled } from "@/config/payments";
 
 export type PaymentMethodInput = "qr" | "bank" | "wise";
 
@@ -21,12 +22,20 @@ export interface CreatePaymentIntentResult {
 /**
  * Creates Stripe PaymentIntent for checkout.
  * Supports: (a) logged-in user who owns the case; (b) guest with valid token.
+ * Disabled until STRIPE_ENABLED=true — use PromptPay / bank / Wise instead.
  */
 export async function createPaymentIntent(input: {
   caseId: string;
   invoiceId?: string;
   guestToken?: string;
 }): Promise<CreatePaymentIntentResult> {
+  if (!isStripeEnabled()) {
+    return {
+      success: false,
+      error: "Card payments are not available yet. Please pay by PromptPay, bank transfer, or Wise.",
+    };
+  }
+
   try {
     const session = await getSession();
     let invoice = null;
@@ -38,8 +47,7 @@ export async function createPaymentIntent(input: {
       invoice =
         input.invoiceId
           ? invoices.find((i) => i.id === input.invoiceId && (i.status === "unpaid" || i.status === "draft"))
-          : invoices.find((i) => (i.status === "unpaid" || i.status === "draft"))
-        ?? null;
+          : invoices.find((i) => i.status === "unpaid" || i.status === "draft") ?? null;
     } else if (session?.user?.id) {
       invoice = input.invoiceId
         ? await invoiceDA.getInvoiceByIdForUser(input.invoiceId, session.user.id)
