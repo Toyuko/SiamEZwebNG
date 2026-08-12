@@ -5,7 +5,7 @@ export const DEFAULT_FLAGS = {
   marketplace_beta: true,
   new_workflows: false,
   beta_analytics: false,
-  /** Soft-launch IA: prefer Services / Cars / RE / Concierge surfaces. */
+  /** Soft-launch IA: prefer Services / Vehicles / RE / Concierge surfaces. */
   soft_launch: true,
   /** Master switch for the customer-facing AI Concierge shell. */
   concierge_enabled: true,

@@ -99,7 +99,7 @@
     "home": "Home",
     "services": "Services",
     "allServices": "All Services",
-    "sales": "Cars",
+    "sales": "Vehicles",
     "freelancers": "Freelancers",
     "company": "Company",
     "about": "About",
@@ -422,7 +422,7 @@
     "subline": "Driver's licenses, marriage registration, certified translation, vehicle registration, visas, cars, and property — with bilingual help for foreigners and residents across Thailand.",
     "primaryCta": "Book a Service",
     "askCta": "Ask SiamEZ",
-    "secondaryCta": "Browse Cars"
+    "secondaryCta": "Browse Vehicles"
   },
   "home": {
     "servicesTitle": "Popular Services",
@@ -439,7 +439,7 @@
       "marketplace": "Featured marketplace",
       "viewAllGoals": "View all goals",
       "viewJourney": "Start",
-      "viewAllVehicles": "Cars",
+      "viewAllVehicles": "Vehicles",
       "viewAllProperties": "Real Estate",
       "conciergeLabel": "Ask SiamEZ",
       "conciergeHint": "Tell us what you need and we'll help you find the right service.",
@@ -1353,7 +1353,7 @@
     "dashboard": "My Account",
     "dashboardSubtitle": "Book a service, track bookings and payments, edit your car and property listings, or ask SiamEZ.",
     "myCases": "My Bookings",
-    "browseCars": "Cars",
+    "browseCars": "Vehicles",
     "browseRealEstate": "Real Estate",
     "roleCustomer": "SiamEZ account",
     "roleFreelancer": "Freelancer account",

@@ -24,9 +24,9 @@ export async function generateMetadata({
   return buildPageMetadata({
     locale,
     path: "/sales",
-    title: "Cars & Motorcycles for Sale in Thailand",
+    title: "Vehicles for Sale in Thailand",
     description:
-      "Browse cars and motorcycles for sale in Thailand. SiamEZ also helps with buying, selling, paperwork, and vehicle registration.",
+      "Browse vehicles for sale in Thailand. SiamEZ also helps with buying, selling, paperwork, and vehicle registration.",
   });
 }
 
