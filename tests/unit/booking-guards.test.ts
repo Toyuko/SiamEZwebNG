@@ -4,6 +4,7 @@ vi.mock("@/lib/db", () => ({
   prisma: {
     service: { findUnique: vi.fn() },
     document: { updateMany: vi.fn() },
+    user: { findUnique: vi.fn() },
   },
 }));
 
@@ -18,6 +19,10 @@ vi.mock("@/data-access/invoice", () => ({
 vi.mock("@/lib/domain/marketplace-jobs", () => ({
   createMarketplaceJobForCase: vi.fn(),
   notifyFreelancers: vi.fn(),
+}));
+
+vi.mock("@/lib/email/messages", () => ({
+  sendBookingConfirmationEmail: vi.fn(),
 }));
 
 vi.mock("@/lib/utils", () => ({
@@ -35,6 +40,7 @@ import { submitBooking } from "@/actions/booking";
 import { getSession } from "@/lib/auth";
 
 const findUnique = vi.mocked(prisma.service.findUnique);
+const userFindUnique = vi.mocked(prisma.user.findUnique);
 const createCaseMock = vi.mocked(createCase);
 const updateMany = vi.mocked(prisma.document.updateMany);
 const getSessionMock = vi.mocked(getSession);
@@ -42,9 +48,14 @@ const getSessionMock = vi.mocked(getSession);
 describe("createBookingCase guards", () => {
   beforeEach(() => {
     findUnique.mockReset();
+    userFindUnique.mockReset();
     createCaseMock.mockReset();
     updateMany.mockReset();
     updateMany.mockResolvedValue({ count: 0 } as never);
+    userFindUnique.mockResolvedValue({
+      email: "user@example.com",
+      name: "User",
+    } as never);
   });
 
   it("rejects inactive or missing services", async () => {

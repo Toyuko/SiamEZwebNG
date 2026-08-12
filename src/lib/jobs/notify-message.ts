@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { parseNotificationPreferences } from "@/lib/notification-preferences";
+import { sendJobChatEmail } from "@/lib/email/messages";
 
 /** Notify recipient when they are not active in the job chat. */
 export async function notifyNewJobMessage(input: {
@@ -21,29 +22,12 @@ export async function notifyNewJobMessage(input: {
     return;
   }
 
-  const url = process.env.CONTACT_FORM_WEBHOOK_URL?.trim();
-  if (!url) {
-    console.warn("[jobs-chat] CONTACT_FORM_WEBHOOK_URL not set; message notify skipped.");
-    return;
-  }
-
-  try {
-    await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        source: "job-chat-message",
-        receivedAt: new Date().toISOString(),
-        jobId: input.jobId,
-        jobTitle: input.jobTitle,
-        recipientEmail: input.recipientEmail,
-        recipientName: input.recipientName,
-        senderName: input.senderName,
-        messagePreview: input.messagePreview.slice(0, 280),
-        message: `New message on "${input.jobTitle}" from ${input.senderName ?? "your coordinator"}: ${input.messagePreview.slice(0, 120)}`,
-      }),
-    });
-  } catch (e) {
-    console.warn("[jobs-chat] message notify failed:", e);
-  }
+  sendJobChatEmail({
+    recipientEmail: input.recipientEmail,
+    recipientName: input.recipientName,
+    jobTitle: input.jobTitle,
+    jobId: input.jobId,
+    senderName: input.senderName,
+    messagePreview: input.messagePreview,
+  });
 }

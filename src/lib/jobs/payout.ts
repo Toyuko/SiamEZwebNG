@@ -1,3 +1,6 @@
+import { prisma } from "@/lib/db";
+import { sendPayoutEmail } from "@/lib/email/messages";
+
 /** Fire-and-forget payout notification when a freelancer job is approved. */
 export async function triggerFreelancerPayout(input: {
   jobId: string;
@@ -6,23 +9,21 @@ export async function triggerFreelancerPayout(input: {
   payoutAmount: number;
   currency: string;
 }): Promise<void> {
-  const url = process.env.CONTACT_FORM_WEBHOOK_URL?.trim();
-  if (!url) {
-    console.warn("[jobs-payout] CONTACT_FORM_WEBHOOK_URL not set; payout webhook skipped.");
+  const freelancer = await prisma.user.findUnique({
+    where: { id: input.freelancerId },
+    select: { email: true, name: true },
+  });
+
+  if (!freelancer?.email) {
+    console.warn("[jobs-payout] freelancer email missing; payout email skipped.");
     return;
   }
-  try {
-    await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        source: "freelancer-job-payout",
-        receivedAt: new Date().toISOString(),
-        ...input,
-        message: `Payout released for job "${input.jobTitle}".`,
-      }),
-    });
-  } catch (e) {
-    console.warn("[jobs-payout] payout notify failed:", e);
-  }
+
+  sendPayoutEmail({
+    freelancerEmail: freelancer.email,
+    freelancerName: freelancer.name,
+    jobTitle: input.jobTitle,
+    payoutAmount: input.payoutAmount,
+    currency: input.currency,
+  });
 }

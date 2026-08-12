@@ -1,0 +1,52 @@
+import { describe, expect, it } from "vitest";
+import { htmlToText } from "@/lib/email/send";
+import { escapeHtml, emailLayout, ctaButton } from "@/lib/email/layout";
+import { getEmailStatus, isEmailConfigured } from "@/lib/email/config";
+
+describe("email helpers", () => {
+  it("escapes HTML entities", () => {
+    expect(escapeHtml(`<a href="x">&'"</a>`)).toBe(
+      "&lt;a href=&quot;x&quot;&gt;&amp;&#39;&quot;&lt;/a&gt;"
+    );
+  });
+
+  it("builds a branded layout with escaped content and brand assets", () => {
+    const html = emailLayout({
+      title: "Hello <script>",
+      bodyHtml: "<p>Body</p>",
+    });
+    expect(html).toContain("Siam");
+    expect(html).toContain("EZ");
+    expect(html).toContain("Hello &lt;script&gt;");
+    expect(html).toContain("<p>Body</p>");
+    expect(html).toContain("/images/brand/banner-email.jpg");
+    expect(html).toContain("/images/brand/logo-circle-email.png");
+    expect(html).toContain("#ffce2d");
+    expect(html).toContain("#2c54c6");
+    expect(html).toContain("Georgia");
+  });
+
+  it("uses yellow brand CTAs with blue text", () => {
+    const html = ctaButton("https://example.com/portal", "Open portal");
+    expect(html).toContain("#ffce2d");
+    expect(html).toContain("#2344b0");
+    expect(html).toContain("Open portal");
+    expect(html).toContain("https://example.com/portal");
+  });
+
+  it("converts HTML to plain text", () => {
+    const text = htmlToText("<p>Hi<br/>there</p><h1>Title</h1>");
+    expect(text).toContain("Hi");
+    expect(text).toContain("there");
+    expect(text).toContain("Title");
+    expect(text).not.toContain("<");
+  });
+
+  it("reports email as unconfigured without RESEND_API_KEY", () => {
+    const prev = process.env.RESEND_API_KEY;
+    delete process.env.RESEND_API_KEY;
+    expect(isEmailConfigured()).toBe(false);
+    expect(getEmailStatus().configured).toBe(false);
+    if (prev !== undefined) process.env.RESEND_API_KEY = prev;
+  });
+});

@@ -13,6 +13,8 @@ import {
   PUBLIC_REAL_ESTATE_INVENTORY_STATUSES,
 } from "@/data-access/real-estate";
 import { PUBLIC_SALES_INVENTORY_STATUSES } from "@/data-access/sales";
+import { sendListingEnquiryEmail } from "@/lib/email/messages";
+import { parseNotificationPreferences } from "@/lib/notification-preferences";
 
 export type CreateListingEnquiryInput = {
   listingType: string;
@@ -88,6 +90,43 @@ export async function createEnquiryAction(
       phone: input.phone?.trim() || null,
       message,
     });
+
+    const ownerId = await getListingOwnerId(listingType, listingId);
+    if (ownerId) {
+      const owner = await prisma.user.findUnique({
+        where: { id: ownerId },
+        select: { email: true, name: true, notificationPreferences: true },
+      });
+      const prefs = parseNotificationPreferences(owner?.notificationPreferences);
+      if (owner?.email && prefs.emailCaseUpdates) {
+        let listingTitle = `${listingType} listing`;
+        if (listingType === "vehicle") {
+          const v = await prisma.salesVehicle.findUnique({
+            where: { id: listingId },
+            select: { title: true, make: true, model: true, year: true },
+          });
+          if (v) listingTitle = v.title || `${v.year} ${v.make} ${v.model}`;
+        } else {
+          const p = await prisma.salesProperty.findUnique({
+            where: { id: listingId },
+            select: { title: true },
+          });
+          if (p?.title) listingTitle = p.title;
+        }
+
+        sendListingEnquiryEmail({
+          ownerEmail: owner.email,
+          ownerName: owner.name,
+          listingType,
+          listingTitle,
+          fromName: name,
+          fromEmail: email,
+          fromPhone: input.phone?.trim() || null,
+          message,
+        });
+      }
+    }
+
     return { ok: true };
   } catch {
     return { ok: false, error: "submit_failed" };

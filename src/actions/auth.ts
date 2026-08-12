@@ -9,6 +9,7 @@ import * as bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { toSlug } from "@/lib/slug";
+import { sendWelcomeEmail } from "@/lib/email/messages";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -79,6 +80,12 @@ export async function register(_prev: unknown, formData: FormData) {
   if (role === "customer") {
     await linkGuestCasesToUser(email, newUser.id);
   }
+
+  sendWelcomeEmail({
+    to: newUser.email,
+    name: newUser.name,
+    role,
+  });
 
   // Session cookie must be set via client `signIn()` (see LoginForm) — Server Action
   // signIn does not reliably forward Set-Cookie on Next.js 15+.

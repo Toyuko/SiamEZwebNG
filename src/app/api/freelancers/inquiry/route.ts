@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ok, fail } from "@/lib/api-response";
 import { getPublicFreelancerBySlug } from "@/data-access/freelancer";
 import { prisma } from "@/lib/db";
+import { isEmailConfigured, sendFreelancerInquiryEmails } from "@/lib/email";
 
 const inquirySchema = z.object({
   slug: z.string().trim().min(1).max(48),
@@ -30,8 +31,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const payload = {
-      type: "freelancer-inquiry",
+    if (!isEmailConfigured() && !process.env.CONTACT_FORM_WEBHOOK_URL?.trim()) {
+      return fail("Unable to send your inquiry right now.", 503);
+    }
+
+    const result = await sendFreelancerInquiryEmails({
       freelancerSlug: profile.slug,
       freelancerName: profile.user.name,
       freelancerEmail: owner?.user.email,
@@ -39,28 +43,16 @@ export async function POST(request: NextRequest) {
       fromEmail: parsed.data.email,
       fromPhone: parsed.data.phone || undefined,
       message: parsed.data.message,
-      receivedAt: new Date().toISOString(),
-    };
+    });
 
-    const webhookUrl = process.env.CONTACT_FORM_WEBHOOK_URL;
-    if (webhookUrl) {
-      const res = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        return fail("Unable to send your inquiry right now.", 502);
-      }
-    } else {
-      console.info("[freelancer-inquiry]", {
-        slug: payload.freelancerSlug,
-        fromEmail: payload.fromEmail,
-        messageLength: payload.message.length,
-      });
+    const webhookOk = Boolean(process.env.CONTACT_FORM_WEBHOOK_URL?.trim());
+    if (result.ok || (result.ok === false && result.skipped && webhookOk)) {
+      return ok({ sent: true });
     }
-
-    return ok({ sent: true });
+    if (result.ok === false && result.skipped) {
+      return fail("Unable to send your inquiry right now.", 503);
+    }
+    return fail("Unable to send your inquiry right now.", 502);
   } catch (e) {
     const message = e instanceof Error ? e.message : "Failed to send inquiry";
     return fail(message, 500);

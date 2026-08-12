@@ -100,8 +100,8 @@ export function LoginForm({
             aria-invalid={Boolean(fieldError)}
           />
           <p className="text-sm text-muted-foreground">
-            <Link href="/contact" className="text-siam-blue hover:underline">
-              Forgot password? Contact support
+            <Link href="/forgot-password" className="text-siam-blue hover:underline">
+              {t("forgotPasswordLink")}
             </Link>
           </p>
         </Field>

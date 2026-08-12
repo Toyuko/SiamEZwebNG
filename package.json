@@ -19,7 +19,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "migrate:inventory-report": "tsx scripts/migrate-inventory-report.ts",
-    "migrate:enhance-listings": "tsx scripts/migrate-enhance-listings.ts"
+    "migrate:enhance-listings": "tsx scripts/migrate-enhance-listings.ts",
+    "email:status": "node -e \"const k=!!process.env.RESEND_API_KEY?.trim(); console.log(JSON.stringify({configured:k,from:process.env.EMAIL_FROM||null},null,2))\""
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -56,6 +57,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.84.0",
     "react-leaflet": "^4.2.1",
+    "resend": "^4.8.0",
     "stripe": "^17.0.0",
     "tailwind-merge": "^2.5.4",
     "zod": "^3.23.8"

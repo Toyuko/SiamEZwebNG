@@ -29,3 +29,4 @@ This is a single Next.js 16 app (`siamez-web-ng`) — a services booking & case-
 - `npm run lint` runs but currently reports ~40 pre-existing errors (`--max-warnings=0`); these are not environment issues.
 - Booking flow (core feature): `/en/booking/<service-slug>` (e.g. `/en/booking/marriage-registration`) → submitting creates a guest `Case` row.
 - Stripe, Vercel Blob, Pusher, Expo push, and OAuth are all optional/feature-specific and not configured locally.
+- **Email (Resend):** set `RESEND_API_KEY` + `EMAIL_FROM` (verified domain). Without them, contact/inquiry fail closed; other notifies skip. Admin → Settings can send a test email. Optional `CONTACT_FORM_WEBHOOK_URL` still bridges to Zapier/Make.

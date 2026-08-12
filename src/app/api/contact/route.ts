@@ -5,6 +5,7 @@ import {
   clientKeyFromRequest,
   rateLimitResponse,
 } from "@/lib/security/rate-limit";
+import { isEmailConfigured, sendContactFormEmails } from "@/lib/email";
 
 const contactSchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -34,31 +35,42 @@ export async function POST(request: Request) {
       );
     }
 
-    const payload = {
-      ...parsed.data,
-      source: "website-contact-form",
-      receivedAt: new Date().toISOString(),
+    const data = {
+      name: parsed.data.name,
+      email: parsed.data.email,
+      phone: parsed.data.phone || undefined,
+      service: parsed.data.service,
+      message: parsed.data.message || undefined,
     };
 
-    const webhookUrl = process.env.CONTACT_FORM_WEBHOOK_URL;
-    if (webhookUrl) {
-      const res = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        return NextResponse.json(
-          { success: false, error: "Unable to submit your request right now." },
-          { status: 502 }
-        );
-      }
-    } else {
-      // Keep a non-PII event marker for diagnostics if webhook isn't configured.
-      console.warn("[contact-form] CONTACT_FORM_WEBHOOK_URL is not configured.");
+    if (!isEmailConfigured() && !process.env.CONTACT_FORM_WEBHOOK_URL?.trim()) {
+      console.warn(
+        "[contact-form] Neither RESEND_API_KEY nor CONTACT_FORM_WEBHOOK_URL is configured."
+      );
+      return NextResponse.json(
+        { success: false, error: "Unable to submit your request right now." },
+        { status: 503 }
+      );
     }
 
-    return NextResponse.json({ success: true });
+    const result = await sendContactFormEmails(data);
+    const webhookOk = Boolean(process.env.CONTACT_FORM_WEBHOOK_URL?.trim());
+
+    if (result.ok || (result.ok === false && result.skipped && webhookOk)) {
+      return NextResponse.json({ success: true });
+    }
+
+    if (result.ok === false && result.skipped) {
+      return NextResponse.json(
+        { success: false, error: "Unable to submit your request right now." },
+        { status: 503 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: false, error: "Unable to submit your request right now." },
+      { status: 502 }
+    );
   } catch {
     return NextResponse.json(
       { success: false, error: "Unexpected server error." },
