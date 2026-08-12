@@ -59,7 +59,8 @@ export type WizardStepType =
   | "summary"
   | "fields"
   | "documents"
-  | "review";
+  | "review"
+  | "quote_review";
 
 /** Checklist item for a documents step (missing-doc detection + typed upload). */
 export interface WizardRequiredDocument {
@@ -93,6 +94,11 @@ export interface WizardStepConfig {
   documentsRequired?: boolean;
   /** Per-service missing-document checklist (documents steps). */
   requiredDocuments?: WizardRequiredDocument[];
+  /**
+   * When true on a fields step, completing it triggers smart-quote generation
+   * before advancing (used by AI quote engine services).
+   */
+  generatesQuote?: boolean;
 }
 
 export interface WizardConfig {
@@ -103,6 +109,8 @@ export interface WizardConfig {
   steps: WizardStepConfig[];
   /** Show marketplace toggle on review step (default true) */
   showMarketplaceToggle?: boolean;
+  /** Enable AI / pricing-engine quote flow for this service */
+  enableSmartQuote?: boolean;
   /**
    * Optional transform from flat wizard values → Case.formData shape.
    * Documents are merged by the engine after this runs.

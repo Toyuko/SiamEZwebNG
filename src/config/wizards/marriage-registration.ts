@@ -8,6 +8,7 @@ export const marriageRegistrationWizard: WizardConfig = {
   serviceSlug: "marriage-registration",
   autosaveKey: "marriage-registration",
   showMarketplaceToggle: true,
+  enableSmartQuote: true,
   steps: [
     {
       id: "summary",
@@ -56,6 +57,7 @@ export const marriageRegistrationWizard: WizardConfig = {
       labelKey: "steps.questions",
       description:
         "Tell us about your marriage registration so we can prepare an accurate quote.",
+      generatesQuote: true,
       fields: [
         {
           name: "marriageType",
@@ -106,6 +108,11 @@ export const marriageRegistrationWizard: WizardConfig = {
           showWhen: { field: "needsTranslation", truthy: true },
         },
         {
+          name: "needsLegalization",
+          type: "checkbox",
+          label: "I need legalization / MFA assistance",
+        },
+        {
           name: "notes",
           type: "textarea",
           label: "Additional notes",
@@ -114,6 +121,13 @@ export const marriageRegistrationWizard: WizardConfig = {
           maxLength: 2000,
         },
       ],
+    },
+    {
+      id: "quote",
+      type: "quote_review",
+      label: "Your quote",
+      labelKey: "steps.quote",
+      description: "Review your personalized SiamEZ quote before continuing.",
     },
     {
       id: "documents",

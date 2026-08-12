@@ -6,7 +6,7 @@ import {
   type LicenseVehicleType,
 } from "@/lib/driver-license-booking";
 import type { WizardConfig } from "./types";
-import { contactFields, notesField } from "./shared";
+import { contactFields, notesField, quoteReviewStep } from "./shared";
 
 function trimOrUndefined(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
@@ -50,6 +50,7 @@ export const driverLicenseWizard: WizardConfig = {
   serviceSlug: "driver-license",
   autosaveKey: "driver-license",
   showMarketplaceToggle: true,
+  enableSmartQuote: true,
   buildFormData: buildDriverLicenseFormData,
   steps: [
     {
@@ -88,6 +89,12 @@ export const driverLicenseWizard: WizardConfig = {
             { value: "both", label: "Both car and bike" },
           ],
         },
+        {
+          name: "nationality",
+          type: "text",
+          label: "Nationality",
+          placeholder: "e.g. Canadian",
+        },
       ],
     },
     {
@@ -95,6 +102,7 @@ export const driverLicenseWizard: WizardConfig = {
       type: "fields",
       label: "Add-ons",
       description: "Optional add-ons. You can skip this step with nothing selected.",
+      generatesQuote: true,
       fields: [
         {
           name: "addonFastTrack",
@@ -113,6 +121,7 @@ export const driverLicenseWizard: WizardConfig = {
         },
       ],
     },
+    quoteReviewStep,
     {
       id: "appointment",
       type: "fields",

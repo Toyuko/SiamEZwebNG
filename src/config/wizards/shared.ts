@@ -39,6 +39,14 @@ export const notesField: WizardFieldConfig = {
   maxLength: 2000,
 };
 
+export const quoteReviewStep: WizardStepConfig = {
+  id: "quote",
+  type: "quote_review",
+  label: "Your quote",
+  labelKey: "steps.quote",
+  description: "Review your personalized SiamEZ quote before continuing.",
+};
+
 type GenericWizardOptions = {
   /** Extra fields appended on the details step (after contact). */
   extraDetailsFields?: WizardFieldConfig[];
@@ -50,10 +58,12 @@ type GenericWizardOptions = {
   /** Missing-document checklist for the documents step. */
   requiredDocuments?: WizardStepConfig["requiredDocuments"];
   documentsRequired?: boolean;
+  /** Enable AI / pricing-engine quote review step. */
+  enableSmartQuote?: boolean;
 };
 
 /**
- * Standard quote/fixed booking wizard: summary → details → documents → review.
+ * Standard quote/fixed booking wizard: summary → details → [questions] → [quote] → documents → review.
  * Fixed vs quote checkout is decided by `service.type` in WizardEngine / submitBooking.
  */
 export function createGenericBookingWizard(
@@ -66,6 +76,7 @@ export function createGenericBookingWizard(
     label: "Your details",
     labelKey: "steps.details",
     fields: [...contactFields, ...(options.extraDetailsFields ?? [])],
+    generatesQuote: Boolean(options.enableSmartQuote && !options.questionsStep),
   };
 
   const steps: WizardStepConfig[] = [
@@ -80,7 +91,16 @@ export function createGenericBookingWizard(
   ];
 
   if (options.questionsStep) {
-    steps.push(options.questionsStep);
+    steps.push({
+      ...options.questionsStep,
+      generatesQuote: options.enableSmartQuote
+        ? true
+        : options.questionsStep.generatesQuote,
+    });
+  }
+
+  if (options.enableSmartQuote) {
+    steps.push(quoteReviewStep);
   }
 
   steps.push(
@@ -107,6 +127,7 @@ export function createGenericBookingWizard(
     serviceSlug,
     autosaveKey: serviceSlug,
     showMarketplaceToggle: options.showMarketplaceToggle ?? true,
+    enableSmartQuote: options.enableSmartQuote ?? false,
     steps,
   };
 }

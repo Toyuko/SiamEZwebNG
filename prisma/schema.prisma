@@ -70,6 +70,8 @@ model User {
   listingEnquiries    ListingEnquiry[]
   savedSearches       SavedSearch[]
   featureFlagsUpdated FeatureFlag[] @relation("FeatureFlagUpdater")
+  quotes              Quote[]            @relation("QuoteCustomer")
+  quotesAdjusted      Quote[]            @relation("QuoteAdjustedBy")
 }
 
 enum FreelancerVerificationStatus {
@@ -399,8 +401,9 @@ model Service {
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
-  cases Case[]
-  jobs  Job[]
+  cases  Case[]
+  jobs   Job[]
+  quotes Quote[]
 }
 
 // ----- Cases (every booking becomes a case) -----
@@ -472,29 +475,79 @@ model MarketplaceJob {
   @@map("marketplace_jobs")
 }
 
-// ----- Quotes -----
+// ----- Quotes (AI / pricing-engine quotes; may exist before a Case) -----
+
+enum QuoteType {
+  fixed
+  calculated
+  range
+}
 
 enum QuoteStatus {
   draft
+  generated
   sent
+  viewed
   accepted
+  expired
+  cancelled
   rejected
+  converted_to_booking
 }
 
 model Quote {
-  id         String      @id @default(cuid())
-  caseId     String      @map("case_id")
-  amount     Int         // smallest currency unit
-  currency   String      @default("THB")
-  status     QuoteStatus @default(draft)
-  validUntil DateTime?   @map("valid_until")
-  notes      String?     @db.Text
-  createdAt  DateTime    @default(now()) @map("created_at")
-  updatedAt  DateTime    @updatedAt @map("updated_at")
-  sentAt     DateTime?   @map("sent_at")
+  id          String      @id @default(cuid())
+  quoteNumber String?     @unique @map("quote_number")
+  /** Null until the quote is converted into a booking Case. */
+  caseId      String?     @map("case_id")
+  serviceId   String      @map("service_id")
+  userId      String?     @map("user_id")
+  /** Opaque token so guests can resume / accept a quote after login. */
+  guestToken  String?     @unique @map("guest_token")
 
-  case    Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  invoices Invoice[]
+  quoteType QuoteType   @default(calculated) @map("quote_type")
+  /** Authoritative total (or mid-range) in smallest currency unit (satang). */
+  amount    Int
+  currency  String      @default("THB")
+  status    QuoteStatus @default(draft)
+
+  /** Structured requirements collected by wizard / AI (never contains AI-invented prices). */
+  requirements     Json?
+  /** Deterministic pricing engine line items. */
+  pricingBreakdown Json? @map("pricing_breakdown")
+  subtotal         Int?
+  governmentFees   Int?  @map("government_fees")
+  addOnsTotal      Int?  @map("add_ons_total")
+  discount         Int?  @default(0)
+  rangeMin         Int?  @map("range_min")
+  rangeMax         Int?  @map("range_max")
+
+  /** Admin override audit trail */
+  originalAmount   Int?      @map("original_amount")
+  adjustmentAmount Int?      @map("adjustment_amount")
+  adjustmentReason String?   @map("adjustment_reason") @db.Text
+  adjustedById     String?   @map("adjusted_by_id")
+  adjustedAt       DateTime? @map("adjusted_at")
+  adminNotes       String?   @map("admin_notes") @db.Text
+
+  notes      String?   @db.Text
+  validUntil DateTime? @map("valid_until")
+  acceptedAt DateTime? @map("accepted_at")
+  viewedAt   DateTime? @map("viewed_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  sentAt     DateTime? @map("sent_at")
+
+  case       Case?     @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  service    Service   @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  user       User?     @relation("QuoteCustomer", fields: [userId], references: [id], onDelete: SetNull)
+  adjustedBy User?     @relation("QuoteAdjustedBy", fields: [adjustedById], references: [id], onDelete: SetNull)
+  invoices   Invoice[]
+
+  @@index([serviceId])
+  @@index([status])
+  @@index([userId])
+  @@index([caseId])
 }
 
 // ----- Payments (provider-agnostic: QR, Bank, Wise, Stripe Phase 2) -----

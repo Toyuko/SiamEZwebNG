@@ -15,6 +15,9 @@ export interface SubmitBookingInput {
   formData: Record<string, unknown>;
   documentIds?: string[];
   postToMarketplace?: boolean;
+  /** Accepted smart-quote id (server validates amount). */
+  quoteId?: string;
+  guestQuoteToken?: string;
 }
 
 export interface SubmitBookingResult {
@@ -49,6 +52,7 @@ export async function submitBooking(input: SubmitBookingInput): Promise<SubmitBo
       formData: input.formData,
       documentIds: input.documentIds,
       postToMarketplace: input.postToMarketplace,
+      quoteId: input.quoteId,
     });
 
     return {

@@ -8,6 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { MarketplacePostToggle } from "@/components/booking/MarketplacePostToggle";
 import { submitBooking } from "@/actions/booking";
+import {
+  acceptSmartQuote,
+  generateSmartQuote,
+  type GenerateQuoteResult,
+} from "@/actions/quote";
 import { uploadWizardDocumentAction } from "@/actions/document";
 import { getWizardConfig } from "@/config/wizards";
 import type { WizardConfig, WizardRequiredDocument } from "@/config/wizards/types";
@@ -28,6 +33,8 @@ import {
   type WizardDocumentMeta,
 } from "@/components/wizard/steps/DocumentsStep";
 import { ReviewStep } from "@/components/wizard/steps/ReviewStep";
+import { QuoteReviewStep } from "@/components/wizard/steps/QuoteReviewStep";
+import { QuoteConciergeAssist } from "@/components/wizard/QuoteConciergeAssist";
 import {
   applyWizardPrefill,
   extractDocumentFields,
@@ -36,6 +43,8 @@ import {
   getMissingDocuments,
   validateWizardDocument,
 } from "@/lib/documents";
+
+type QuoteSuccess = Extract<GenerateQuoteResult, { success: true }>;
 
 function documentsStepConfig(config: WizardConfig) {
   return config.steps.find((s) => s.type === "documents");
@@ -120,6 +129,8 @@ function WizardEngineInner({
   const [docWarning, setDocWarning] = useState<string | null>(null);
   const [selectedRequiredId, setSelectedRequiredId] = useState<string | null>(null);
   const [resumeBanner, setResumeBanner] = useState(false);
+  const [quote, setQuote] = useState<QuoteSuccess | null>(null);
+  const [quoteAccepted, setQuoteAccepted] = useState(false);
 
   const form = useForm<Record<string, unknown>>({
     defaultValues: defaultValuesFromConfig(config, {
@@ -265,9 +276,20 @@ function WizardEngineInner({
       guestEmail: (values.email as string) || userEmail || undefined,
       guestName: (values.name as string) || userName || undefined,
       guestPhone: (values.phone as string) || undefined,
-      formData: payload,
+      formData: {
+        ...payload,
+        ...(quote
+          ? {
+              smartQuoteId: quote.quoteId,
+              smartQuoteNumber: quote.quoteNumber,
+              smartQuoteTotal: quote.total,
+            }
+          : {}),
+      },
       documentIds: documentIds.length > 0 ? documentIds : undefined,
       postToMarketplace,
+      quoteId: quoteAccepted && quote ? quote.quoteId : undefined,
+      guestQuoteToken: quote?.guestToken ?? undefined,
     });
     setLoading(false);
 
@@ -305,7 +327,55 @@ function WizardEngineInner({
     userEmail,
     userId,
     userName,
+    quote,
+    quoteAccepted,
   ]);
+
+  const runGenerateQuote = useCallback(async () => {
+    if (!config.enableSmartQuote) return true;
+    setLoading(true);
+    setError(null);
+    const values = getValues() as Record<string, unknown>;
+    const result = await generateSmartQuote({
+      serviceId: service.id,
+      serviceSlug,
+      requirements: values,
+    });
+    setLoading(false);
+    if (!result.success) {
+      setError(
+        result.error ||
+          "We're having trouble calculating your quote. You can continue with our standard booking form or contact SiamEZ."
+      );
+      // Soft-launch fallback: allow continuing without a locked quote
+      setQuote(null);
+      setQuoteAccepted(false);
+      return true;
+    }
+    setQuote(result);
+    setQuoteAccepted(false);
+    return true;
+  }, [config.enableSmartQuote, getValues, service.id, serviceSlug]);
+
+  const handleAcceptQuote = useCallback(async () => {
+    if (!quote) return;
+    setLoading(true);
+    setError(null);
+    const result = await acceptSmartQuote({
+      quoteId: quote.quoteId,
+      guestToken: quote.guestToken ?? undefined,
+    });
+    setLoading(false);
+    if (!result.success) {
+      setError(result.error ?? "Could not accept quote.");
+      if (result.expired) {
+        setQuoteAccepted(false);
+      }
+      return;
+    }
+    setQuoteAccepted(true);
+    setStepIndex((i) => Math.min(i + 1, visibleSteps.length - 1));
+  }, [quote, visibleSteps.length]);
 
   const handleNext = useCallback(async () => {
     setError(null);
@@ -320,6 +390,18 @@ function WizardEngineInner({
         return;
       }
       clearErrors();
+
+      if (currentStep.generatesQuote && config.enableSmartQuote) {
+        const ok = await runGenerateQuote();
+        if (!ok) return;
+      }
+    }
+
+    if (currentStep.type === "quote_review") {
+      if (!quoteAccepted) {
+        setError("Please accept the quote to continue, or go back to edit your details.");
+        return;
+      }
     }
 
     if (currentStep.type === "documents") {
@@ -341,12 +423,15 @@ function WizardEngineInner({
   }, [
     applyFieldErrors,
     clearErrors,
+    config.enableSmartQuote,
     currentStep,
     documents.length,
     getValues,
     handleSubmit,
     isLastStep,
     missingDocWarning,
+    quoteAccepted,
+    runGenerateQuote,
     visibleSteps.length,
   ]);
 
@@ -551,6 +636,8 @@ function WizardEngineInner({
     setResumeBanner(false);
     setDocWarning(null);
     setSelectedRequiredId(null);
+    setQuote(null);
+    setQuoteAccepted(false);
   };
 
   const locale =
@@ -609,12 +696,48 @@ function WizardEngineInner({
             <SummaryStep service={service} description={currentStep.description} />
           ) : null}
           {currentStep.type === "fields" ? (
-            <FieldsStep
-              step={currentStep}
-              control={control}
-              errors={errors}
-              values={watchedValues as Record<string, unknown>}
-              footer={guestFooter}
+            <>
+              {config.enableSmartQuote &&
+              (currentStep.generatesQuote ||
+                currentStep.id === "service" ||
+                currentStep.id === "questions" ||
+                currentStep.id === "details") ? (
+                <QuoteConciergeAssist
+                  serviceSlug={serviceSlug}
+                  currentRequirements={watchedValues as Record<string, unknown>}
+                  onApply={(requirements) => {
+                    for (const [name, value] of Object.entries(requirements)) {
+                      setValue(name, value, {
+                        shouldDirty: true,
+                        shouldValidate: false,
+                      });
+                    }
+                  }}
+                />
+              ) : null}
+              <FieldsStep
+                step={currentStep}
+                control={control}
+                errors={errors}
+                values={watchedValues as Record<string, unknown>}
+                footer={guestFooter}
+              />
+            </>
+          ) : null}
+          {currentStep.type === "quote_review" ? (
+            <QuoteReviewStep
+              quote={quote}
+              serviceName={service.name}
+              accepted={quoteAccepted}
+              loading={loading}
+              onAccept={handleAcceptQuote}
+              onEdit={() => {
+                setQuoteAccepted(false);
+                setStepIndex((i) => Math.max(i - 1, 0));
+              }}
+              onRecalculate={() => {
+                void runGenerateQuote();
+              }}
             />
           ) : null}
           {currentStep.type === "documents" ? (
@@ -670,10 +793,20 @@ function WizardEngineInner({
           <Button
             type="button"
             onClick={handleNext}
-            disabled={loading}
+            disabled={loading || (currentStep.type === "quote_review" && !quoteAccepted)}
             className="w-full sm:w-auto"
           >
-            {loading ? "Submitting…" : isLastStep ? "Submit booking" : "Next"}
+            {loading
+              ? currentStep.type === "quote_review"
+                ? "Working…"
+                : "Submitting…"
+              : isLastStep
+                ? "Submit booking"
+                : currentStep.type === "quote_review"
+                  ? quoteAccepted
+                    ? "Continue"
+                    : "Accept quote above"
+                  : "Next"}
           </Button>
         </div>
       </CardContent>

@@ -3,11 +3,15 @@ import { createGenericBookingWizard, notesField } from "./shared";
 export const vehicleRegistrationWizard = createGenericBookingWizard(
   "vehicle-registration",
   {
+    enableSmartQuote: true,
+    summaryDescription:
+      "Answer a few questions for a calculated vehicle registration quote. DLT fees are estimated.",
     extraDetailsFields: [
       {
         name: "registrationType",
         type: "select",
         label: "Registration need",
+        required: true,
         options: [
           { value: "transfer", label: "Ownership transfer" },
           { value: "renewal", label: "Tax / insurance renewal" },
@@ -20,6 +24,7 @@ export const vehicleRegistrationWizard = createGenericBookingWizard(
         name: "vehicleType",
         type: "select",
         label: "Vehicle type",
+        required: true,
         options: [
           { value: "car", label: "Car" },
           { value: "motorcycle", label: "Motorcycle" },
@@ -31,6 +36,11 @@ export const vehicleRegistrationWizard = createGenericBookingWizard(
         type: "text",
         label: "Province / plate area",
         placeholder: "e.g. Bangkok (BKK)",
+      },
+      {
+        name: "express",
+        type: "checkbox",
+        label: "Urgent / express processing",
       },
       notesField,
     ],

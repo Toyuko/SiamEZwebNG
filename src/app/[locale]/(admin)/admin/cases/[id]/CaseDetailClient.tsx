@@ -207,10 +207,16 @@ export function CaseDetailClient({
               ) : (
                 <ul className="space-y-2">
                   {caseData.quotes.map((q) => (
-                    <li key={q.id} className="flex justify-between text-sm">
+                    <li key={q.id} className="flex items-center justify-between gap-3 text-sm">
                       <span>
                         {formatCurrency(q.amount, q.currency)} · {q.status}
                       </span>
+                      <Link
+                        href={`/admin/quotes/${q.id}`}
+                        className="text-siam-blue hover:underline"
+                      >
+                        View
+                      </Link>
                     </li>
                   ))}
                 </ul>

@@ -22,6 +22,10 @@ export interface CreateBookingCaseInput {
   formData?: Record<string, unknown>;
   documentIds?: string[];
   postToMarketplace?: boolean;
+  /** When set, attach this quote to the case and use its amount for invoicing. */
+  quoteId?: string;
+  /** Authoritative satang amount from server-side quote (never trust client). */
+  quoteAmountOverride?: number;
 }
 
 export async function getUserCases(userId: string) {
@@ -83,11 +87,37 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
   const status: CaseStatus = service.type === "fixed" ? "new" : "under_review";
   const guestCheckoutToken = input.isGuest ? randomBytes(32).toString("hex") : undefined;
 
+  // Resolve authoritative invoice amount: quote engine > fixed service price
+  let invoiceAmount: number | null = null;
+  let invoiceCurrency = service.priceCurrency ?? "THB";
+  let treatAsPayable = service.type === "fixed";
+
+  if (input.quoteId) {
+    const quote = await prisma.quote.findUnique({ where: { id: input.quoteId } });
+    if (!quote) throw new Error("Quote not found");
+    if (quote.serviceId !== input.serviceId) throw new Error("Quote service mismatch");
+    if (quote.status === "expired" || (quote.validUntil && quote.validUntil < new Date())) {
+      throw new Error("Quote expired — please recalculate before booking");
+    }
+    // Server-side amount only (ignore any client-supplied override unless it matches quote)
+    invoiceAmount = quote.amount;
+    invoiceCurrency = quote.currency;
+    if (quote.quoteType === "fixed" || quote.quoteType === "calculated") {
+      treatAsPayable = true;
+    }
+  } else if (input.quoteAmountOverride != null && input.quoteAmountOverride > 0) {
+    // Only allowed when paired with quoteId in normal flow; kept for admin convert
+    invoiceAmount = input.quoteAmountOverride;
+    treatAsPayable = true;
+  } else if (service.type === "fixed" && service.priceAmount != null && service.priceAmount > 0) {
+    invoiceAmount = service.priceAmount;
+  }
+
   const c = await createCaseRecord({
     caseNumber: nextCaseNumber(),
     userId: userId ?? null,
     serviceId: input.serviceId,
-    status,
+    status: treatAsPayable && invoiceAmount && invoiceAmount > 0 ? "new" : status,
     isGuest: input.isGuest,
     guestCheckoutToken: guestCheckoutToken ?? null,
     guestEmail: input.guestEmail?.trim() || null,
@@ -97,6 +127,18 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
     postToMarketplace: input.postToMarketplace ?? false,
   });
 
+  if (input.quoteId) {
+    await prisma.quote.update({
+      where: { id: input.quoteId },
+      data: {
+        caseId: c.id,
+        status: "converted_to_booking",
+        acceptedAt: new Date(),
+        userId: userId ?? undefined,
+      },
+    });
+  }
+
   if (input.documentIds?.length) {
     await attachOwnedDocumentsToCase({
       caseId: c.id,
@@ -105,13 +147,14 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
     });
   }
 
-  if (service.type === "fixed" && service.priceAmount != null && service.priceAmount > 0) {
+  if (treatAsPayable && invoiceAmount != null && invoiceAmount > 0) {
     await createInvoice({
       caseId: c.id,
       userId: userId ?? null,
-      amount: service.priceAmount,
-      currency: service.priceCurrency ?? "THB",
+      amount: invoiceAmount,
+      currency: invoiceCurrency,
       status: "unpaid",
+      quoteId: input.quoteId ?? undefined,
     });
   }
 
@@ -151,7 +194,7 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
       caseId: c.id,
       serviceName: service.name,
       isGuest: input.isGuest,
-      isFixed: service.type === "fixed",
+      isFixed: treatAsPayable && invoiceAmount != null && invoiceAmount > 0,
       guestCheckoutToken,
     });
   }
@@ -159,7 +202,7 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
   return {
     caseId: c.id,
     caseNumber: c.caseNumber,
-    isFixed: service.type === "fixed",
+    isFixed: treatAsPayable && invoiceAmount != null && invoiceAmount > 0,
     guestCheckoutToken,
   };
 }
