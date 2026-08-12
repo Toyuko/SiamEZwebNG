@@ -75,6 +75,10 @@ export default async function CheckoutPage({
     const paymentSettings = await getPaymentSettings();
     const portalInvoiceHref =
       !isGuestCheckout && session?.user?.id ? `/portal/invoices/${invoice.id}` : null;
+    const quote = c.quotes?.[0];
+    const totalSatang = quote?.amount ?? invoice.amount;
+    const remainingSatang =
+      quote?.remainingBalance ?? Math.max(0, totalSatang - invoice.amount);
 
     return (
       <div className="container mx-auto max-w-lg px-4 py-8">
@@ -86,6 +90,9 @@ export default async function CheckoutPage({
           paymentSettings={paymentSettings}
           portalInvoiceHref={portalInvoiceHref}
           isGuest={isGuestCheckout}
+          totalSatang={totalSatang}
+          remainingSatang={remainingSatang}
+          reason={quote?.paymentReason ?? null}
         />
         <div className="mt-6">
           <Button asChild variant="ghost" size="sm">

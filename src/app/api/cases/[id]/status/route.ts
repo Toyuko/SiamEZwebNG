@@ -8,12 +8,18 @@ const VALID_STATUSES: CaseStatus[] = [
   "new",
   "under_review",
   "quoted",
+  "custom_quote_required",
   "awaiting_payment",
+  "awaiting_initial_payment",
+  "initial_payment_paid",
   "paid",
   "in_progress",
+  "milestone_due",
   "pending_docs",
   "completed",
   "cancelled",
+  "refund_pending",
+  "refunded",
 ];
 
 /**

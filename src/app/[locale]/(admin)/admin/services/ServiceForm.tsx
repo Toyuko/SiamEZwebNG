@@ -105,6 +105,78 @@ export function ServiceForm({ action, defaultValues }: ServiceFormProps) {
       {!defaultValues && (
         <input type="hidden" name="active" value="1" />
       )}
+      <div className="rounded-lg border border-border p-4 space-y-3">
+        <p className="text-sm font-medium">Customer-friendly payment strategy</p>
+        <p className="text-xs text-muted">
+          10% / 20% / 30% initial payment. Never use 50–75% as a default.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <Label htmlFor="paymentStrategy">Exposure</Label>
+            <Select
+              id="paymentStrategy"
+              name="paymentStrategy"
+              defaultValue={
+                (defaultValues?.paymentConfig as { payment_strategy?: string } | null)
+                  ?.payment_strategy ?? "NORMAL_EXPOSURE"
+              }
+              className="mt-1"
+            >
+              <option value="LOW_EXPOSURE">Low — 10%</option>
+              <option value="NORMAL_EXPOSURE">Normal — 20%</option>
+              <option value="HIGH_EXPOSURE">High — 30% + milestones</option>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="minimumInitialPayment">Minimum initial payment (THB)</Label>
+            <Input
+              id="minimumInitialPayment"
+              name="minimumInitialPayment"
+              type="number"
+              min={0}
+              defaultValue={
+                (defaultValues?.paymentConfig as { minimum_initial_payment?: number } | null)
+                  ?.minimum_initial_payment ?? 500
+              }
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="allowMilestones">Allow milestones</Label>
+            <Select
+              id="allowMilestones"
+              name="allowMilestones"
+              defaultValue={
+                (defaultValues?.paymentConfig as { allow_milestones?: boolean } | null)
+                  ?.allow_milestones
+                  ? "1"
+                  : "0"
+              }
+              className="mt-1"
+            >
+              <option value="0">No</option>
+              <option value="1">Yes</option>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="allowFullPayment">Allow pay-in-full</Label>
+            <Select
+              id="allowFullPayment"
+              name="allowFullPayment"
+              defaultValue={
+                (defaultValues?.paymentConfig as { allow_full_payment?: boolean } | null)
+                  ?.allow_full_payment === false
+                  ? "0"
+                  : "1"
+              }
+              className="mt-1"
+            >
+              <option value="1">Yes</option>
+              <option value="0">No</option>
+            </Select>
+          </div>
+        </div>
+      </div>
       <Button type="submit" disabled={pending}>
         {pending ? "Saving…" : "Save"}
       </Button>

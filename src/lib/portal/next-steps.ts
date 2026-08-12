@@ -72,7 +72,7 @@ export function buildCustomerNextSteps(input: {
         title: input.labels.uploadDocs(c.service.name),
         description: input.labels.uploadDocsDesc(c.caseNumber),
       });
-    } else if (c.status === "quoted" || c.status === "awaiting_payment") {
+    } else if (c.status === "quoted" || c.status === "awaiting_payment" || c.status === "awaiting_initial_payment") {
       // Prefer invoice link when present; otherwise point at case.
       const hasInvoiceStep = input.invoices.some(
         (inv) =>

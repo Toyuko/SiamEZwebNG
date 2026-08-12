@@ -18,6 +18,16 @@ import {
   updateQuoteAdmin,
   updateQuoteStatus,
 } from "@/data-access/quote";
+import { resolveServicePaymentConfig } from "@/lib/payments/service-config";
+import {
+  buildPricingSnapshot,
+  buildQuotePaymentPlan,
+  parseStoredPaymentPlan,
+  type PaymentChoice,
+  type QuotePaymentPlan,
+} from "@/lib/payments/quote-plan";
+import { trackPlatformEvent } from "@/lib/analytics/track";
+import { assertQuoteOwnership, CheckoutValidationError } from "@/lib/payments/checkout-guard";
 
 export type GenerateQuoteResult =
   | {
@@ -44,6 +54,8 @@ export type GenerateQuoteResult =
       validUntil: string;
       requirements: Record<string, unknown>;
       summaryLabel: string;
+      paymentPlan: QuotePaymentPlan;
+      pricingVersion: string;
     }
   | { success: false; error: string };
 
@@ -77,15 +89,31 @@ export async function generateSmartQuote(input: {
       currency: service.priceCurrency ?? "THB",
     });
 
+    const paymentConfig = resolveServicePaymentConfig({
+      serviceSlug: service.slug,
+      dbPaymentConfig: service.paymentConfig,
+    });
+    const paymentPlan = buildQuotePaymentPlan({
+      pricing: calculated,
+      config: paymentConfig,
+      serviceSlug: service.slug,
+      serviceName: service.name,
+      requirements: input.requirements,
+    });
+    const snapshot = buildPricingSnapshot({ plan: paymentPlan, pricing: calculated });
+
     const session = await getSession();
     const validUntil = computeQuoteExpiry(pricing.validityDays);
+    const quoteStatus = paymentPlan.requires_human_review
+      ? "custom_quote_required"
+      : "generated";
 
     const quote = await createQuote({
       serviceId: service.id,
       userId: session?.user?.id ?? null,
       amount: calculated.total,
       currency: calculated.currency,
-      status: "generated",
+      status: quoteStatus,
       quoteType: calculated.quoteType,
       validUntil,
       requirements: input.requirements as unknown as Prisma.InputJsonValue,
@@ -100,7 +128,59 @@ export async function generateSmartQuote(input: {
       rangeMin: calculated.rangeMin,
       rangeMax: calculated.rangeMax,
       originalAmount: calculated.total,
+      paymentPlan: paymentPlan as unknown as Prisma.InputJsonValue,
+      pricingSnapshot: snapshot as unknown as Prisma.InputJsonValue,
+      pricingVersion: snapshot.pricing_version,
+      complexity: paymentPlan.complexity,
+      aiConfidence: paymentPlan.confidence,
+      requiresHumanReview: paymentPlan.requires_human_review,
+      paymentReason: paymentPlan.reason,
+      paymentModel: paymentPlan.model,
+      initialPercentage: paymentPlan.initial_percentage,
+      initialPaymentTotal: paymentPlan.initial_payment_total,
+      remainingBalance: paymentPlan.remaining_balance,
+      requiredUpfrontCosts: paymentPlan.required_upfront_costs,
     });
+
+    if (paymentPlan.milestones.length > 0) {
+      await prisma.paymentMilestone.createMany({
+        data: paymentPlan.milestones.map((m, i) => ({
+          quoteId: quote.id,
+          name: m.name,
+          description: m.description ?? null,
+          amount: m.amount,
+          percentage: m.percentage,
+          status: i === 0 ? "due" : "pending",
+          dueCondition: m.dueCondition ?? null,
+          sortOrder: i,
+        })),
+      });
+    }
+
+    void trackPlatformEvent(
+      "quote_generated",
+      {
+        serviceSlug: service.slug,
+        quoteId: quote.id,
+        paymentModel: paymentPlan.model,
+        initialPercentage: paymentPlan.initial_percentage,
+        initialPaymentTotal: paymentPlan.initial_payment_total,
+        requiredUpfrontCosts: paymentPlan.required_upfront_costs,
+        total: calculated.total,
+        requiresHumanReview: paymentPlan.requires_human_review,
+      },
+      session?.user?.id
+    );
+    void trackPlatformEvent(
+      "initial_payment_shown",
+      {
+        serviceSlug: service.slug,
+        quoteId: quote.id,
+        initialPercentage: paymentPlan.initial_percentage,
+        initialPaymentTotal: paymentPlan.initial_payment_total,
+      },
+      session?.user?.id
+    );
 
     return {
       success: true,
@@ -120,6 +200,8 @@ export async function generateSmartQuote(input: {
       validUntil: validUntil.toISOString(),
       requirements: input.requirements,
       summaryLabel: calculated.summaryLabel,
+      paymentPlan,
+      pricingVersion: snapshot.pricing_version,
     };
   } catch (e) {
     console.error("generateSmartQuote", e);
@@ -133,20 +215,38 @@ export async function generateSmartQuote(input: {
 export async function acceptSmartQuote(input: {
   quoteId: string;
   guestToken?: string;
+  paymentChoice?: PaymentChoice;
 }): Promise<{ success: boolean; error?: string; expired?: boolean }> {
   try {
     const quote = await getQuoteById(input.quoteId);
     if (!quote) return { success: false, error: "Quote not found" };
 
     const session = await getSession();
-    const owns =
-      (session?.user?.id && quote.userId === session.user.id) ||
-      (input.guestToken && quote.guestToken === input.guestToken) ||
-      (!quote.userId && !input.guestToken && quote.status === "generated");
+    try {
+      assertQuoteOwnership({
+        quoteUserId: quote.userId,
+        quoteGuestToken: quote.guestToken,
+        sessionUserId: session?.user?.id,
+        guestToken: input.guestToken,
+      });
+    } catch (e) {
+      const owns =
+        (session?.user?.id && quote.userId === session.user.id) ||
+        (input.guestToken && quote.guestToken === input.guestToken) ||
+        (!quote.userId && !input.guestToken && quote.status === "generated");
+      if (!owns && quote.status !== "generated" && quote.status !== "viewed") {
+        return { success: false, error: "Not authorized to accept this quote" };
+      }
+      if (e instanceof CheckoutValidationError && !owns) {
+        return { success: false, error: e.message };
+      }
+    }
 
-    // Soft-launch: allow accept when quote is freshly generated in same wizard session
-    if (!owns && quote.status !== "generated" && quote.status !== "viewed") {
-      return { success: false, error: "Not authorized to accept this quote" };
+    if (quote.requiresHumanReview || quote.status === "custom_quote_required") {
+      return {
+        success: false,
+        error: "This request requires a custom quote from our SiamEZ team.",
+      };
     }
 
     if (isQuoteExpired(quote.validUntil)) {
@@ -159,11 +259,54 @@ export async function acceptSmartQuote(input: {
       };
     }
 
-    await updateQuoteStatus(quote.id, "accepted", { acceptedAt: new Date() });
+    const choice: PaymentChoice = input.paymentChoice === "full" ? "full" : "initial";
+    const plan = parseStoredPaymentPlan(quote.paymentPlan);
+    if (choice === "full" && plan && !plan.allow_full_payment) {
+      return { success: false, error: "Full payment is not available for this service." };
+    }
+
+    await prisma.quote.update({
+      where: { id: quote.id },
+      data: {
+        status: "accepted",
+        acceptedAt: new Date(),
+        paymentChoice: choice,
+      },
+    });
+
+    void trackPlatformEvent(
+      choice === "full" ? "full_payment_selected" : "quote_completed",
+      {
+        quoteId: quote.id,
+        paymentChoice: choice,
+        initialPercentage: quote.initialPercentage ?? undefined,
+      },
+      session?.user?.id
+    );
+
     return { success: true };
   } catch (e) {
     console.error("acceptSmartQuote", e);
     return { success: false, error: e instanceof Error ? e.message : "Accept failed" };
+  }
+}
+
+export async function requestCustomQuote(input: {
+  quoteId: string;
+  guestToken?: string;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const quote = await getQuoteById(input.quoteId);
+    if (!quote) return { success: false, error: "Quote not found" };
+    await prisma.quote.update({
+      where: { id: quote.id },
+      data: { status: "custom_quote_required", requiresHumanReview: true },
+    });
+    void trackPlatformEvent("custom_quote_requested", { quoteId: quote.id });
+    return { success: true };
+  } catch (e) {
+    console.error("requestCustomQuote", e);
+    return { success: false, error: e instanceof Error ? e.message : "Request failed" };
   }
 }
 

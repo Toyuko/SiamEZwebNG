@@ -25,6 +25,16 @@ export default async function AdminEditServicePage({
     const priceStr = (formData.get("priceAmount") as string)?.trim();
     const priceAmount = priceStr ? Math.round(parseFloat(priceStr) * 100) : null;
     const active = formData.get("active") === "1";
+    const strategy = String(formData.get("paymentStrategy") || "NORMAL_EXPOSURE");
+    const minPay = Number(formData.get("minimumInitialPayment") || 500);
+    const paymentConfig = {
+      payment_strategy: strategy,
+      default_initial_percentage: strategy === "LOW_EXPOSURE" ? 10 : strategy === "HIGH_EXPOSURE" ? 30 : 20,
+      minimum_initial_payment: Number.isFinite(minPay) ? minPay : 500,
+      maximum_normal_percentage: 30,
+      allow_milestones: formData.get("allowMilestones") === "1",
+      allow_full_payment: formData.get("allowFullPayment") !== "0",
+    };
 
     if (!slug || !name || !description) return;
 
@@ -36,6 +46,7 @@ export default async function AdminEditServicePage({
       type,
       priceAmount,
       active,
+      paymentConfig,
     });
     redirect("/admin/services");
   }

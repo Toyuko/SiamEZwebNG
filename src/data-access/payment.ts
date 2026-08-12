@@ -50,6 +50,8 @@ export async function createPayment(data: {
   stripeChargeId?: string | null;
   metadata?: object | null;
   status?: PaymentStatus;
+  kind?: "full" | "initial" | "milestone" | "balance";
+  idempotencyKey?: string | null;
 }) {
   return prisma.payment.create({
     data: {
@@ -63,6 +65,8 @@ export async function createPayment(data: {
       stripeChargeId: data.stripeChargeId ?? undefined,
       metadata: data.metadata ?? undefined,
       status: data.status ?? "submitted",
+      kind: data.kind ?? "full",
+      idempotencyKey: data.idempotencyKey ?? undefined,
     },
   });
 }

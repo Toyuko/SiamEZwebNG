@@ -12,6 +12,7 @@ export async function getQuoteById(id: string) {
       user: { select: { id: true, name: true, email: true } },
       adjustedBy: { select: { id: true, name: true, email: true } },
       invoices: true,
+      paymentMilestones: { orderBy: { sortOrder: "asc" } },
     },
   });
 }
@@ -104,6 +105,19 @@ export async function createQuote(data: {
   rangeMin?: number;
   rangeMax?: number;
   originalAmount?: number;
+  paymentPlan?: Prisma.InputJsonValue;
+  pricingSnapshot?: Prisma.InputJsonValue;
+  pricingVersion?: string | null;
+  complexity?: string | null;
+  aiConfidence?: number | null;
+  requiresHumanReview?: boolean;
+  paymentReason?: string | null;
+  paymentModel?: string | null;
+  initialPercentage?: number | null;
+  initialPaymentTotal?: number | null;
+  remainingBalance?: number | null;
+  requiredUpfrontCosts?: number | null;
+  paymentChoice?: string | null;
 }) {
   const guestToken = data.userId ? undefined : randomBytes(24).toString("hex");
   const quoteNumber = nextCaseNumber("QT");
@@ -130,6 +144,19 @@ export async function createQuote(data: {
       rangeMin: data.rangeMin ?? undefined,
       rangeMax: data.rangeMax ?? undefined,
       originalAmount: data.originalAmount ?? data.amount,
+      paymentPlan: data.paymentPlan ?? undefined,
+      pricingSnapshot: data.pricingSnapshot ?? undefined,
+      pricingVersion: data.pricingVersion ?? undefined,
+      complexity: data.complexity ?? undefined,
+      aiConfidence: data.aiConfidence ?? undefined,
+      requiresHumanReview: data.requiresHumanReview ?? false,
+      paymentReason: data.paymentReason ?? undefined,
+      paymentModel: data.paymentModel ?? undefined,
+      initialPercentage: data.initialPercentage ?? undefined,
+      initialPaymentTotal: data.initialPaymentTotal ?? undefined,
+      remainingBalance: data.remainingBalance ?? undefined,
+      requiredUpfrontCosts: data.requiredUpfrontCosts ?? undefined,
+      paymentChoice: data.paymentChoice ?? undefined,
     },
   });
 }

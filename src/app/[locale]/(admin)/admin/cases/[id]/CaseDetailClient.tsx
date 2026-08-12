@@ -17,12 +17,18 @@ const STATUS_OPTIONS: { value: CaseStatus; label: string }[] = [
   { value: "new", label: "New" },
   { value: "under_review", label: "Under review" },
   { value: "quoted", label: "Quoted" },
+  { value: "custom_quote_required", label: "Custom quote required" },
   { value: "awaiting_payment", label: "Awaiting payment" },
+  { value: "awaiting_initial_payment", label: "Awaiting initial payment" },
+  { value: "initial_payment_paid", label: "Initial payment paid" },
   { value: "paid", label: "Paid" },
   { value: "in_progress", label: "In progress" },
+  { value: "milestone_due", label: "Milestone due" },
   { value: "pending_docs", label: "Pending docs" },
   { value: "completed", label: "Completed" },
   { value: "cancelled", label: "Cancelled" },
+  { value: "refund_pending", label: "Refund pending" },
+  { value: "refunded", label: "Refunded" },
 ];
 
 type CaseWithRelations = Case & {

@@ -7,6 +7,7 @@ import * as invoiceDA from "@/data-access/invoice";
 import * as paymentDA from "@/data-access/payment";
 import { applySalesSuperBoostForListing } from "@/data-access/sales";
 import { isStripeEnabled } from "@/config/payments";
+import { confirmVerifiedPayment } from "@/lib/payments/confirm";
 
 export const runtime = "nodejs";
 
@@ -46,8 +47,19 @@ export async function POST(request: NextRequest) {
         if (!pi.id) break;
 
         const payment = await paymentDA.getPaymentByStripePaymentIntentId(pi.id);
-        if (payment) {
-          if (payment.status !== "approved") {
+        if (invoiceId && caseId) {
+          await confirmVerifiedPayment({
+            invoiceId,
+            caseId,
+            paymentId: payment?.id,
+            webhookEventId: event.id,
+            stripeChargeId:
+              typeof pi.latest_charge === "string"
+                ? pi.latest_charge
+                : pi.latest_charge?.id ?? null,
+          });
+        } else {
+          if (payment && payment.status !== "approved") {
             await paymentDA.updatePaymentByStripeIntentId(pi.id, {
               status: "succeeded",
               stripeChargeId:
@@ -56,31 +68,29 @@ export async function POST(request: NextRequest) {
                   : pi.latest_charge?.id,
             });
           }
-        }
-
-        if (invoiceId) {
-          const invoice = await invoiceDA.getInvoiceById(invoiceId);
-          if (invoice && invoice.status !== "paid") {
-            await invoiceDA.updateInvoicePaid(invoiceId);
+          if (invoiceId) {
+            const invoice = await invoiceDA.getInvoiceById(invoiceId);
+            if (invoice && invoice.status !== "paid") {
+              await invoiceDA.updateInvoicePaid(invoiceId);
+            }
           }
-        }
-
-        if (caseId) {
-          const caseRecord = await prisma.case.findUnique({
-            where: { id: caseId },
-            select: { status: true },
-          });
-          if (
-            caseRecord &&
-            caseRecord.status !== "paid" &&
-            caseRecord.status !== "in_progress" &&
-            caseRecord.status !== "completed" &&
-            caseRecord.status !== "cancelled"
-          ) {
-            await prisma.case.update({
+          if (caseId) {
+            const caseRecord = await prisma.case.findUnique({
               where: { id: caseId },
-              data: { status: "paid" },
+              select: { status: true },
             });
+            if (
+              caseRecord &&
+              caseRecord.status !== "paid" &&
+              caseRecord.status !== "in_progress" &&
+              caseRecord.status !== "completed" &&
+              caseRecord.status !== "cancelled"
+            ) {
+              await prisma.case.update({
+                where: { id: caseId },
+                data: { status: "paid" },
+              });
+            }
           }
         }
 

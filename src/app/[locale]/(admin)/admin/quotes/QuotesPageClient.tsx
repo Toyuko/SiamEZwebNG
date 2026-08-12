@@ -26,6 +26,12 @@ type QuoteRow = {
   caseId: string | null;
   caseNumber: string | null;
   paymentStatus: string | null;
+  paymentModel: string | null;
+  initialPercentage: number | null;
+  initialPaymentTotal: number | null;
+  remainingBalance: number | null;
+  aiConfidence: number | null;
+  requiresHumanReview: boolean;
 };
 
 function formatQuoteAmount(q: QuoteRow): string {
@@ -87,6 +93,7 @@ export function QuotesPageClient({
               <option value="generated">Generated</option>
               <option value="accepted">Accepted</option>
               <option value="converted_to_booking">Converted</option>
+              <option value="custom_quote_required">Custom quote required</option>
               <option value="expired">Expired</option>
               <option value="cancelled">Cancelled</option>
               <option value="rejected">Rejected</option>
@@ -116,6 +123,8 @@ export function QuotesPageClient({
                 <th className="py-2 pr-3 font-medium">Service</th>
                 <th className="py-2 pr-3 font-medium">Customer</th>
                 <th className="py-2 pr-3 font-medium">Amount</th>
+                <th className="py-2 pr-3 font-medium">Pay today</th>
+                <th className="py-2 pr-3 font-medium">Model</th>
                 <th className="py-2 pr-3 font-medium">Status</th>
                 <th className="py-2 pr-3 font-medium">Booking</th>
                 <th className="py-2 font-medium" />
@@ -124,7 +133,7 @@ export function QuotesPageClient({
             <tbody>
               {quotes.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-muted">
+                  <td colSpan={9} className="py-8 text-center text-muted">
                     No quotes yet.
                   </td>
                 </tr>
@@ -144,6 +153,20 @@ export function QuotesPageClient({
                         <div className="text-xs text-muted">{q.customerEmail}</div>
                       </td>
                       <td className="py-3 pr-3">{formatQuoteAmount(q)}</td>
+                      <td className="py-3 pr-3">
+                        {q.initialPaymentTotal != null
+                          ? formatCurrency(q.initialPaymentTotal, q.currency)
+                          : "—"}
+                        {q.initialPercentage != null ? (
+                          <div className="text-xs text-muted">{q.initialPercentage}%</div>
+                        ) : null}
+                      </td>
+                      <td className="py-3 pr-3">
+                        <div>{q.paymentModel ?? "—"}</div>
+                        {q.requiresHumanReview ? (
+                          <div className="text-xs text-amber-700">Review</div>
+                        ) : null}
+                      </td>
                       <td className="py-3 pr-3">
                         <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
                           {q.status}

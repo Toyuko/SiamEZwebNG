@@ -773,15 +773,18 @@ export async function createService(data: {
   priceAmount?: number | null;
   sortOrder?: number;
   active?: boolean;
+  paymentConfig?: Prisma.InputJsonValue | null;
 }) {
   await ensureStaffAccess();
   const slug = data.slug.toLowerCase().replace(/\s+/g, "-");
+  const { paymentConfig, ...rest } = data;
   return prisma.service.create({
     data: {
-      ...data,
+      ...rest,
       slug,
       sortOrder: data.sortOrder ?? 0,
       active: data.active ?? true,
+      ...(paymentConfig != null ? { paymentConfig } : {}),
     },
   });
 }
@@ -797,11 +800,23 @@ export async function updateService(
     priceAmount?: number | null;
     sortOrder?: number;
     active?: boolean;
+    paymentConfig?: Prisma.InputJsonValue | null;
   }
 ) {
   await ensureStaffAccess();
   if (data.slug) data.slug = data.slug.toLowerCase().replace(/\s+/g, "-");
-  return prisma.service.update({ where: { id }, data });
+  const { paymentConfig, ...rest } = data;
+  return prisma.service.update({
+    where: { id },
+    data: {
+      ...rest,
+      ...(paymentConfig === undefined
+        ? {}
+        : paymentConfig === null
+          ? { paymentConfig: Prisma.JsonNull }
+          : { paymentConfig }),
+    },
+  });
 }
 
 export async function deleteService(id: string) {

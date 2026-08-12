@@ -396,6 +396,8 @@ model Service {
   priceCurrency String?   @map("price_currency") @default("THB")
   // JSON: dynamic form config (questions, required docs, etc.)
   formConfig  Json?       @map("form_config")
+  /** Conversion-first payment strategy (10/20/30 + minimums). See ServicePaymentConfig. */
+  paymentConfig Json?     @map("payment_config")
   sortOrder   Int         @default(0) @map("sort_order")
   active      Boolean     @default(true)
   createdAt   DateTime    @default(now()) @map("created_at")
@@ -412,12 +414,18 @@ enum CaseStatus {
   new           // Just submitted
   under_review  // Staff reviewing (quote-based)
   quoted        // Quote sent to client
+  custom_quote_required
   awaiting_payment
+  awaiting_initial_payment
+  initial_payment_paid
   paid          // Payment received
   in_progress   // Work in progress
+  milestone_due
   pending_docs  // Waiting for client docs
   completed
   cancelled
+  refund_pending
+  refunded
 }
 
 model Case {
@@ -448,6 +456,7 @@ model Case {
   events          Event[]
   marketplaceJob  MarketplaceJob?
   workflowRuns    WorkflowRun[] @relation("WorkflowRunLinkedCase")
+  paymentMilestones PaymentMilestone[]
 }
 
 enum MarketplaceJobStatus {
@@ -493,6 +502,7 @@ enum QuoteStatus {
   cancelled
   rejected
   converted_to_booking
+  custom_quote_required
 }
 
 model Quote {
@@ -538,11 +548,27 @@ model Quote {
   updatedAt  DateTime  @updatedAt @map("updated_at")
   sentAt     DateTime? @map("sent_at")
 
+  /** Conversion-first payment plan (server-calculated; never trust the client). */
+  paymentPlan          Json?    @map("payment_plan")
+  pricingSnapshot      Json?    @map("pricing_snapshot")
+  pricingVersion       String?  @map("pricing_version")
+  complexity           String?
+  aiConfidence         Float?   @map("ai_confidence")
+  requiresHumanReview  Boolean  @default(false) @map("requires_human_review")
+  paymentReason        String?  @map("payment_reason") @db.Text
+  paymentModel         String?  @map("payment_model")
+  initialPercentage    Int?     @map("initial_percentage")
+  initialPaymentTotal  Int?     @map("initial_payment_total")
+  remainingBalance     Int?     @map("remaining_balance")
+  requiredUpfrontCosts Int?     @map("required_upfront_costs")
+  paymentChoice        String?  @map("payment_choice") // initial | full
+
   case       Case?     @relation(fields: [caseId], references: [id], onDelete: SetNull)
   service    Service   @relation(fields: [serviceId], references: [id], onDelete: Restrict)
   user       User?     @relation("QuoteCustomer", fields: [userId], references: [id], onDelete: SetNull)
   adjustedBy User?     @relation("QuoteAdjustedBy", fields: [adjustedById], references: [id], onDelete: SetNull)
   invoices   Invoice[]
+  paymentMilestones PaymentMilestone[]
 
   @@index([serviceId])
   @@index([status])
@@ -579,6 +605,9 @@ model Payment {
   approvedAt            DateTime?      @map("approved_at")
   stripePaymentIntentId String?        @unique @map("stripe_payment_intent_id") // Phase 2
   stripeChargeId        String?        @map("stripe_charge_id")
+  kind                  InvoiceKind    @default(full)
+  idempotencyKey        String?        @unique @map("idempotency_key")
+  webhookEventId        String?        @unique @map("webhook_event_id")
   metadata              Json?
   createdAt             DateTime       @default(now()) @map("created_at")
   updatedAt             DateTime       @updatedAt @map("updated_at")
@@ -648,11 +677,50 @@ enum InvoiceStatus {
   rejected             // Payment rejected
 }
 
+enum InvoiceKind {
+  full
+  initial
+  milestone
+  balance
+}
+
 enum InvoicePaymentMethod {
   qr     // Thai PromptPay / Bank QR
   bank   // Bank transfer
   wise   // Wise international
   stripe // Phase 2
+}
+
+enum PaymentMilestoneStatus {
+  pending
+  due
+  paid
+  waived
+}
+
+model PaymentMilestone {
+  id           String                  @id @default(cuid())
+  quoteId      String                  @map("quote_id")
+  caseId       String?                 @map("case_id")
+  name         String
+  description  String?                 @db.Text
+  amount       Int
+  percentage   Int
+  status       PaymentMilestoneStatus  @default(pending)
+  dueCondition String?                 @map("due_condition")
+  dueDate      DateTime?               @map("due_date")
+  paidAt       DateTime?               @map("paid_at")
+  sortOrder    Int                     @default(0) @map("sort_order")
+  createdAt    DateTime                @default(now()) @map("created_at")
+  updatedAt    DateTime                @updatedAt @map("updated_at")
+
+  quote    Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  case     Case?     @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  invoices Invoice[]
+
+  @@index([quoteId])
+  @@index([caseId])
+  @@map("payment_milestones")
 }
 
 model Invoice {
@@ -663,6 +731,8 @@ model Invoice {
   amount           Int
   currency         String               @default("THB")
   status           InvoiceStatus        @default(draft)
+  kind             InvoiceKind          @default(full)
+  milestoneId      String?              @map("milestone_id")
   paymentMethod    InvoicePaymentMethod? @map("payment_method") // set when client selects
   dueDate          DateTime?            @map("due_date")
   stripeInvoiceId  String?              @map("stripe_invoice_id") // Phase 2
@@ -674,10 +744,11 @@ model Invoice {
   sentAt           DateTime?            @map("sent_at")
   paidAt           DateTime?            @map("paid_at")
 
-  case     Case     @relation(fields: [caseId], references: [id], onDelete: Restrict)
-  quote    Quote?   @relation(fields: [quoteId], references: [id], onDelete: SetNull)
-  user     User?    @relation("InvoiceCustomer", fields: [userId], references: [id], onDelete: SetNull)
-  payments Payment[]
+  case      Case               @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  quote     Quote?             @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  user      User?              @relation("InvoiceCustomer", fields: [userId], references: [id], onDelete: SetNull)
+  payments  Payment[]
+  milestone PaymentMilestone?  @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
 
   @@map("invoices")
 }
@@ -1323,4 +1394,15 @@ model PlatformMetricEvent {
   @@index([kind, createdAt])
   @@index([userId, createdAt])
   @@map("platform_metric_events")
+}
+
+/** Idempotency store for Stripe (and other) webhooks. */
+model ProcessedWebhookEvent {
+  id          String   @id // provider event id
+  provider    String   @default("stripe")
+  type        String
+  processedAt DateTime @default(now()) @map("processed_at")
+
+  @@index([provider, type])
+  @@map("processed_webhook_events")
 }

@@ -43,6 +43,15 @@ type QuoteDetail = {
   case: { id: string; caseNumber: string; status: string } | null;
   adjustedBy: { id: string; name: string | null; email: string } | null;
   invoices: { id: string; status: string; amount: number }[];
+  paymentModel: string | null;
+  initialPercentage: number | null;
+  initialPaymentTotal: number | null;
+  remainingBalance: number | null;
+  requiredUpfrontCosts: number | null;
+  aiConfidence: number | null;
+  requiresHumanReview: boolean;
+  paymentReason: string | null;
+  pricingVersion: string | null;
 };
 
 export function QuoteDetailClient({ quote }: { quote: QuoteDetail }) {
@@ -227,7 +236,8 @@ export function QuoteDetailClient({ quote }: { quote: QuoteDetail }) {
                 <option value="rejected">Rejected</option>
                 <option value="cancelled">Cancelled</option>
                 <option value="expired">Expired</option>
-                <option value="converted_to_booking">Converted</option>
+                <option value="custom_quote_required">Custom quote required</option>
+              <option value="converted_to_booking">Converted</option>
               </Select>
             </div>
             <div>
@@ -286,6 +296,44 @@ export function QuoteDetailClient({ quote }: { quote: QuoteDetail }) {
             <Button type="button" variant="outline" onClick={applyAdjustment} disabled={pending}>
               Apply adjustment
             </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Payment plan</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {quote.requiresHumanReview ? (
+              <p className="rounded-md bg-amber-50 px-3 py-2 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                Admin review required — do not charge the customer yet.
+              </p>
+            ) : null}
+            <p>Model: {quote.paymentModel ?? "—"}</p>
+            <p>Initial %: {quote.initialPercentage ?? "—"}</p>
+            <p>
+              Pay today:{" "}
+              {quote.initialPaymentTotal != null
+                ? formatCurrency(quote.initialPaymentTotal, quote.currency)
+                : "—"}
+            </p>
+            <p>
+              Upfront costs:{" "}
+              {quote.requiredUpfrontCosts != null
+                ? formatCurrency(quote.requiredUpfrontCosts, quote.currency)
+                : "—"}
+            </p>
+            <p>
+              Remaining:{" "}
+              {quote.remainingBalance != null
+                ? formatCurrency(quote.remainingBalance, quote.currency)
+                : "—"}
+            </p>
+            <p>AI confidence: {quote.aiConfidence != null ? quote.aiConfidence.toFixed(2) : "—"}</p>
+            <p>Pricing version: {quote.pricingVersion ?? "—"}</p>
+            {quote.paymentReason ? (
+              <p className="text-muted">{quote.paymentReason}</p>
+            ) : null}
           </CardContent>
         </Card>
       </div>

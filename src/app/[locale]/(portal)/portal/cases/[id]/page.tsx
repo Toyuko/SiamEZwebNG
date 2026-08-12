@@ -8,32 +8,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CaseTimeline } from "@/components/portal/CaseTimeline";
 import { buildCaseTimeline } from "@/lib/portal/case-timeline";
-import type { CaseStatus } from "@prisma/client";
-
-const statusLabels: Record<CaseStatus, { en: string; th: string }> = {
-  new: { en: "New", th: "ใหม่" },
-  under_review: { en: "Under Review", th: "กำลังตรวจสอบ" },
-  quoted: { en: "Quoted", th: "มีใบเสนอราคา" },
-  awaiting_payment: { en: "Awaiting Payment", th: "รอชำระเงิน" },
-  paid: { en: "Paid", th: "ชำระแล้ว" },
-  in_progress: { en: "In Progress", th: "กำลังดำเนินการ" },
-  pending_docs: { en: "Pending Documents", th: "รอเอกสาร" },
-  completed: { en: "Completed", th: "เสร็จสิ้น" },
-  cancelled: { en: "Cancelled", th: "ยกเลิก" },
-};
-
-const statusBadgeClass: Record<CaseStatus, string> = {
-  new: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-  under_review: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  quoted: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
-  awaiting_payment:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
-  paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  in_progress: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300",
-  pending_docs: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
-  completed: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
-  cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-};
+import { CASE_STATUS_BADGE_CLASS, CASE_STATUS_LABELS } from "@/lib/domain/case-status";
+import { formatCurrency } from "@/lib/utils";
 
 export default async function PortalCaseDetailPage({
   params,
@@ -44,12 +20,13 @@ export default async function PortalCaseDetailPage({
   setRequestLocale(locale);
   const session = await requireAuth();
   const t = await getTranslations("portal");
+  const tPay = await getTranslations("quotePayment");
 
   const caseData = await getCaseByIdForUser(id, session.user.id);
   if (!caseData) notFound();
 
   const statusLabel =
-    statusLabels[caseData.status][locale === "th" ? "th" : "en"];
+    CASE_STATUS_LABELS[caseData.status][locale === "th" ? "th" : "en"];
 
   const timeline = buildCaseTimeline({
     caseNumber: caseData.caseNumber,
@@ -98,7 +75,7 @@ export default async function PortalCaseDetailPage({
           <p className="mt-1 text-gray-600 dark:text-gray-400">{caseData.service.name}</p>
         </div>
         <span
-          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass[caseData.status]}`}
+          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${CASE_STATUS_BADGE_CLASS[caseData.status]}`}
         >
           {statusLabel}
         </span>
@@ -151,6 +128,71 @@ export default async function PortalCaseDetailPage({
               )}
             </CardContent>
           </Card>
+
+          {caseData.quotes[0] ? (
+            <Card>
+              <CardHeader>
+                <h2 className="text-lg font-semibold">{tPay("title")}</h2>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-xs text-muted">{tPay("total")}</p>
+                    <p className="font-semibold">
+                      {formatCurrency(caseData.quotes[0].amount, caseData.quotes[0].currency)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted">{tPay("bookingPaid")}</p>
+                    <p className="font-semibold">
+                      {formatCurrency(
+                        Math.max(
+                          0,
+                          caseData.quotes[0].amount -
+                            (caseData.quotes[0].remainingBalance ?? caseData.quotes[0].amount)
+                        ),
+                        caseData.quotes[0].currency
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted">{tPay("remaining")}</p>
+                    <p className="font-semibold">
+                      {formatCurrency(
+                        caseData.quotes[0].remainingBalance ??
+                          Math.max(
+                            0,
+                            caseData.quotes[0].amount -
+                              caseData.invoices
+                                .filter((inv) => inv.status === "paid")
+                                .reduce((sum, inv) => sum + inv.amount, 0)
+                          ),
+                        caseData.quotes[0].currency
+                      )}
+                    </p>
+                  </div>
+                </div>
+                {unpaidInvoices[0] ? (
+                  <p className="text-sm text-muted">
+                    {tPay("nextPayment")}:{" "}
+                    {formatCurrency(unpaidInvoices[0].amount, unpaidInvoices[0].currency)}
+                  </p>
+                ) : null}
+                <div className="flex flex-wrap gap-2">
+                  {unpaidInvoices[0] ? (
+                    <Button asChild size="sm">
+                      <Link href={`/portal/invoices/${unpaidInvoices[0].id}`}>
+                        {tPay("payBalance")}
+                      </Link>
+                    </Button>
+                  ) : null}
+                  <Button asChild variant="outline" size="sm">
+                    <Link href="/">{tPay("chatConcierge")}</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card>
             <CardHeader>

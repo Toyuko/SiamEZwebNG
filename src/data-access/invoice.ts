@@ -51,17 +51,23 @@ export async function createInvoice(data: {
   dueDate?: Date | null;
   lineItems?: object | null;
   clientAddress?: string | null;
+  kind?: "full" | "initial" | "milestone" | "balance";
+  milestoneId?: string | null;
 }) {
   return prisma.invoice.create({
     data: {
-      ...data,
+      caseId: data.caseId,
       quoteId: data.quoteId ?? undefined,
+      userId: data.userId ?? undefined,
+      amount: data.amount,
       currency: data.currency ?? "THB",
       status: data.status ?? "draft",
       paymentMethod: data.paymentMethod ?? undefined,
       dueDate: data.dueDate ?? undefined,
       lineItems: data.lineItems ?? undefined,
       clientAddress: data.clientAddress ?? undefined,
+      kind: data.kind ?? "full",
+      milestoneId: data.milestoneId ?? undefined,
     },
   });
 }

@@ -46,6 +46,7 @@ export async function submitUserPayment(input: SubmitPaymentInput) {
     stripePaymentIntentId: input.stripePaymentIntentId,
     stripeChargeId: input.stripeChargeId,
     metadata: { source: "mobile_api" },
+    kind: invoice.kind,
   });
 
   await invoiceDA.updateInvoiceStatus(input.invoiceId, "pending_verification");

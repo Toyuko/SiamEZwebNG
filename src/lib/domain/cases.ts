@@ -7,10 +7,13 @@ import {
   createMarketplaceJobForCase,
   notifyFreelancers,
 } from "@/lib/domain/marketplace-jobs";
-import type { CaseStatus } from "@prisma/client";
+import type { CaseStatus, InvoiceKind } from "@prisma/client";
 import { assertCaseStatusTransition } from "@/lib/domain/case-status";
 import { attachOwnedDocumentsToCase } from "@/lib/documents/ownership";
 import { sendBookingConfirmationEmail } from "@/lib/email/messages";
+import { parseStoredPaymentPlan } from "@/lib/payments/quote-plan";
+import { CheckoutValidationError, validateCheckoutAmount } from "@/lib/payments/checkout-guard";
+import { trackPlatformEvent } from "@/lib/analytics/track";
 
 export interface CreateBookingCaseInput {
   serviceId: string;
@@ -26,6 +29,8 @@ export interface CreateBookingCaseInput {
   quoteId?: string;
   /** Authoritative satang amount from server-side quote (never trust client). */
   quoteAmountOverride?: number;
+  /** initial (default) or full — never below the required initial payment. */
+  paymentChoice?: "initial" | "full";
 }
 
 export async function getUserCases(userId: string) {
@@ -91,22 +96,61 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
   let invoiceAmount: number | null = null;
   let invoiceCurrency = service.priceCurrency ?? "THB";
   let treatAsPayable = service.type === "fixed";
+  let invoiceKind: InvoiceKind = "full";
+  let caseStatus: CaseStatus = status;
+  let quotePaymentChoice: "initial" | "full" = input.paymentChoice === "full" ? "full" : "initial";
 
   if (input.quoteId) {
-    const quote = await prisma.quote.findUnique({ where: { id: input.quoteId } });
+    const quote = await prisma.quote.findUnique({
+      where: { id: input.quoteId },
+      include: { paymentMilestones: true },
+    });
     if (!quote) throw new Error("Quote not found");
     if (quote.serviceId !== input.serviceId) throw new Error("Quote service mismatch");
     if (quote.status === "expired" || (quote.validUntil && quote.validUntil < new Date())) {
       throw new Error("Quote expired — please recalculate before booking");
     }
-    // Server-side amount only (ignore any client-supplied override unless it matches quote)
-    invoiceAmount = quote.amount;
-    invoiceCurrency = quote.currency;
-    if (quote.quoteType === "fixed" || quote.quoteType === "calculated") {
-      treatAsPayable = true;
+    if (quote.status === "converted_to_booking" && quote.caseId) {
+      throw new Error("This quote already has a booking");
+    }
+    if (quote.requiresHumanReview || quote.status === "custom_quote_required") {
+      invoiceAmount = null;
+      treatAsPayable = false;
+      caseStatus = "custom_quote_required";
+    } else {
+      const storedPlan = parseStoredPaymentPlan(quote.paymentPlan);
+      const choice =
+        (quote.paymentChoice === "full" || quote.paymentChoice === "initial"
+          ? quote.paymentChoice
+          : quotePaymentChoice) as "initial" | "full";
+      quotePaymentChoice = choice;
+      if (storedPlan) {
+        try {
+          const validated = validateCheckoutAmount({ plan: storedPlan, choice });
+          invoiceAmount = validated.amountSatang;
+          invoiceKind = choice === "full" ? "full" : "initial";
+          treatAsPayable = true;
+          caseStatus =
+            choice === "full" ? "awaiting_payment" : "awaiting_initial_payment";
+        } catch (e) {
+          if (e instanceof CheckoutValidationError && e.code === "HUMAN_REVIEW_REQUIRED") {
+            treatAsPayable = false;
+            caseStatus = "custom_quote_required";
+          } else {
+            throw e;
+          }
+        }
+      } else {
+        invoiceAmount = quote.amount;
+        invoiceCurrency = quote.currency;
+        if (quote.quoteType === "fixed" || quote.quoteType === "calculated") {
+          treatAsPayable = true;
+          caseStatus = "awaiting_payment";
+        }
+      }
+      invoiceCurrency = quote.currency;
     }
   } else if (input.quoteAmountOverride != null && input.quoteAmountOverride > 0) {
-    // Only allowed when paired with quoteId in normal flow; kept for admin convert
     invoiceAmount = input.quoteAmountOverride;
     treatAsPayable = true;
   } else if (service.type === "fixed" && service.priceAmount != null && service.priceAmount > 0) {
@@ -117,7 +161,12 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
     caseNumber: nextCaseNumber(),
     userId: userId ?? null,
     serviceId: input.serviceId,
-    status: treatAsPayable && invoiceAmount && invoiceAmount > 0 ? "new" : status,
+    status:
+      caseStatus !== status
+        ? caseStatus
+        : treatAsPayable && invoiceAmount && invoiceAmount > 0
+          ? "new"
+          : status,
     isGuest: input.isGuest,
     guestCheckoutToken: guestCheckoutToken ?? null,
     guestEmail: input.guestEmail?.trim() || null,
@@ -135,7 +184,12 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
         status: "converted_to_booking",
         acceptedAt: new Date(),
         userId: userId ?? undefined,
+        paymentChoice: quotePaymentChoice,
       },
+    });
+    await prisma.paymentMilestone.updateMany({
+      where: { quoteId: input.quoteId },
+      data: { caseId: c.id },
     });
   }
 
@@ -148,6 +202,12 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
   }
 
   if (treatAsPayable && invoiceAmount != null && invoiceAmount > 0) {
+    const firstMilestone = input.quoteId
+      ? await prisma.paymentMilestone.findFirst({
+          where: { quoteId: input.quoteId },
+          orderBy: { sortOrder: "asc" },
+        })
+      : null;
     await createInvoice({
       caseId: c.id,
       userId: userId ?? null,
@@ -155,6 +215,15 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
       currency: invoiceCurrency,
       status: "unpaid",
       quoteId: input.quoteId ?? undefined,
+      kind: invoiceKind,
+      milestoneId:
+        invoiceKind === "initial" && firstMilestone ? firstMilestone.id : undefined,
+    });
+    void trackPlatformEvent("payment_started", {
+      caseId: c.id,
+      quoteId: input.quoteId,
+      amount: invoiceAmount,
+      kind: invoiceKind,
     });
   }
 

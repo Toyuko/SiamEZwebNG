@@ -12,6 +12,7 @@ const STATUSES: QuoteStatus[] = [
   "expired",
   "cancelled",
   "rejected",
+  "custom_quote_required",
   "converted_to_booking",
 ];
 
@@ -59,6 +60,12 @@ export default async function AdminQuotesPage({
         caseId: q.case?.id ?? null,
         caseNumber: q.case?.caseNumber ?? null,
         paymentStatus: q.invoices[0]?.status ?? null,
+        paymentModel: q.paymentModel,
+        initialPercentage: q.initialPercentage,
+        initialPaymentTotal: q.initialPaymentTotal,
+        remainingBalance: q.remainingBalance,
+        aiConfidence: q.aiConfidence,
+        requiresHumanReview: q.requiresHumanReview,
       }))}
       total={result.total}
       services={services}

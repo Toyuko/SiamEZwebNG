@@ -154,3 +154,15 @@ describe("ai concierge URL sanitization", () => {
     expect(prompt).toMatch(/do not invent any \/sales/i);
   });
 });
+
+describe("quote payment concierge questions", () => {
+  it("detects customer payment questions", async () => {
+    const { isQuotePaymentQuestion } = await import("@/lib/ai/quote-payment-reply");
+    expect(isQuotePaymentQuestion("Why do I only have to pay 10%?")).toBe(true);
+    expect(isQuotePaymentQuestion("Can I pay the rest later?")).toBe(true);
+    expect(isQuotePaymentQuestion("Are government fees included?")).toBe(true);
+    expect(isQuotePaymentQuestion("How much do I owe?")).toBe(true);
+    expect(isQuotePaymentQuestion("What is included?")).toBe(true);
+    expect(isQuotePaymentQuestion("hello")).toBe(false);
+  });
+});

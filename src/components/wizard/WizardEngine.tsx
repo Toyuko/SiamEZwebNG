@@ -11,6 +11,7 @@ import { submitBooking } from "@/actions/booking";
 import {
   acceptSmartQuote,
   generateSmartQuote,
+  requestCustomQuote,
   type GenerateQuoteResult,
 } from "@/actions/quote";
 import { uploadWizardDocumentAction } from "@/actions/document";
@@ -43,6 +44,7 @@ import {
   getMissingDocuments,
   validateWizardDocument,
 } from "@/lib/documents";
+import { trackEvent } from "@/lib/analytics";
 
 type QuoteSuccess = Extract<GenerateQuoteResult, { success: true }>;
 
@@ -131,6 +133,8 @@ function WizardEngineInner({
   const [resumeBanner, setResumeBanner] = useState(false);
   const [quote, setQuote] = useState<QuoteSuccess | null>(null);
   const [quoteAccepted, setQuoteAccepted] = useState(false);
+  const [paymentChoice, setPaymentChoice] = useState<"initial" | "full">("initial");
+  const [customQuoteRequested, setCustomQuoteRequested] = useState(false);
 
   const form = useForm<Record<string, unknown>>({
     defaultValues: defaultValuesFromConfig(config, {
@@ -152,6 +156,10 @@ function WizardEngineInner({
   } = form;
 
   const watchedValues = watch();
+
+  useEffect(() => {
+    trackEvent("booking_started", { slug: serviceSlug, service_id: service.id });
+  }, [service.id, serviceSlug]);
 
   // Hydrate from localStorage once
   useEffect(() => {
@@ -290,11 +298,18 @@ function WizardEngineInner({
       postToMarketplace,
       quoteId: quoteAccepted && quote ? quote.quoteId : undefined,
       guestQuoteToken: quote?.guestToken ?? undefined,
+      paymentChoice,
     });
     setLoading(false);
 
     if (result.success && result.caseId && result.caseNumber) {
       clearAutosave(storageKey);
+      trackEvent("booking_completed", {
+        slug: serviceSlug,
+        case_number: result.caseNumber,
+        is_guest: isGuest,
+        is_fixed: Boolean(result.isFixed),
+      });
       if (result.isFixed) {
         const base = `/checkout/${result.caseId}`;
         const url =
@@ -329,6 +344,7 @@ function WizardEngineInner({
     userName,
     quote,
     quoteAccepted,
+    paymentChoice,
   ]);
 
   const runGenerateQuote = useCallback(async () => {
@@ -354,16 +370,18 @@ function WizardEngineInner({
     }
     setQuote(result);
     setQuoteAccepted(false);
+    trackEvent("quote_requested", { slug: serviceSlug, source: "smart_quote" });
     return true;
   }, [config.enableSmartQuote, getValues, service.id, serviceSlug]);
 
-  const handleAcceptQuote = useCallback(async () => {
+  const handleAcceptQuote = useCallback(async (choice: "initial" | "full" = "initial") => {
     if (!quote) return;
     setLoading(true);
     setError(null);
     const result = await acceptSmartQuote({
       quoteId: quote.quoteId,
       guestToken: quote.guestToken ?? undefined,
+      paymentChoice: choice,
     });
     setLoading(false);
     if (!result.success) {
@@ -373,6 +391,25 @@ function WizardEngineInner({
       }
       return;
     }
+    setPaymentChoice(choice);
+    setQuoteAccepted(true);
+    setStepIndex((i) => Math.min(i + 1, visibleSteps.length - 1));
+  }, [quote, visibleSteps.length]);
+
+  const handleRequestCustomQuote = useCallback(async () => {
+    if (!quote) return;
+    setLoading(true);
+    setError(null);
+    const result = await requestCustomQuote({
+      quoteId: quote.quoteId,
+      guestToken: quote.guestToken ?? undefined,
+    });
+    setLoading(false);
+    if (!result.success) {
+      setError(result.error ?? "Could not request a custom quote.");
+      return;
+    }
+    setCustomQuoteRequested(true);
     setQuoteAccepted(true);
     setStepIndex((i) => Math.min(i + 1, visibleSteps.length - 1));
   }, [quote, visibleSteps.length]);
@@ -638,6 +675,8 @@ function WizardEngineInner({
     setSelectedRequiredId(null);
     setQuote(null);
     setQuoteAccepted(false);
+    setCustomQuoteRequested(false);
+    setPaymentChoice("initial");
   };
 
   const locale =
@@ -731,8 +770,10 @@ function WizardEngineInner({
               accepted={quoteAccepted}
               loading={loading}
               onAccept={handleAcceptQuote}
+              onRequestCustomQuote={handleRequestCustomQuote}
               onEdit={() => {
                 setQuoteAccepted(false);
+                setCustomQuoteRequested(false);
                 setStepIndex((i) => Math.max(i - 1, 0));
               }}
               onRecalculate={() => {
@@ -793,7 +834,10 @@ function WizardEngineInner({
           <Button
             type="button"
             onClick={handleNext}
-            disabled={loading || (currentStep.type === "quote_review" && !quoteAccepted)}
+            disabled={
+              loading ||
+              (currentStep.type === "quote_review" && !quoteAccepted && !customQuoteRequested)
+            }
             className="w-full sm:w-auto"
           >
             {loading

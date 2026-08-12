@@ -8,6 +8,7 @@ import * as paymentDA from "@/data-access/payment";
 import { getStripe } from "@/lib/stripe";
 import { submitUserPayment } from "@/lib/domain/payments";
 import { isStripeEnabled } from "@/config/payments";
+import { confirmVerifiedPayment } from "@/lib/payments/confirm";
 
 export type PaymentMethodInput = "qr" | "bank" | "wise";
 
@@ -90,6 +91,8 @@ export async function createPaymentIntent(input: {
           method: "stripe",
           stripePaymentIntentId: pi.id,
           status: "submitted",
+          kind: invoice.kind,
+          idempotencyKey: `siamez_invoice_${invoice.id}`,
         });
       } catch (trackErr) {
         // Unique race on stripePaymentIntentId is fine — another request won.
@@ -168,19 +171,10 @@ export async function approvePayment(paymentId: string): Promise<ApprovePaymentR
     if (!payment) return { success: false, error: "Payment not found" };
     if (payment.status !== "submitted") return { success: false, error: "Payment already processed" };
 
-    await prisma.$transaction(async (tx) => {
-      await tx.payment.update({
-        where: { id: paymentId },
-        data: { status: "approved", approvedAt: new Date() },
-      });
-      await tx.invoice.update({
-        where: { id: payment.invoiceId },
-        data: { status: "paid", paidAt: new Date() },
-      });
-      await tx.case.update({
-        where: { id: payment.caseId },
-        data: { status: "in_progress" },
-      });
+    await confirmVerifiedPayment({
+      invoiceId: payment.invoiceId,
+      caseId: payment.caseId,
+      paymentId,
     });
 
     return { success: true };

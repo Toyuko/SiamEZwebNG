@@ -18,6 +18,7 @@ export interface SubmitBookingInput {
   /** Accepted smart-quote id (server validates amount). */
   quoteId?: string;
   guestQuoteToken?: string;
+  paymentChoice?: "initial" | "full";
 }
 
 export interface SubmitBookingResult {
@@ -53,6 +54,7 @@ export async function submitBooking(input: SubmitBookingInput): Promise<SubmitBo
       documentIds: input.documentIds,
       postToMarketplace: input.postToMarketplace,
       quoteId: input.quoteId,
+      paymentChoice: input.paymentChoice === "full" ? "full" : "initial",
     });
 
     return {

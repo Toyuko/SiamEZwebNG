@@ -59,6 +59,15 @@ export default async function AdminQuoteDetailPage({
           status: inv.status,
           amount: inv.amount,
         })),
+        paymentModel: quote.paymentModel,
+        initialPercentage: quote.initialPercentage,
+        initialPaymentTotal: quote.initialPaymentTotal,
+        remainingBalance: quote.remainingBalance,
+        requiredUpfrontCosts: quote.requiredUpfrontCosts,
+        aiConfidence: quote.aiConfidence,
+        requiresHumanReview: quote.requiresHumanReview,
+        paymentReason: quote.paymentReason,
+        pricingVersion: quote.pricingVersion,
       }}
     />
   );

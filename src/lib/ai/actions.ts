@@ -42,6 +42,10 @@ import {
   type RecommendationSuggestion,
 } from "@/lib/recommendations";
 import { buildUserOwner } from "@/lib/marketplace-engagement";
+import {
+  buildStoredQuotePaymentReply,
+  isQuotePaymentQuestion,
+} from "@/lib/ai/quote-payment-reply";
 
 export type ConciergeCapability = {
   llmEnabled: boolean;
@@ -258,6 +262,23 @@ export async function requestConciergeReply(input: {
 
   const searchDeepLinks = await buildSearchDeepLinks(userMessage, locale);
   const intent = detectConciergeIntent(userMessage);
+
+  if (isQuotePaymentQuestion(userMessage)) {
+    const quoteReply = await buildStoredQuotePaymentReply({
+      userId,
+      locale,
+    });
+    if (quoteReply) {
+      return enrichWithIntelligence({
+        reply: quoteReply,
+        locale,
+        journey,
+        goalChange,
+        suggestions: [],
+        hasCustomerHistory,
+      });
+    }
+  }
 
   const rec = recommendTool({
     locale,

@@ -8,19 +8,7 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { CaseStatus } from "@prisma/client";
-
-const statusLabels: Record<CaseStatus, string> = {
-  new: "New",
-  under_review: "Under Review",
-  quoted: "Quoted",
-  awaiting_payment: "Awaiting Payment",
-  paid: "Paid",
-  in_progress: "In Progress",
-  pending_docs: "Pending Documents",
-  completed: "Completed",
-  cancelled: "Cancelled",
-};
+import { CASE_STATUS_BADGE_CLASS, CASE_STATUS_LABELS } from "@/lib/domain/case-status";
 
 const jobStatusLabels: Record<JobStatus, string> = {
   open: "Awaiting freelancer",
@@ -37,18 +25,6 @@ const jobStatusBadgeClass: Record<JobStatus, string> = {
     "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
   approved: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
   completed: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
-};
-
-const statusBadgeClass: Record<CaseStatus, string> = {
-  new: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-  under_review: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  quoted: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
-  awaiting_payment: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
-  paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  in_progress: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300",
-  pending_docs: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
-  completed: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
-  cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
 };
 
 export default async function PortalCasesPage({
@@ -152,9 +128,9 @@ export default async function PortalCasesPage({
                             </p>
                           </div>
                           <span
-                            className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass[c.status]}`}
+                            className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium ${CASE_STATUS_BADGE_CLASS[c.status]}`}
                           >
-                            {statusLabels[c.status]}
+                            {CASE_STATUS_LABELS[c.status].en}
                           </span>
                         </CardContent>
                       </Card>
