@@ -133,7 +133,8 @@ export function emailLayout(input: {
                       <a href="mailto:${escapeHtml(site.email)}" style="color:${EMAIL_BRAND.yellow};text-decoration:none;">${escapeHtml(site.email)}</a>
                     </div>
                     <div style="margin:0;color:#a8b8e8;">You received this because of activity on ${escapeHtml(site.name)}.</div>
-                    <div style="margin:8px 0 0;color:#a8b8e8;">SiamEZ Professional Services Co., Ltd. · Thailand</div>
+                    <div style="margin:8px 0 0;color:#a8b8e8;">${escapeHtml(site.legal.companyName)}</div>
+                    <div style="margin:4px 0 0;color:#a8b8e8;">${escapeHtml(site.address.full)}</div>
                   </td>
                 </tr>
               </table>

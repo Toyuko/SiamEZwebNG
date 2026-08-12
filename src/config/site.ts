@@ -7,6 +7,11 @@ export const site = {
   phone: "+66 64 343 8768",
   line: "@siamez",
   lineUrl: "https://lin.ee/AHqaAXi",
+  address: {
+    line1: "No.2556, 66 Tower, Level 4, Office Room 444-01",
+    line2: "Bang Na, Bangkok 10260, Thailand",
+    full: "No.2556, 66 Tower, Level 4, Office Room 444-01, Bang Na, Bangkok 10260, Thailand",
+  },
   social: {
     facebook: "https://www.facebook.com/siamezth",
     instagram: "https://www.instagram.com/siam_ez/",

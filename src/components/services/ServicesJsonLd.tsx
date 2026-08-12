@@ -43,6 +43,14 @@ export function ServicesJsonLd({
       url: baseUrl,
       telephone: site.phone,
       email: site.email,
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: site.address.line1,
+        addressLocality: "Bang Na",
+        addressRegion: "Bangkok",
+        postalCode: "10260",
+        addressCountry: "TH",
+      },
     },
     areaServed: {
       "@type": "Country",

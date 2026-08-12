@@ -2,7 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { PageHero } from "@/components/sections/PageHero";
 import { site } from "@/config/site";
-import { Mail, Phone, MessageCircle } from "lucide-react";
+import { Mail, Phone, MessageCircle, MapPin } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { ContactRequestForm } from "@/components/sections/ContactRequestForm";
 
@@ -78,6 +78,16 @@ export default async function ContactPage({
                 <p className="text-siam-blue">{site.line}</p>
               </div>
             </a>
+            <div className="flex items-start gap-4 rounded-xl border border-border bg-card p-5 shadow-sm">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-siam-blue/10 text-siam-blue">
+                <MapPin className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">{t("visitUs")}</p>
+                <p className="text-siam-blue">{site.address.line1}</p>
+                <p className="text-siam-blue">{site.address.line2}</p>
+              </div>
+            </div>
           </div>
           <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
             <h2 className="text-xl font-semibold text-foreground">{t("bookService")}</h2>

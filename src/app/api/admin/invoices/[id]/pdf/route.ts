@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { site } from "@/config/site";
 import { prisma } from "@/lib/db";
 import { getPaymentSettings } from "@/lib/payment-settings";
 import { readFile } from "node:fs/promises";
@@ -100,9 +101,9 @@ export async function GET(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   y += 6;
-  doc.text("615/93 Lumpini Sukhumvit 77, Suan Luang", margin, y);
+  doc.text(site.address.line1, margin, y);
   y += 4.5;
-  doc.text("Bangkok, Thailand, 10250", margin, y);
+  doc.text(site.address.line2, margin, y);
   y += 4.5;
   doc.text("Phone +66 64 343 8768", margin, y);
 
