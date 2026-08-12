@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { JOB_AUTO_APPROVE_MS } from "@/lib/jobs/constants";
-import { getAutoApprovalRemainingMs } from "@/lib/jobs/auto-approve";
+import { getAutoApprovalRemainingMs } from "@/lib/jobs/review-status";
 import { Clock } from "lucide-react";
 
 function formatRemaining(ms: number): string {

@@ -18,7 +18,7 @@ import { ChatBox } from "@/components/jobs/ChatBox";
 import { TrackingMap } from "@/components/tracking/TrackingMap";
 import type { TrackingStep } from "@/config/job-tracking-steps";
 import type { JobStatus, TrackingStatus } from "@prisma/client";
-import { isAwaitingReviewStatus } from "@/lib/jobs/auto-approve";
+import { isAwaitingReviewStatus } from "@/lib/jobs/review-status";
 import { canClientShowDocumentUpload } from "@/lib/jobs/client-document-upload";
 
 type TrackingPayload = {

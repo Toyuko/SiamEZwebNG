@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { acceptJob } from "@/actions/freelancer-jobs";
-import { formatJobAmount } from "@/data-access/job";
+import { formatJobAmount } from "@/lib/jobs/format";
 import type { JobBoardFeedItem } from "@/lib/jobs/job-board-payload";
 import {
   getPusherClient,

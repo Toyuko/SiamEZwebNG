@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatJobAmount } from "@/data-access/job";
+import { formatJobAmount } from "@/lib/jobs/format";
 import { TrendingUp, Clock } from "lucide-react";
 
 export async function RevenueTracker({

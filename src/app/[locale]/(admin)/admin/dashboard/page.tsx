@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getAdminStats, getRecentActivity, getRecentFreelancerJobs } from "@/actions/admin";
-import { formatJobAmount } from "@/data-access/job";
+import { formatJobAmount } from "@/lib/jobs/format";
 
 function formatCurrency(cents: number) {
   return new Intl.NumberFormat("th-TH", {

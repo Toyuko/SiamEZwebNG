@@ -5,7 +5,7 @@ import { useRouter } from "@/i18n/navigation";
 import { updateFreelancerVerification, approveFreelancerJob } from "@/actions/admin";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatJobAmount } from "@/data-access/job";
+import { formatJobAmount } from "@/lib/jobs/format";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import type { FreelancerVerificationStatus, JobStatus } from "@prisma/client";

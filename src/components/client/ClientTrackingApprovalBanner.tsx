@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Clock, ShieldCheck } from "lucide-react";
 import { confirmJobAndReleaseFunds } from "@/actions/client-jobs";
 import { JOB_AUTO_APPROVE_MS } from "@/lib/jobs/constants";
-import { getAutoApprovalRemainingMs } from "@/lib/jobs/auto-approve";
+import { getAutoApprovalRemainingMs } from "@/lib/jobs/review-status";
 import { Button } from "@/components/ui/button";
 
 type ClientTrackingApprovalBannerProps = {

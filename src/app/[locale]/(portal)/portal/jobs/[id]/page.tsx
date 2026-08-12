@@ -4,7 +4,8 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "next-intl/server";
 import { requireAuth } from "@/lib/auth";
-import { getJobById, formatJobAmount } from "@/data-access/job";
+import { getJobById } from "@/data-access/job";
+import { formatJobAmount } from "@/lib/jobs/format";
 import { AutoApprovalCountdown } from "@/components/freelancer/AutoApprovalCountdown";
 import { JobTrackingTimeline } from "@/components/jobs/JobTrackingTimeline";
 import { TrackingUpdater } from "@/components/TrackingUpdater";
@@ -15,7 +16,7 @@ import {
   isTrackableServiceSlug,
   trackingProgressPercent,
 } from "@/config/job-tracking-steps";
-import { jobProgressPercent, isAwaitingReviewStatus } from "@/lib/jobs/auto-approve";
+import { jobProgressPercent, isAwaitingReviewStatus } from "@/lib/jobs/review-status";
 import { Link } from "@/i18n/navigation";
 import { ArrowLeft, User } from "lucide-react";
 import { FreelancerRatingBadge } from "@/components/freelancer/FreelancerRatingBadge";

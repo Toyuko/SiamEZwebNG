@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { triggerFreelancerPayout } from "@/lib/jobs/payout";
-import { isAwaitingReviewStatus } from "@/lib/jobs/auto-approve";
+import { isAwaitingReviewStatus } from "@/lib/jobs/review-status";
 
 export async function approveJobByClient(clientId: string, jobId: string) {
   const job = await prisma.job.findUnique({

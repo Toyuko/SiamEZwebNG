@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-import { formatJobAmount } from "@/data-access/job";
+import { formatJobAmount } from "@/lib/jobs/format";
 import { approveFreelancerJob } from "@/actions/admin";
 import { cn } from "@/lib/utils";
 import type { JobStatus } from "@prisma/client";

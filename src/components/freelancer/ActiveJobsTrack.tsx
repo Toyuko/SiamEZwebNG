@@ -5,8 +5,8 @@ import { useTranslations } from "next-intl";
 import { markJobComplete } from "@/actions/freelancer-jobs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatJobAmount } from "@/data-access/job";
-import { isAwaitingReviewStatus, jobProgressPercent } from "@/lib/jobs/auto-approve";
+import { formatJobAmount } from "@/lib/jobs/format";
+import { isAwaitingReviewStatus, jobProgressPercent } from "@/lib/jobs/review-status";
 import {
   getTrackingStepsForServiceSlug,
   isTrackableServiceSlug,
