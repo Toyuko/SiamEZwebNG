@@ -9,6 +9,7 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { SocialAuthButtons, SocialAuthDivider } from "@/components/auth/SocialAuthButtons";
 import type { AuthSocialProviders } from "@/lib/auth-providers";
 import { hasAnySocialProvider } from "@/lib/auth-providers";
+import { Link } from "@/i18n/navigation";
 
 export function LoginForm({
   redirectTo,
@@ -98,6 +99,11 @@ export function LoginForm({
             required
             aria-invalid={Boolean(fieldError)}
           />
+          <p className="text-sm text-muted-foreground">
+            <Link href="/contact" className="text-siam-blue hover:underline">
+              Forgot password? Contact support
+            </Link>
+          </p>
         </Field>
         <Button type="submit" variant="primary" className="w-full" disabled={pending}>
           {pending ? t("signingIn") : t("signIn")}

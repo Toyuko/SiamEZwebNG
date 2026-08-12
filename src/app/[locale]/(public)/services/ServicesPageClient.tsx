@@ -101,8 +101,7 @@ export function ServicesPageClient({
     [directoryLabels.sortOptions]
   );
 
-  const getBookHref = (slug: string) =>
-    isLoggedIn ? `/book/${slug}` : `/login?redirect=/${locale}/book/${slug}`;
+  const getBookHref = (slug: string) => `/book/${slug}`;
 
   const barLabels = useMemo(
     (): ServiceSearchBarLabels => ({

@@ -8,6 +8,9 @@ import {
   notifyFreelancers,
 } from "@/lib/domain/marketplace-jobs";
 import type { CaseStatus } from "@prisma/client";
+import { assertCaseStatusTransition } from "@/lib/domain/case-status";
+import { attachOwnedDocumentsToCase } from "@/lib/documents/ownership";
+import { sendBookingConfirmationEmail } from "@/lib/email/messages";
 
 export interface CreateBookingCaseInput {
   serviceId: string;
@@ -47,6 +50,14 @@ export async function getUserCaseById(userId: string, caseId: string) {
 }
 
 export async function updateCaseStatus(caseId: string, status: CaseStatus) {
+  const existing = await prisma.case.findUnique({
+    where: { id: caseId },
+    select: { status: true },
+  });
+  if (!existing) {
+    throw new Error("Case not found");
+  }
+  assertCaseStatusTransition(existing.status, status);
   return prisma.case.update({
     where: { id: caseId },
     data: { status },
@@ -87,9 +98,10 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
   });
 
   if (input.documentIds?.length) {
-    await prisma.document.updateMany({
-      where: { id: { in: input.documentIds } },
-      data: { caseId: c.id },
+    await attachOwnedDocumentsToCase({
+      caseId: c.id,
+      documentIds: input.documentIds,
+      userId: userId ?? null,
     });
   }
 
@@ -118,6 +130,30 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
         marketplaceError,
       );
     }
+  }
+
+  let recipientEmail = input.guestEmail?.trim() || null;
+  let recipientName = input.guestName?.trim() || null;
+  if (!recipientEmail && userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, name: true },
+    });
+    recipientEmail = user?.email ?? null;
+    recipientName = recipientName || user?.name || null;
+  }
+
+  if (recipientEmail) {
+    sendBookingConfirmationEmail({
+      to: recipientEmail,
+      name: recipientName,
+      caseNumber: c.caseNumber,
+      caseId: c.id,
+      serviceName: service.name,
+      isGuest: input.isGuest,
+      isFixed: service.type === "fixed",
+      guestCheckoutToken,
+    });
   }
 
   return {

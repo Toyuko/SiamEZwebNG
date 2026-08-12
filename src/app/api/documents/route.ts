@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createDocument, getDocumentsByUserId } from "@/data-access/document";
-import { prisma } from "@/lib/db";
 import { requireBearerApiUser } from "@/lib/auth/requireBearerApiUser";
+import { assertCanAttachDocumentToCase } from "@/lib/documents/authz";
 
 /**
  * GET /api/documents
@@ -37,12 +37,14 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/documents
  * Upload document metadata (file must be uploaded to storage separately).
- * Body: { caseId?, name, storageKey, uploadedBy?, mimeType?, size?, documentType? }
+ * Body: { caseId?, name, storageKey, mimeType?, size?, documentType? }
+ * uploadedBy is always the authenticated caller.
  */
 export async function POST(request: NextRequest) {
   try {
+    const { userId, role } = await requireBearerApiUser(request);
     const body = await request.json();
-    const { caseId, name, storageKey, uploadedBy, mimeType, size, documentType } = body;
+    const { caseId, name, storageKey, mimeType, size, documentType } = body;
 
     if (!name || !storageKey) {
       return NextResponse.json(
@@ -54,12 +56,12 @@ export async function POST(request: NextRequest) {
     const resolvedCaseId =
       typeof caseId === "string" && caseId.trim() !== "" ? caseId.trim() : null;
     if (resolvedCaseId) {
-      const caseRecord = await prisma.case.findUnique({
-        where: { id: resolvedCaseId },
-        select: { id: true },
-      });
-      if (!caseRecord) {
-        return NextResponse.json({ error: "Case not found" }, { status: 404 });
+      try {
+        await assertCanAttachDocumentToCase(resolvedCaseId, userId, role);
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "Forbidden";
+        const status = message === "Case not found" ? 404 : 403;
+        return NextResponse.json({ error: message }, { status });
       }
     }
 
@@ -67,7 +69,7 @@ export async function POST(request: NextRequest) {
       caseId: resolvedCaseId,
       name,
       storageKey,
-      uploadedBy: uploadedBy ?? undefined,
+      uploadedBy: userId,
       mimeType: mimeType ?? undefined,
       size: size != null ? Number(size) : undefined,
       documentType: documentType ?? undefined,
@@ -75,10 +77,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, documentId: doc.id });
   } catch (e) {
-    console.error("POST /api/documents error", e);
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Failed to save document metadata" },
-      { status: 500 }
-    );
+    const message = e instanceof Error ? e.message : "Failed to save document metadata";
+    const status = message === "Unauthorized" ? 401 : 500;
+    if (status === 500) {
+      console.error("POST /api/documents error", e);
+    }
+    return NextResponse.json({ error: message }, { status });
   }
 }

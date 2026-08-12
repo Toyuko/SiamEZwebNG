@@ -1,6 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { CheckCircle } from "lucide-react";
+import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 export default async function BookingConfirmationPage({
@@ -13,6 +14,9 @@ export default async function BookingConfirmationPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const { caseNumber, guest, email } = await searchParams;
+  if (!caseNumber?.trim()) {
+    notFound();
+  }
   const isGuest = guest === "1";
   const prefillEmail = email ?? "";
 
@@ -23,15 +27,9 @@ export default async function BookingConfirmationPage({
         Pending Review
       </h1>
       <p className="mt-2 text-center text-gray-600 dark:text-gray-400">
-        Thank you for your request. Your case is under review and we will send you
-        a quote within 24–48 hours.
-        {caseNumber && (
-          <>
-            {" "}
-            Your case number is <strong>{caseNumber}</strong>. Please keep it for
-            your records.
-          </>
-        )}
+        Thank you for your request. Your case is under review and we will send you a quote within
+        24–48 hours. Your case number is <strong>{caseNumber}</strong>. Please keep it for your
+        records.
       </p>
 
       {isGuest && (
@@ -43,7 +41,9 @@ export default async function BookingConfirmationPage({
             Upload documents, see invoices, and manage your case in one place.
           </p>
           <Button asChild className="mt-3 w-full" variant="default">
-            <Link href={`/${locale}/register${prefillEmail ? `?email=${encodeURIComponent(prefillEmail)}` : ""}`}>
+            <Link
+              href={`/${locale}/register${prefillEmail ? `?email=${encodeURIComponent(prefillEmail)}` : ""}`}
+            >
               Create account
             </Link>
           </Button>

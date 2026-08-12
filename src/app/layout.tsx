@@ -1,20 +1,6 @@
 import type { Metadata } from "next";
-import Script from "next/script";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { THEME_SCRIPT } from "@/components/theme/theme-script";
-import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { site } from "@/config/site";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -30,17 +16,14 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Root layout passes children through.
+ * `<html>` / `<body>` live in `[locale]/layout.tsx` so `lang` is locale-correct on SSR.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
-      <body className="min-h-screen antialiased font-sans bg-background text-foreground">
-        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
-        <ThemeProvider>{children}</ThemeProvider>
-      </body>
-    </html>
-  );
+  return children;
 }

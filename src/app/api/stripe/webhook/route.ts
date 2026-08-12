@@ -42,21 +42,41 @@ export async function POST(request: NextRequest) {
 
         const payment = await paymentDA.getPaymentByStripePaymentIntentId(pi.id);
         if (payment) {
-          await paymentDA.updatePaymentByStripeIntentId(pi.id, {
-            status: "succeeded",
-            stripeChargeId: typeof pi.latest_charge === "string" ? pi.latest_charge : pi.latest_charge?.id,
-          });
+          if (payment.status !== "approved") {
+            await paymentDA.updatePaymentByStripeIntentId(pi.id, {
+              status: "succeeded",
+              stripeChargeId:
+                typeof pi.latest_charge === "string"
+                  ? pi.latest_charge
+                  : pi.latest_charge?.id,
+            });
+          }
         }
 
         if (invoiceId) {
-          await invoiceDA.updateInvoicePaid(invoiceId);
+          const invoice = await invoiceDA.getInvoiceById(invoiceId);
+          if (invoice && invoice.status !== "paid") {
+            await invoiceDA.updateInvoicePaid(invoiceId);
+          }
         }
 
         if (caseId) {
-          await prisma.case.update({
+          const caseRecord = await prisma.case.findUnique({
             where: { id: caseId },
-            data: { status: "paid" },
+            select: { status: true },
           });
+          if (
+            caseRecord &&
+            caseRecord.status !== "paid" &&
+            caseRecord.status !== "in_progress" &&
+            caseRecord.status !== "completed" &&
+            caseRecord.status !== "cancelled"
+          ) {
+            await prisma.case.update({
+              where: { id: caseId },
+              data: { status: "paid" },
+            });
+          }
         }
 
         if (pi.metadata?.intent === "super_boost" && pi.metadata?.salesVehicleId) {
@@ -74,7 +94,7 @@ export async function POST(request: NextRequest) {
         if (!pi.id) break;
 
         const payment = await paymentDA.getPaymentByStripePaymentIntentId(pi.id);
-        if (payment) {
+        if (payment && payment.status === "submitted") {
           await paymentDA.updatePaymentByStripeIntentId(pi.id, { status: "failed" });
         }
         break;

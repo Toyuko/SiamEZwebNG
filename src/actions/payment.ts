@@ -57,12 +57,37 @@ export async function createPaymentIntent(input: {
       return { success: false, error: "Stripe is not configured" };
     }
 
-    const pi = await stripe.paymentIntents.create({
-      amount: invoice.amount,
-      currency: invoice.currency.toLowerCase(),
-      metadata: { caseId: invoice.caseId, invoiceId: invoice.id },
-      automatic_payment_methods: { enabled: true },
-    });
+    const pi = await stripe.paymentIntents.create(
+      {
+        amount: invoice.amount,
+        currency: invoice.currency.toLowerCase(),
+        metadata: { caseId: invoice.caseId, invoiceId: invoice.id },
+        automatic_payment_methods: { enabled: true },
+      },
+      {
+        // Prevents duplicate PaymentIntents for the same invoice on retries / double-clicks.
+        idempotencyKey: `siamez_invoice_${invoice.id}`,
+      }
+    );
+
+    // Track PI so webhooks and retries can reconcile without creating orphans.
+    const existingPayment = await paymentDA.getPaymentByStripePaymentIntentId(pi.id);
+    if (!existingPayment) {
+      try {
+        await paymentDA.createPayment({
+          invoiceId: invoice.id,
+          caseId: invoice.caseId,
+          amount: invoice.amount,
+          currency: invoice.currency,
+          method: "stripe",
+          stripePaymentIntentId: pi.id,
+          status: "submitted",
+        });
+      } catch (trackErr) {
+        // Unique race on stripePaymentIntentId is fine — another request won.
+        console.warn("createPaymentIntent: payment row race", trackErr);
+      }
+    }
 
     return {
       success: true,

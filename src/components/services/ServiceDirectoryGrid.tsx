@@ -98,8 +98,7 @@ export function ServiceDirectoryGrid({
     }
   }, [filtered]);
 
-  const getBookHref = (slug: string) =>
-    isLoggedIn ? `/book/${slug}` : `/login?redirect=/${locale}/book/${slug}`;
+  const getBookHref = (slug: string) => `/book/${slug}`;
 
   const countText = resultsCountLabel.replace("{count}", String(filtered.length));
 

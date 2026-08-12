@@ -1,6 +1,7 @@
 "use server";
 
 import { createBookingCase } from "@/lib/domain/cases";
+import { getSession } from "@/lib/auth";
 
 export interface SubmitBookingInput {
   serviceId: string;
@@ -9,6 +10,7 @@ export interface SubmitBookingInput {
   guestEmail?: string;
   guestName?: string;
   guestPhone?: string;
+  /** Ignored — session identity is authoritative when logged in. */
   userId?: string;
   formData: Record<string, unknown>;
   documentIds?: string[];
@@ -27,14 +29,20 @@ export interface SubmitBookingResult {
 
 /**
  * Creates a Case from a booking submission.
- * Supports both guest and logged-in user bookings.
+ * Logged-in users are always bound to the session userId (client userId ignored).
+ * Guests require guestEmail.
  */
 export async function submitBooking(input: SubmitBookingInput): Promise<SubmitBookingResult> {
   try {
+    const session = await getSession();
+    const sessionUserId = session?.user?.id;
+    // Session is authoritative. Client-supplied userId / isGuest are ignored.
+    const isGuest = !sessionUserId;
+
     const result = await createBookingCase({
       serviceId: input.serviceId,
-      isGuest: input.isGuest,
-      userId: input.userId,
+      isGuest,
+      userId: sessionUserId,
       guestEmail: input.guestEmail,
       guestName: input.guestName,
       guestPhone: input.guestPhone,

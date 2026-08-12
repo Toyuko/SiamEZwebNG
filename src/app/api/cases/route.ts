@@ -4,21 +4,33 @@ import { nextCaseNumber } from "@/lib/utils";
 import { prisma } from "@/lib/db";
 import type { CaseStatus } from "@prisma/client";
 import { getApiUser } from "@/lib/auth/getApiUser";
+import { isStaffRole } from "@/lib/auth/roles";
 import { getUserCases } from "@/lib/domain/cases";
+import { attachOwnedDocumentsToCase } from "@/lib/documents/ownership";
 import { ok, fail } from "@/lib/api-response";
 
 /**
  * POST /api/cases
- * Create a new case (e.g. from booking).
- * Body: { userId, serviceId, guestEmail?, guestName?, guestPhone?, formData?, documentIds? }
+ * Create a new case for the authenticated API user.
+ * Staff may optionally set userId for another customer.
+ * Body: { serviceId, guestEmail?, guestName?, guestPhone?, formData?, documentIds?, userId? }
  */
 export async function POST(request: NextRequest) {
   try {
+    const apiUser = await getApiUser(request);
     const body = await request.json();
-    const { userId, serviceId, guestEmail, guestName, guestPhone, formData, documentIds } = body;
+    const { serviceId, guestEmail, guestName, guestPhone, formData, documentIds } = body;
 
-    if (!userId || !serviceId) {
-      return NextResponse.json({ error: "userId and serviceId required" }, { status: 400 });
+    if (!serviceId) {
+      return NextResponse.json({ error: "serviceId required" }, { status: 400 });
+    }
+
+    let userId = apiUser.userId;
+    if (typeof body?.userId === "string" && body.userId !== apiUser.userId) {
+      if (!isStaffRole(apiUser.role)) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      userId = body.userId;
     }
 
     const service = await prisma.service.findUnique({ where: { id: serviceId } });
@@ -27,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     const caseNumber = nextCaseNumber();
-    const status: CaseStatus = "new";
+    const status: CaseStatus = service.type === "fixed" ? "new" : "under_review";
 
     const c = await createCase({
       caseNumber,
@@ -40,10 +52,11 @@ export async function POST(request: NextRequest) {
       formData: formData ?? undefined,
     });
 
-    if (documentIds?.length) {
-      await prisma.document.updateMany({
-        where: { id: { in: documentIds } },
-        data: { caseId: c.id },
+    if (Array.isArray(documentIds) && documentIds.length) {
+      await attachOwnedDocumentsToCase({
+        caseId: c.id,
+        documentIds,
+        userId: apiUser.userId,
       });
     }
 
@@ -53,11 +66,12 @@ export async function POST(request: NextRequest) {
       caseNumber: c.caseNumber,
     });
   } catch (e) {
-    console.error("POST /api/cases error", e);
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Failed to create case" },
-      { status: 500 }
-    );
+    const message = e instanceof Error ? e.message : "Failed to create case";
+    const status = message === "Unauthorized" ? 401 : 500;
+    if (status === 500) {
+      console.error("POST /api/cases error", e);
+    }
+    return NextResponse.json({ error: message }, { status });
   }
 }
 

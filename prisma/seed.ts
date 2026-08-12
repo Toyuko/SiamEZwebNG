@@ -39,6 +39,23 @@ import { SUNSET_SCOOTERS_BATCH_LISTINGS } from "./sunset-scooters-batch-listings
 
 const prisma = new PrismaClient();
 
+function assertSeedAllowed(): void {
+  const vercelEnv = process.env.VERCEL_ENV;
+  const allow =
+    process.env.ALLOW_PRODUCTION_SEED === "true" ||
+    process.env.ALLOW_PRODUCTION_SEED === "1";
+  if ((vercelEnv === "production" || vercelEnv === "preview") && !allow) {
+    throw new Error(
+      "Refusing to seed on Vercel production/preview. Set ALLOW_PRODUCTION_SEED=true only if intentional."
+    );
+  }
+  if (process.env.NODE_ENV === "production" && vercelEnv === "production" && !allow) {
+    throw new Error(
+      "Refusing to seed production database. Set ALLOW_PRODUCTION_SEED=true only if intentional."
+    );
+  }
+}
+
 const services = [
   {
     slug: "marriage-registration",
@@ -159,6 +176,8 @@ const services = [
 ];
 
 async function main() {
+  assertSeedAllowed();
+
   for (const s of services) {
     await prisma.service.upsert({
       where: { slug: s.slug },

@@ -7,7 +7,7 @@
 const { generatePayload } = require("promptpay-qr");
 
 const defaultPromptPayId =
-  typeof process !== "undefined" ? process.env.PROMPTPAY_ID ?? "5302601003497" : "5302601003497";
+  typeof process !== "undefined" ? process.env.PROMPTPAY_ID?.trim() || "" : "";
 
 /**
  * Generate PromptPay QR payload for dynamic amount (THB).
@@ -19,7 +19,10 @@ export function generatePromptPayQRPayload(
   _reference?: string,
   promptPayId?: string
 ): string {
-  const id = promptPayId ?? defaultPromptPayId;
+  const id = (promptPayId ?? defaultPromptPayId).trim();
+  if (!id) {
+    throw new Error("PromptPay ID is not configured");
+  }
   const amountBaht = amountCents / 100;
   return generatePayload(id, { amount: amountBaht });
 }

@@ -193,14 +193,10 @@ export default async function HomePage({
         showViewAll={true}
         viewAllHref="/services"
         viewAllLabel={tCommon("viewAllServices")}
+        getBookHref={(slug) => `/book/${slug}`}
         bookNowLabel={tServices("bookNow")}
         detailsLabel={tServices("details")}
         priceLabel={tServices("from")}
-        getBookHref={
-          isLoggedIn
-            ? (slug) => `/book/${slug}`
-            : (slug) => `/login?redirect=/${locale}/book/${slug}`
-        }
       />
       <WhyChooseSection
         title={tWhy("title")}

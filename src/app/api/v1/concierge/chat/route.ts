@@ -11,6 +11,11 @@ import {
   serializeJson,
   withOptionalBearerUser,
 } from "@/lib/api/v1/helpers";
+import {
+  checkRateLimit,
+  clientKeyFromRequest,
+  rateLimitResponse,
+} from "@/lib/security/rate-limit";
 
 /**
  * POST /api/v1/concierge/chat
@@ -18,6 +23,11 @@ import {
  * Wraps Platform Concierge engine (rule + optional LLM + tools + journey memory).
  */
 export async function POST(request: NextRequest) {
+  const rl = checkRateLimit(clientKeyFromRequest(request, "concierge"), 30, 60_000);
+  if (!rl.allowed) {
+    return rateLimitResponse(rl.retryAfterSec);
+  }
+
   return withOptionalBearerUser(request, async () => {
     const body = (await request.json().catch(() => null)) as {
       message?: string;

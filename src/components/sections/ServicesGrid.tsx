@@ -85,8 +85,7 @@ export function ServicesGrid({
   isLoggedIn = false,
   locale = "en",
 }: ServicesGridProps) {
-  const getBookHref = (slug: string) =>
-    isLoggedIn ? `/book/${slug}` : `/login?redirect=/${locale}/book/${slug}`;
+  const getBookHref = (slug: string) => `/book/${slug}`;
   if (searchQuery.trim() && services.length === 0) {
     const message = noResultsMessage.replace("{query}", searchQuery.trim());
     return (
