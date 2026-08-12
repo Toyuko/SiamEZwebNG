@@ -43,15 +43,19 @@ const fullClientNav = [
   { labelKey: "settings", href: "/portal/profile", icon: Settings },
 ];
 
+const sellerListingNav = [
+  { labelKey: "mySales", href: "/portal/sales", icon: Car },
+  { labelKey: "myRealEstate", href: "/portal/real-estate", icon: Home },
+];
+
 const softLaunchClientNav = [
   { labelKey: "dashboard", href: "/portal", icon: LayoutDashboard },
   { labelKey: "myCases", href: "/portal/cases", icon: FolderOpen },
+  ...(softLaunch.showSellerListings ? sellerListingNav : []),
   { labelKey: "invoices", href: "/portal/invoices", icon: CreditCard },
-  { labelKey: "mySales", href: "/portal/sales", icon: Car },
-  { labelKey: "myRealEstate", href: "/portal/real-estate", icon: Home },
-  { labelKey: "listingEnquiries", href: "/portal/enquiries", icon: Inbox },
+  { labelKey: "browseCars", href: "/sales", icon: Car },
+  { labelKey: "browseRealEstate", href: "/real-estate", icon: Home },
   { labelKey: "documents", href: "/portal/documents", icon: FileText },
-  { labelKey: "notifications", href: "/portal/notifications", icon: Bell },
   { labelKey: "settings", href: "/portal/profile", icon: Settings },
 ];
 

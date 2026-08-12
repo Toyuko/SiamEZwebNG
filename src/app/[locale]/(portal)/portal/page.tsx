@@ -8,8 +8,12 @@ import { AiRecommendations } from "@/components/portal/AiRecommendations";
 import { SellerAnalyticsStub } from "@/components/portal/SellerAnalyticsStub";
 import { SuggestionSlot } from "@/components/recommendations/SuggestionSlot";
 import { PortalFooter } from "@/components/portal/PortalFooter";
+import { AskSiamEzButton } from "@/components/ai/AskSiamEzButton";
+import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth } from "@/lib/auth";
+import { softLaunch } from "@/config/soft-launch";
 import { getCasesByUserId } from "@/data-access/case";
 import { getJobsByClientId } from "@/data-access/job";
 import { getInvoicesByUserId } from "@/data-access/invoice";
@@ -132,7 +136,49 @@ export default async function PortalDashboardPage({
       : getPopularRecommendations(conciergeLocale, 4);
   const crossDivision = engineRecs.filter((s) => s.kind !== "service").slice(0, 3);
 
-  const quickLinks = [
+  const listingManageLinks = [
+    {
+      href: "/portal/sales",
+      label: t("mySales"),
+      hint: t("quickLinks.salesHint", { count: sellerStats.vehicleCount }),
+      icon: "sales" as const,
+      badge: sellerStats.vehicleCount,
+    },
+    {
+      href: "/portal/real-estate",
+      label: t("myRealEstate"),
+      hint: t("quickLinks.realEstateHint", { count: sellerStats.propertyCount }),
+      icon: "realEstate" as const,
+      badge: sellerStats.propertyCount,
+    },
+  ];
+
+  const quickLinks = softLaunch.enabled
+    ? [
+        {
+          href: "/portal/cases",
+          label: t("myCases"),
+          hint: t("quickLinks.casesHint", { count: activeCasesCount }),
+          icon: "cases" as const,
+          badge: activeCasesCount,
+        },
+        ...listingManageLinks,
+        {
+          href: "/portal/invoices",
+          label: t("invoices"),
+          hint: t("quickLinks.invoicesHint", { count: pendingInvoicesCount }),
+          icon: "invoices" as const,
+          badge: pendingInvoicesCount,
+        },
+        {
+          href: "/portal/documents",
+          label: t("documents"),
+          hint: t("quickLinks.documentsHint", { count: documentsCount }),
+          icon: "documents" as const,
+          badge: documentsCount,
+        },
+      ]
+    : [
     {
       href: "/portal/cases",
       label: t("myCases"),
@@ -140,6 +186,7 @@ export default async function PortalDashboardPage({
       icon: "cases" as const,
       badge: activeCasesCount,
     },
+    ...listingManageLinks,
     {
       href: "/portal/goals",
       label: t("goalsLifeEvents"),
@@ -190,11 +237,23 @@ export default async function PortalDashboardPage({
 
   return (
     <div className="max-w-7xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          {t("dashboard")}
-        </h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">{t("dashboardSubtitle")}</p>
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            {t("dashboard")}
+          </h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">{t("dashboardSubtitle")}</p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Button asChild variant="primary" size="lg">
+            <Link href="/services">{t("bookNewService")}</Link>
+          </Button>
+          <AskSiamEzButton
+            label={t("askSiamEz")}
+            variant="outline"
+            size="lg"
+          />
+        </div>
       </div>
 
       <QuickLinks title={t("quickLinksTitle")} links={quickLinks} />
@@ -206,6 +265,7 @@ export default async function PortalDashboardPage({
       />
 
       <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {softLaunch.enabled ? null : (
         <SummaryCard
           iconName="Flag"
           title={t("workspace.goalsTitle")}
@@ -218,6 +278,7 @@ export default async function PortalDashboardPage({
           buttonLabel={t("workspace.viewGoals")}
           buttonVariant="outline"
         />
+        )}
         <SummaryCard
           iconName="FolderOpen"
           title={t("myCases")}
@@ -227,6 +288,25 @@ export default async function PortalDashboardPage({
           buttonLabel={t("viewCases")}
           buttonVariant="default"
         />
+        <SummaryCard
+          iconName="Car"
+          title={t("mySales")}
+          description={t("salesListingsDescription", { count: sellerStats.vehicleCount })}
+          count={sellerStats.vehicleCount}
+          href="/portal/sales"
+          buttonLabel={t("viewMySales")}
+          buttonVariant="outline"
+        />
+        <SummaryCard
+          iconName="Home"
+          title={t("myRealEstate")}
+          description={t("propertyListingsDescription", { count: sellerStats.propertyCount })}
+          count={sellerStats.propertyCount}
+          href="/portal/real-estate"
+          buttonLabel={t("viewMyProperties")}
+          buttonVariant="outline"
+        />
+        {softLaunch.enabled ? null : (
         <SummaryCard
           iconName="Bookmark"
           title={t("workspace.savedTitle")}
@@ -239,6 +319,7 @@ export default async function PortalDashboardPage({
           buttonLabel={t("workspace.viewSaved")}
           buttonVariant="outline"
         />
+        )}
         <SummaryCard
           iconName="CreditCard"
           title={t("invoices")}
@@ -259,18 +340,17 @@ export default async function PortalDashboardPage({
         />
       </div>
 
-      {showSeller ? (
-        <SellerAnalyticsStub
-          title={t("sellerAnalytics.title")}
-          subtitle={t("sellerAnalytics.subtitle")}
-          emptyLabel={t("sellerAnalytics.empty")}
-          viewsLabel={(count) => t("sellerAnalytics.views", { count })}
-          manageSalesLabel={t("sellerAnalytics.manageSales")}
-          manageRealEstateLabel={t("sellerAnalytics.manageRealEstate")}
-          totalViews={sellerStats.totalViews}
-          rows={sellerStats.rows}
-        />
-      ) : null}
+      <SellerAnalyticsStub
+        title={t("sellerAnalytics.title")}
+        subtitle={t("sellerAnalytics.subtitle")}
+        emptyLabel={t("sellerAnalytics.empty")}
+        viewsLabel={(count) => t("sellerAnalytics.views", { count })}
+        manageSalesLabel={t("sellerAnalytics.manageSales")}
+        manageRealEstateLabel={t("sellerAnalytics.manageRealEstate")}
+        editListingLabel={t("editListing")}
+        totalViews={sellerStats.totalViews}
+        rows={sellerStats.rows}
+      />
 
       <ActivityFeed items={activities} viewAllHref="/portal/notifications" />
 

@@ -16,6 +16,8 @@ export type SellerListingViewRow = {
 
 export type SellerListingViewStats = {
   listingCount: number;
+  vehicleCount: number;
+  propertyCount: number;
   totalViews: number;
   totalEnquiries: number;
   rows: SellerListingViewRow[];
@@ -42,9 +44,18 @@ export async function getSellerListingViewStats(
     }),
   ]);
 
-  const listingCount = vehicles.length + properties.length;
+  const vehicleCount = vehicles.length;
+  const propertyCount = properties.length;
+  const listingCount = vehicleCount + propertyCount;
   if (listingCount === 0) {
-    return { listingCount: 0, totalViews: 0, totalEnquiries: 0, rows: [] };
+    return {
+      listingCount: 0,
+      vehicleCount: 0,
+      propertyCount: 0,
+      totalViews: 0,
+      totalEnquiries: 0,
+      rows: [],
+    };
   }
 
   const vehicleIds = vehicles.map((v) => v.id);
@@ -129,5 +140,5 @@ export async function getSellerListingViewStats(
     .sort((a, b) => b.viewCount - a.viewCount || a.title.localeCompare(b.title))
     .slice(0, limit);
 
-  return { listingCount, totalViews, totalEnquiries, rows };
+  return { listingCount, vehicleCount, propertyCount, totalViews, totalEnquiries, rows };
 }

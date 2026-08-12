@@ -262,6 +262,7 @@
     },
     "perPageLabel": "Per page",
     "backToInventory": "Back to inventory",
+    "editListing": "Edit listing",
     "categoryLabel": "Category",
     "aiSummaryTitle": "At a glance",
     "videos": "Videos",
@@ -1350,7 +1351,7 @@
   "portal": {
     "portalName": "My Account",
     "dashboard": "My Account",
-    "dashboardSubtitle": "Book a service, track bookings and payments, browse cars and real estate, or ask SiamEZ.",
+    "dashboardSubtitle": "Book a service, track bookings and payments, edit your car and property listings, or ask SiamEZ.",
     "myCases": "My Bookings",
     "browseCars": "Cars",
     "browseRealEstate": "Real Estate",
@@ -1363,6 +1364,13 @@
     "carsHint": "Browse vehicles for sale",
     "realEstateHint": "Browse homes and condos",
     "mySales": "My Sales",
+    "mySalesSubtitle": "Create and edit your vehicle listings — photos, price, description, and status.",
+    "myRealEstateSubtitle": "Create and edit your property listings — photos, price, description, and status.",
+    "editListing": "Edit listing",
+    "salesListingsDescription": "You have **{count} vehicle listings**. Open them to change photos, price, or status.",
+    "propertyListingsDescription": "You have **{count} property listings**. Open them to change photos, price, or status.",
+    "viewMySales": "Manage vehicles",
+    "viewMyProperties": "Manage properties",
     "invoices": "Payments",
     "documents": "Documents",
     "profile": "Profile",
@@ -1381,8 +1389,8 @@
     },
     "sellerAnalytics": {
       "title": "Your listing views",
-      "subtitle": "Lightweight view counts for vehicles and properties you listed.",
-      "empty": "No views recorded yet. Counts appear when buyers open your listings.",
+      "subtitle": "View counts for vehicles and properties you listed. Use Edit to change a listing from your dashboard.",
+      "empty": "No views yet. Use Manage vehicles or Manage properties to add or edit listings.",
       "views": "{count} views",
       "manageSales": "Manage vehicles",
       "manageRealEstate": "Manage properties"
@@ -1418,7 +1426,9 @@
       "invoicesHint": "{count} pending",
       "documentsHint": "{count} files",
       "notificationsHint": "{count} need attention",
-      "enquiriesHint": "{count} new"
+      "enquiriesHint": "{count} new",
+      "salesHint": "{count} listings",
+      "realEstateHint": "{count} listings"
     },
     "nextSteps": {
       "title": "Your next steps",
@@ -2025,6 +2035,7 @@
     },
     "perPageLabel": "Per page",
     "backToInventory": "Back to properties",
+    "editListing": "Edit listing",
     "aiSummaryTitle": "At a glance",
     "videos": "Videos",
     "specifications": "Specifications",

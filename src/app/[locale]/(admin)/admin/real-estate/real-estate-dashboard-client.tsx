@@ -119,13 +119,26 @@ function normalizeForForm(listing: Listing): RealEstateListingInput {
   };
 }
 
-export function RealEstateDashboardClient({ initialListings }: { initialListings: Listing[] }) {
+export function RealEstateDashboardClient({
+  initialListings,
+  variant = "admin",
+  initialEditId,
+}: {
+  initialListings: Listing[];
+  variant?: "admin" | "seller";
+  initialEditId?: string;
+}) {
   const t = useTranslations("realEstateAdmin");
+  const tPortal = useTranslations("portal");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Listing | null>(null);
   const listings = useMemo(() => initialListings, [initialListings]);
+  const initialListing = initialEditId
+    ? listings.find((listing) => listing.id === initialEditId) ?? null
+    : null;
+  const [formOpen, setFormOpen] = useState(Boolean(initialListing));
+  const [editing, setEditing] = useState<Listing | null>(initialListing);
+  const isSeller = variant === "seller";
 
   const openCreate = () => {
     setEditing(null);
@@ -172,8 +185,12 @@ export function RealEstateDashboardClient({ initialListings }: { initialListings
     <>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
-          <p className="mt-1 text-gray-600 dark:text-gray-400">{t("subtitle")}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {isSeller ? tPortal("myRealEstate") : t("title")}
+          </h1>
+          <p className="mt-1 text-gray-600 dark:text-gray-400">
+            {isSeller ? tPortal("myRealEstateSubtitle") : t("subtitle")}
+          </p>
         </div>
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4" />
@@ -254,7 +271,12 @@ export function RealEstateDashboardClient({ initialListings }: { initialListings
                           }}
                           translationNamespace="realEstateAdmin"
                         />
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(listing)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={tPortal("editListing")}
+                          onClick={() => openEdit(listing)}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button

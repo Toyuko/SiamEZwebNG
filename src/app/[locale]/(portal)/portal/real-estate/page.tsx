@@ -4,9 +4,20 @@ import { RealEstateDashboardClient } from "@/app/[locale]/(admin)/admin/real-est
 
 export const dynamic = "force-dynamic";
 
-export default async function PortalRealEstatePage() {
+export default async function PortalRealEstatePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ edit?: string }>;
+}) {
   const session = await requireAuth();
+  const { edit } = await searchParams;
   const listings = await getSalesPropertiesByOwner(session.user.id);
 
-  return <RealEstateDashboardClient initialListings={listings} />;
+  return (
+    <RealEstateDashboardClient
+      initialListings={listings}
+      variant="seller"
+      initialEditId={typeof edit === "string" ? edit : undefined}
+    />
+  );
 }

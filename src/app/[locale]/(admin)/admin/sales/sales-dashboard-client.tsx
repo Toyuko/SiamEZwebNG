@@ -95,13 +95,26 @@ function normalizeForForm(listing: Listing): SalesListingInput {
   };
 }
 
-export function SalesDashboardClient({ initialListings }: { initialListings: Listing[] }) {
+export function SalesDashboardClient({
+  initialListings,
+  variant = "admin",
+  initialEditId,
+}: {
+  initialListings: Listing[];
+  variant?: "admin" | "seller";
+  initialEditId?: string;
+}) {
   const t = useTranslations("salesAdmin");
+  const tPortal = useTranslations("portal");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Listing | null>(null);
   const listings = useMemo(() => initialListings, [initialListings]);
+  const initialListing = initialEditId
+    ? listings.find((listing) => listing.id === initialEditId) ?? null
+    : null;
+  const [formOpen, setFormOpen] = useState(Boolean(initialListing));
+  const [editing, setEditing] = useState<Listing | null>(initialListing);
+  const isSeller = variant === "seller";
 
   const openCreate = () => {
     setEditing(null);
@@ -164,9 +177,11 @@ export function SalesDashboardClient({ initialListings }: { initialListings: Lis
     <>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {isSeller ? tPortal("mySales") : t("title")}
+          </h1>
           <p className="mt-1 text-gray-600 dark:text-gray-400">
-            {t("subtitle")}
+            {isSeller ? tPortal("mySalesSubtitle") : t("subtitle")}
           </p>
         </div>
         <Button onClick={openCreate}>
@@ -227,7 +242,7 @@ export function SalesDashboardClient({ initialListings }: { initialListings: Lis
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-1">
                         <SalesListingExportActions listing={listing} />
-                        {listing.status === "pending_boost" ? (
+                        {!isSeller && listing.status === "pending_boost" ? (
                           <Button
                             type="button"
                             variant="outline"
@@ -239,7 +254,12 @@ export function SalesDashboardClient({ initialListings }: { initialListings: Lis
                             {t("approveBoost")}
                           </Button>
                         ) : null}
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(listing)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={tPortal("editListing")}
+                          onClick={() => openEdit(listing)}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button

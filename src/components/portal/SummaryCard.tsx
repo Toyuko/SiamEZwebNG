@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Bookmark,
+  Car,
   CreditCard,
   FileText,
   Flag,
   FolderOpen,
+  Home,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,6 +22,8 @@ const iconMap: Record<string, LucideIcon> = {
   FileText,
   Bookmark,
   Flag,
+  Car,
+  Home,
 };
 
 interface SummaryCardProps {

@@ -8,6 +8,12 @@ export const softLaunch = {
   /** When true, primary customer IA focuses on Services / Cars / RE / Concierge. */
   enabled: process.env.SOFT_LAUNCH !== "false",
 
+  /**
+   * Seller listing management in the customer portal (My Sales / My Properties).
+   * Cars and real estate are core to the launch surface, so this stays on.
+   */
+  showSellerListings: true,
+
   /** Public marketplace freelancers directory in primary nav. */
   showFreelancers: false,
 

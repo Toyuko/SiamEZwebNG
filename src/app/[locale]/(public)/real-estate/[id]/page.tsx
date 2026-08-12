@@ -110,6 +110,9 @@ export default async function RealEstateDetailPage({
   }
 
   const session = await getSession();
+  const canEdit = Boolean(
+    session?.user?.id && property.createdById && session.user.id === property.createdById
+  );
 
   const boostActive = Boolean(
     property.isBoosted && property.boostExpiresAt && property.boostExpiresAt > new Date()
@@ -308,6 +311,11 @@ export default async function RealEstateDetailPage({
               <span className="inline-block rounded-md bg-yellow-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-900">
                 {t("featuredBadge")}
               </span>
+            ) : null}
+            {canEdit ? (
+              <Button asChild variant="outline" className="w-full">
+                <Link href={`/portal/real-estate?edit=${property.id}`}>{t("editListing")}</Link>
+              </Button>
             ) : null}
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{property.title}</h1>
             <ListingEngagementBar listingType="property" listingId={property.id} />

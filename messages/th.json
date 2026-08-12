@@ -262,6 +262,7 @@
     },
     "perPageLabel": "ต่อหน้า",
     "backToInventory": "กลับไปหน้ารายการรถ",
+    "editListing": "แก้ไขรายการ",
     "categoryLabel": "หมวดหมู่",
     "aiSummaryTitle": "สรุปโดยย่อ",
     "videos": "วิดีโอ",
@@ -1350,7 +1351,7 @@
   "portal": {
     "portalName": "บัญชีของฉัน",
     "dashboard": "บัญชีของฉัน",
-    "dashboardSubtitle": "จองบริการ ติดตามการจองและการชำระเงิน ดูรถยนต์และอสังหา หรือถาม SiamEZ",
+    "dashboardSubtitle": "จองบริการ ติดตามการจองและการชำระเงิน แก้ไขรายการรถและอสังหาของคุณ หรือถาม SiamEZ",
     "myCases": "การจองของฉัน",
     "browseCars": "รถยนต์",
     "browseRealEstate": "อสังหา",
@@ -1363,6 +1364,13 @@
     "carsHint": "ดูรถยนต์ที่ประกาศขาย",
     "realEstateHint": "ดูบ้านและคอนโด",
     "mySales": "รายการขายของฉัน",
+    "mySalesSubtitle": "สร้างและแก้ไขรายการรถของคุณ — รูปภาพ ราคา คำอธิบาย และสถานะ",
+    "myRealEstateSubtitle": "สร้างและแก้ไขรายการอสังหาของคุณ — รูปภาพ ราคา คำอธิบาย และสถานะ",
+    "editListing": "แก้ไขรายการ",
+    "salesListingsDescription": "คุณมี **รายการรถ {count} รายการ** เปิดเพื่อเปลี่ยนรูป ราคา หรือสถานะ",
+    "propertyListingsDescription": "คุณมี **รายการอสังหา {count} รายการ** เปิดเพื่อเปลี่ยนรูป ราคา หรือสถานะ",
+    "viewMySales": "จัดการรถยนต์",
+    "viewMyProperties": "จัดการอสังหาฯ",
     "invoices": "การชำระเงิน",
     "documents": "เอกสาร",
     "profile": "โปรไฟล์",
@@ -1381,8 +1389,8 @@
     },
     "sellerAnalytics": {
       "title": "ยอดเข้าชมรายการของคุณ",
-      "subtitle": "สรุปยอดเข้าชมแบบง่ายสำหรับรถและอสังหาฯ ที่คุณลงขาย",
-      "empty": "ยังไม่มียอดเข้าชม เมื่อผู้ซื้อเปิดรายการของคุณ ตัวเลขจะแสดงที่นี่",
+      "subtitle": "ยอดเข้าชมรถและอสังหาฯ ที่คุณลงขาย กดแก้ไขเพื่อเปลี่ยนรายการจากแดชบอร์ด",
+      "empty": "ยังไม่มียอดเข้าชม ใช้จัดการรถยนต์หรือจัดการอสังหาฯ เพื่อเพิ่มหรือแก้ไขรายการ",
       "views": "{count} ครั้ง",
       "manageSales": "จัดการรถยนต์",
       "manageRealEstate": "จัดการอสังหาฯ"
@@ -1418,7 +1426,9 @@
       "invoicesHint": "{count} รายการรอชำระ",
       "documentsHint": "{count} ไฟล์",
       "notificationsHint": "{count} รายการที่ต้องดำเนินการ",
-      "enquiriesHint": "{count} ใหม่"
+      "enquiriesHint": "{count} ใหม่",
+      "salesHint": "{count} รายการ",
+      "realEstateHint": "{count} รายการ"
     },
     "nextSteps": {
       "title": "ขั้นตอนถัดไปของคุณ",
@@ -2025,6 +2035,7 @@
     },
     "perPageLabel": "ต่อหน้า",
     "backToInventory": "กลับไปรายการอสังหาฯ",
+    "editListing": "แก้ไขรายการ",
     "aiSummaryTitle": "สรุปโดยย่อ",
     "videos": "วิดีโอ",
     "specifications": "รายละเอียดเพิ่มเติม",

@@ -9,6 +9,12 @@ export type SellerAnalyticsRow = {
   viewCount: number;
 };
 
+function listingEditHref(row: SellerAnalyticsRow) {
+  return row.listingType === "vehicle"
+    ? `/portal/sales?edit=${row.listingId}`
+    : `/portal/real-estate?edit=${row.listingId}`;
+}
+
 export function SellerAnalyticsStub({
   title,
   subtitle,
@@ -16,6 +22,7 @@ export function SellerAnalyticsStub({
   viewsLabel,
   manageSalesLabel,
   manageRealEstateLabel,
+  editListingLabel,
   totalViews,
   rows,
 }: {
@@ -25,6 +32,7 @@ export function SellerAnalyticsStub({
   viewsLabel: (count: number) => string;
   manageSalesLabel: string;
   manageRealEstateLabel: string;
+  editListingLabel: string;
   totalViews: number;
   rows: SellerAnalyticsRow[];
 }) {
@@ -64,9 +72,17 @@ export function SellerAnalyticsStub({
               >
                 {row.title}
               </Link>
-              <span className="shrink-0 text-xs tabular-nums text-gray-500 dark:text-gray-400">
-                {viewsLabel(row.viewCount)}
-              </span>
+              <div className="flex shrink-0 items-center gap-3">
+                <span className="text-xs tabular-nums text-gray-500 dark:text-gray-400">
+                  {viewsLabel(row.viewCount)}
+                </span>
+                <Link
+                  href={listingEditHref(row)}
+                  className="text-xs font-medium text-siam-blue hover:underline dark:text-siam-blue-light"
+                >
+                  {editListingLabel}
+                </Link>
+              </div>
             </li>
           ))}
         </ul>

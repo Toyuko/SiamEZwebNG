@@ -2,10 +2,12 @@ import { Link } from "@/i18n/navigation";
 import {
   Bell,
   Bookmark,
+  Car,
   CreditCard,
   FileText,
   Flag,
   FolderOpen,
+  Home,
   Inbox,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,7 +19,9 @@ type QuickLinkIcon =
   | "notifications"
   | "saved"
   | "goals"
-  | "enquiries";
+  | "enquiries"
+  | "sales"
+  | "realEstate";
 
 type QuickLink = {
   href: string;
@@ -35,6 +39,8 @@ const icons = {
   saved: Bookmark,
   goals: Flag,
   enquiries: Inbox,
+  sales: Car,
+  realEstate: Home,
 };
 
 export function QuickLinks({

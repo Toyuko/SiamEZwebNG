@@ -336,6 +336,11 @@ export default async function SalesVehicleDetailPage({
                 bankAccountNumber: paymentSettings.bankAccountNumber,
               }}
             />
+            {canBoost ? (
+              <Button asChild variant="outline" className="w-full">
+                <Link href={`/portal/sales?edit=${vehicle.id}`}>{t("editListing")}</Link>
+              </Button>
+            ) : null}
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {vehicle.year} {vehicle.make} {vehicle.model}
             </h1>
