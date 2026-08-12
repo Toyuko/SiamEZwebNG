@@ -1,4 +1,5 @@
 import { site } from "@/config/site";
+import { EMAIL_BRAND_CIDS } from "@/lib/email/assets";
 import { getAppBaseUrl } from "@/lib/email/config";
 
 /** Brand palette from SiamEZ logo / cover assets */
@@ -28,18 +29,15 @@ export function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function brandAsset(path: string): string {
-  return `${getAppBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`;
-}
-
 export function emailLayout(input: {
   title: string;
   preheader?: string;
   bodyHtml: string;
 }): string {
   const base = getAppBaseUrl();
-  const bannerUrl = brandAsset("/images/brand/banner-email.jpg");
-  const logoUrl = brandAsset("/images/brand/logo-circle-email.png");
+  // Inline CIDs — attached by sendEmail from public/images/brand/*
+  const bannerUrl = `cid:${EMAIL_BRAND_CIDS.banner}`;
+  const logoUrl = `cid:${EMAIL_BRAND_CIDS.logo}`;
   const host = base.replace(/^https?:\/\//, "");
   const preheader = input.preheader
     ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px;">${escapeHtml(input.preheader)}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>`
@@ -70,7 +68,7 @@ export function emailLayout(input: {
             <td style="padding:0;line-height:0;font-size:0;background:${EMAIL_BRAND.blue};">
               <a href="${escapeHtml(base)}" style="display:block;text-decoration:none;">
                 <img
-                  src="${escapeHtml(bannerUrl)}"
+                  src="${bannerUrl}"
                   width="600"
                   alt="${escapeHtml(site.name)} — ${escapeHtml(site.tagline)}"
                   style="display:block;width:100%;max-width:600px;height:auto;border:0;outline:none;text-decoration:none;"
@@ -85,7 +83,7 @@ export function emailLayout(input: {
                 <tr>
                   <td style="vertical-align:middle;width:44px;">
                     <img
-                      src="${escapeHtml(logoUrl)}"
+                      src="${logoUrl}"
                       width="40"
                       height="40"
                       alt=""
@@ -117,7 +115,7 @@ export function emailLayout(input: {
                 <tr>
                   <td style="vertical-align:top;width:52px;">
                     <img
-                      src="${escapeHtml(logoUrl)}"
+                      src="${logoUrl}"
                       width="44"
                       height="44"
                       alt="${escapeHtml(site.name)}"
@@ -135,6 +133,7 @@ export function emailLayout(input: {
                       <a href="mailto:${escapeHtml(site.email)}" style="color:${EMAIL_BRAND.yellow};text-decoration:none;">${escapeHtml(site.email)}</a>
                     </div>
                     <div style="margin:0;color:#a8b8e8;">You received this because of activity on ${escapeHtml(site.name)}.</div>
+                    <div style="margin:8px 0 0;color:#a8b8e8;">SiamEZ Professional Services Co., Ltd. · Thailand</div>
                   </td>
                 </tr>
               </table>

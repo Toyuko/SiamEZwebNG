@@ -1,5 +1,9 @@
 import { Resend } from "resend";
 import {
+  getBrandEmailAttachments,
+  htmlNeedsBrandAttachments,
+} from "@/lib/email/assets";
+import {
   getEmailFrom,
   getEmailReplyTo,
   isEmailConfigured,
@@ -67,6 +71,10 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
   }
 
   try {
+    const attachments = htmlNeedsBrandAttachments(input.html)
+      ? await getBrandEmailAttachments()
+      : [];
+
     const { data, error } = await client.emails.send({
       from: getEmailFrom(),
       to: recipients,
@@ -75,6 +83,12 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
       text: input.text ?? htmlToText(input.html),
       replyTo: input.replyTo ?? getEmailReplyTo(),
       tags: input.tags,
+      ...(attachments.length > 0 ? { attachments } : {}),
+      headers: {
+        // Helps mailbox providers classify as legitimate transactional mail
+        "X-Entity-Ref-ID": input.tags?.find((t) => t.name === "type")?.value ?? "siamez-transactional",
+        Precedence: "normal",
+      },
     });
 
     if (error) {

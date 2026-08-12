@@ -6,6 +6,10 @@ const withNextIntl = createNextIntlPlugin();
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Email brand assets are read from disk when attaching CID images.
+  outputFileTracingIncludes: {
+    "/*": ["./public/images/brand/**/*"],
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "siam-ez.com", pathname: "/**" },

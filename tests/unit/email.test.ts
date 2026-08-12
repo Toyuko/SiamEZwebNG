@@ -19,11 +19,25 @@ describe("email helpers", () => {
     expect(html).toContain("EZ");
     expect(html).toContain("Hello &lt;script&gt;");
     expect(html).toContain("<p>Body</p>");
-    expect(html).toContain("/images/brand/banner-email.jpg");
-    expect(html).toContain("/images/brand/logo-circle-email.png");
+    expect(html).toContain("cid:siamez-banner");
+    expect(html).toContain("cid:siamez-logo");
     expect(html).toContain("#ffce2d");
     expect(html).toContain("#2c54c6");
     expect(html).toContain("Georgia");
+  });
+
+  it("loads brand image attachments from public/", async () => {
+    const { getBrandEmailAttachments, htmlNeedsBrandAttachments } = await import(
+      "@/lib/email/assets"
+    );
+    expect(htmlNeedsBrandAttachments("cid:siamez-banner")).toBe(true);
+    const attachments = await getBrandEmailAttachments();
+    expect(attachments).toHaveLength(2);
+    expect(attachments.map((a) => a.contentId)).toEqual([
+      "siamez-banner",
+      "siamez-logo",
+    ]);
+    expect(attachments.every((a) => Buffer.isBuffer(a.content))).toBe(true);
   });
 
   it("uses yellow brand CTAs with blue text", () => {
