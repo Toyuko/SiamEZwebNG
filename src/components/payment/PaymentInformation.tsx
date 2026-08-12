@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const DEFAULT_STATIC_QR = "/images/payment/promptpay-static.png";
+const DEFAULT_STATIC_QR = paymentConfig.promptPayQrImage;
 
 export type PaymentInformationBankDetails = {
   bankName?: string;
@@ -30,9 +30,9 @@ export type PaymentInformationProps = {
   /** Controlled slip file; omit for uncontrolled mode with internal state. */
   transferSlipFile?: File | null;
   onTransferSlipChange?: (file: File | null) => void;
-  /** Static QR image URL when no dynamic amount QR is shown. Defaults to the site’s Kasikorn / PromptPay template asset. */
+  /** Static QR image URL when no dynamic amount QR is shown. Defaults to the Bangkok Bank PromptPay asset. */
   staticQrSrc?: string;
-  /** Override displayed bank fields (defaults from `paymentConfig.bank` / i18n). */
+  /** Override displayed bank fields (defaults from `paymentConfig.bank`). */
   bankDetails?: PaymentInformationBankDetails;
   className?: string;
 };
@@ -67,7 +67,7 @@ export function PaymentInformation({
     [controlledSlip, onTransferSlipChange]
   );
 
-  const bankName = bankDetails?.bankName ?? t("kbankName");
+  const bankName = bankDetails?.bankName ?? paymentConfig.bank.name;
   const accountName = bankDetails?.accountName ?? paymentConfig.bank.accountName;
   const accountNumber = bankDetails?.accountNumber ?? paymentConfig.bank.accountNumber;
 
@@ -248,6 +248,37 @@ export function PaymentInformation({
               </dd>
             </div>
           </dl>
+        </section>
+
+        <section aria-labelledby="payment-wise-heading" className="space-y-4">
+          <div className="border-t border-border pt-6">
+            <h3 id="payment-wise-heading" className="text-base font-semibold text-gray-900 dark:text-gray-100">
+              {t("wiseTitle")}
+            </h3>
+            <p className="mt-1 text-sm text-muted">{t("wiseHint")}</p>
+          </div>
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+            {/* eslint-disable-next-line @next/next/no-img-element -- public static Wise QR asset */}
+            <img
+              src={paymentConfig.wise.qrImage}
+              alt={t("wiseQrAlt")}
+              width={180}
+              height={180}
+              className="h-40 w-40 rounded-lg border border-border bg-white object-contain p-2 dark:bg-gray-950"
+            />
+            <dl className="grid flex-1 gap-3 text-sm">
+              <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-4">
+                <dt className="min-w-[8rem] shrink-0 font-medium text-gray-600 dark:text-gray-400">{t("wiseIdLabel")}</dt>
+                <dd className="font-mono font-semibold text-gray-900 dark:text-gray-100">
+                  {paymentConfig.wise.accountId}
+                </dd>
+              </div>
+              <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-4">
+                <dt className="min-w-[8rem] shrink-0 font-medium text-gray-600 dark:text-gray-400">{t("accountNameLabel")}</dt>
+                <dd className="text-gray-900 dark:text-gray-100">{paymentConfig.wise.beneficiary}</dd>
+              </div>
+            </dl>
+          </div>
         </section>
 
         <section aria-labelledby="payment-slip-heading" className="space-y-2 border-t border-border pt-6">

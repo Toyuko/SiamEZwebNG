@@ -538,7 +538,7 @@ export function PortalSettings({ user: initial, hasPassword }: PortalSettingsPro
                     name="bankName"
                     className="mt-1"
                     defaultValue={initial.notificationPreferences.bankName ?? ""}
-                    placeholder="Kasikorn Bank"
+                    placeholder="Bangkok Bank"
                   />
                 </div>
                 <div>

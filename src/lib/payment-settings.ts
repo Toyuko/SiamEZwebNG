@@ -21,7 +21,7 @@ const SETTINGS_KEY = "payment_details";
 export function getDefaultPaymentSettings(): PaymentSettings {
   return {
     promptPayId: paymentConfig.promptPayId,
-    qrImagePath: process.env.INVOICE_THAI_QR_IMAGE_PATH ?? null,
+    qrImagePath: process.env.INVOICE_THAI_QR_IMAGE_PATH ?? "public/images/payments/thai-qr-payment.png",
     bankName: paymentConfig.bank.name,
     bankBranch: paymentConfig.bank.branch,
     bankAccountName: paymentConfig.bank.accountName,

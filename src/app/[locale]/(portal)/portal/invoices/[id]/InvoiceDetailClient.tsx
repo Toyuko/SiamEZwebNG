@@ -9,6 +9,7 @@ import { submitPaymentWithProof } from "@/actions/payment";
 import { uploadDocumentMetadataAction } from "@/actions/document";
 import { CreditCard, Building2, Globe, Upload, Loader2 } from "lucide-react";
 import type { PaymentSettings } from "@/lib/payment-settings";
+import { paymentConfig } from "@/config/payments";
 
 type InvoiceWithRelations = {
   id: string;
@@ -66,6 +67,7 @@ export function InvoiceDetailClient({
       Reference: reference,
       Details: paymentSettings.wiseDetails.replace("[Your invoice reference]", reference),
       Note: paymentSettings.wiseNote,
+      "Pay link": paymentConfig.wise.payUrl,
     },
   };
 
@@ -206,14 +208,24 @@ export function InvoiceDetailClient({
               <p className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
                 {wiseInstructions.label}
               </p>
-              <dl className="space-y-2 text-sm">
-                {Object.entries(wiseInstructions.details).map(([k, v]) => (
-                  <div key={k} className="flex flex-col gap-0.5">
-                    <dt className="font-medium text-gray-600 dark:text-gray-400">{k}</dt>
-                    <dd className="whitespace-pre-wrap text-gray-900 dark:text-white">{v}</dd>
-                  </div>
-                ))}
-              </dl>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                {/* eslint-disable-next-line @next/next/no-img-element -- public Wise QR asset */}
+                <img
+                  src={paymentConfig.wise.qrImage}
+                  alt="Wise QR code"
+                  width={180}
+                  height={180}
+                  className="h-40 w-40 rounded-lg border border-gray-200 bg-white object-contain p-2 dark:border-gray-600"
+                />
+                <dl className="space-y-2 text-sm">
+                  {Object.entries(wiseInstructions.details).map(([k, v]) => (
+                    <div key={k} className="flex flex-col gap-0.5">
+                      <dt className="font-medium text-gray-600 dark:text-gray-400">{k}</dt>
+                      <dd className="whitespace-pre-wrap text-gray-900 dark:text-white">{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
             </div>
           )}
 
