@@ -35,8 +35,8 @@ const MARKETPLACE_RE =
 const COPY = {
   en: {
     greeting:
-      "Hi — I'm the SiamEZ Concierge. Tell me what you need in Thailand (visa, driver's license, translation, vehicles, and more) and I'll recommend the right service or listing.",
-    help: "I can search services and marketplace listings, suggest packages (e.g. motorcycle → registration), and hand you Book buttons or real listing links. Try: “I viewed a motorcycle” or “find Honda Wave”.",
+      "Hi — I'm Ask SiamEZ. Tell me what you need (services, driver's license, vehicles, real estate, and more) and I'll help you find the right next step.",
+    help: "I can search services and published car/property listings, recommend what fits, and hand you Book or View buttons. I won't invent prices or listings.",
     popularIntro: "Here are popular services expats book most often:",
     bookIntro: "Great — pick a service to start booking, or describe what you need:",
     found: (n: number) =>
@@ -53,8 +53,8 @@ const COPY = {
   },
   th: {
     greeting:
-      "สวัสดีครับ/ค่ะ — ฉันคือ Concierge ของ SiamEZ บอกความต้องการในไทยได้เลย (วีซ่า ใบขับขี่ แปลเอกสาร รถ ฯลฯ) แล้วฉันจะแนะนำบริการหรือรายการที่เหมาะสม",
-    help: "ฉันค้นหาบริการและรายการในตลาด แนะนำแพ็กเกจ (เช่น มอเตอร์ไซค์ → จดทะเบียน) และพาไปหน้าจองหรือรายการจริงได้ ลองพิมพ์ เช่น “ดูมอเตอร์ไซค์” หรือ “หา Honda Wave”",
+      "สวัสดีครับ/ค่ะ — ฉันคือ Ask SiamEZ บอกความต้องการได้เลย (บริการ ใบขับขี่ รถ อสังหา ฯลฯ) แล้วฉันจะช่วยหาขั้นตอนถัดไปที่เหมาะสม",
+    help: "ฉันค้นหาบริการและประกาศรถ/อสังหาที่เผยแพร่จริง แนะนำสิ่งที่เหมาะ และพาไปปุ่มจองหรือดูรายการ — จะไม่ประดิษฐ์ราคาหรือประกาศ",
     popularIntro: "บริการยอดนิยมที่ลูกค้าต่างชาติจองบ่อย:",
     bookIntro: "เลือกบริการเพื่อเริ่มจอง หรืออธิบายสิ่งที่ต้องการ:",
     found: (n: number) =>

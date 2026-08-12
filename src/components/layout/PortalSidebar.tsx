@@ -25,8 +25,9 @@ import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { LanguageSwitcher } from "@/components/portal/LanguageSwitcher";
+import { softLaunch } from "@/config/soft-launch";
 
-const clientNav = [
+const fullClientNav = [
   { labelKey: "dashboard", href: "/portal", icon: LayoutDashboard },
   { labelKey: "myCases", href: "/portal/cases", icon: FolderOpen },
   { labelKey: "mySales", href: "/portal/sales", icon: Car },
@@ -41,6 +42,23 @@ const clientNav = [
   { labelKey: "publicProfile", href: "/portal/freelancer-profile", icon: UserRound },
   { labelKey: "settings", href: "/portal/profile", icon: Settings },
 ];
+
+const softLaunchClientNav = [
+  { labelKey: "dashboard", href: "/portal", icon: LayoutDashboard },
+  { labelKey: "myCases", href: "/portal/cases", icon: FolderOpen },
+  { labelKey: "invoices", href: "/portal/invoices", icon: CreditCard },
+  { labelKey: "mySales", href: "/portal/sales", icon: Car },
+  { labelKey: "myRealEstate", href: "/portal/real-estate", icon: Home },
+  { labelKey: "listingEnquiries", href: "/portal/enquiries", icon: Inbox },
+  { labelKey: "documents", href: "/portal/documents", icon: FileText },
+  { labelKey: "notifications", href: "/portal/notifications", icon: Bell },
+  { labelKey: "settings", href: "/portal/profile", icon: Settings },
+];
+
+const clientNav =
+  softLaunch.enabled && !softLaunch.showLifeEvents && !softLaunch.showWorkflows
+    ? softLaunchClientNav
+    : fullClientNav;
 
 const freelancerNav = [
   { labelKey: "freelancerDashboard", href: "/portal/freelancer", icon: Briefcase },

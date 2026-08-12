@@ -13,9 +13,11 @@ import type { SessionUser } from "@/lib/auth";
 export function PortalLayoutClient({
   children,
   user,
+  showConcierge = true,
 }: {
   children: React.ReactNode;
   user: SessionUser;
+  showConcierge?: boolean;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
@@ -79,7 +81,7 @@ export function PortalLayoutClient({
           {children}
         </main>
       </div>
-      <LazyAiConciergeShell placement="default" />
+      {showConcierge ? <LazyAiConciergeShell placement="default" /> : null}
     </div>
   );
 }

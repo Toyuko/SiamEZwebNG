@@ -48,37 +48,24 @@ export type PublicNavEntry =
       items: PublicNavLink[];
     };
 
+/**
+ * Soft-launch public navigation.
+ * Keep freelancers / gallery / testimonials reachable via footer or direct URL,
+ * but out of the primary nav so conversion stays focused.
+ */
 export const publicNav: PublicNavEntry[] = [
   { type: "link", labelKey: "home", href: "/", match: "exact" },
-  {
-    type: "group",
-    id: "services",
-    labelKey: "services",
-    items: [
-      { labelKey: "allServices", href: "/services", match: "exact" },
-      { labelKey: "sales", href: "/sales", match: "exact" },
-      { labelKey: "realEstate", href: "/real-estate", match: "exact" },
-      { labelKey: "freelancers", href: "/freelancers", match: "prefix" },
-    ],
-  },
-  {
-    type: "group",
-    id: "company",
-    labelKey: "company",
-    items: [
-      { labelKey: "about", href: "/about", match: "exact" },
-      { labelKey: "gallery", href: "/gallery", match: "exact" },
-      { labelKey: "testimonials", href: "/testimonials", match: "exact" },
-    ],
-  },
+  { type: "link", labelKey: "services", href: "/services", match: "prefix" },
+  { type: "link", labelKey: "sales", href: "/sales", match: "prefix" },
+  { type: "link", labelKey: "realEstate", href: "/real-estate", match: "prefix" },
   { type: "link", labelKey: "contact", href: "/contact", match: "exact" },
 ];
 
 export const footerQuickLinks = [
   { label: "Services", href: "/services" },
+  { label: "Cars", href: "/sales" },
+  { label: "Real Estate", href: "/real-estate" },
   { label: "About Us", href: "/about" },
-  { label: "Gallery", href: "/gallery" },
-  { label: "Testimonials", href: "/testimonials" },
   { label: "Contact", href: "/contact" },
 ] as const;
 

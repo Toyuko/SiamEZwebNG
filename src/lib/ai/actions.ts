@@ -35,6 +35,7 @@ import type {
 } from "@/lib/ai/types";
 import { getSession } from "@/lib/auth";
 import { trackPlatformEvent } from "@/lib/analytics/track";
+import { getConciergeSettings } from "@/lib/concierge-settings";
 import {
   loadRecommendationContext,
   loadRecommendationEdges,
@@ -44,10 +45,15 @@ import { buildUserOwner } from "@/lib/marketplace-engagement";
 
 export type ConciergeCapability = {
   llmEnabled: boolean;
+  enabled: boolean;
 };
 
 export async function getConciergeCapability(): Promise<ConciergeCapability> {
-  return { llmEnabled: isConciergeLlmConfigured() };
+  const settings = await getConciergeSettings();
+  return {
+    llmEnabled: isConciergeLlmConfigured(),
+    enabled: settings.enabled,
+  };
 }
 
 type ChatCompletionResponse = {
@@ -172,6 +178,38 @@ export async function requestConciergeReply(input: {
   const userId = session?.user?.id;
   void trackPlatformEvent("concierge_chat", { messageLength: userMessage.length }, userId, locale);
 
+  const conciergeSettings = await getConciergeSettings();
+  if (!conciergeSettings.enabled) {
+    const content =
+      locale === "th"
+        ? `${conciergeSettings.fallbackMessageTh}\n\n${conciergeSettings.contactHintTh}`
+        : `${conciergeSettings.fallbackMessageEn}\n\n${conciergeSettings.contactHintEn}`;
+    return {
+      content,
+      recommendations: [],
+      deepLinks: [
+        {
+          label: locale === "th" ? "ติดต่อ SiamEZ" : "Contact SiamEZ",
+          href: "/contact",
+          kind: "search",
+        },
+      ],
+      mode: "rule",
+    };
+  }
+
+  const knowledgeBlock = [
+    locale === "th" ? conciergeSettings.knowledgeTh : conciergeSettings.knowledgeEn,
+    locale === "th" ? conciergeSettings.faqTh : conciergeSettings.faqEn,
+    locale === "th" ? conciergeSettings.contactHintTh : conciergeSettings.contactHintEn,
+  ]
+    .filter((block) => block.trim())
+    .join("\n\n");
+  const fallbackMessage =
+    locale === "th"
+      ? conciergeSettings.fallbackMessageTh
+      : conciergeSettings.fallbackMessageEn;
+
   let recContextListings:
     | Awaited<ReturnType<typeof loadRecommendationContext>>["listings"]
     | undefined;
@@ -288,6 +326,8 @@ export async function requestConciergeReply(input: {
       href: l.href,
     })),
     journeySummary: formatJourneySummary(journey, locale),
+    knowledgeBlock,
+    fallbackMessage,
   });
 
   try {

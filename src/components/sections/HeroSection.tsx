@@ -1,6 +1,7 @@
 import { Link } from "@/i18n/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { AskSiamEzButton } from "@/components/ai/AskSiamEzButton";
 import { site } from "@/config/site";
 
 /** Must stay in sync with `.hero-slide` animation duration in `globals.css` (15s). */
@@ -26,6 +27,8 @@ interface HeroSectionProps {
   subline?: string;
   primaryCta?: { label: string; href: string };
   secondaryCta?: { label: string; href: string };
+  /** Opens the AI Concierge chat */
+  askCta?: { label: string; prompt?: string };
   showLogo?: boolean;
   className?: string;
 }
@@ -36,6 +39,7 @@ export function HeroSection({
   subline = "Your trusted partner for marriage registration, translations, driver's licenses, police clearance, and more",
   primaryCta = { label: "Get Started", href: "/contact" },
   secondaryCta = { label: "Learn More", href: "/services" },
+  askCta,
   showLogo = true,
   className = "",
 }: HeroSectionProps) {
@@ -62,7 +66,6 @@ export function HeroSection({
             />
           </div>
         ))}
-        {/* Keep the brand blue look while allowing subtle imagery to show through */}
         <div className="absolute inset-0 bg-siam-blue/50" />
         <div className="absolute inset-0 bg-gradient-to-br from-siam-blue/62 via-siam-blue-light/50 to-siam-blue/62" />
       </div>
@@ -102,11 +105,20 @@ export function HeroSection({
               >
                 <Link href={primaryCta.href}>{primaryCta.label}</Link>
               </Button>
+              {askCta ? (
+                <AskSiamEzButton
+                  label={askCta.label}
+                  prompt={askCta.prompt}
+                  size="lg"
+                  variant="outline"
+                  className="min-w-[140px] border-white text-white hover:bg-white/10 hover:text-white"
+                />
+              ) : null}
               <Button
                 asChild
                 size="lg"
                 variant="outline"
-                className="min-w-[140px] border-white text-white hover:bg-white/10 hover:text-white"
+                className="min-w-[140px] border-white/70 text-white hover:bg-white/10 hover:text-white"
               >
                 <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
               </Button>
@@ -117,10 +129,8 @@ export function HeroSection({
               className="relative hidden shrink-0 opacity-0 animate-slide-in-right lg:block lg:w-72 xl:w-80"
               style={{ animationDelay: "0.3s" }}
             >
-              {/* Backdrop for better visibility */}
               <div className="absolute inset-0 -z-10 rounded-3xl bg-white/10 backdrop-blur-sm shadow-2xl" />
               <div className="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-br from-white/20 to-white/5" />
-              
               <Image
                 src="/images/logo.png"
                 alt={site.name}

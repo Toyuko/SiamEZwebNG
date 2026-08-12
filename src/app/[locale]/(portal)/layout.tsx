@@ -5,6 +5,8 @@ import { getLocale } from "next-intl/server";
 import { prisma } from "@/lib/db";
 import { PortalLayoutClient } from "./PortalLayoutClient";
 import { FirstRunOnboarding } from "@/components/auth/FirstRunOnboarding";
+import { getConciergeSettings } from "@/lib/concierge-settings";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 export default async function PortalLayout({
   children,
@@ -43,8 +45,14 @@ export default async function PortalLayout({
     }
   }
 
+  const [settings, flagEnabled] = await Promise.all([
+    getConciergeSettings(),
+    isFeatureEnabled("concierge_enabled"),
+  ]);
+  const showConcierge = settings.enabled && flagEnabled;
+
   return (
-    <PortalLayoutClient user={session.user}>
+    <PortalLayoutClient user={session.user} showConcierge={showConcierge}>
       {firstRunUser ? (
         <Suspense fallback={null}>
           <FirstRunOnboarding user={firstRunUser} />

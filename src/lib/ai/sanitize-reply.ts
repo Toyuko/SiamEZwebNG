@@ -54,6 +54,9 @@ export type ConciergePromptContext = {
   knownListingPaths: Array<{ label: string; href: string }>;
   /** Platform 2.1 journey memory summary for adaptive replies */
   journeySummary?: string;
+  /** Admin-managed verified FAQ + knowledge (soft launch). */
+  knowledgeBlock?: string;
+  fallbackMessage?: string;
 };
 
 export function buildConciergeSystemPrompt(ctx: ConciergePromptContext): string {
@@ -74,12 +77,32 @@ export function buildConciergeSystemPrompt(ctx: ConciergePromptContext): string 
         : `Customer journey context: ${ctx.journeySummary}`
     : null;
 
+  const knowledge =
+    ctx.knowledgeBlock?.trim() ?
+      ctx.locale === "th"
+        ? ["ข้อมูลที่ยืนยันแล้วจาก SiamEZ:", ctx.knowledgeBlock.trim()]
+        : ["Verified SiamEZ knowledge:", ctx.knowledgeBlock.trim()]
+    : [];
+
+  const uncertainty =
+    ctx.fallbackMessage?.trim() ?
+      ctx.locale === "th"
+        ? `ถ้าไม่แน่ใจ ให้ตอบประมาณว่า: ${ctx.fallbackMessage.trim()}`
+        : `If uncertain, say something like: ${ctx.fallbackMessage.trim()}`
+    : ctx.locale === "th"
+      ? "ถ้าไม่แน่ใจ อย่าเดา — บอกให้ติดต่อทีม SiamEZ"
+      : "If uncertain, do not invent — offer to connect the customer with SiamEZ.";
+
   if (ctx.locale === "th") {
     return [
-      "คุณคือ SiamEZ Concierge ผู้ช่วยแพลตฟอร์มบริการและการจองในประเทศไทย",
+      "คุณคือ Ask SiamEZ (SiamEZ AI Concierge) ผู้ช่วยลูกค้าสำหรับบริการ จอง รถยนต์ และอสังหา",
       "ตอบสั้น ชัด เป็นมิตร เป็นภาษาไทย",
+      "ห้ามประดิษฐ์ราคา บริการ ประกาศรถ/อสังหา นโยบาย หรือคำรับรองทางกฎหมาย",
+      "ช่วยค้นหาบริการ/ประกาศ แล้วส่งลูกค้าไปหน้าบริการหรือวิซาร์ดจองที่มีอยู่แล้ว — อย่าสร้างระบบจองในแชท",
       "ปรับคำตอบตามบริบทการเดินทางของลูกค้าเมื่อมี และอธิบายสั้นๆ ว่าทำไมถึงแนะนำ",
       journeyLine,
+      uncertainty,
+      ...knowledge,
       "",
       "กฎลิงก์ (สำคัญมาก):",
       "- ห้ามประดิษฐ์ URL และห้ามเขียน {cuid} {id} {slug} หรือ placeholder อื่นๆ",
@@ -99,10 +122,14 @@ export function buildConciergeSystemPrompt(ctx: ConciergePromptContext): string 
   }
 
   return [
-    "You are the SiamEZ Concierge for Thailand services + marketplace booking.",
+    "You are Ask SiamEZ (SiamEZ AI Concierge) — a helpful customer assistant for services, booking, cars, and real estate.",
     "Keep answers short, clear, and friendly.",
+    "Never invent prices, services, vehicle/property listings, policies, availability, approvals, or legal guarantees.",
+    "Help customers discover the right service or listing, then hand them off to existing service pages and the booking wizard — do not complete booking inside chat.",
     "Adapt to the customer's journey context when available and briefly explain why you recommend something.",
     journeyLine,
+    uncertainty,
+    ...knowledge,
     "",
     "URL rules (critical):",
     "- NEVER invent URLs. NEVER write {cuid}, {id}, {slug}, or any placeholder token.",
@@ -121,3 +148,4 @@ export function buildConciergeSystemPrompt(ctx: ConciergePromptContext): string 
     .filter((line): line is string => line != null)
     .join("\n");
 }
+

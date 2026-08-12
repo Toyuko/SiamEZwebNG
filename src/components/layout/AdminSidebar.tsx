@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
+import { softLaunch } from "@/config/soft-launch";
 
 type NavItem = {
   label: string;
@@ -51,7 +52,7 @@ const topNav: NavItem[] = [
   { label: "dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
 ];
 
-const navGroups: NavGroup[] = [
+const allNavGroups: NavGroup[] = [
   {
     id: "operations",
     label: "groupOperations",
@@ -67,12 +68,17 @@ const navGroups: NavGroup[] = [
     id: "people",
     label: "groupPeople",
     icon: Users,
-    items: [
-      { label: "clients", href: "/admin/clients", icon: Users },
-      { label: "freelancers", href: "/admin/freelancers", icon: UserCheck },
-      { label: "freelancerJobs", href: "/admin/service-jobs?source=freelancer", icon: ClipboardList },
-      { label: "staff", href: "/admin/staff", icon: UserCog },
-    ],
+    items: softLaunch.enabled && !softLaunch.showFreelancerOps
+      ? [
+          { label: "clients", href: "/admin/clients", icon: Users },
+          { label: "staff", href: "/admin/staff", icon: UserCog },
+        ]
+      : [
+          { label: "clients", href: "/admin/clients", icon: Users },
+          { label: "freelancers", href: "/admin/freelancers", icon: UserCheck },
+          { label: "freelancerJobs", href: "/admin/service-jobs?source=freelancer", icon: ClipboardList },
+          { label: "staff", href: "/admin/staff", icon: UserCog },
+        ],
   },
   {
     id: "companies",
@@ -88,14 +94,20 @@ const navGroups: NavGroup[] = [
     id: "catalog",
     label: "groupCatalog",
     icon: Package,
-    items: [
-      { label: "services", href: "/admin/services", icon: Package },
-      { label: "lifeEvents", href: "/admin/life-events", icon: Route },
-      { label: "workflows", href: "/admin/workflows", icon: Workflow },
-      { label: "recommendations", href: "/admin/recommendations", icon: Sparkles },
-      { label: "sales", href: "/admin/sales", icon: Car },
-      { label: "realEstate", href: "/admin/real-estate", icon: Home },
-    ],
+    items: softLaunch.enabled && !softLaunch.showAdvancedCatalog
+      ? [
+          { label: "services", href: "/admin/services", icon: Package },
+          { label: "sales", href: "/admin/sales", icon: Car },
+          { label: "realEstate", href: "/admin/real-estate", icon: Home },
+        ]
+      : [
+          { label: "services", href: "/admin/services", icon: Package },
+          { label: "lifeEvents", href: "/admin/life-events", icon: Route },
+          { label: "workflows", href: "/admin/workflows", icon: Workflow },
+          { label: "recommendations", href: "/admin/recommendations", icon: Sparkles },
+          { label: "sales", href: "/admin/sales", icon: Car },
+          { label: "realEstate", href: "/admin/real-estate", icon: Home },
+        ],
   },
   {
     id: "finance",
@@ -120,6 +132,12 @@ const navGroups: NavGroup[] = [
     ],
   },
 ];
+
+const navGroups: NavGroup[] = allNavGroups.filter((group) => {
+  if (!softLaunch.enabled) return true;
+  if (group.id === "companies" && !softLaunch.showCompanies) return false;
+  return true;
+});
 
 const bottomNav: NavItem[] = [
   { label: "settings", href: "/admin/settings", icon: Settings },

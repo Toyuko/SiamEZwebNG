@@ -18,6 +18,7 @@ import { serviceSlugs } from "@/config/services";
 import { getTranslations } from "next-intl/server";
 import { getSession } from "@/lib/auth";
 import { site } from "@/config/site";
+import { softLaunch } from "@/config/soft-launch";
 
 export async function generateMetadata({
   params,
@@ -148,11 +149,15 @@ export default async function HomePage({
         subline={tHero("subline")}
         primaryCta={{
           label: tHero("primaryCta"),
-          href: "#home-goals",
+          href: "/services",
+        }}
+        askCta={{
+          label: tHero("askCta"),
+          prompt: t("goalsSection.conciergePrompt"),
         }}
         secondaryCta={{
           label: tHero("secondaryCta"),
-          href: "/services",
+          href: "/sales",
         }}
       />
       <HomeGoalsSection
@@ -172,7 +177,7 @@ export default async function HomePage({
           stepsLabel: t("goalsSection.stepsLabel"),
         }}
         popularGoals={popularGoals}
-        lifeEvents={lifeEventTeasers}
+        lifeEvents={softLaunch.enabled && !softLaunch.showLifeEvents ? [] : lifeEventTeasers}
         featuredListings={featuredListings}
         isLoggedIn={isLoggedIn}
         goalsHref={goalsHref}

@@ -4,6 +4,11 @@ import { prisma } from "@/lib/db";
 import { nextCaseNumber } from "@/lib/utils";
 import { getSession } from "@/lib/auth";
 import { getPaymentSettings, savePaymentSettings, type PaymentSettings } from "@/lib/payment-settings";
+import {
+  getConciergeSettings,
+  saveConciergeSettings,
+  type ConciergeSettings,
+} from "@/lib/concierge-settings";
 import type {
   CaseStatus,
   InvoiceStatus,
@@ -1584,6 +1589,17 @@ export async function getAdminPaymentSettings(): Promise<PaymentSettings> {
 export async function updateAdminPaymentSettings(input: PaymentSettings) {
   await ensureStaffAccess();
   await savePaymentSettings(input);
+  return { success: true as const };
+}
+
+export async function getAdminConciergeSettings(): Promise<ConciergeSettings> {
+  await ensureStaffAccess();
+  return getConciergeSettings();
+}
+
+export async function updateAdminConciergeSettings(input: ConciergeSettings) {
+  await ensureStaffAccess();
+  await saveConciergeSettings(input);
   return { success: true as const };
 }
 
