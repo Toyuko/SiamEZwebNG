@@ -662,6 +662,7 @@
     "bestValue": "BEST VALUE",
     "premiumService": "PREMIUM SERVICE",
     "marriageHelpBlurb": "Our marriage registration specialists are ready to answer your questions.",
+    "vehicleRegistrationHelpBlurb": "We pick up your car or motorcycle at home, go to the DLT on your behalf, and return it when registration is done.",
     "marriageRegistration": {
       "packagesTitle": "Packages & pricing",
       "packagesIntro": "Choose the level of support that fits your needs. All packages include expert guidance and support throughout your journey.",
@@ -2296,6 +2297,8 @@
     "metaDescription": "Send vehicle details and photos to SiamEZ. No account required.",
     "hubTitle": "Vehicle help from SiamEZ",
     "hubDescription": "Tell us whether you want to sell a vehicle or find one. You can finish this on your phone — no account needed.",
+    "servicePageFormsTitle": "Start with a buy or sell form",
+    "servicePageFormsBody": "Tell us what you need — no account required. We use this to match buyers, sellers, and paperwork.",
     "sellTitle": "Sell my vehicle",
     "sellBlurb": "I want SiamEZ to help me sell my car or motorcycle.",
     "sellMetaTitle": "Sell your vehicle with SiamEZ",

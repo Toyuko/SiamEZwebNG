@@ -3,7 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ShoppingCart, Phone, MessageCircle, HelpCircle, CheckCircle2, Car } from "lucide-react";
+import { ShoppingCart, Phone, MessageCircle, HelpCircle, CheckCircle2, Car, Search } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { site } from "@/config/site";
 import { useTranslations } from "next-intl";
@@ -35,6 +35,7 @@ export function ServiceDetailSidebar({
   const t = useTranslations("services");
   const tSales = useTranslations("sales");
   const tSeo = useTranslations("seo");
+  const tVehicle = useTranslations("vehicleIntake");
   const whatsappUrl = `https://wa.me/${site.phone.replace(/\D/g, "")}`;
 
   return (
@@ -92,17 +93,39 @@ export function ServiceDetailSidebar({
             </Link>
           </Button>
           {serviceSlug === VEHICLE_FINDER_SLUG ? (
-            <Button
-              asChild
-              variant="outline"
-              className="mt-3 w-full border-siam-blue text-siam-blue hover:bg-siam-blue/10 dark:border-siam-blue dark:text-siam-blue-light dark:hover:bg-siam-blue/20"
-              size="lg"
-            >
-              <Link href="/sales">
-                <Car className="mr-2 h-4 w-4" />
-                {tSales("finderBrowseInventory")}
-              </Link>
-            </Button>
+            <>
+              <Button
+                asChild
+                className="mt-3 w-full bg-siam-blue text-white hover:bg-siam-blue-light"
+                size="lg"
+              >
+                <Link href="/vehicle/buy">
+                  <Search className="mr-2 h-4 w-4" />
+                  {tVehicle("buyTitle")}
+                </Link>
+              </Button>
+              <Button
+                asChild
+                className="mt-3 w-full bg-siam-blue text-white hover:bg-siam-blue-light"
+                size="lg"
+              >
+                <Link href="/vehicle/sell">
+                  <Car className="mr-2 h-4 w-4" />
+                  {tVehicle("sellTitle")}
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="mt-3 w-full border-siam-blue text-siam-blue hover:bg-siam-blue/10 dark:border-siam-blue dark:text-siam-blue-light dark:hover:bg-siam-blue/20"
+                size="lg"
+              >
+                <Link href="/sales">
+                  <Car className="mr-2 h-4 w-4" />
+                  {tSales("finderBrowseInventory")}
+                </Link>
+              </Button>
+            </>
           ) : null}
           <Button
             asChild

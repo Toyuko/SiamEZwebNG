@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { X, ChevronLeft, ChevronRight, Instagram } from "lucide-react";
 import { RED_DOOR_GALLERY_ITEMS } from "@/config/red-door-gallery";
 import { cn } from "@/lib/utils";
+import { PublicImage } from "@/components/ui/public-image";
 
 export function RedDoorVenueGallery() {
   const t = useTranslations("eventPlanningVenuePage");
@@ -73,11 +73,10 @@ export function RedDoorVenueGallery() {
               setLightboxOpen(true);
             }}
           >
-            <Image
+            <PublicImage
               src={item.src}
               alt={alts[index] ?? item.id}
               fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-cover transition duration-300 group-hover:scale-105"
             />
           </button>
@@ -110,12 +109,11 @@ export function RedDoorVenueGallery() {
             <ChevronLeft className="h-10 w-10" />
           </button>
           <div className="relative h-[85vh] w-full max-w-4xl">
-            <Image
+            <PublicImage
               src={current.src}
               alt={currentAlt}
               fill
               className="object-contain"
-              sizes="(max-width: 896px) 100vw, 896px"
             />
           </div>
           <button

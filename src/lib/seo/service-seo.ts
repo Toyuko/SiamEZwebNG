@@ -87,8 +87,8 @@ export const serviceSeoBySlug: Record<ServiceSlug, ServiceSeo> = {
       th: "บริการจดทะเบียนรถในประเทศไทย",
     },
     description: {
-      en: "Car and motorcycle registration in Bangkok with SiamEZ — transfers, renewals, and DLT paperwork. Same-day BKK plates where eligible.",
-      th: "จดทะเบียนรถยนต์และมอเตอร์ไซค์ในกรุงเทพกับ SiamEZ — โอน ต่อภาษี และเอกสาร DLT ป้าย กทม. วันเดียวตามสิทธิ์",
+      en: "Car and motorcycle registration in Bangkok with SiamEZ — we pick up at your home and go to the DLT on your behalf. Transfers, renewals, and same-day BKK plates where eligible.",
+      th: "จดทะเบียนรถยนต์และมอเตอร์ไซค์ในกรุงเทพกับ SiamEZ — รับรถถึงบ้านและไป DLT แทนคุณ โอน ต่อภาษี และป้าย กทม. วันเดียวตามสิทธิ์",
     },
     audience: {
       en: "Anyone buying, selling, or transferring a car or motorcycle in Thailand who wants DLT registration, plates, or tax renewal handled without the queue.",
@@ -118,6 +118,16 @@ export const serviceSeoBySlug: Record<ServiceSlug, ServiceSeo> = {
         answer: {
           en: "Typically the vehicle book, your ID or passport, and the sale contract or transfer documents. We give you a checklist when you book.",
           th: "โดยทั่วไปใช้เล่มทะเบียนรถ บัตรประชาชนหรือพาสปอร์ต และสัญญาซื้อขายหรือเอกสารโอน เราจะส่งเช็กลิสต์เมื่อคุณจอง",
+        },
+      },
+      {
+        question: {
+          en: "Do I have to go to the DLT myself?",
+          th: "ต้องไปกรมการขนส่งทางบกด้วยตัวเองหรือไม่?",
+        },
+        answer: {
+          en: "No. We pick up your car or motorcycle at your home, go to the DLT on your behalf, and return the vehicle when registration is complete.",
+          th: "ไม่ต้อง เรารับรถยนต์หรือมอเตอร์ไซค์ถึงบ้าน ไปดำเนินการที่ DLT แทนคุณ และนำรถกลับเมื่อจดทะเบียนเสร็จ",
         },
       },
     ],

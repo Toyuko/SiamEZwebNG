@@ -1,5 +1,4 @@
 import { Link } from "@/i18n/navigation";
-import Image from "next/image";
 import { Clock, FileCheck, LucideIcon, MessageCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { serviceCardThumbnailObjectPosition } from "@/lib/service-display";
 import { ServiceBadges } from "@/components/services/ServiceBadges";
 import { site } from "@/config/site";
 import type { ServiceBadgeKey } from "@/config/service-catalog";
+import { PublicImage } from "@/components/ui/public-image";
 
 interface ServiceCardProps {
   slug: string;
@@ -71,13 +71,12 @@ export function ServiceCard({
     <Card className="flex h-full flex-col overflow-hidden shadow-sm transition-all duration-200 hover:shadow-lg">
       {thumbnailImage ? (
         <div className="relative h-40 w-full">
-          <Image
+          <PublicImage
             src={thumbnailImage}
             alt={name}
             fill
             className="object-cover"
             style={objectPosition ? { objectPosition } : undefined}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         </div>
       ) : null}

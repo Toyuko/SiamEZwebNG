@@ -41,7 +41,7 @@ export const serviceShortDescriptions: Record<ServiceSlug, string> = {
   "driver-license":
     "Thai driver's license under 2026 DLT rules: conversion, renewal, new car/bike, IDP, FastTrack, and bilingual coordinators in Bangkok",
   "vehicle-registration":
-    "Professional car and motorcycle registration in Bangkok — 1-day process for BKK plates; transfers, renewals, and DLT paperwork handled for you",
+    "We pick up your car or motorcycle at home, go to the DLT on your behalf, and handle Bangkok registration — often in one day for BKK plates",
   "visa-services":
     "Professional guidance on visa applications, extensions, and immigration matters",
   "translation-services":

@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { getServiceBySlug } from "@/data-access/service";
@@ -8,14 +7,16 @@ import { ServiceDetailTabs } from "@/components/sections/ServiceDetailTabs";
 import { ServiceDetailSidebar } from "@/components/sections/ServiceDetailSidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, Clock, Shield, FileText, Car, Plane, Wrench, Handshake, ClipboardList, Bus, User, Award, Zap, CheckCircle, Landmark, CalendarCheck, Building2, Key, MapPin, TrendingUp, Users } from "lucide-react";
-import { serviceDisplayNames, serviceShortDescriptions, serviceSlugs, serviceThumbnailImages } from "@/config/services";
+import { serviceDisplayNames, serviceShortDescriptions, serviceSlugs, serviceThumbnailImages, serviceThumbnailObjectPosition } from "@/config/services";
 import type { ServiceSlug } from "@/config/services";
 import { MarriageRegistrationSections } from "@/components/sections/MarriageRegistrationSections";
 import { DriverLicenseExtras } from "@/components/sections/DriverLicenseExtras";
+import { VehicleFinderCtas } from "@/components/sections/VehicleFinderCtas";
 import { buildDriverLicenseServiceContent } from "@/lib/driver-license-service";
 import { buildEventPlanningServiceContent } from "@/lib/event-planning-service";
 import { EventPlanningVenueSections } from "@/components/sections/EventPlanningVenueSections";
 import { RedDoorVenueGallery } from "@/components/sections/RedDoorVenueGallery";
+import { PublicImage } from "@/components/ui/public-image";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { getServiceSeo } from "@/lib/seo/service-seo";
 import { JsonLdScript } from "@/components/seo/JsonLd";
@@ -479,7 +480,7 @@ const getServiceContent = (slug: string): ServiceDetailContent => {
       subtitle:
         "Buy or sell your car or motorcycle in Thailand with one trusted team handling the full journey from search to handover.",
       overview:
-        "At SiamEZ Auto & Bike Finder, we make buying and selling vehicles in Thailand simple, fast, and stress-free. Whether you are upgrading, relocating, or want a hassle-free deal, we handle everything from matching and negotiation to paperwork and registration.\n\nFor buyers, we help you find the right car, motorcycle, van, or big bike based on your budget and needs. For sellers, we position your vehicle, screen serious buyers, and push for a fast sale at the best possible price.\n\nOur team has supported locals and expats for over 10 years. With transparent communication and start-to-finish support, you can move forward confidently without dealing with confusing steps alone.",
+        "At SiamEZ Auto & Bike Finder, we make buying and selling vehicles in Thailand simple, fast, and stress-free. Whether you are upgrading, relocating, or want a hassle-free deal, we handle everything from matching and negotiation to paperwork and registration.\n\nStart with our buy or sell form — no account needed. For buyers, we help you find the right car, motorcycle, van, or big bike based on your budget and needs. For sellers, we position your vehicle, screen serious buyers, and push for a fast sale at the best possible price.\n\nOur team has supported locals and expats for over 10 years. With transparent communication and start-to-finish support, you can move forward confidently without dealing with confusing steps alone.",
       features: [
         {
           icon: Car,
@@ -511,7 +512,7 @@ const getServiceContent = (slug: string): ServiceDetailContent => {
         {
           title: "Share your buy/sell brief",
           description:
-            "Contact us with your requirements via phone, LINE, or website so we can map the right approach.",
+            "Start with our buy or sell form (or contact us on LINE/WhatsApp). Tell us your budget, vehicle, and timeline so we can map the right approach.",
         },
         {
           title: "Market matching and negotiation",
@@ -634,10 +635,16 @@ const getServiceContent = (slug: string): ServiceDetailContent => {
     },
     "vehicle-registration": {
       subtitle:
-        "Professional car and motorcycle registration in Bangkok — one-day process for qualifying BKK-plated vehicles.",
+        "We collect your car or motorcycle at home, go to the DLT on your behalf, and handle Bangkok registration — often in one day for BKK plates.",
       overview:
-        "SiamEZ provides professional vehicle registration assistance across Thailand. Whether you need to transfer ownership, renew your tax and insurance, change plates, or update your registration book, our team handles the paperwork and DLT (Department of Land Transport) process so you can focus on what matters.\n\nWe specialize in Bangkok one-day processing for both cars and motorcycles. For BKK-plated vehicles, we can often complete your registration within a single working day. Vehicles from other provinces may require additional time, and our team will provide a clear timeline when you inquire.\n\nWhat we handle: ownership transfers; tax and insurance renewals; plate changes; color or engine updates in the book; lost book replacement; and documentation for modified vehicles. Contact us with your specific situation — we will advise on the process and cost.\n\nPricing is transparent and listed below. Contact us via LINE, email, or phone to get started, ask about other provinces, or submit documents for online inspection.",
+        "SiamEZ provides professional vehicle registration assistance across Thailand. We come to pick up your car or motorcycle at your home, go to the Department of Land Transport (DLT) on your behalf, and return the vehicle when the work is done — so you do not have to queue at the office.\n\nWhether you need to transfer ownership, renew your tax and insurance, change plates, or update your registration book, our team handles the paperwork and DLT process. We specialize in Bangkok one-day processing for both cars and motorcycles. For BKK-plated vehicles, we can often complete your registration within a single working day. Vehicles from other provinces may require additional time, and our team will provide a clear timeline when you inquire.\n\nWhat we handle: ownership transfers; tax and insurance renewals; plate changes; color or engine updates in the book; lost book replacement; and documentation for modified vehicles. Contact us with your specific situation — we will advise on the process and cost.\n\nPricing is transparent and listed below. Contact us via LINE, email, or phone to get started, ask about other provinces, or submit documents for online inspection.",
       features: [
+        {
+          icon: MapPin,
+          title: "Home pickup, DLT on your behalf",
+          description:
+            "We collect your car or motorcycle at your home, complete the DLT visit for you, and bring it back when registration is finished.",
+        },
         {
           icon: Car,
           title: "Bangkok one-day processing",
@@ -654,7 +661,7 @@ const getServiceContent = (slug: string): ServiceDetailContent => {
           icon: FileText,
           title: "Online document inspection",
           description:
-            "Submit your documents for review before you visit so we can confirm everything is in order.",
+            "Submit your documents for review before pickup so we can confirm everything is in order.",
         },
       ],
       requirements: [
@@ -669,19 +676,19 @@ const getServiceContent = (slug: string): ServiceDetailContent => {
             "Reach us on LINE, email, or phone. You can submit documents for online inspection; we separate our service fees from DLT (government) fees.",
         },
         {
-          title: "Timeline and preparation",
+          title: "Home pickup",
           description:
-            "We confirm whether Bangkok one-day processing applies (typically BKK plates) or a longer timeline for other provinces.",
+            "We come to your home to collect your car or motorcycle (and the documents we confirmed) so you do not need to drive to the DLT.",
         },
         {
-          title: "DLT and submissions",
+          title: "DLT on your behalf",
           description:
-            "We prepare your file and handle the Department of Land Transport process as agreed.",
+            "We go to the Department of Land Transport for you, prepare the file, and complete the agreed registration, transfer, or renewal.",
         },
         {
-          title: "Registration complete",
+          title: "Vehicle returned, registration complete",
           description:
-            "You receive updated registration, plates, or renewals as applicable, with clear next steps for tax and insurance where needed.",
+            "We return your car or motorcycle with updated registration, plates, or renewals as applicable, plus clear next steps for tax and insurance where needed.",
         },
       ],
       documents: {
@@ -692,7 +699,7 @@ const getServiceContent = (slug: string): ServiceDetailContent => {
           "Compulsory motor insurance (Por Ror Bor) and prior registration book for transfers or renewals",
           "Invoice from a registered dealer (required for engine changes)",
           "Existing plates, tax stickers, and any prior DLT correspondence",
-          "Power of attorney if another person will act on your behalf",
+          "Power of attorney so we can go to the DLT on your behalf (we will tell you if this is needed)",
         ],
       },
       processingTime: "Bangkok (BKK plates): often 1 business day; other provinces: timeline on inquiry",
@@ -730,6 +737,12 @@ const getServiceContent = (slug: string): ServiceDetailContent => {
         "SiamEZ offers professional assistance and consultancy services as an independent company. We are not connected to or endorsed by the Thai government.",
       galleryVideoSrc: "/images/services/vehicle-registration/registration-video.mp4",
       galleryImages: [
+        {
+          src: "/images/services/vehicle-registration-poster.png",
+          alt: "SiamEZ vehicle registration service — we pick up your car or motorcycle and handle DLT paperwork",
+          width: 682,
+          height: 1024,
+        },
         {
           src: "/images/services/vehicle-registration/registration-honda-click.png",
           alt: "Customer with Thai vehicle tax sticker for year 2570 next to a white Honda Click motorcycle",
@@ -1053,14 +1066,12 @@ export default async function ServiceDetailPage({
                 key={`${img.src}-${idx}`}
                 className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50 shadow-sm dark:border-gray-700 dark:bg-gray-800/50"
               >
-                <Image
+                <PublicImage
                   src={img.src}
                   alt={img.alt}
                   width={img.width}
                   height={img.height}
-                  sizes="(min-width: 640px) 50vw, 100vw"
                   className="h-auto w-full object-cover"
-                  unoptimized
                 />
               </figure>
             ))}
@@ -1115,6 +1126,8 @@ export default async function ServiceDetailPage({
         title={heroTitle}
         subtitle={content.subtitle}
         breadcrumbs={breadcrumbs}
+        imageUrl={poster}
+        imagePosition={serviceThumbnailObjectPosition[slug as ServiceSlug]}
         showPremiumTag={slug === "marriage-registration"}
         badge={
           tDriverLicense
@@ -1167,6 +1180,7 @@ export default async function ServiceDetailPage({
                     })}
                   </div>
                   {slug === "driver-license" ? <DriverLicenseExtras /> : null}
+                  {slug === "car-motorbike-finder-selling-service" ? <VehicleFinderCtas /> : null}
                   {slug === "event-planning-venue-services" ? (
                     <EventPlanningVenueSections locale={locale} />
                   ) : null}
@@ -1358,7 +1372,13 @@ export default async function ServiceDetailPage({
               visaDuration={content.visaDuration}
               serviceSlug={serviceData.slug}
               showBestValue={slug === "marriage-registration"}
-              helpDescription={slug === "marriage-registration" ? t("marriageHelpBlurb") : undefined}
+              helpDescription={
+                slug === "marriage-registration"
+                  ? t("marriageHelpBlurb")
+                  : slug === "vehicle-registration"
+                    ? t("vehicleRegistrationHelpBlurb")
+                    : undefined
+              }
             />
           </div>
         </div>

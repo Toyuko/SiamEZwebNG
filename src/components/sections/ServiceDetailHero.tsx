@@ -1,12 +1,14 @@
-import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { ChevronRight } from "lucide-react";
+import { PublicImage } from "@/components/ui/public-image";
 
 interface ServiceDetailHeroProps {
   title: string;
   subtitle: string;
   breadcrumbs: Array<{ label: string; href: string }>;
   imageUrl?: string;
+  /** CSS object-position for portrait posters (e.g. "center 16%"). */
+  imagePosition?: string;
   showPremiumTag?: boolean;
   /** Optional pill above the title (e.g. regulatory readiness). */
   badge?: string;
@@ -17,6 +19,7 @@ export function ServiceDetailHero({
   subtitle,
   breadcrumbs,
   imageUrl,
+  imagePosition,
   showPremiumTag = false,
   badge,
 }: ServiceDetailHeroProps) {
@@ -50,13 +53,13 @@ export function ServiceDetailHero({
         {/* Background Image */}
         <div className="absolute inset-0">
           {imageUrl ? (
-            <Image
+            <PublicImage
               src={imageUrl}
               alt={title}
               fill
               className="object-cover"
+              style={imagePosition ? { objectPosition: imagePosition } : undefined}
               priority
-              sizes="100vw"
             />
           ) : (
             <div className="h-full w-full bg-gradient-to-br from-green-700 via-green-600 to-yellow-600" />
