@@ -2,9 +2,11 @@
 
 import { MessageCircle } from "lucide-react";
 import { site } from "@/config/site";
+import { isTawkConfigured } from "@/lib/tawk";
 
 export function WhatsAppFloat() {
-  // Using LINE URL as WhatsApp alternative, or you can add WhatsApp URL to site config
+  if (isTawkConfigured()) return null;
+
   const whatsappUrl = `https://wa.me/${site.phone.replace(/\D/g, "")}`;
 
   return (

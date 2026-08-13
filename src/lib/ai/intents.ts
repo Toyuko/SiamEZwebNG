@@ -8,7 +8,7 @@ export type ConciergeIntent =
   | { kind: "start_workflow"; workflowKey: string };
 
 const ESCALATE_RE =
-  /\b(speak\s+to\s+(a\s+)?(human|person|agent|staff|coordinator)|talk\s+to\s+(someone|staff)|real\s+person|human\s+help|call\s+me|whatsapp|line\s+official)\b|(?:ติดต่อเจ้าหน้าที่|คุยกับ(?:คน|เจ้าหน้าที่)|พูดคุยกับเจ้าหน้าที่|ขอคุยกับเจ้าหน้าที่|ขอคนจริง|โทรหา|แชทกับเจ้าหน้าที่)/i;
+  /\b(speak\s+to\s+(a\s+)?(human|person|agent|staff|coordinator)|talk\s+to\s+(a\s+)?(person|human|agent|someone|staff)|real\s+person|human\s+help|live\s*chat|chat\s+with\s+(staff|a\s+person|someone)|call\s+me|whatsapp|line\s+official)\b|(?:ติดต่อเจ้าหน้าที่|คุยกับ(?:คน|เจ้าหน้าที่|พนักงาน)|พูดคุยกับเจ้าหน้าที่|ขอคุยกับเจ้าหน้าที่|ขอคนจริง|โทรหา|แชทกับเจ้าหน้าที่|แชทสด)/i;
 
 const LIFE_EVENT_INTENTS: Array<{ key: string; re: RegExp }> = [
   {

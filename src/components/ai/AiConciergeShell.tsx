@@ -10,10 +10,16 @@ import { getConciergeCapability } from "@/lib/ai/actions";
 import { CONCIERGE_OPEN_EVENT, type ConciergeOpenDetail } from "@/lib/ai/concierge-events";
 import type { ConciergeLocale } from "@/lib/ai/types";
 import { trackEvent } from "@/lib/analytics";
+import {
+  dispatchOpenTawk,
+  isTawkConfigured,
+  summarizeConciergeForTawk,
+  TAWK_MAXIMIZED_EVENT,
+} from "@/lib/tawk";
 
 export type AiConciergeShellProps = {
   /**
-   * FAB placement. Public pages use `stacked` so the button sits above WhatsApp.
+   * FAB placement. Public pages use `stacked` so the button sits above tawk.to / WhatsApp.
    * Portal pages can use `default` (bottom-right).
    */
   placement?: "default" | "stacked";
@@ -35,6 +41,7 @@ export function AiConciergeShell({
   const [open, setOpen] = useState(false);
   const [llmEnabled, setLlmEnabled] = useState(llmEnabledProp);
   const startedRef = useRef(false);
+  const liveChatEnabled = isTawkConfigured();
 
   const {
     messages,
@@ -56,6 +63,12 @@ export function AiConciergeShell({
     onJourneyUpdate: setJourney,
   });
 
+  const openLiveChat = () => {
+    if (!liveChatEnabled) return;
+    dispatchOpenTawk({ summary: summarizeConciergeForTawk(messages) });
+    setOpen(false);
+  };
+
   useEffect(() => {
     function onOpenConcierge(event: Event) {
       const detail = (event as CustomEvent<ConciergeOpenDetail>).detail;
@@ -67,6 +80,15 @@ export function AiConciergeShell({
     window.addEventListener(CONCIERGE_OPEN_EVENT, onOpenConcierge);
     return () => window.removeEventListener(CONCIERGE_OPEN_EVENT, onOpenConcierge);
   }, [sendMessage]);
+
+  useEffect(() => {
+    if (!liveChatEnabled) return;
+    function onTawkMaximized() {
+      setOpen(false);
+    }
+    window.addEventListener(TAWK_MAXIMIZED_EVENT, onTawkMaximized);
+    return () => window.removeEventListener(TAWK_MAXIMIZED_EVENT, onTawkMaximized);
+  }, [liveChatEnabled]);
 
   useEffect(() => {
     if (!open || startedRef.current) return;
@@ -111,6 +133,7 @@ export function AiConciergeShell({
       findVehicles: t("quickActions.findVehicles"),
       openLink: t("openLink"),
       openLabel: t("openLabel"),
+      talkToPerson: t("talkToPerson"),
     }),
     [t]
   );
@@ -163,10 +186,13 @@ export function AiConciergeShell({
           help: labels.help,
           findVehicles: labels.findVehicles,
           openLink: labels.openLink,
+          talkToPerson: labels.talkToPerson,
         }}
+        liveChatEnabled={liveChatEnabled}
         onClose={() => setOpen(false)}
         onSend={sendMessage}
         onClear={clearHistory}
+        onLiveChat={liveChatEnabled ? openLiveChat : undefined}
       />
     </>
   );

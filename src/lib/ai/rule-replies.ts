@@ -5,7 +5,7 @@ import {
 } from "@/lib/ai/recommend";
 import { detectConciergeIntent } from "@/lib/ai/intents";
 import { recommendTool } from "@/lib/ai/tools/recommend";
-import { escalateHumanTool } from "@/lib/ai/tools/escalate-human";
+import { escalateHumanTool, escalationDeepLinks } from "@/lib/ai/tools/escalate-human";
 import {
   buildLifeEventRecommendationPath,
   type RecommendationSuggestion,
@@ -141,24 +141,9 @@ function orchestrationHintReply(
   if (intent.kind === "escalate") {
     const escalation = escalateHumanTool({ context: userMessage, locale });
     return {
-      content:
-        locale === "th"
-          ? "ฉันจะเชื่อมต่อคุณกับผู้ประสานงาน — กด WhatsApp หรือ LINE ด้านล่าง"
-          : "I'll connect you with a coordinator — tap WhatsApp or LINE below.",
+      content: escalation.message,
       recommendations: getPopularRecommendations(locale, 2),
-      deepLinks: [
-        {
-          href: escalation.whatsappUrl,
-          label: escalation.whatsappLabel,
-          kind: "search",
-        },
-        {
-          href: escalation.lineUrl,
-          label: escalation.lineLabel,
-          kind: "search",
-        },
-        ...searchDeepLinks,
-      ],
+      deepLinks: [...escalationDeepLinks(escalation), ...searchDeepLinks],
       mode: "rule",
     };
   }

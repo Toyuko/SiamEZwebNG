@@ -1,8 +1,10 @@
 import { LazyAiConciergeShell } from "@/components/ai";
+import { LazyTawkWidget } from "@/components/chat/LazyTawkWidget";
 import { PublicHeaderWithAuth } from "@/components/layout/PublicHeaderWithAuth";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { getConciergeSettings } from "@/lib/concierge-settings";
 import { isFeatureEnabled } from "@/lib/feature-flags";
+import { isTawkConfigured } from "@/lib/tawk";
 
 export default async function PublicLayout({
   children,
@@ -14,6 +16,7 @@ export default async function PublicLayout({
     isFeatureEnabled("concierge_enabled"),
   ]);
   const showConcierge = settings.enabled && flagEnabled;
+  const showTawk = isTawkConfigured();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -21,6 +24,7 @@ export default async function PublicLayout({
       <main className="flex-1">{children}</main>
       <PublicFooter />
       {showConcierge ? <LazyAiConciergeShell placement="stacked" /> : null}
+      {showTawk ? <LazyTawkWidget /> : null}
     </div>
   );
 }

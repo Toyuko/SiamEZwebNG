@@ -42,10 +42,12 @@ describe("escalate-human tool", () => {
     const result = escalateHumanTool({
       context: "Need visa help",
       locale: "en",
+      tawkEnabled: false,
     });
     expect(result.whatsappUrl).toContain("whatsapp.com");
     expect(result.whatsappUrl).toContain(encodeURIComponent("Need visa help"));
     expect(result.whatsappLabel).toBe("Chat on WhatsApp");
+    expect(result.liveChatEnabled).toBe(false);
   });
 });
 

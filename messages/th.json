@@ -2177,7 +2177,8 @@
       "startBooking": "เริ่มจอง",
       "help": "ช่วยเหลือ",
       "findVehicles": "หารถ"
-    }
+    },
+    "talkToPerson": "แชทกับเจ้าหน้าที่"
   },
   "adminCase": {
     "clientInfo": "ข้อมูลลูกค้า",

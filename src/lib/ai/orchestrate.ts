@@ -5,14 +5,15 @@ import * as workflowsDA from "@/data-access/workflows";
 import { syncLinkedGoalsFromLifeEvent } from "@/data-access/goals";
 import { getSession } from "@/lib/auth";
 import type { ConciergeIntent } from "@/lib/ai/intents";
-import { escalateHumanTool } from "@/lib/ai/tools/escalate-human";
-import type { ConciergeDeepLink, ConciergeLocale, ConciergeReply } from "@/lib/ai/types";
+import {
+  escalateHumanTool,
+  escalationDeepLinks,
+} from "@/lib/ai/tools/escalate-human";
+import type { ConciergeLocale, ConciergeReply } from "@/lib/ai/types";
 import { buildLifeEventRecommendationPath } from "@/lib/recommendations";
 
 const COPY = {
   en: {
-    escalate:
-      "I'll connect you with a SiamEZ coordinator. Tap WhatsApp or LINE below — your message will include context from this chat.",
     startLifeEvent: (title: string) =>
       `I've started "${title}" for you. Open your checklist to see the next steps.`,
     startLifeEventGuest: (title: string) =>
@@ -27,8 +28,6 @@ const COPY = {
     notFound: "That journey isn't available right now. Browse goals or ask for help.",
   },
   th: {
-    escalate:
-      "ฉันจะเชื่อมต่อคุณกับผู้ประสานงาน SiamEZ กด WhatsApp หรือ LINE ด้านล่าง — ข้อความจะมีบริบทจากแชทนี้",
     startLifeEvent: (title: string) =>
       `เริ่ม "${title}" ให้แล้ว เปิดเช็กลิสต์เพื่อดูขั้นตอนถัดไป`,
     startLifeEventGuest: (title: string) =>
@@ -50,7 +49,8 @@ function loginRedirectPath(path: string): string {
 
 /**
  * Execute authenticated Concierge mutations (life event / workflow start) or
- * return guest login deep links. Escalation always returns WhatsApp/LINE links.
+ * return guest login deep links. Escalation returns tawk.to (when configured)
+ * plus WhatsApp / LINE fallbacks.
  */
 export async function applyConciergeOrchestration(input: {
   intent: ConciergeIntent;
@@ -63,22 +63,10 @@ export async function applyConciergeOrchestration(input: {
 
   if (intent.kind === "escalate") {
     const escalation = escalateHumanTool({ context: userMessage, locale });
-    const deepLinks: ConciergeDeepLink[] = [
-      {
-        href: escalation.whatsappUrl,
-        label: escalation.whatsappLabel,
-        kind: "search",
-      },
-      {
-        href: escalation.lineUrl,
-        label: escalation.lineLabel,
-        kind: "search",
-      },
-    ];
     return {
-      content: copy.escalate,
+      content: escalation.message,
       recommendations: baseReply.recommendations,
-      deepLinks: [...deepLinks, ...(baseReply.deepLinks ?? [])],
+      deepLinks: [...escalationDeepLinks(escalation), ...(baseReply.deepLinks ?? [])],
       mode: baseReply.mode,
     };
   }

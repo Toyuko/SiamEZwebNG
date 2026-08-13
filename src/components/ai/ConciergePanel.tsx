@@ -30,6 +30,7 @@ type Labels = {
   help: string;
   findVehicles: string;
   openLink: string;
+  talkToPerson: string;
 };
 
 type Props = {
@@ -39,9 +40,11 @@ type Props = {
   isStreaming: boolean;
   llmEnabled: boolean;
   labels: Labels;
+  liveChatEnabled?: boolean;
   onClose: () => void;
   onSend: (message: string) => void;
   onClear: () => void;
+  onLiveChat?: () => void;
 };
 
 export function ConciergePanel({
@@ -51,9 +54,11 @@ export function ConciergePanel({
   isStreaming,
   llmEnabled,
   labels,
+  liveChatEnabled = false,
   onClose,
   onSend,
   onClear,
+  onLiveChat,
 }: Props) {
   return (
     <AnimatePresence>
@@ -112,6 +117,7 @@ export function ConciergePanel({
             bookLabel={labels.book}
             emptyLabel={labels.empty}
             openLinkLabel={labels.openLink}
+            onLiveChat={onLiveChat}
           />
 
           <ConciergeQuickActions
@@ -126,6 +132,18 @@ export function ConciergePanel({
               book: labels.book,
             }}
           />
+
+          {liveChatEnabled && onLiveChat ? (
+            <div className="border-t border-gray-100 px-3 py-2 dark:border-gray-800">
+              <button
+                type="button"
+                onClick={onLiveChat}
+                className="w-full rounded-xl border border-siam-blue/20 bg-siam-blue/5 px-3 py-2 text-xs font-medium text-siam-blue hover:bg-siam-blue/10"
+              >
+                {labels.talkToPerson}
+              </button>
+            </div>
+          ) : null}
 
           <ConciergeComposer
             locale={locale}
