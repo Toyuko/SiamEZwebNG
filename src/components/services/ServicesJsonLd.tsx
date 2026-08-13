@@ -1,4 +1,5 @@
 import { site } from "@/config/site";
+import { getSiteOrigin } from "@/lib/seo/urls";
 import type { EnrichedService } from "@/lib/service-display";
 
 interface ServicesJsonLdProps {
@@ -15,7 +16,7 @@ export function ServicesJsonLd({
   pageName,
   pageDescription,
 }: ServicesJsonLdProps) {
-  const baseUrl = site.url.replace(/\/$/, "");
+  const baseUrl = getSiteOrigin();
 
   const itemList = {
     "@context": "https://schema.org",

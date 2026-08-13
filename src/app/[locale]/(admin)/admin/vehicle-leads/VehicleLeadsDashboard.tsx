@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { site } from "@/config/site";
+import { resolvePublicSiteUrl } from "@/config/site-url";
 import { VEHICLE_LEAD_STATUSES } from "@/config/vehicle-intake";
 import { formatThb } from "@/lib/vehicle-leads/display";
 import { createVehicleShareTokenAction } from "@/actions/vehicle-leads";
@@ -41,7 +41,7 @@ type Stats = {
 };
 
 function shareUrl(path: string, source?: string, ref?: string) {
-  const url = new URL(path, site.url);
+  const url = new URL(path, resolvePublicSiteUrl());
   if (source) url.searchParams.set("source", source);
   if (ref) url.searchParams.set("ref", ref);
   return url.toString();

@@ -1,3 +1,4 @@
+import { resolvePublicSiteUrl } from "@/config/site-url";
 import { site } from "@/config/site";
 
 /** True when Resend can send (API key present). */
@@ -22,12 +23,7 @@ export function getOpsInbox(): string {
 }
 
 export function getAppBaseUrl(): string {
-  const fromEnv =
-    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
-    process.env.AUTH_URL?.trim() ||
-    process.env.NEXTAUTH_URL?.trim();
-  if (fromEnv) return fromEnv.replace(/\/$/, "");
-  return site.url.replace(/\/$/, "");
+  return resolvePublicSiteUrl();
 }
 
 export function getEmailStatus() {

@@ -1,5 +1,6 @@
 import createMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
+import { getCanonicalHostRedirect } from "@/config/site-url";
 import { isAdminAuthBypassEnabled } from "@/lib/auth/admin-bypass";
 import { routing } from "./i18n/routing";
 
@@ -82,6 +83,16 @@ async function verifyApiJwtInMiddleware(token: string) {
 
 export default async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const host = request.headers.get("host") || request.nextUrl.host;
+  const canonicalRedirect = getCanonicalHostRedirect(
+    host,
+    pathname,
+    request.nextUrl.search
+  );
+  if (canonicalRedirect) {
+    return NextResponse.redirect(canonicalRedirect, 308);
+  }
+
   const hasSession = SESSION_COOKIES.some((name) => request.cookies.has(name));
 
   if (PROTECTED_API_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {

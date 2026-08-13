@@ -1,11 +1,11 @@
-import { site } from "@/config/site";
+import { resolvePublicSiteUrl } from "@/config/site-url";
 import { routing } from "@/i18n/routing";
 
 export type AppLocale = (typeof routing.locales)[number];
 
-/** Production origin with no trailing slash. */
+/** Public origin with no trailing slash (production, preview, or local). */
 export function getSiteOrigin(): string {
-  return site.url.replace(/\/$/, "");
+  return resolvePublicSiteUrl();
 }
 
 /** Normalize a path to `/{segment}` or `""` for the homepage. */

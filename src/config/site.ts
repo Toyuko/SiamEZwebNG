@@ -1,8 +1,10 @@
+import { resolvePublicSiteUrl } from "@/config/site-url";
+
 export const site = {
   name: "SiamEZ",
   tagline: "Making life in Thailand EZ",
   description: "Professional help for your life in Thailand. From visas to relocations, our team handles the complexities so you can focus on enjoying the Land of Smiles.",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "https://siam-e-zweb-ng.vercel.app",
+  url: resolvePublicSiteUrl(),
   email: "inquiries@siam-ez.com",
   phone: "+66 64 343 8768",
   line: "@siamez",

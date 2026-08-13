@@ -4,6 +4,7 @@
  */
 
 import { site } from "@/config/site";
+import { getSiteOrigin } from "@/lib/seo/urls";
 import {
   buildLocalizedRealEstateListingPath,
   buildLocalizedSalesListingPath,
@@ -42,7 +43,7 @@ export type PropertyJsonLdSource = {
 };
 
 function siteBaseUrl(): string {
-  return site.url.replace(/\/$/, "");
+  return getSiteOrigin();
 }
 
 export function buildVehicleJsonLd(

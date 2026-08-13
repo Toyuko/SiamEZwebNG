@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "siam-ez.com", pathname: "/**" },
+      { protocol: "https", hostname: "www.siam-ez.com", pathname: "/**" },
       { protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/**" },
       { protocol: "https", hostname: "dealers.virtualyard.com.au", pathname: "/**" },
       { protocol: "https", hostname: "virtualyard.com.au", pathname: "/**" },
@@ -35,6 +36,18 @@ const nextConfig: NextConfig = {
       { source: "/thailicense.html", destination: "/en/services/driver-license", permanent: true },
       { source: "/en/thailicense.html", destination: "/en/services/driver-license", permanent: true },
       { source: "/th/thailicense.html", destination: "/th/services/driver-license", permanent: true },
+      {
+        source: "/",
+        has: [{ type: "host", value: "www.siam-ez.com" }],
+        destination: "https://siam-ez.com/",
+        permanent: true,
+      },
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.siam-ez.com" }],
+        destination: "https://siam-ez.com/:path*",
+        permanent: true,
+      },
     ];
   },
   async headers() {

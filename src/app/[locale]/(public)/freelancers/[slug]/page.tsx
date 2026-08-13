@@ -5,6 +5,7 @@ import { getPublicFreelancerBySlug } from "@/data-access/freelancer";
 import { FreelancerPublicProfileClient } from "./FreelancerPublicProfileClient";
 import { site } from "@/config/site";
 import { Link } from "@/i18n/navigation";
+import { canonicalUrl, languageAlternates } from "@/lib/seo/urls";
 
 export async function generateMetadata({
   params,
@@ -14,7 +15,6 @@ export async function generateMetadata({
   const { locale, slug } = await params;
   const profile = await getPublicFreelancerBySlug(slug);
   const t = await getTranslations({ locale, namespace: "freelancersPublic" });
-  const baseUrl = site.url.replace(/\/$/, "");
 
   if (!profile) {
     return { title: t("notFoundTitle") };
@@ -27,21 +27,20 @@ export async function generateMetadata({
   const description =
     profile.bio?.slice(0, 160) ||
     t("profileMetaDescription", { name, title: profile.title ?? t("freelancerBadge") });
+  const path = `/freelancers/${profile.slug}`;
+  const url = canonicalUrl(locale, path);
 
   return {
     title,
     description,
     alternates: {
-      canonical: `${baseUrl}/${locale}/freelancers/${profile.slug}`,
-      languages: {
-        en: `${baseUrl}/en/freelancers/${profile.slug}`,
-        th: `${baseUrl}/th/freelancers/${profile.slug}`,
-      },
+      canonical: url,
+      languages: languageAlternates(path),
     },
     openGraph: {
       title: `${title} | ${site.name}`,
       description,
-      url: `${baseUrl}/${locale}/freelancers/${profile.slug}`,
+      url,
       siteName: site.name,
       locale: locale === "th" ? "th_TH" : "en_US",
       type: "profile",

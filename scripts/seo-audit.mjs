@@ -3,12 +3,12 @@
  * Lightweight production SEO checks for SiamEZ.
  * Usage:
  *   node scripts/seo-audit.mjs
- *   node scripts/seo-audit.mjs https://siam-e-zweb-ng.vercel.app
+ *   node scripts/seo-audit.mjs https://siam-ez.com
  *
  * Does not crawl private/account URLs. Exits 1 if critical public checks fail.
  */
 
-const origin = (process.argv[2] || process.env.NEXT_PUBLIC_SITE_URL || "https://siam-e-zweb-ng.vercel.app").replace(
+const origin = (process.argv[2] || process.env.NEXT_PUBLIC_SITE_URL || "https://siam-ez.com").replace(
   /\/$/,
   ""
 );

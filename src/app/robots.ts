@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { site } from "@/config/site";
+import { getSiteOrigin } from "@/lib/seo/urls";
 
 const PRIVATE_PATHS = [
   "/admin",
@@ -36,10 +36,13 @@ const PRIVATE_PATHS = [
   "/reset-password",
   "/en/reset-password",
   "/th/reset-password",
+  "/vehicle/confirmation",
+  "/en/vehicle/confirmation",
+  "/th/vehicle/confirmation",
 ] as const;
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = site.url.replace(/\/$/, "");
+  const baseUrl = getSiteOrigin();
   const noindexAll = process.env.NEXT_PUBLIC_NOINDEX === "true";
 
   if (noindexAll) {

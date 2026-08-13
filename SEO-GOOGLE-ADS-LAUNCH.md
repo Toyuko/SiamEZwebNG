@@ -1,6 +1,6 @@
 # SiamEZ SEO & Google Ads Launch
 
-Production site: https://siam-e-zweb-ng.vercel.app/en/
+Production site: https://siam-ez.com/en/
 
 This document distinguishes **IMPLEMENTED** (in the codebase) from **REQUIRES MANUAL GOOGLE SETUP**.
 
@@ -22,7 +22,7 @@ This document distinguishes **IMPLEMENTED** (in the codebase) from **REQUIRES MA
 - Default Open Graph image: `/opengraph-image`.
 - Audit: `npm run seo:audit` and `tests/unit/seo.test.ts`.
 
-Set `NEXT_PUBLIC_SITE_URL` to the live canonical host (custom domain when attached). Until then, canonicals use `https://siam-e-zweb-ng.vercel.app`.
+Canonical host is `https://siam-ez.com` (`NEXT_PUBLIC_SITE_URL` in production). Preview deployments use the Vercel preview URL when that variable is unset.
 
 Set `NEXT_PUBLIC_NOINDEX=true` on any non-production environment that must stay out of Google.
 
@@ -59,13 +59,13 @@ Thai equivalents use `/th/` instead of `/en/`.
 
 ## 3. Sitemap URL — IMPLEMENTED
 
-https://siam-e-zweb-ng.vercel.app/sitemap.xml
+https://siam-ez.com/sitemap.xml
 
 ---
 
 ## 4. Robots URL — IMPLEMENTED
 
-https://siam-e-zweb-ng.vercel.app/robots.txt
+https://siam-ez.com/robots.txt
 
 ---
 
@@ -189,7 +189,7 @@ Optional later: Visa Services, Real Estate, Private Driver, branded SiamEZ.
 
 ### REQUIRES MANUAL GOOGLE SETUP
 
-- [ ] Set `NEXT_PUBLIC_SITE_URL` to the production domain
+- [x] Canonical production host `https://siam-ez.com` (also set `NEXT_PUBLIC_SITE_URL` / `AUTH_URL` on Vercel Production)
 - [ ] Set `NEXT_PUBLIC_GTM_ID` (or GA4 id)
 - [ ] Google Search Console: add property, verify, submit sitemap
 - [ ] Google Analytics 4: property + GTM tag

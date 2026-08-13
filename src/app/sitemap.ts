@@ -1,5 +1,4 @@
 import type { MetadataRoute } from "next";
-import { site } from "@/config/site";
 import { serviceSlugs } from "@/config/services";
 import { routing } from "@/i18n/routing";
 import { analyzePublishedListings } from "@/lib/migration/analyze";
@@ -9,7 +8,7 @@ import {
   buildRealEstateListingPath,
   buildSalesListingPath,
 } from "@/lib/migration/urls";
-import { languageAlternates, localizedPath } from "@/lib/seo/urls";
+import { getSiteOrigin, languageAlternates, localizedPath } from "@/lib/seo/urls";
 
 const STATIC_PATHS = [
   "",
@@ -25,6 +24,9 @@ const STATIC_PATHS = [
   "/terms",
   "/privacy",
   "/refund",
+  "/vehicle",
+  "/vehicle/buy",
+  "/vehicle/sell",
 ] as const;
 
 function sitemapEntry(
@@ -32,7 +34,7 @@ function sitemapEntry(
   path: string,
   options: Pick<MetadataRoute.Sitemap[number], "changeFrequency" | "priority" | "lastModified">
 ): MetadataRoute.Sitemap[number] {
-  const origin = site.url.replace(/\/$/, "");
+  const origin = getSiteOrigin();
   return {
     url: `${origin}${localizedPath(locale, path)}`,
     alternates: { languages: languageAlternates(path) },
@@ -72,7 +74,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const locale of routing.locales) {
       for (const vehicle of vehicles) {
         entries.push({
-          url: `${site.url.replace(/\/$/, "")}${buildLocalizedSalesListingPath(locale, vehicle)}`,
+          url: `${getSiteOrigin()}${buildLocalizedSalesListingPath(locale, vehicle)}`,
           lastModified: vehicle.updatedAt ?? lastModified,
           changeFrequency: "weekly",
           priority: 0.65,
@@ -82,7 +84,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
       for (const property of properties) {
         entries.push({
-          url: `${site.url.replace(/\/$/, "")}${buildLocalizedRealEstateListingPath(locale, property)}`,
+          url: `${getSiteOrigin()}${buildLocalizedRealEstateListingPath(locale, property)}`,
           lastModified: property.updatedAt ?? lastModified,
           changeFrequency: "weekly",
           priority: 0.65,

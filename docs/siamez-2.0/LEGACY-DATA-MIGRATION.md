@@ -3,7 +3,7 @@
 **Status:** Audit complete · pipeline implemented · **production import blocked** until a destination backup and explicit apply flags.  
 **Date:** 2026-08-12  
 **Source:** https://siam-ez.com/admin/ (read-only)  
-**Destination app:** https://siam-e-zweb-ng.vercel.app/en/admin/dashboard  
+**Destination app:** https://siam-ez.com/en/admin/dashboard  
 
 This is **not** the Platform 2.0 listing enhancement engine (`src/lib/migration`). That tooling inventories vehicles/properties. This pipeline imports customers, jobs/bookings, and finances from the PHP admin.
 

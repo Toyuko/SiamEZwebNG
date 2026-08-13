@@ -36,7 +36,7 @@ export type ServiceDetailContent = {
 
 type DriverLicenseTranslator = Awaited<ReturnType<typeof getTranslations<"driverLicensePage">>>;
 
-const THAI_LICENSE_GALLERY_BASE = "https://siam-ez.com/assets";
+const THAI_LICENSE_GALLERY_BASE = "/assets";
 const THAI_LICENSE_PROMO_VIDEO = `${THAI_LICENSE_GALLERY_BASE}/thai-license-promo.mp4`;
 const THAI_LICENSE_GALLERY_FILES = [
   "thai-license-customers-1.png",
