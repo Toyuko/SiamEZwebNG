@@ -1,5 +1,5 @@
 import { site } from "@/config/site";
-import { getAppBaseUrl, getOpsInbox } from "@/lib/email/config";
+import { getAppBaseUrl, getOpsInboxes } from "@/lib/email/config";
 import {
   ctaButton,
   detailTable,
@@ -75,7 +75,7 @@ export async function sendContactFormEmails(input: {
 
   const [ops] = await Promise.all([
     sendEmail({
-      to: getOpsInbox(),
+      to: getOpsInboxes(),
       subject: `[SiamEZ] Contact: ${input.service} — ${input.name}`,
       html: opsHtml,
       replyTo: input.email,
@@ -108,7 +108,7 @@ export async function sendFreelancerInquiryEmails(input: {
 
   if (!input.freelancerEmail) {
     return sendEmail({
-      to: getOpsInbox(),
+      to: getOpsInboxes(),
       subject: `[SiamEZ] Freelancer inquiry (no owner email): ${input.freelancerSlug}`,
       html: emailLayout({
         title: "Freelancer inquiry",
@@ -201,11 +201,53 @@ export function sendBookingConfirmationEmail(input: {
   });
 }
 
+export function sendAdminNewBookingEmail(input: {
+  caseNumber: string;
+  caseId: string;
+  serviceName: string;
+  customerName: string | null;
+  customerEmail: string;
+  customerPhone?: string | null;
+  isGuest: boolean;
+  isFixed: boolean;
+}): void {
+  sendEmailBackground({
+    to: getOpsInboxes(),
+    subject: `[SiamEZ] New booking — ${input.caseNumber} — ${input.serviceName}`,
+    html: emailLayout({
+      title: "New booking",
+      preheader: `${input.serviceName} · ${input.caseNumber}`,
+      bodyHtml: [
+        heading("New booking received"),
+        detailTable([
+          { label: "Case", value: input.caseNumber },
+          { label: "Service", value: input.serviceName },
+          { label: "Type", value: input.isFixed ? "Fixed price" : "Custom quote" },
+          { label: "Customer", value: input.customerName?.trim() || "—" },
+          { label: "Email", value: input.customerEmail },
+          ...(input.customerPhone
+            ? [{ label: "Phone", value: input.customerPhone }]
+            : []),
+          { label: "Guest", value: input.isGuest ? "Yes" : "No" },
+        ]),
+        ctaButton(portalUrl(`/admin/cases/${input.caseId}`), "Open in admin"),
+      ].join(""),
+    }),
+    tags: [{ name: "type", value: "admin-new-booking" }],
+  });
+}
+
 export function sendWelcomeEmail(input: {
   to: string;
   name: string | null;
   role: string;
 }): void {
+  sendAdminNewUserEmail({
+    email: input.to,
+    name: input.name,
+    role: input.role,
+  });
+
   sendEmailBackground({
     to: input.to,
     subject: `Welcome to ${site.name}`,
@@ -214,12 +256,37 @@ export function sendWelcomeEmail(input: {
       preheader: "Your account is ready",
       bodyHtml: [
         heading(`Welcome${input.name ? `, ${input.name.split(" ")[0]}` : ""}`),
-        paragraph(`Your ${input.role} account on ${site.name} is ready.`),
-        paragraph("Sign in anytime to track cases, documents, and messages."),
-        ctaButton(portalUrl("/portal"), "Open your portal"),
+        paragraph("Your SiamEZ account is ready."),
+        paragraph("Sign in anytime to book services, track bookings, and ask SiamEZ for help."),
+        ctaButton(portalUrl("/portal"), "Open my account"),
       ].join(""),
     }),
     tags: [{ name: "type", value: "welcome" }],
+  });
+}
+
+export function sendAdminNewUserEmail(input: {
+  email: string;
+  name: string | null;
+  role: string;
+}): void {
+  sendEmailBackground({
+    to: getOpsInboxes(),
+    subject: `[SiamEZ] New user — ${input.email}`,
+    html: emailLayout({
+      title: "New user",
+      preheader: `${input.email} registered`,
+      bodyHtml: [
+        heading("New user registered"),
+        detailTable([
+          { label: "Name", value: input.name?.trim() || "—" },
+          { label: "Email", value: input.email },
+          { label: "Role", value: input.role },
+        ]),
+        ctaButton(portalUrl("/admin/clients"), "Open clients"),
+      ].join(""),
+    }),
+    tags: [{ name: "type", value: "admin-new-user" }],
   });
 }
 
@@ -354,7 +421,7 @@ export function sendSalesBoostPendingEmail(input: {
   priceThb: number;
 }): void {
   sendEmailBackground({
-    to: getOpsInbox(),
+    to: getOpsInboxes(),
     subject: `[SiamEZ] Sales boost bank slip — ${input.make} ${input.model}`,
     html: emailLayout({
       title: "Sales boost pending",
@@ -459,7 +526,7 @@ export function sendVehicleLeadNotification(input: {
       : "Not estimated";
 
   sendEmailBackground({
-    to: getOpsInbox(),
+    to: getOpsInboxes(),
     subject: `[SiamEZ] NEW VEHICLE LEAD — ${input.type.toUpperCase()} — ${input.displayTitle}`,
     html: emailLayout({
       title: "New vehicle lead",

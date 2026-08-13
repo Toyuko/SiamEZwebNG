@@ -236,6 +236,26 @@ async function main() {
     console.log("Admin user ensured:", brandAdminEmail);
   }
 
+  const inquiriesAdminEmail = "inquiries@siam-ez.com";
+  if (inquiriesAdminEmail !== adminEmail) {
+    await prisma.user.upsert({
+      where: { email: inquiriesAdminEmail },
+      create: {
+        email: inquiriesAdminEmail,
+        name: "SiamEZ Inquiries",
+        role: "admin",
+        passwordHash: hash,
+        active: true,
+      },
+      update: {
+        name: "SiamEZ Inquiries",
+        role: "admin",
+        active: true,
+      },
+    });
+    console.log("Admin user ensured:", inquiriesAdminEmail);
+  }
+
   const customerEmail = (process.env.SEED_CUSTOMER_EMAIL ?? "customer@example.com").toLowerCase();
   const customerPassword = process.env.SEED_CUSTOMER_PASSWORD ?? "Customer123!";
   const customerHash = await bcrypt.hash(customerPassword, 10);

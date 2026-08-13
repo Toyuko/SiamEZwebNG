@@ -23,6 +23,7 @@ vi.mock("@/lib/domain/marketplace-jobs", () => ({
 
 vi.mock("@/lib/email/messages", () => ({
   sendBookingConfirmationEmail: vi.fn(),
+  sendAdminNewBookingEmail: vi.fn(),
 }));
 
 vi.mock("@/lib/utils", () => ({

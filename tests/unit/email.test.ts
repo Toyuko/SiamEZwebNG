@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { htmlToText } from "@/lib/email/send";
 import { escapeHtml, emailLayout, ctaButton } from "@/lib/email/layout";
-import { getEmailStatus, isEmailConfigured } from "@/lib/email/config";
+import { DEFAULT_OPS_INBOXES, getEmailStatus, getOpsInbox, getOpsInboxes, isEmailConfigured } from "@/lib/email/config";
 
 describe("email helpers", () => {
   it("escapes HTML entities", () => {
@@ -62,5 +62,24 @@ describe("email helpers", () => {
     expect(isEmailConfigured()).toBe(false);
     expect(getEmailStatus().configured).toBe(false);
     if (prev !== undefined) process.env.RESEND_API_KEY = prev;
+  });
+
+  it("always sends ops alerts to both default inboxes", () => {
+    const prev = process.env.EMAIL_OPS_TO;
+    try {
+      delete process.env.EMAIL_OPS_TO;
+      expect(getOpsInboxes()).toEqual([...DEFAULT_OPS_INBOXES]);
+      expect(getOpsInbox()).toContain("touy_smith@hotmail.com");
+      expect(getOpsInbox()).toContain("inquiries@siam-ez.com");
+      process.env.EMAIL_OPS_TO = "ops@example.com, touy_smith@hotmail.com";
+      expect(getOpsInboxes()).toEqual([
+        "touy_smith@hotmail.com",
+        "inquiries@siam-ez.com",
+        "ops@example.com",
+      ]);
+    } finally {
+      if (prev !== undefined) process.env.EMAIL_OPS_TO = prev;
+      else delete process.env.EMAIL_OPS_TO;
+    }
   });
 });

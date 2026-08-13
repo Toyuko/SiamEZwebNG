@@ -17,9 +17,33 @@ export function getEmailReplyTo(): string {
   return process.env.EMAIL_REPLY_TO?.trim() || site.email;
 }
 
-/** Ops inbox for contact forms, sales boost, etc. */
+/** Default ops inboxes for contact forms, new users, bookings, and other internal alerts. */
+export const DEFAULT_OPS_INBOXES = [
+  "touy_smith@hotmail.com",
+  "inquiries@siam-ez.com",
+] as const;
+
+function parseEmailList(value: string | undefined): string[] {
+  if (!value?.trim()) return [];
+  return [
+    ...new Set(
+      value
+        .split(/[,;]+/)
+        .map((email) => email.trim().toLowerCase())
+        .filter((email) => email.includes("@"))
+    ),
+  ];
+}
+
+/** All ops inboxes. Always includes the default pair; EMAIL_OPS_TO can add more. */
+export function getOpsInboxes(): string[] {
+  const extra = parseEmailList(process.env.EMAIL_OPS_TO);
+  return [...new Set([...DEFAULT_OPS_INBOXES, ...extra])];
+}
+
+/** Comma-separated ops inboxes (settings UI / status). */
 export function getOpsInbox(): string {
-  return process.env.EMAIL_OPS_TO?.trim() || site.email;
+  return getOpsInboxes().join(", ");
 }
 
 export function getAppBaseUrl(): string {

@@ -4,6 +4,7 @@ export {
   getEmailReplyTo,
   getEmailStatus,
   getOpsInbox,
+  getOpsInboxes,
   isEmailConfigured,
 } from "@/lib/email/config";
 export { htmlToText, sendEmail, sendEmailBackground } from "@/lib/email/send";
@@ -21,4 +22,6 @@ export {
   sendTestEmail,
   sendVehicleLeadNotification,
   sendWelcomeEmail,
+  sendAdminNewBookingEmail,
+  sendAdminNewUserEmail,
 } from "@/lib/email/messages";

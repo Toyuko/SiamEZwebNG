@@ -11,6 +11,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import * as bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { authConfig } from "./auth.config";
+import { sendWelcomeEmail } from "@/lib/email/messages";
 
 /** Required by Auth.js assertConfig; env vars may be unset in minimal .env files. */
 const authSecret =
@@ -170,6 +171,13 @@ export const {
         where: { id: user.id! },
         data: { role: "customer" },
       });
+      if (user.email) {
+        sendWelcomeEmail({
+          to: user.email,
+          name: user.name ?? null,
+          role: "customer",
+        });
+      }
     },
   },
 });

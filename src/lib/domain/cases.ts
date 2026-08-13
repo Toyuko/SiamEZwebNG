@@ -10,7 +10,7 @@ import {
 import type { CaseStatus, InvoiceKind } from "@prisma/client";
 import { assertCaseStatusTransition } from "@/lib/domain/case-status";
 import { attachOwnedDocumentsToCase } from "@/lib/documents/ownership";
-import { sendBookingConfirmationEmail } from "@/lib/email/messages";
+import { sendAdminNewBookingEmail, sendBookingConfirmationEmail } from "@/lib/email/messages";
 import { parseStoredPaymentPlan } from "@/lib/payments/quote-plan";
 import { CheckoutValidationError, validateCheckoutAmount } from "@/lib/payments/checkout-guard";
 import { trackPlatformEvent } from "@/lib/analytics/track";
@@ -246,14 +246,27 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
 
   let recipientEmail = input.guestEmail?.trim() || null;
   let recipientName = input.guestName?.trim() || null;
-  if (!recipientEmail && userId) {
+  let recipientPhone = input.guestPhone?.trim() || null;
+  if (userId) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true, name: true },
+      select: { email: true, name: true, phone: true },
     });
-    recipientEmail = user?.email ?? null;
+    recipientEmail = recipientEmail || user?.email || null;
     recipientName = recipientName || user?.name || null;
+    recipientPhone = recipientPhone || user?.phone || null;
   }
+
+  sendAdminNewBookingEmail({
+    caseNumber: c.caseNumber,
+    caseId: c.id,
+    serviceName: service.name,
+    customerName: recipientName,
+    customerEmail: recipientEmail || "unknown",
+    customerPhone: recipientPhone,
+    isGuest: input.isGuest,
+    isFixed: treatAsPayable && invoiceAmount != null && invoiceAmount > 0,
+  });
 
   if (recipientEmail) {
     sendBookingConfirmationEmail({
