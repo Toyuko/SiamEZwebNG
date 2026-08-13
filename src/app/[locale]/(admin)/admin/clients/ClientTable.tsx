@@ -14,6 +14,7 @@ type Client = {
   phone: string | null;
   active: boolean | null;
   createdAt: Date;
+  legacyCustomerId?: number | null;
 };
 
 export function ClientTable({
@@ -59,6 +60,7 @@ export function ClientTable({
               <th className="px-4 py-3 font-medium">Name</th>
               <th className="px-4 py-3 font-medium">Email</th>
               <th className="px-4 py-3 font-medium">Phone</th>
+              <th className="px-4 py-3 font-medium">Legacy ID</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Joined</th>
               <th className="px-4 py-3 font-medium w-24">Actions</th>
@@ -73,6 +75,7 @@ export function ClientTable({
                 <td className="px-4 py-3 font-medium">{c.name ?? "—"}</td>
                 <td className="px-4 py-3">{c.email}</td>
                 <td className="px-4 py-3 text-gray-500">{c.phone ?? "—"}</td>
+                <td className="px-4 py-3 text-gray-500">{c.legacyCustomerId ?? "—"}</td>
                 <td className="px-4 py-3">
                   <span
                     className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${

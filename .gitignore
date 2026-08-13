@@ -13,6 +13,12 @@ yarn-error.log*
 .env
 .env*.local
 
+# Legacy production extracts contain customer PII — never commit
+data/legacy-extract/
+
+# Database dumps contain production data — never commit
+data/backups/
+
 # Vercel (keep project.json in git for CI; ignore local link cache)
 .vercel/*
 !.vercel/project.json

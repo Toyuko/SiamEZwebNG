@@ -128,6 +128,11 @@ export default async function AdminCaseDetailPage({
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {caseData.service.name} • {displayName}
+            {caseData.legacyJobId != null
+              ? ` • Legacy job #${caseData.legacyJobId}${
+                  caseData.legacyOrderNumber ? ` (${caseData.legacyOrderNumber})` : ""
+                }`
+              : ""}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

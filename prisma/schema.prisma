@@ -38,6 +38,13 @@ model User {
   lastLoginAt    DateTime? @map("last_login_at")
   role           UserRole  @default(customer)
   active         Boolean   @default(true)
+  address        String?
+  notes          String?   @db.Text
+  /// Integer PK from siam-ez.com/admin clients.php
+  legacyCustomerId Int?    @unique @map("legacy_customer_id")
+  /// Integer PK from siam-ez.com/admin staff.php
+  legacyStaffId    Int?    @unique @map("legacy_staff_id")
+  metadata       Json?
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
@@ -447,6 +454,10 @@ model Case {
   guestPhone          String?    @map("guest_phone")
   formData            Json?      @map("form_data")
   postToMarketplace   Boolean    @default(false) @map("post_to_marketplace")
+  /// Integer PK from siam-ez.com/admin jobs.php (same id as operations bookings)
+  legacyJobId         Int?       @unique @map("legacy_job_id")
+  /// Order number from payments.php (e.g. BOOK-67)
+  legacyOrderNumber   String?    @unique @map("legacy_order_number")
   createdAt           DateTime   @default(now()) @map("created_at")
   updatedAt           DateTime   @updatedAt @map("updated_at")
   completedAt         DateTime?  @map("completed_at")
@@ -615,6 +626,8 @@ model Payment {
   kind                  InvoiceKind    @default(full)
   idempotencyKey        String?        @unique @map("idempotency_key")
   webhookEventId        String?        @unique @map("webhook_event_id")
+  /// Integer PK from siam-ez.com/admin payments.php orders
+  legacyOrderId         Int?           @unique @map("legacy_order_id")
   metadata              Json?
   createdAt             DateTime       @default(now()) @map("created_at")
   updatedAt             DateTime       @updatedAt @map("updated_at")
@@ -746,6 +759,8 @@ model Invoice {
   lineItems        Json?                @map("line_items")
   attachedPdfUrl   String?              @map("attached_pdf_url") // admin-uploaded or external PDF (blob URL)
   clientAddress    String?              @map("client_address")
+  /// Integer PK from siam-ez.com/admin payments.php orders
+  legacyOrderId    Int?                 @unique @map("legacy_order_id")
   createdAt        DateTime             @default(now()) @map("created_at")
   updatedAt        DateTime             @updatedAt @map("updated_at")
   sentAt           DateTime?            @map("sent_at")
@@ -788,6 +803,20 @@ model Event {
   staff User?  @relation("EventStaff", fields: [staffId], references: [id], onDelete: SetNull)
 
   @@map("events")
+}
+
+/// Idempotent legacy → new ID map. Do not use names/emails as the join key after import.
+model LegacyIdMap {
+  id         String   @id @default(cuid())
+  entityType String   @map("entity_type")
+  legacyId   String   @map("legacy_id")
+  newId      String   @map("new_id")
+  extra      Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([entityType, legacyId])
+  @@index([newId])
+  @@map("legacy_id_map")
 }
 
 // ----- App settings -----

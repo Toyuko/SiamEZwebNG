@@ -46,6 +46,15 @@ export default async function AdminEditClientPage({
           <CardTitle>{client.name ?? client.email}</CardTitle>
         </CardHeader>
         <CardContent>
+          {client.legacyCustomerId != null || client.address || client.notes ? (
+            <div className="mb-4 space-y-1 text-sm text-gray-600 dark:text-gray-400">
+              {client.legacyCustomerId != null ? (
+                <p>Legacy customer ID: {client.legacyCustomerId}</p>
+              ) : null}
+              {client.address ? <p>Address: {client.address}</p> : null}
+              {client.notes ? <p>Notes: {client.notes}</p> : null}
+            </div>
+          ) : null}
           <ClientForm
             action={handleSubmit}
             defaultValues={{

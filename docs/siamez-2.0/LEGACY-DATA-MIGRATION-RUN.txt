@@ -1,0 +1,61 @@
+SIAMEZ DATA MIGRATION REPORT
+Mode: APPLY
+
+Customers
+Legacy: 58
+Migrated: 58
+Duplicates: 2
+Errors: 0
+
+Jobs
+Legacy: 67
+Migrated: 67
+Errors: 0
+
+Bookings
+Legacy: 67
+Migrated: 67
+Errors: 0
+
+Invoices
+Legacy: 62
+Migrated: 62
+Errors: 0
+
+Payments
+Legacy: 62
+Migrated: 62
+Errors: 0
+
+Revenue
+Legacy: 1,698,850 THB
+New: 1,698,850 THB
+Difference: 0 THB
+
+Outstanding Balance
+Legacy: 0 THB
+New: 0 THB
+Difference: 0 THB
+
+Source-system notes (not migration errors)
+- Legacy dashboard widget revenue (completed jobs only): 529,350 THB
+- Legacy payments.php total_revenue (paid orders): 1,698,850 THB
+- Legacy job.cost / operation_costs: 14,250 THB (stored on Case.formData; no Expense model)
+- Refunds: 0 THB
+- Deposits: 0 THB
+- Cancelled job totals excluded from invoices: 37,000 THB
+
+Duplicate review
+- Exact matches: 0
+- Likely duplicates (not auto-merged): 2
+- Conflicts: 0
+- New customers: 58
+- Manual review: 2
+
+Validation errors: 0
+Validation warnings: 44
+- Import targeted a non-local DATABASE_URL after explicit production confirmation flags.
+- Attachments in legacy assets.php: 0
+- Legal documents in legacy legal.php: 0
+- Passwords were not migrated. Customers with real emails can use password reset after import.
+

@@ -21,6 +21,7 @@
     "seo:audit": "node scripts/seo-audit.mjs",
     "migrate:inventory-report": "tsx scripts/migrate-inventory-report.ts",
     "migrate:enhance-listings": "tsx scripts/migrate-enhance-listings.ts",
+    "migrate:legacy": "tsx scripts/legacy-migrate.ts",
     "email:status": "node -e \"const k=!!process.env.RESEND_API_KEY?.trim(); console.log(JSON.stringify({configured:k,from:process.env.EMAIL_FROM||null},null,2))\""
   },
   "prisma": {

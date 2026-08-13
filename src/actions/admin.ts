@@ -686,7 +686,7 @@ export async function getClients(options?: { search?: string; page?: number }) {
   const [clients, total] = await Promise.all([
     prisma.user.findMany({
       where,
-      select: { id: true, name: true, email: true, phone: true, active: true, createdAt: true },
+      select: { id: true, name: true, email: true, phone: true, active: true, createdAt: true, legacyCustomerId: true },
       orderBy: { name: "asc" },
       skip,
       take: ITEMS_PER_PAGE,

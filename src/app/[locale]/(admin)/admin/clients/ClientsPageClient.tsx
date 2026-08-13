@@ -15,6 +15,7 @@ type Client = {
   phone: string | null;
   active: boolean | null;
   createdAt: Date;
+  legacyCustomerId?: number | null;
 };
 
 type ClientsPageClientProps = {
