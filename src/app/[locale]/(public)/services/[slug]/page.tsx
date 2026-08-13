@@ -1000,6 +1000,7 @@ export default async function ServiceDetailPage({
       ? buildDriverLicenseServiceContent(tDriverLicense)
       : getServiceContent(slug);
   const displayName = serviceDisplayNames[slug as ServiceSlug] || service?.name || slug;
+  const poster = serviceThumbnailImages[slug as ServiceSlug];
 
   // Create fallback service object if database unavailable
   // Basic package from siam-ez.com; formatCurrency divides by 100 (satang).
