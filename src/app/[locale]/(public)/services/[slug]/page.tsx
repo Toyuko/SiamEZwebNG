@@ -989,17 +989,21 @@ export default async function ServiceDetailPage({
   const displayName = serviceDisplayNames[slug as ServiceSlug] || service?.name || slug;
 
   // Create fallback service object if database unavailable
-  // Basic package from siam-ez.com; formatCurrency divides by 100 (satang)
-  const defaultPrice =
-    slug === "marriage-registration" ? 850000 : slug === "driver-license" ? 350000 : null;
+  // Basic package from siam-ez.com; formatCurrency divides by 100 (satang).
+  // Driver license totals vary by type and add-ons — do not publish a starting price.
+  const defaultPrice = slug === "marriage-registration" ? 850000 : null;
+  const hidePublicPrice = slug === "driver-license";
 
   const serviceData = service
-    ? { ...service, priceAmount: service.priceAmount ?? defaultPrice }
+    ? {
+        ...service,
+        priceAmount: hidePublicPrice ? null : (service.priceAmount ?? defaultPrice),
+      }
     : {
         name: displayName,
         shortDescription: serviceShortDescriptions[slug as ServiceSlug] || null,
         description: content.overview,
-        priceAmount: defaultPrice,
+        priceAmount: hidePublicPrice ? null : defaultPrice,
         priceCurrency: "THB" as const,
         slug,
       };
@@ -1026,12 +1030,13 @@ export default async function ServiceDetailPage({
           </p>
         </div>
         {content.galleryVideoSrc ? (
-          <div className="overflow-hidden rounded-lg border border-gray-200 bg-black shadow-sm dark:border-gray-700">
+          <div className="flex justify-center overflow-hidden rounded-lg border border-gray-200 bg-black shadow-sm dark:border-gray-700">
             <video
-              className="aspect-video w-full max-h-[70vh] object-contain"
+              className="aspect-[9/16] h-auto max-h-[70vh] w-full max-w-md object-contain"
               controls
               playsInline
               preload="metadata"
+              poster={content.galleryImages?.[0]?.src}
               aria-label={
                 content.galleryVideoAriaLabel ??
                 "SiamEZ vehicle registration services — recent registrations video"
@@ -1055,6 +1060,7 @@ export default async function ServiceDetailPage({
                   height={img.height}
                   sizes="(min-width: 640px) 50vw, 100vw"
                   className="h-auto w-full object-cover"
+                  unoptimized
                 />
               </figure>
             ))}

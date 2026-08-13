@@ -50,13 +50,15 @@ export function ServiceDetailSidebar({
         )}
         {/* Blue Header Section */}
         <div className="bg-siam-blue px-6 py-6 text-white">
-          <p className="text-xs font-medium uppercase tracking-wider opacity-90">
-            {t("startingFrom")}
-          </p>
           {priceAmount != null ? (
-            <p className="mt-2 text-5xl font-bold">{formatCurrency(priceAmount, priceCurrency)}</p>
+            <>
+              <p className="text-xs font-medium uppercase tracking-wider opacity-90">
+                {t("startingFrom")}
+              </p>
+              <p className="mt-2 text-5xl font-bold">{formatCurrency(priceAmount, priceCurrency)}</p>
+            </>
           ) : (
-            <p className="mt-2 text-3xl font-bold">Quote-based</p>
+            <p className="text-3xl font-bold">{t("quoteBased")}</p>
           )}
         </div>
 

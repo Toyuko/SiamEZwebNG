@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
     "/*": ["./public/images/brand/**/*"],
   },
   images: {
+    // Vercel Image Optimization returns 402 (OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED)
+    // without the paid add-on; serve originals from /public instead.
+    unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "siam-ez.com", pathname: "/**" },
       { protocol: "https", hostname: "www.siam-ez.com", pathname: "/**" },

@@ -656,6 +656,7 @@
     "chatOnWhatsApp": "Chat on WhatsApp",
     "basedOnReviews": "Based on {count}+ reviews",
     "startingFrom": "STARTING FROM",
+    "quoteBased": "Quote-based",
     "processingTime": "Processing Time",
     "visaDuration": "Visa Duration",
     "bestValue": "BEST VALUE",
@@ -759,8 +760,8 @@
       },
       {
         "icon": "circle-dollar-sign",
-        "title": "Transparent packages",
-        "description": "Clear base prices and add-ons — no hidden “extra forms” after you book."
+        "title": "Quoted for your case",
+        "description": "Your coordinator confirms the total for your license type and add-ons before you pay — no hidden extra forms after you book."
       },
       {
         "icon": "graduation-cap",
@@ -815,54 +816,25 @@
       "Coordinators on the ground in Bangkok",
       "English + Thai support via WhatsApp",
       "Updated for 2026 color-blind, reaction, and health checks",
-      "Fixed package lines — optional add-ons only when you need them"
+      "Optional add-ons only when you need them"
     ],
-    "packagesTitle": "Packages & indicative pricing",
-    "packagesIntro": "Final totals depend on your license type and add-ons. Your coordinator confirms everything in writing before payment.",
+    "packagesTitle": "License services",
+    "packagesIntro": "Totals depend on your license type and add-ons. Your coordinator confirms everything in writing before payment.",
     "packageRows": [
-      {
-        "name": "Conversion (foreign license)",
-        "price": "Bike 4,500 THB · Car 6,000 THB"
-      },
-      {
-        "name": "Renewal",
-        "price": "Bike 3,500 THB · Car 4,500 THB"
-      },
-      {
-        "name": "Apply new",
-        "price": "Bike 3,500 THB · Car 5,000 THB · Both 7,500 THB"
-      },
-      {
-        "name": "International Driving Permit (IDP)",
-        "price": "3,500 THB"
-      }
+      "Conversion (foreign license)",
+      "Renewal",
+      "Apply new",
+      "International Driving Permit (IDP)"
     ],
     "addonsTitle": "Optional add-ons",
-    "addonsIntro": "Prices update your package total in real time when selected.",
+    "addonsIntro": "Add these only if your case needs them. Your coordinator confirms the total before payment.",
     "addonRows": [
-      {
-        "name": "FastTrack booking",
-        "price": "+1,500 THB"
-      },
-      {
-        "name": "Translation letter",
-        "price": "+2,500 THB"
-      },
-      {
-        "name": "Address certificate assistance",
-        "price": "+2,500 THB"
-      }
+      "FastTrack booking",
+      "Translation letter",
+      "Address certificate assistance"
     ],
     "schedulingTitle": "Scheduling note",
     "schedulingBody": "Allow at least three business days before your preferred date. Weekends are usually unavailable. If you process car and motorcycle together, expect a longer appointment block.",
-    "paymentTitle": "Payment after confirmation",
-    "paymentBody": "Once your coordinator confirms the package total, you can pay by bank transfer to Bangkok Bank or PromptPay. Upload your transfer slip through our booking flow or send it on WhatsApp — we match it to your file before the DLT visit.",
-    "bankLabel": "Bangkok Bank",
-    "accountNameLabel": "Account name",
-    "accountName": "Touy Smith",
-    "accountNumberLabel": "Account number",
-    "accountNumber": "037-7-076153",
-    "promptPayNote": "PromptPay QR and exact amount are shared with your booking confirmation.",
     "resourcesTitle": "Resources & what happens next",
     "resources": [
       {

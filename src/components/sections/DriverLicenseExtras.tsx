@@ -2,17 +2,16 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Building2, Wallet, CalendarDays, BookOpen } from "lucide-react";
+import { CheckCircle2, Building2, Sparkles, CalendarDays, BookOpen } from "lucide-react";
 import { site } from "@/config/site";
 
-type Row = { name: string; price: string };
 type Resource = { title: string; body: string };
 
 export async function DriverLicenseExtras() {
   const t = await getTranslations("driverLicensePage");
   const trustPoints = t.raw("trustPoints") as string[];
-  const packageRows = t.raw("packageRows") as Row[];
-  const addonRows = t.raw("addonRows") as Row[];
+  const packageRows = t.raw("packageRows") as string[];
+  const addonRows = t.raw("addonRows") as string[];
   const resources = t.raw("resources") as Resource[];
 
   return (
@@ -39,13 +38,12 @@ export async function DriverLicenseExtras() {
             </div>
             <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">{t("packagesIntro")}</p>
             <ul className="space-y-3">
-              {packageRows.map((row, i) => (
+              {packageRows.map((name, i) => (
                 <li
                   key={i}
-                  className="flex flex-col gap-0.5 border-b border-gray-200 pb-3 last:border-0 dark:border-gray-600 sm:flex-row sm:justify-between sm:gap-4"
+                  className="border-b border-gray-200 pb-3 last:border-0 dark:border-gray-600"
                 >
-                  <span className="font-medium text-gray-900 dark:text-gray-100">{row.name}</span>
-                  <span className="text-sm text-gray-700 dark:text-gray-300 sm:text-right">{row.price}</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{name}</span>
                 </li>
               ))}
             </ul>
@@ -55,18 +53,17 @@ export async function DriverLicenseExtras() {
         <Card className="border-0 bg-gray-50 shadow-sm dark:bg-gray-800/50">
           <CardContent className="p-6">
             <div className="mb-4 flex items-center gap-2">
-              <Wallet className="h-5 w-5 text-siam-blue" />
+              <Sparkles className="h-5 w-5 text-siam-blue" />
               <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t("addonsTitle")}</h3>
             </div>
             <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">{t("addonsIntro")}</p>
             <ul className="space-y-3">
-              {addonRows.map((row, i) => (
+              {addonRows.map((name, i) => (
                 <li
                   key={i}
-                  className="flex flex-col gap-0.5 border-b border-gray-200 pb-3 last:border-0 dark:border-gray-600 sm:flex-row sm:justify-between sm:gap-4"
+                  className="border-b border-gray-200 pb-3 last:border-0 dark:border-gray-600"
                 >
-                  <span className="font-medium text-gray-900 dark:text-gray-100">{row.name}</span>
-                  <span className="text-siam-blue dark:text-siam-blue-light sm:text-right">{row.price}</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{name}</span>
                 </li>
               ))}
             </ul>
@@ -83,27 +80,6 @@ export async function DriverLicenseExtras() {
           </div>
         </CardContent>
       </Card>
-
-      <section>
-        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t("paymentTitle")}</h3>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{t("paymentBody")}</p>
-        <Card className="mt-4 border border-gray-200 dark:border-gray-700">
-          <CardContent className="space-y-3 p-6 text-sm">
-            <p className="font-semibold text-gray-900 dark:text-gray-100">{t("bankLabel")}</p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">{t("accountNameLabel")}: </span>
-                <span className="text-gray-900 dark:text-gray-100">{t("accountName")}</span>
-              </div>
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">{t("accountNumberLabel")}: </span>
-                <span className="font-mono text-gray-900 dark:text-gray-100">{t("accountNumber")}</span>
-              </div>
-            </div>
-            <p className="text-gray-600 dark:text-gray-400">{t("promptPayNote")}</p>
-          </CardContent>
-        </Card>
-      </section>
 
       <section>
         <div className="mb-4 flex items-center gap-2">
