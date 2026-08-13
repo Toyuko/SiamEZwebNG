@@ -20,6 +20,7 @@ export type AnalyticsEventName =
   | "phone_clicked"
   | "email_clicked"
   | "line_clicked"
+  | "maps_clicked"
   | "whatsapp_clicked"
   | "ai_concierge_started"
   | "ai_concierge_lead"

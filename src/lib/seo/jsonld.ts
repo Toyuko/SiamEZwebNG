@@ -1,4 +1,5 @@
 import { site } from "@/config/site";
+import { officeGoogleMapsUrl } from "@/lib/maps";
 import { getSiteOrigin } from "@/lib/seo/urls";
 
 export type JsonLd = Record<string, unknown>;
@@ -83,6 +84,12 @@ export function localBusinessJsonLd(): JsonLd {
     image: `${origin()}/images/logo.png`,
     description: site.description,
     address: postalAddress(),
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: site.address.coords.lat,
+      longitude: site.address.coords.lng,
+    },
+    hasMap: officeGoogleMapsUrl(),
     areaServed: {
       "@type": "Country",
       name: "Thailand",

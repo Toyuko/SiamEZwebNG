@@ -13,6 +13,8 @@ export const site = {
     line1: "No.2556, 66 Tower, Level 4, Office Room 444-01",
     line2: "Bang Na, Bangkok 10260, Thailand",
     full: "No.2556, 66 Tower, Level 4, Office Room 444-01, Bang Na, Bangkok 10260, Thailand",
+    coords: { lat: 13.6823856, lng: 100.6096155 },
+    placeId: "ChIJoQi-v8JJA68RqRtvTftrbw8",
   },
   social: {
     facebook: "https://www.facebook.com/siamezth",

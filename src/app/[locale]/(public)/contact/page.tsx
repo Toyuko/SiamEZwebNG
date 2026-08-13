@@ -5,7 +5,9 @@ import { site } from "@/config/site";
 import { Mail, Phone, MessageCircle, MapPin } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { ContactRequestForm } from "@/components/sections/ContactRequestForm";
+import { OfficeLocator } from "@/components/sections/OfficeLocator";
 import { TrackedContactLink } from "@/components/seo/TrackedContactLink";
+import { getGoogleMapsApiKey, officeGoogleMapsUrl } from "@/lib/maps";
 import { JsonLdScript } from "@/components/seo/JsonLd";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbListJsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
@@ -37,6 +39,8 @@ export default async function ContactPage({
     getTranslations("contact"),
     getTranslations("common"),
   ]);
+  const mapsApiKey = getGoogleMapsApiKey() ?? "";
+  const mapsUrl = officeGoogleMapsUrl();
 
   return (
     <>
@@ -105,7 +109,14 @@ export default async function ContactPage({
                 <p className="text-siam-blue">{site.line}</p>
               </div>
             </TrackedContactLink>
-            <div className="flex items-start gap-4 rounded-xl border border-border bg-card p-5 shadow-sm">
+            <TrackedContactLink
+              href={mapsUrl}
+              event="maps_clicked"
+              source="contact_page"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-4 rounded-xl border border-border bg-card p-5 shadow-sm transition hover:border-siam-blue hover:shadow-md"
+            >
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-siam-blue/10 text-siam-blue">
                 <MapPin className="h-6 w-6" />
               </div>
@@ -113,12 +124,20 @@ export default async function ContactPage({
                 <p className="font-semibold text-foreground">{t("visitUs")}</p>
                 <p className="text-siam-blue">{site.address.line1}</p>
                 <p className="text-siam-blue">{site.address.line2}</p>
+                <p className="mt-1 text-sm text-muted">{t("openInMaps")}</p>
               </div>
-            </div>
+            </TrackedContactLink>
           </div>
           <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
             <h2 className="text-xl font-semibold text-foreground">{t("bookService")}</h2>
             <ContactRequestForm />
+          </div>
+        </div>
+        <div className="mt-12">
+          <h2 className="text-xl font-semibold text-foreground">{t("findUs")}</h2>
+          <p className="mt-2 text-muted">{t("findUsDescription")}</p>
+          <div className="mt-6">
+            <OfficeLocator apiKey={mapsApiKey} locale={locale} />
           </div>
         </div>
         <p className="mt-8 text-center text-muted">

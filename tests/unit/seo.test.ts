@@ -50,6 +50,16 @@ describe("structured data", () => {
     expect(local).not.toContain("aggregateRating");
   });
 
+  it("includes Bangkok office geo coordinates on LocalBusiness", () => {
+    const local = localBusinessJsonLd();
+    expect(local.geo).toMatchObject({
+      "@type": "GeoCoordinates",
+      latitude: 13.6823856,
+      longitude: 100.6096155,
+    });
+    expect(String(local.hasMap)).toContain("query_place_id=ChIJoQi-v8JJA68RqRtvTftrbw8");
+  });
+
   it("builds FAQPage JSON-LD only when FAQs exist", () => {
     expect(faqPageJsonLd([])).toBeNull();
     const json = faqPageJsonLd([{ question: "Q?", answer: "A." }]);
