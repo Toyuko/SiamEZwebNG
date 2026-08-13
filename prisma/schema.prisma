@@ -72,6 +72,12 @@ model User {
   featureFlagsUpdated FeatureFlag[] @relation("FeatureFlagUpdater")
   quotes              Quote[]            @relation("QuoteCustomer")
   quotesAdjusted      Quote[]            @relation("QuoteAdjustedBy")
+  vehicleLeadsAssigned VehicleLead[]     @relation("VehicleLeadAssignee")
+  vehicleLeadNotes     VehicleLeadNote[]
+  vehicleReferralTokens VehicleLeadReferralToken[]
+  vehicleStatusChanges VehicleLeadStatusHistory[] @relation("VehicleLeadStatusActor")
+  vehicleSocialApprovals VehicleSocialContent[] @relation("VehicleSocialApprover")
+  vehicleSocialPosts VehicleSocialPost[] @relation("VehicleSocialPoster")
 }
 
 enum FreelancerVerificationStatus {
@@ -457,6 +463,7 @@ model Case {
   marketplaceJob  MarketplaceJob?
   workflowRuns    WorkflowRun[] @relation("WorkflowRunLinkedCase")
   paymentMilestones PaymentMilestone[]
+  vehicleLead     VehicleLead?
 }
 
 enum MarketplaceJobStatus {
@@ -1405,4 +1412,299 @@ model ProcessedWebhookEvent {
 
   @@index([provider, type])
   @@map("processed_webhook_events")
+}
+
+// ----- Vehicle buy / sell leads (quick-link intake) -----
+
+enum VehicleLeadType {
+  sell
+  buy
+}
+
+enum VehicleLeadStatus {
+  new
+  reviewing
+  contacted
+  info_confirmed
+  price_evaluation
+  customer_approved
+  listing_or_search
+  negotiating
+  sold_or_purchased
+  completed
+  cancelled
+}
+
+enum VehicleKind {
+  car
+  motorcycle
+  other
+}
+
+enum VehicleMediaKind {
+  image
+  video
+  document
+}
+
+enum VehicleSocialStatus {
+  not_generated
+  draft_generated
+  ready_for_review
+  approved
+  posted
+  sold
+}
+
+enum VehicleSocialPlatform {
+  facebook
+  instagram
+  tiktok
+  line
+  whatsapp
+  marketplace
+}
+
+/**
+ * Guest-friendly vehicle buy/sell lead. Distinct from Case so staff can
+ * qualify before converting into a booking/job. Converted leads set caseId.
+ */
+model VehicleLead {
+  id            String            @id @default(cuid())
+  leadNumber    String            @unique @map("lead_number")
+  publicToken   String            @unique @map("public_token")
+  type          VehicleLeadType
+  status        VehicleLeadStatus @default(new)
+  source        String?
+  utmSource     String?           @map("utm_source")
+  utmMedium     String?           @map("utm_medium")
+  utmCampaign   String?           @map("utm_campaign")
+  locale        String?
+
+  customerName              String  @map("customer_name")
+  customerPhone             String? @map("customer_phone")
+  customerLineId            String? @map("customer_line_id")
+  customerEmail             String? @map("customer_email")
+  preferredContactMethod    String? @map("preferred_contact_method")
+  preferredContactTime      String? @map("preferred_contact_time")
+  customerLocation          String? @map("customer_location")
+
+  vehicleKind VehicleKind @map("vehicle_kind")
+  displayTitle String     @map("display_title")
+  province     String?
+  city         String?
+
+  /// Whole THB baht (same unit as SalesVehicle.priceAmount).
+  askingPrice          Int? @map("asking_price")
+  budgetMin            Int? @map("budget_min")
+  budgetMax            Int? @map("budget_max")
+  officialListingPrice Int? @map("official_listing_price")
+
+  aiEstimatedMin       Int?    @map("ai_estimated_min")
+  aiEstimatedMax       Int?    @map("ai_estimated_max")
+  aiSuggestedPrice     Int?    @map("ai_suggested_price")
+  aiMinAcceptablePrice Int?    @map("ai_min_acceptable_price")
+  aiSummary            String? @map("ai_summary") @db.Text
+  aiLeadScore          String? @map("ai_lead_score")
+  aiAnalysis           Json?   @map("ai_analysis")
+  aiCustomerDraft      String? @map("ai_customer_draft") @db.Text
+
+  notes String? @db.Text
+
+  socialStatus VehicleSocialStatus @default(not_generated) @map("social_status")
+
+  assignedStaffId String? @map("assigned_staff_id")
+  caseId          String? @unique @map("case_id")
+  referralTokenId String? @map("referral_token_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  assignedStaff  User?                     @relation("VehicleLeadAssignee", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  case           Case?                     @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  referralToken  VehicleLeadReferralToken? @relation(fields: [referralTokenId], references: [id], onDelete: SetNull)
+  vehicle        Vehicle?
+  media          VehicleMedia[]
+  statusHistory  VehicleLeadStatusHistory[]
+  leadNotes      VehicleLeadNote[]
+  socialContent  VehicleSocialContent[]
+  socialPosts    VehicleSocialPost[]
+
+  @@index([type, status, createdAt])
+  @@index([assignedStaffId])
+  @@index([source, createdAt])
+  @@index([vehicleKind, province])
+  @@map("vehicle_leads")
+}
+
+model Vehicle {
+  id     String @id @default(cuid())
+  leadId String @unique @map("lead_id")
+
+  kind         VehicleKind
+  make         String?
+  model        String?
+  year         Int?
+  variant      String?
+  engineSize   String? @map("engine_size")
+  transmission String?
+  fuel         String?
+  mileageKm    Int?    @map("mileage_km")
+  colour       String?
+  province     String?
+  city         String?
+
+  overallCondition        String? @map("overall_condition")
+  accidentHistory         String? @map("accident_history")
+  floodDamage             String? @map("flood_damage")
+  majorRepairs            String? @map("major_repairs") @db.Text
+  engineCondition         String? @map("engine_condition")
+  transmissionCondition   String? @map("transmission_condition")
+  tireCondition           String? @map("tire_condition")
+  modifications           String? @db.Text
+  knownProblems           String? @map("known_problems") @db.Text
+  serviceHistory          String? @map("service_history") @db.Text
+
+  registeredOwner      String?  @map("registered_owner")
+  ownershipStatus      String?  @map("ownership_status")
+  greenBookAvailable   Boolean? @map("green_book_available")
+  blueBookAvailable    Boolean? @map("blue_book_available")
+  registrationProvince String?  @map("registration_province")
+  taxStatus            String?  @map("tax_status")
+  insuranceStatus      String?  @map("insurance_status")
+  outstandingFinance   String?  @map("outstanding_finance")
+  restrictions         String?  @db.Text
+
+  priceNegotiable         Boolean? @map("price_negotiable")
+  sellTimeline            String?  @map("sell_timeline")
+  reasonForSelling        String?  @map("reason_for_selling") @db.Text
+  acceptRecommendedPrice  Boolean? @map("accept_recommended_price")
+
+  yearMin              Int?     @map("year_min")
+  yearMax              Int?     @map("year_max")
+  budgetMin            Int?     @map("budget_min")
+  budgetMax            Int?     @map("budget_max")
+  maxMileageKm         Int?     @map("max_mileage_km")
+  newOrUsed            String?  @map("new_or_used")
+  preferredColour      String?  @map("preferred_colour")
+  mustHaveFeatures     String?  @map("must_have_features") @db.Text
+  dealBreakers         String?  @map("deal_breakers") @db.Text
+  purchasePayment      String?  @map("purchase_payment")
+  purchaseTimeframe    String?  @map("purchase_timeframe")
+  needDelivery         Boolean? @map("need_delivery")
+  needTransfer         Boolean? @map("need_transfer")
+  needInsurance        Boolean? @map("need_insurance")
+  needInspection       Boolean? @map("need_inspection")
+  needFinancingHelp    Boolean? @map("need_financing_help")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  lead  VehicleLead    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  media VehicleMedia[]
+
+  @@index([make, model, year])
+  @@map("vehicles")
+}
+
+model VehicleMedia {
+  id          String           @id @default(cuid())
+  leadId      String           @map("lead_id")
+  vehicleId   String?          @map("vehicle_id")
+  mediaType   VehicleMediaKind @map("media_type")
+  category    String
+  name        String
+  storageKey  String           @map("storage_key")
+  mimeType    String?          @map("mime_type")
+  size        Int?
+  /// Registration / ID / private docs — never used in social content.
+  isPrivate   Boolean          @default(false) @map("is_private")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  lead    VehicleLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  vehicle Vehicle?    @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+
+  @@index([leadId, category])
+  @@map("vehicle_media")
+}
+
+model VehicleLeadStatusHistory {
+  id          String            @id @default(cuid())
+  leadId      String            @map("lead_id")
+  fromStatus  VehicleLeadStatus? @map("from_status")
+  toStatus    VehicleLeadStatus @map("to_status")
+  changedById String?           @map("changed_by_id")
+  note        String?
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  lead      VehicleLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  changedBy User?       @relation("VehicleLeadStatusActor", fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([leadId, createdAt])
+  @@map("vehicle_lead_status_history")
+}
+
+model VehicleLeadNote {
+  id        String   @id @default(cuid())
+  leadId    String   @map("lead_id")
+  userId    String   @map("user_id")
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  lead VehicleLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, createdAt])
+  @@map("vehicle_lead_notes")
+}
+
+model VehicleLeadReferralToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  staffId   String    @map("staff_id")
+  campaign  String?
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  staff User          @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  leads VehicleLead[]
+
+  @@index([staffId])
+  @@map("vehicle_lead_referral_tokens")
+}
+
+model VehicleSocialContent {
+  id          String                @id @default(cuid())
+  leadId      String                @map("lead_id")
+  language    String                @default("en")
+  status      VehicleSocialStatus   @default(draft_generated)
+  packageJson Json                  @map("package_json")
+  approvedAt  DateTime?             @map("approved_at")
+  approvedById String?              @map("approved_by_id")
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+
+  lead       VehicleLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  approvedBy User?       @relation("VehicleSocialApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@index([leadId, createdAt])
+  @@map("vehicle_social_content")
+}
+
+model VehicleSocialPost {
+  id        String                 @id @default(cuid())
+  leadId    String                 @map("lead_id")
+  platform  VehicleSocialPlatform
+  postedAt  DateTime?              @map("posted_at")
+  postUrl   String?                @map("post_url")
+  staffId   String?                @map("staff_id")
+  campaign  String?
+  notes     String?                @db.Text
+  createdAt DateTime               @default(now()) @map("created_at")
+
+  lead  VehicleLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  staff User?       @relation("VehicleSocialPoster", fields: [staffId], references: [id], onDelete: SetNull)
+
+  @@index([leadId, platform])
+  @@map("vehicle_social_posts")
 }

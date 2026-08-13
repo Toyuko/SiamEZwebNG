@@ -24,7 +24,10 @@ export type AnalyticsEventName =
   | "ai_concierge_started"
   | "ai_concierge_lead"
   | "payment_completed"
-  | "listing_enquiry_submitted";
+  | "listing_enquiry_submitted"
+  | "vehicle_form_opened"
+  | "vehicle_form_started"
+  | "vehicle_form_submitted";
 
 export type AnalyticsEventPayload = Record<string, string | number | boolean | undefined>;
 

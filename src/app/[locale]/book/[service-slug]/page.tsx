@@ -7,6 +7,7 @@ import { getOrEnsureServiceBySlug } from "@/data-access/service";
 import { Button } from "@/components/ui/button";
 import { hasWizardEngine } from "@/config/wizards";
 import { getSession } from "@/lib/auth";
+import { VehicleWizardBanner } from "@/components/vehicle-intake/VehicleWizardBanner";
 
 /**
  * Defer the WizardEngine client graph (RHF, step renderers, documents) so the
@@ -60,6 +61,7 @@ export default async function BookServicePage({
           <Link href={`/services/${serviceSlug}`}>{tCommon("cancel")}</Link>
         </Button>
       </div>
+      <VehicleWizardBanner serviceSlug={serviceSlug} />
       <WizardEngine
         service={service}
         serviceSlug={serviceSlug}

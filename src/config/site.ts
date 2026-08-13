@@ -64,6 +64,7 @@ export const publicNav: PublicNavEntry[] = [
 export const footerQuickLinks = [
   { label: "Services", href: "/services" },
   { label: "Vehicles", href: "/sales" },
+  { label: "Sell or find a vehicle", href: "/vehicle" },
   { label: "Real Estate", href: "/real-estate" },
   { label: "About Us", href: "/about" },
   { label: "Contact", href: "/contact" },

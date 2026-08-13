@@ -435,6 +435,85 @@ export function sendMarketplaceJobEmails(input: {
   }
 }
 
+export function sendVehicleLeadNotification(input: {
+  leadId: string;
+  leadNumber: string;
+  type: "sell" | "buy";
+  displayTitle: string;
+  year?: number | null;
+  mileageKm?: number | null;
+  province?: string | null;
+  askingPrice?: number | null;
+  aiRangeMin?: number | null;
+  aiRangeMax?: number | null;
+  leadScore?: string | null;
+  customerName: string;
+  customerEmail?: string | null;
+}): void {
+  const format = (n: number | null | undefined) =>
+    n == null ? "—" : `฿${n.toLocaleString("en-US")}`;
+  const adminPath = `/admin/vehicle-leads/${input.leadId}`;
+  const range =
+    input.aiRangeMin != null && input.aiRangeMax != null
+      ? `${format(input.aiRangeMin)}–${format(input.aiRangeMax)} (estimate)`
+      : "Not estimated";
+
+  sendEmailBackground({
+    to: getOpsInbox(),
+    subject: `[SiamEZ] NEW VEHICLE LEAD — ${input.type.toUpperCase()} — ${input.displayTitle}`,
+    html: emailLayout({
+      title: "New vehicle lead",
+      preheader: `${input.type.toUpperCase()} · ${input.displayTitle}`,
+      bodyHtml: [
+        heading("NEW VEHICLE LEAD"),
+        detailTable([
+          { label: "Lead", value: input.leadNumber },
+          { label: "Type", value: input.type.toUpperCase() },
+          { label: "Vehicle", value: input.displayTitle },
+          ...(input.year ? [{ label: "Year", value: String(input.year) }] : []),
+          ...(input.mileageKm != null
+            ? [{ label: "Mileage", value: `${input.mileageKm.toLocaleString("en-US")} km` }]
+            : []),
+          { label: "Location", value: input.province ?? "—" },
+          { label: "Customer asking price", value: format(input.askingPrice) },
+          { label: "AI estimated range", value: range },
+          { label: "Lead score", value: input.leadScore ?? "—" },
+          { label: "Customer", value: input.customerName },
+        ]),
+        paragraph("AI price figures are internal estimates only — not guaranteed market values."),
+        ctaButton(portalUrl(adminPath), "Open lead"),
+      ].join(""),
+    }),
+    tags: [{ name: "type", value: "vehicle-lead" }],
+  });
+
+  void postOptionalWebhook({
+    source: "vehicle-lead",
+    ...input,
+  });
+
+  if (input.customerEmail?.trim()) {
+    sendEmailBackground({
+      to: input.customerEmail.trim(),
+      subject: `We received your vehicle request — ${input.leadNumber}`,
+      html: emailLayout({
+        title: "Vehicle request received",
+        preheader: input.leadNumber,
+        bodyHtml: [
+          heading("Thank you"),
+          paragraph(`Hi ${input.customerName},`),
+          paragraph(
+            `SiamEZ has received your vehicle request (${input.leadNumber}) for ${input.displayTitle}. Our team will review the details and follow up with next steps.`
+          ),
+          paragraph(`If you need faster help, message us on LINE (${site.line}) or call ${site.phone}.`),
+          ctaButton(portalUrl("/vehicle"), "Visit SiamEZ"),
+        ].join(""),
+      }),
+      tags: [{ name: "type", value: "vehicle-lead-ack" }],
+    });
+  }
+}
+
 export async function sendTestEmail(to: string): Promise<SendEmailResult> {
   return sendEmail({
     to,

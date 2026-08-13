@@ -19,5 +19,6 @@ export {
   sendPayoutEmail,
   sendSalesBoostPendingEmail,
   sendTestEmail,
+  sendVehicleLeadNotification,
   sendWelcomeEmail,
 } from "@/lib/email/messages";
