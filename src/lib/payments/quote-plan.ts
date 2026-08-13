@@ -58,7 +58,6 @@ export interface BuildPaymentPlanInput {
 const HIGH_CUSTOM_SLUGS = new Set([
   "construction-handyman",
   "real-estate-services",
-  "car-motorbike-finder-selling-service",
   "event-planning-venue-services",
 ]);
 

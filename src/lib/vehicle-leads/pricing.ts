@@ -21,14 +21,14 @@ const SETTINGS_KEY = "vehicle_service_pricing";
 
 export function getDefaultVehicleServicePricing(): VehicleServicePricing {
   return {
-    sourcingFeeBaht: 0,
-    sellingFeeBaht: 0,
+    sourcingFeeBaht: 5000,
+    sellingFeeBaht: 5000,
     commissionPercent: 0,
     registrationFeeBaht: 0,
     deliveryFeeBaht: 0,
     inspectionFeeBaht: 0,
     otherFeeBaht: 0,
-    pricingMode: "hybrid",
+    pricingMode: "fixed",
     expectedResponseHours: null,
     responseTimeframeCopy: null,
   };

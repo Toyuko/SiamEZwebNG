@@ -460,6 +460,16 @@ export const serviceSeoBySlug: Record<ServiceSlug, ServiceSeo> = {
           th: "ช่วยทั้งซื้อและขาย รวมเอกสารและโอนทะเบียนเมื่อพร้อม",
         },
       },
+      {
+        question: {
+          en: "How much does the finder and selling service cost?",
+          th: "บริการหารถและขายรถมีค่าใช้จ่ายเท่าไหร่?",
+        },
+        answer: {
+          en: "The service fee is a fixed ฿5,000 upfront when you book. That covers SiamEZ sourcing, negotiation, and paperwork support. Vehicle purchase price, DLT fees, and optional extras are separate.",
+          th: "ค่าบริการคงที่ 5,000 บาท จ่ายล่วงหน้าตอนจอง ครอบคลุมการค้นหา ต่อรอง และเอกสารโดย SiamEZ ราคารถ ค่า DLT และบริการเสริมแยกต่างหาก",
+        },
+      },
     ],
   },
   "transportation-services": {

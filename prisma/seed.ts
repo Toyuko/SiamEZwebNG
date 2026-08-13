@@ -121,10 +121,12 @@ const services = [
     slug: "car-motorbike-finder-selling-service",
     name: "Car & Motorbike Finding and Selling Service",
     shortDescription:
-      "Buy or sell cars and motorcycles in Thailand with full negotiation, paperwork, and registration support from start to finish.",
+      "Buy or sell cars and motorcycles in Thailand with full negotiation, paperwork, and registration support — ฿5,000 upfront service fee.",
     description:
-      "SiamEZ Auto & Bike Finder helps you buy or sell cars, motorcycles, vans, and big bikes in Thailand. We handle sourcing, negotiation, paperwork, and registration with transparent support for locals and expats.",
-    type: "quote" as const,
+      "SiamEZ Auto & Bike Finder helps you buy or sell cars, motorcycles, vans, and big bikes in Thailand. We handle sourcing, negotiation, paperwork, and registration with transparent support for locals and expats. Fixed upfront service fee: ฿5,000.",
+    type: "fixed" as const,
+    priceAmount: 500_000, // 5,000 THB in satang
+    priceCurrency: "THB",
     sortOrder: 8,
   },
   {
@@ -188,6 +190,9 @@ async function main() {
         description: s.description,
         type: s.type,
         sortOrder: s.sortOrder,
+        ...("priceAmount" in s
+          ? { priceAmount: s.priceAmount ?? null, priceCurrency: s.priceCurrency ?? "THB" }
+          : {}),
       },
     });
   }

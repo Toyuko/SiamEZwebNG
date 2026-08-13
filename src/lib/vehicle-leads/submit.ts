@@ -5,6 +5,7 @@ import { trackPlatformEvent } from "@/lib/analytics/track";
 import { getOrEnsureServiceBySlug } from "@/data-access/service";
 import { createCase as createCaseRecord } from "@/data-access/case";
 import { createDocument } from "@/data-access/document";
+import { createInvoice } from "@/data-access/invoice";
 import { nextCaseNumber } from "@/lib/utils";
 import {
   createVehicleLeadRecord,
@@ -249,16 +250,29 @@ export async function convertVehicleLeadToBooking(leadId: string, staffUserId: s
     officialListingPrice: lead.officialListingPrice,
   };
 
+  const isFixedPayable =
+    service.type === "fixed" && service.priceAmount != null && service.priceAmount > 0;
+
   const created = await createCaseRecord({
     caseNumber: nextCaseNumber(),
     serviceId: service.id,
-    status: "under_review",
+    status: isFixedPayable ? "new" : "under_review",
     isGuest: true,
     guestEmail: lead.customerEmail,
     guestName: lead.customerName,
     guestPhone: lead.customerPhone,
     formData,
   });
+
+  if (isFixedPayable) {
+    await createInvoice({
+      caseId: created.id,
+      amount: service.priceAmount!,
+      currency: service.priceCurrency ?? "THB",
+      status: "unpaid",
+      kind: "full",
+    });
+  }
 
   for (const media of lead.media) {
     await createDocument({

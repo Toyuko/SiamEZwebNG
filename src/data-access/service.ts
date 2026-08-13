@@ -117,10 +117,12 @@ export async function getOrEnsureServiceBySlug(slug: string) {
         name,
         shortDescription: shortDesc,
         description,
-        type: "quote",
+        type: slug === "car-motorbike-finder-selling-service" ? "fixed" : "quote",
+        ...(slug === "car-motorbike-finder-selling-service"
+          ? { priceAmount: 500_000, priceCurrency: "THB" }
+          : { priceCurrency: "THB" }),
         sortOrder,
         active: true,
-        priceCurrency: "THB",
       },
       update: {
         name,
