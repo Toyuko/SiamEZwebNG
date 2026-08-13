@@ -35,6 +35,23 @@ export function getHelpSearchStubs(locale: "en" | "th" = "en"): HelpSearchDocume
       href: "/about",
     },
     {
+      id: "help-testimonials",
+      titleEn: "Customer testimonials & reviews",
+      titleTh: "คำรับรองและความคิดเห็นจากลูกค้า",
+      subtitleEn: "Google, Facebook, and YouTube reviews from SiamEZ clients",
+      subtitleTh: "รีวิวจากลูกค้า SiamEZ บน Google, Facebook และ YouTube",
+      keywords: [
+        "testimonials",
+        "reviews",
+        "google",
+        "facebook",
+        "youtube",
+        "คำรับรอง",
+        "รีวิว",
+      ],
+      href: "/testimonials",
+    },
+    {
       id: "help-services",
       titleEn: "Browse all services",
       titleTh: "ดูบริการทั้งหมด",

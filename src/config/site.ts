@@ -52,7 +52,7 @@ export type PublicNavEntry =
 
 /**
  * Soft-launch public navigation.
- * Keep freelancers / gallery / testimonials reachable via footer or direct URL,
+ * Keep freelancers / gallery reachable via footer or direct URL,
  * but out of the primary nav so conversion stays focused.
  */
 export const publicNav: PublicNavEntry[] = [
@@ -60,6 +60,7 @@ export const publicNav: PublicNavEntry[] = [
   { type: "link", labelKey: "services", href: "/services", match: "prefix" },
   { type: "link", labelKey: "sales", href: "/sales", match: "prefix" },
   { type: "link", labelKey: "realEstate", href: "/real-estate", match: "prefix" },
+  { type: "link", labelKey: "testimonials", href: "/testimonials", match: "exact" },
   { type: "link", labelKey: "contact", href: "/contact", match: "exact" },
 ];
 
@@ -69,6 +70,7 @@ export const footerQuickLinks = [
   { label: "Sell or find a vehicle", href: "/vehicle" },
   { label: "Real Estate", href: "/real-estate" },
   { label: "About Us", href: "/about" },
+  { label: "Testimonials", href: "/testimonials" },
   { label: "Contact", href: "/contact" },
 ] as const;
 
