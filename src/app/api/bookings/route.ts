@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { createBookingCase } from "@/lib/domain/cases";
+import { getOrEnsureServiceBySlug, getServiceById } from "@/data-access/service";
 import { ok, fail } from "@/lib/api-response";
 import { optionalBearerApiUser } from "@/lib/auth/requireBearerApiUser";
 import {
@@ -23,15 +24,24 @@ export async function POST(request: NextRequest) {
   try {
     const apiUser = await optionalBearerApiUser(request);
     const body = await request.json();
-    const serviceId = String(body?.serviceId ?? "").trim();
+    // Accept either a service id (cuid) or a canonical slug (e.g. "translation-services").
+    // Mirrors the website booking page, which resolves the slug via getOrEnsureServiceBySlug.
+    const serviceRef = String(body?.serviceId ?? body?.serviceSlug ?? "").trim();
 
-    if (!serviceId) {
+    if (!serviceRef) {
       return fail("serviceId is required", 400);
+    }
+
+    const service =
+      (await getServiceById(serviceRef).catch(() => null)) ??
+      (await getOrEnsureServiceBySlug(serviceRef));
+    if (!service || !service.active) {
+      return fail("Service not found or inactive", 404);
     }
 
     const isAuthenticated = Boolean(apiUser?.userId);
     const result = await createBookingCase({
-      serviceId,
+      serviceId: service.id,
       isGuest: !isAuthenticated,
       userId: isAuthenticated ? apiUser!.userId : undefined,
       guestEmail: typeof body?.guestEmail === "string" ? body.guestEmail : undefined,
