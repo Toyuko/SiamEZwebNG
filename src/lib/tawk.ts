@@ -1,5 +1,5 @@
 /**
- * tawk.to live chat — public widget + Concierge handoff.
+ * tawk.to live chat — Concierge staff handoff (launcher hidden until opened).
  *
  * Direct chat: https://tawk.to/chat/{propertyId}/{widgetId}
  * Embed: https://embed.tawk.to/{propertyId}/{widgetId}
@@ -43,6 +43,7 @@ export type TawkApi = {
   addTags?: (tags: string[], callback?: (error?: unknown) => void) => void;
   onLoad?: () => void;
   onChatMaximized?: () => void;
+  onChatMinimized?: () => void;
   visitor?: { name?: string; email?: string };
 };
 

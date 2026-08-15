@@ -23,7 +23,8 @@ export default async function PublicLayout({
       <PublicHeaderWithAuth />
       <main className="flex-1">{children}</main>
       <PublicFooter />
-      {showConcierge ? <LazyAiConciergeShell placement="stacked" /> : null}
+      {/* default placement: tawk launcher stays hidden until Concierge handoff */}
+      {showConcierge ? <LazyAiConciergeShell placement="default" /> : null}
       {showTawk ? <LazyTawkWidget /> : null}
     </div>
   );

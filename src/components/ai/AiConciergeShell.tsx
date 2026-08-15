@@ -19,8 +19,9 @@ import {
 
 export type AiConciergeShellProps = {
   /**
-   * FAB placement. Public pages use `stacked` so the button sits above tawk.to / WhatsApp.
-   * Portal pages can use `default` (bottom-right).
+   * FAB placement. Public pages use `default` (bottom-right) because the
+   * tawk.to launcher stays hidden until staff handoff. Use `stacked` only
+   * when another float (WhatsApp / visible live-chat) shares the corner.
    */
   placement?: "default" | "stacked";
   /** Optional server-provided flag; client still re-checks capability. */
@@ -32,7 +33,7 @@ function toConciergeLocale(locale: string): ConciergeLocale {
 }
 
 export function AiConciergeShell({
-  placement = "stacked",
+  placement = "default",
   llmEnabled: llmEnabledProp = false,
 }: AiConciergeShellProps) {
   const localeRaw = useLocale();

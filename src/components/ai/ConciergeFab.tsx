@@ -22,7 +22,7 @@ export function ConciergeFab({
   onToggle,
   label,
   closeLabel,
-  placement = "stacked",
+  placement = "default",
 }: Props) {
   return (
     <button

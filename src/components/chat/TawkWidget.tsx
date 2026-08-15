@@ -25,9 +25,12 @@ function applyHandoff(detail?: TawkOpenDetail) {
 }
 
 /**
- * Loads the tawk.to embed on public pages and opens it when Concierge
- * dispatches a staff-handoff event. Hidden on unmount so portal/admin
- * layouts are not covered by a leftover bubble.
+ * Loads the tawk.to embed on public pages for Concierge staff handoff.
+ *
+ * The floating launcher stays hidden by default so it does not cover Ask
+ * SiamEZ. It only appears when Concierge opens live chat, and is hidden
+ * again when the visitor minimizes. Unmount also hides the bubble so
+ * portal/admin layouts are not covered by a leftover widget.
  */
 export function TawkWidget() {
   const config = getTawkConfig();
@@ -46,11 +49,13 @@ export function TawkWidget() {
 
     const previousOnLoad = api.onLoad;
     const previousOnMaximized = api.onChatMaximized;
+    const previousOnMinimized = api.onChatMinimized;
 
     api.onLoad = () => {
       previousOnLoad?.();
       loaded = true;
-      api.showWidget?.();
+      // Keep Ask SiamEZ as the sole public chat FAB until handoff.
+      api.hideWidget?.();
       if (pending) {
         applyHandoff(pending);
         pending = null;
@@ -60,6 +65,11 @@ export function TawkWidget() {
     api.onChatMaximized = () => {
       previousOnMaximized?.();
       dispatchTawkMaximized();
+    };
+
+    api.onChatMinimized = () => {
+      previousOnMinimized?.();
+      api.hideWidget?.();
     };
 
     const onOpen = (event: Event) => {
@@ -82,8 +92,9 @@ export function TawkWidget() {
       script.charset = "UTF-8";
       script.setAttribute("crossorigin", "*");
       document.body.appendChild(script);
-    } else if (loaded) {
-      api.showWidget?.();
+    } else {
+      // Script already present (e.g. client navigation back to public).
+      api.hideWidget?.();
     }
 
     return () => {
