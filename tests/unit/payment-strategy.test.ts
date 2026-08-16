@@ -119,6 +119,41 @@ describe("payment strategy — conversion-first 10/20/30", () => {
     expect(plan.percentage_rejected).toBe(true);
   });
 
+  it("driver-license uses a fixed 50% deposit", () => {
+    const config = getDefaultPaymentConfig("driver-license");
+    expect(config.default_initial_percentage).toBe(50);
+    expect(config.maximum_normal_percentage).toBe(50);
+
+    const plan = buildQuotePaymentPlan({
+      pricing: {
+        quoteType: "calculated",
+        currency: "THB",
+        total: thbToSatang(15_000),
+        subtotal: thbToSatang(15_000),
+        governmentFees: 0,
+        addOnsTotal: 0,
+        discount: 0,
+        lineItems: [
+          {
+            id: "svc",
+            label: "License conversion (car)",
+            category: "service",
+            amount: thbToSatang(15_000),
+            feeGuarantee: "exact",
+          },
+        ],
+        summaryLabel: "driver-license",
+      },
+      config,
+      serviceSlug: "driver-license",
+      aiRecommendedPercentage: 10,
+    });
+    expect(plan.initial_percentage).toBe(50);
+    expect(plan.initial_payment_total).toBe(thbToSatang(7500));
+    expect(plan.remaining_balance).toBe(thbToSatang(7500));
+    expect(plan.requires_human_review).toBe(false);
+  });
+
   it("Test 7 — AI 90% is rejected", () => {
     const norm = normalizeInitialPercentage(90, 30);
     expect(norm.rejected).toBe(true);

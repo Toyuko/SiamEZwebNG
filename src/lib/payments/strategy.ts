@@ -45,7 +45,10 @@ export const EXPOSURE_FOR_MODEL: Record<PaymentModel, ExposureStrategy> = {
 export const DEFAULT_MINIMUM_INITIAL_THB = 500;
 export const DEFAULT_MAXIMUM_NORMAL_PERCENTAGE = 30;
 
-/** Percentages above this are never a "normal" deposit — only allowed to fund named external costs. */
+/**
+ * Default ceiling for the standard 10/20/30 exposure ladder.
+ * Individual services may raise `maximum_normal_percentage` (e.g. 50% deposit).
+ */
 export const HARD_MAX_SERVICE_PERCENTAGE = 30;
 
 export const DEFAULT_PROJECT_MILESTONES: ReadonlyArray<{
@@ -82,9 +85,10 @@ export const DEFAULT_PROJECT_MILESTONES: ReadonlyArray<{
 
 export interface ServicePaymentConfig {
   payment_strategy: ExposureStrategy;
-  default_initial_percentage: 10 | 20 | 30;
+  /** Catalog default / ceiling for the initial payment percentage (typically 10–50). */
+  default_initial_percentage: number;
   minimum_initial_payment: number;
-  /** THB. Converted to satang at calculation time. */
+  /** Ceiling for the SiamEZ booking percentage (default 30; some services allow 50). */
   maximum_normal_percentage: number;
   allow_milestones: boolean;
   allow_full_payment: boolean;
@@ -130,9 +134,9 @@ export interface InitialPaymentBreakdown {
 }
 
 /**
- * Normalize an AI- or client-supplied percentage.
- * 50–90% is never a normal deposit — cap to maximum_normal_percentage
- * unless the service config explicitly permits a higher ceiling.
+ * Normalize an AI- or client-supplied percentage against the service ceiling.
+ * Services on the default ladder stay ≤ HARD_MAX_SERVICE_PERCENTAGE (30).
+ * Services that opt into a higher `maximum_normal_percentage` (e.g. 50) may use it.
  */
 export function normalizeInitialPercentage(
   requested: number,
@@ -148,11 +152,9 @@ export function normalizeInitialPercentage(
   );
   if (rounded > cap) {
     return {
-      percentage: Math.min(cap, HARD_MAX_SERVICE_PERCENTAGE) === cap
-        ? cap
-        : Math.min(cap, HARD_MAX_SERVICE_PERCENTAGE),
+      percentage: cap,
       normalized: true,
-      rejected: rounded > HARD_MAX_SERVICE_PERCENTAGE || rounded > cap,
+      rejected: true,
     };
   }
   if (rounded > HARD_MAX_SERVICE_PERCENTAGE && cap <= HARD_MAX_SERVICE_PERCENTAGE) {

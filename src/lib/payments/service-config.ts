@@ -36,7 +36,12 @@ export const SERVICE_PAYMENT_DEFAULTS: Record<string, ServicePaymentConfig> = {
   "basic-translation": config("LOW_EXPOSURE"),
   "translation-services": config("LOW_EXPOSURE"),
   "police-clearance": config("LOW_EXPOSURE"),
-  "driver-license": config("LOW_EXPOSURE"),
+  /** 50% deposit at booking; balance before DLT visit. */
+  "driver-license": config("NORMAL_EXPOSURE", {
+    default_initial_percentage: 50,
+    maximum_normal_percentage: 50,
+    allow_milestones: false,
+  }),
   "vehicle-registration": config("NORMAL_EXPOSURE"),
   "marriage-registration": config("NORMAL_EXPOSURE"),
   "visa-services": config("NORMAL_EXPOSURE"),
@@ -104,11 +109,9 @@ export function parseServicePaymentConfig(
 
   const pctRaw = asPositiveInt(
     obj.default_initial_percentage,
-    EXPOSURE_PERCENTAGE[strategy]
+    defaults.default_initial_percentage || EXPOSURE_PERCENTAGE[strategy]
   );
-  const default_initial_percentage = (
-    pctRaw <= 10 ? 10 : pctRaw <= 20 ? 20 : 30
-  ) as 10 | 20 | 30;
+  const default_initial_percentage = Math.min(100, Math.max(1, pctRaw));
 
   return {
     payment_strategy: strategy,

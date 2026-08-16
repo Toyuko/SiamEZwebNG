@@ -1,6 +1,7 @@
 import {
   computeAddonsTotalThb,
   computeBasePriceThb,
+  computeDepositThb,
   type LicenseAddons,
   type LicenseServiceCategory,
   type LicenseVehicleType,
@@ -28,6 +29,8 @@ export function buildDriverLicenseFormData(
   };
   const basePriceThb = computeBasePriceThb(category, vehicleType);
   const addonsTotalThb = computeAddonsTotalThb(addons);
+  const totalThb = basePriceThb + addonsTotalThb;
+  const depositThb = computeDepositThb(totalThb);
   return {
     name: values.name,
     email: values.email,
@@ -40,7 +43,10 @@ export function buildDriverLicenseFormData(
       appointmentDate: values.appointmentDate,
       basePriceThb,
       addonsTotalThb,
-      totalThb: basePriceThb + addonsTotalThb,
+      totalThb,
+      depositThb,
+      depositPercent: 50,
+      remainingThb: totalThb - depositThb,
       currency: "THB",
     },
   };
@@ -112,12 +118,12 @@ export const driverLicenseWizard: WizardConfig = {
         {
           name: "addonTranslationLetter",
           type: "checkbox",
-          label: "Translation letter (+2,500 THB)",
+          label: "Translation letter (+1,500 THB)",
         },
         {
           name: "addonAddressCertificate",
           type: "checkbox",
-          label: "Address certificate (+2,500 THB)",
+          label: "Residential certificate (+2,500 THB)",
         },
       ],
     },
@@ -156,7 +162,7 @@ export const driverLicenseWizard: WizardConfig = {
       type: "documents",
       label: "Payment receipt",
       description:
-        "Upload your bank transfer / PromptPay receipt (required). Signed-in uploads are linked to your booking via document IDs.",
+        "Upload your 50% deposit bank transfer / PromptPay receipt (required). The balance is due before your DLT visit. Signed-in uploads are linked to your booking via document IDs.",
       documentsRequired: true,
       requiredDocuments: [
         {

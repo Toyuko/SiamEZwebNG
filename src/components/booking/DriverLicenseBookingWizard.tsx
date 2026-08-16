@@ -19,6 +19,7 @@ import { clientDetailsSchema } from "@/lib/booking-schema";
 import {
   computeAddonsTotalThb,
   computeBasePriceThb,
+  computeDepositThb,
   getMinimumAppointmentDateString,
   isValidDriverLicenseAppointmentDate,
   type LicenseAddons,
@@ -98,6 +99,8 @@ export function DriverLicenseBookingWizard({
 
   const addonsThb = computeAddonsTotalThb(addons);
   const totalThb = baseThb + addonsThb;
+  const depositThb = computeDepositThb(totalThb);
+  const remainingThb = totalThb - depositThb;
 
   const steps = [
     { id: "service" as const, label: t("stepService") },
@@ -215,6 +218,9 @@ export function DriverLicenseBookingWizard({
         basePriceThb: baseThb,
         addonsTotalThb: addonsThb,
         totalThb,
+        depositThb,
+        depositPercent: 50,
+        remainingThb,
         currency: "THB",
       },
       documents: documents.map((d) => ({
@@ -444,9 +450,17 @@ export function DriverLicenseBookingWizard({
                 <span className="text-gray-600 dark:text-gray-400">{t("summaryAddons")}</span>
                 <span>{fmtThb.format(addonsThb)}</span>
               </div>
-              <div className="mt-2 flex justify-between border-t border-gray-200 pt-2 font-semibold dark:border-gray-600">
+              <div className="mt-2 flex justify-between border-t border-gray-200 pt-2 dark:border-gray-600">
+                <span className="text-gray-600 dark:text-gray-400">{t("summaryTotal")}</span>
+                <span>{fmtThb.format(totalThb)}</span>
+              </div>
+              <div className="mt-2 flex justify-between font-semibold">
                 <span>{t("amountToPay")}</span>
-                <span className="text-siam-blue">{fmtThb.format(totalThb)}</span>
+                <span className="text-siam-blue">{fmtThb.format(depositThb)}</span>
+              </div>
+              <div className="mt-2 flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                <span>{t("summaryRemaining")}</span>
+                <span>{fmtThb.format(remainingThb)}</span>
               </div>
             </div>
 

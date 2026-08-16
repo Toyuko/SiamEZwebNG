@@ -1,6 +1,13 @@
 export type LicenseServiceCategory = "conversion" | "renewal" | "apply_new" | "idp";
 export type LicenseVehicleType = "bike" | "car" | "both";
 
+/** Share of total due at booking (remainder before DLT visit). */
+export const DRIVER_LICENSE_DEPOSIT_PERCENT = 50;
+
+export function computeDepositThb(totalThb: number): number {
+  return Math.round((Math.max(0, totalThb) * DRIVER_LICENSE_DEPOSIT_PERCENT) / 100);
+}
+
 export function computeBasePriceThb(
   category: LicenseServiceCategory,
   vehicle: LicenseVehicleType | null
@@ -9,13 +16,12 @@ export function computeBasePriceThb(
   if (!vehicle) return 0;
   switch (category) {
     case "conversion":
-      if (vehicle === "bike") return 4500;
-      if (vehicle === "car") return 6000;
-      return 10500;
+      if (vehicle === "bike") return 10_000;
+      if (vehicle === "car") return 15_000;
+      return 20_000;
     case "renewal":
-      if (vehicle === "bike") return 3500;
-      if (vehicle === "car") return 4500;
-      return 8000;
+      if (vehicle === "both") return 4500;
+      return 3500;
     case "apply_new":
       if (vehicle === "bike") return 3500;
       if (vehicle === "car") return 5000;
@@ -34,7 +40,7 @@ export type LicenseAddons = {
 export function computeAddonsTotalThb(addons: LicenseAddons): number {
   let t = 0;
   if (addons.fastTrack) t += 1500;
-  if (addons.translationLetter) t += 2500;
+  if (addons.translationLetter) t += 1500;
   if (addons.addressCertificate) t += 2500;
   return t;
 }

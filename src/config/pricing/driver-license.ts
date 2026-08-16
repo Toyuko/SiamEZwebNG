@@ -46,12 +46,12 @@ export const driverLicensePricing: ServicePricingConfig = {
     {
       name: "addonTranslationLetter",
       type: "checkbox",
-      label: "Translation letter (+฿2,500)",
+      label: "Translation letter (+฿1,500)",
     },
     {
       name: "addonAddressCertificate",
       type: "checkbox",
-      label: "Address certificate (+฿2,500)",
+      label: "Residential certificate (+฿2,500)",
     },
   ],
   rules: [
@@ -60,7 +60,7 @@ export const driverLicensePricing: ServicePricingConfig = {
       id: "conversion-bike",
       label: "License conversion (motorcycle)",
       category: "service",
-      amountThb: 4500,
+      amountThb: 10_000,
       when: {
         and: [
           { field: "category", equals: "conversion" },
@@ -72,7 +72,7 @@ export const driverLicensePricing: ServicePricingConfig = {
       id: "conversion-car",
       label: "License conversion (car)",
       category: "service",
-      amountThb: 6000,
+      amountThb: 15_000,
       when: {
         and: [
           { field: "category", equals: "conversion" },
@@ -84,7 +84,7 @@ export const driverLicensePricing: ServicePricingConfig = {
       id: "conversion-both",
       label: "License conversion (car + bike)",
       category: "service",
-      amountThb: 10500,
+      amountThb: 20_000,
       when: {
         and: [
           { field: "category", equals: "conversion" },
@@ -92,7 +92,7 @@ export const driverLicensePricing: ServicePricingConfig = {
         ],
       },
     },
-    // Renewal
+    // Renewal — same rate for car or bike; both is discounted vs two singles
     {
       id: "renewal-bike",
       label: "License renewal (motorcycle)",
@@ -109,7 +109,7 @@ export const driverLicensePricing: ServicePricingConfig = {
       id: "renewal-car",
       label: "License renewal (car)",
       category: "service",
-      amountThb: 4500,
+      amountThb: 3500,
       when: {
         and: [
           { field: "category", equals: "renewal" },
@@ -121,7 +121,7 @@ export const driverLicensePricing: ServicePricingConfig = {
       id: "renewal-both",
       label: "License renewal (car + bike)",
       category: "service",
-      amountThb: 8000,
+      amountThb: 4500,
       when: {
         and: [
           { field: "category", equals: "renewal" },
@@ -186,12 +186,12 @@ export const driverLicensePricing: ServicePricingConfig = {
       id: "translation-letter",
       label: "Translation letter",
       category: "addon",
-      amountThb: 2500,
+      amountThb: 1500,
       when: { field: "addonTranslationLetter", truthy: true },
     },
     {
       id: "address-certificate",
-      label: "Address certificate",
+      label: "Residential certificate",
       category: "addon",
       amountThb: 2500,
       when: { field: "addonAddressCertificate", truthy: true },

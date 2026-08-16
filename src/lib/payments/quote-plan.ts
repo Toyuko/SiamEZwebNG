@@ -135,14 +135,18 @@ export function selectLowestPercentage(input: {
 }): { percentage: number; reason: string } {
   const ceiling = Math.min(
     input.config.default_initial_percentage,
-    input.config.maximum_normal_percentage,
-    30
+    input.config.maximum_normal_percentage
   );
 
   let percentage = ceiling;
   let reason = reasonForPercentage(percentage);
 
+  // Services with an explicit high deposit (e.g. driver-license 50%) keep that
+  // rate; AI may only lower percentages on the standard ≤30% ladder.
+  const allowAiLower = ceiling <= 30;
+
   if (
+    allowAiLower &&
     typeof input.aiRecommendedPercentage === "number" &&
     Number.isFinite(input.aiRecommendedPercentage)
   ) {
@@ -165,10 +169,20 @@ function reasonForPercentage(percentage: number): string {
   if (percentage <= 20) {
     return "A 20% initial payment allows our team to begin preparing and processing your service. This payment is applied toward your final balance.";
   }
+  if (percentage >= 50) {
+    return "A 50% deposit reserves your appointment and starts document prep. The remaining balance is due before your DLT visit.";
+  }
   return "This is a more involved project, so a 30% start payment lets our team begin work. Remaining amounts follow your payment plan.";
 }
 
-function customerMessage(model: PaymentModel, initialThbHint: number): string {
+function customerMessage(
+  model: PaymentModel,
+  initialThbHint: number,
+  percentage?: number
+): string {
+  if (percentage != null && percentage >= 50) {
+    return `Pay a ${percentage}% deposit of ${initialThbHint.toLocaleString("en-US")} THB today to reserve your booking. The balance is due before your DLT visit.`;
+  }
   if (model === "BOOK_NOW") {
     return `Secure your booking with a small ${initialThbHint.toLocaleString("en-US")} THB payment. This amount is applied toward your final service fee.`;
   }
@@ -219,7 +233,7 @@ export function buildQuotePaymentPlan(input: BuildPaymentPlanInput): QuotePaymen
   const aiOverMax =
     typeof input.aiRecommendedPercentage === "number" &&
     Number.isFinite(input.aiRecommendedPercentage) &&
-    input.aiRecommendedPercentage > Math.min(config.maximum_normal_percentage, 30);
+    input.aiRecommendedPercentage > config.maximum_normal_percentage;
 
   const calc = calculateInitialPayment({
     serviceFeeSatang: buckets.serviceFee,
@@ -282,7 +296,7 @@ export function buildQuotePaymentPlan(input: BuildPaymentPlanInput): QuotePaymen
     allow_milestones: config.allow_milestones,
     milestones,
     reason,
-    customer_message: customerMessage(model, initialThb),
+    customer_message: customerMessage(model, initialThb, calc.initialPercentage),
     requires_human_review: review,
     confidence,
     percentage_rejected: calc.percentageRejected || aiOverMax,

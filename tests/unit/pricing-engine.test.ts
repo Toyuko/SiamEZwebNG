@@ -20,7 +20,7 @@ describe("pricing engine", () => {
       requirements: { category: "conversion", vehicleType: "car" },
     });
     expect(result.quoteType).toBe("calculated");
-    expect(result.total).toBe(thbToSatang(6000));
+    expect(result.total).toBe(thbToSatang(15_000));
     expect(result.addOnsTotal).toBe(0);
     expect(result.lineItems).toHaveLength(1);
   });
@@ -35,8 +35,8 @@ describe("pricing engine", () => {
         addonTranslationLetter: true,
       },
     });
-    expect(result.total).toBe(thbToSatang(6000 + 1500 + 2500));
-    expect(result.addOnsTotal).toBe(thbToSatang(1500 + 2500));
+    expect(result.total).toBe(thbToSatang(15_000 + 1500 + 1500));
+    expect(result.addOnsTotal).toBe(thbToSatang(1500 + 1500));
   });
 
   it("applies conditional pricing (marriage foreign + translation)", () => {
@@ -131,6 +131,6 @@ describe("admin override math", () => {
     const original = calculated.total;
     const adjustment = thbToSatang(-500);
     const finalAmount = Math.max(0, original + adjustment);
-    expect(finalAmount).toBe(thbToSatang(5500));
+    expect(finalAmount).toBe(thbToSatang(14_500));
   });
 });
