@@ -217,8 +217,7 @@ describe("specialty formData transforms", () => {
       notes: "  hello  ",
       category: "conversion",
       vehicleType: "bike",
-      addonFastTrack: true,
-      addonTranslationLetter: false,
+      addonTranslationLetter: true,
       addonAddressCertificate: false,
       appointmentDate: "2026-08-10",
     });
@@ -234,7 +233,7 @@ describe("specialty formData transforms", () => {
       depositThb: number;
       remainingThb: number;
       currency: string;
-      addons: { fastTrack: boolean };
+      addons: { translationLetter: boolean; addressCertificate: boolean };
     };
     expect(dl.category).toBe("conversion");
     expect(dl.vehicleType).toBe("bike");
@@ -244,7 +243,22 @@ describe("specialty formData transforms", () => {
     expect(dl.depositThb).toBe(5750);
     expect(dl.remainingThb).toBe(5750);
     expect(dl.currency).toBe("THB");
-    expect(dl.addons.fastTrack).toBe(true);
+    expect(dl.addons.translationLetter).toBe(true);
+    expect(dl.addons.addressCertificate).toBe(false);
+  });
+
+  it("prices apply_new the same as conversion", () => {
+    const payload = buildDriverLicenseFormData({
+      name: "Ada",
+      email: "ada@example.com",
+      phone: "+66",
+      category: "apply_new",
+      vehicleType: "car",
+      appointmentDate: "2026-08-10",
+    });
+    const dl = payload.driverLicense as { basePriceThb: number; totalThb: number };
+    expect(dl.basePriceThb).toBe(15_000);
+    expect(dl.totalThb).toBe(15_000);
   });
 
   it("nulls vehicleType for IDP", () => {

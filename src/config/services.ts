@@ -39,7 +39,7 @@ export const serviceDisplayNames: Record<ServiceSlug, string> = {
 /** Short descriptions for services (siam-ez.com); used when DB has no data */
 export const serviceShortDescriptions: Record<ServiceSlug, string> = {
   "driver-license":
-    "Thai driver's license under 2026 DLT rules: conversion, renewal, new car/bike, IDP, FastTrack, and bilingual coordinators in Bangkok",
+    "Thai driver's license under 2026 DLT rules: conversion, renewal, new car/bike, IDP, and bilingual coordinators in Bangkok",
   "vehicle-registration":
     "We pick up your car or motorcycle at home, go to the DLT on your behalf, and handle Bangkok registration — often in one day for BKK plates",
   "visa-services":

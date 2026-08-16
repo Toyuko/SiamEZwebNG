@@ -23,7 +23,6 @@ export function buildDriverLicenseFormData(
   const vehicleType =
     category === "idp" ? null : ((values.vehicleType as LicenseVehicleType) || null);
   const addons: LicenseAddons = {
-    fastTrack: Boolean(values.addonFastTrack),
     translationLetter: Boolean(values.addonTranslationLetter),
     addressCertificate: Boolean(values.addonAddressCertificate),
   };
@@ -110,11 +109,6 @@ export const driverLicenseWizard: WizardConfig = {
       description: "Optional add-ons. You can skip this step with nothing selected.",
       generatesQuote: true,
       fields: [
-        {
-          name: "addonFastTrack",
-          type: "checkbox",
-          label: "FastTrack (+1,500 THB)",
-        },
         {
           name: "addonTranslationLetter",
           type: "checkbox",

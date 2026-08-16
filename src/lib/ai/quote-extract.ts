@@ -61,8 +61,10 @@ function ruleBasedExtract(input: {
     if (/british|uk|united kingdom/.test(text)) requirements.nationality = "British";
     if (/australian|australia/.test(text)) requirements.nationality = "Australian";
 
-    if (/express|fast.?track|urgent/.test(text)) requirements.addonFastTrack = true;
     if (/translat/.test(text)) requirements.addonTranslationLetter = true;
+    if (/residential|address.?cert|house.?book|yellow.?book/.test(text)) {
+      requirements.addonAddressCertificate = true;
+    }
   }
 
   if (input.serviceSlug === "basic-translation" || input.serviceSlug === "translation-services") {

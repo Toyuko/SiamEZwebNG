@@ -31,12 +31,12 @@ describe("pricing engine", () => {
       requirements: {
         category: "conversion",
         vehicleType: "car",
-        addonFastTrack: true,
         addonTranslationLetter: true,
+        addonAddressCertificate: true,
       },
     });
-    expect(result.total).toBe(thbToSatang(15_000 + 1500 + 1500));
-    expect(result.addOnsTotal).toBe(thbToSatang(1500 + 1500));
+    expect(result.total).toBe(thbToSatang(15_000 + 1500 + 2500));
+    expect(result.addOnsTotal).toBe(thbToSatang(1500 + 2500));
   });
 
   it("applies conditional pricing (marriage foreign + translation)", () => {

@@ -16,30 +16,25 @@ export function computeBasePriceThb(
   if (!vehicle) return 0;
   switch (category) {
     case "conversion":
+    case "apply_new":
       if (vehicle === "bike") return 10_000;
       if (vehicle === "car") return 15_000;
       return 20_000;
     case "renewal":
       if (vehicle === "both") return 4500;
       return 3500;
-    case "apply_new":
-      if (vehicle === "bike") return 3500;
-      if (vehicle === "car") return 5000;
-      return 7500;
     default:
       return 0;
   }
 }
 
 export type LicenseAddons = {
-  fastTrack: boolean;
   translationLetter: boolean;
   addressCertificate: boolean;
 };
 
 export function computeAddonsTotalThb(addons: LicenseAddons): number {
   let t = 0;
-  if (addons.fastTrack) t += 1500;
   if (addons.translationLetter) t += 1500;
   if (addons.addressCertificate) t += 2500;
   return t;

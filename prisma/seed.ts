@@ -77,7 +77,7 @@ const services = [
     slug: "driver-license",
     name: "Driver's License",
     shortDescription:
-      "Thai driver's license under 2026 DLT rules: conversion, renewal, new car/bike, IDP, FastTrack, and bilingual coordinators in Bangkok.",
+      "Thai driver's license under 2026 DLT rules: conversion, renewal, new car/bike, IDP, and bilingual coordinators in Bangkok.",
     description:
       "Fast-track appointments, exam prep, and escorted DLT visits for conversion, renewal, new licenses, and IDP — updated for 2026 health, address, and theory requirements.",
     type: "quote" as const,

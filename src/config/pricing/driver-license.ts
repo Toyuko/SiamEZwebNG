@@ -6,7 +6,7 @@ export const driverLicensePricing: ServicePricingConfig = {
   quoteMode: "calculated",
   validityDays: 14,
   conciergeHint:
-    "Ask about license service type (conversion/renewal/new/IDP), vehicle type, nationality, and optional express/translation add-ons. Never invent prices.",
+    "Ask about license service type (conversion/renewal/new/IDP), vehicle type, nationality, and optional translation/residential-certificate add-ons. Never invent prices.",
   questions: [
     {
       name: "category",
@@ -37,11 +37,6 @@ export const driverLicensePricing: ServicePricingConfig = {
       type: "text",
       label: "Nationality",
       required: false,
-    },
-    {
-      name: "addonFastTrack",
-      type: "checkbox",
-      label: "Express / fast-track (+฿1,500)",
     },
     {
       name: "addonTranslationLetter",
@@ -129,12 +124,12 @@ export const driverLicensePricing: ServicePricingConfig = {
         ],
       },
     },
-    // New
+    // New — same rates as conversion
     {
       id: "new-bike",
       label: "New license (motorcycle)",
       category: "service",
-      amountThb: 3500,
+      amountThb: 10_000,
       when: {
         and: [
           { field: "category", equals: "apply_new" },
@@ -146,7 +141,7 @@ export const driverLicensePricing: ServicePricingConfig = {
       id: "new-car",
       label: "New license (car)",
       category: "service",
-      amountThb: 5000,
+      amountThb: 15_000,
       when: {
         and: [
           { field: "category", equals: "apply_new" },
@@ -158,7 +153,7 @@ export const driverLicensePricing: ServicePricingConfig = {
       id: "new-both",
       label: "New license (car + bike)",
       category: "service",
-      amountThb: 7500,
+      amountThb: 20_000,
       when: {
         and: [
           { field: "category", equals: "apply_new" },
@@ -175,13 +170,6 @@ export const driverLicensePricing: ServicePricingConfig = {
       when: { field: "category", equals: "idp" },
     },
     // Add-ons
-    {
-      id: "fast-track",
-      label: "Express / fast-track",
-      category: "addon",
-      amountThb: 1500,
-      when: { field: "addonFastTrack", truthy: true },
-    },
     {
       id: "translation-letter",
       label: "Translation letter",

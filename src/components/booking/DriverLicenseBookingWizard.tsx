@@ -70,7 +70,6 @@ export function DriverLicenseBookingWizard({
   const [category, setCategory] = useState<LicenseServiceCategory | null>(null);
   const [vehicle, setVehicle] = useState<LicenseVehicleType | null>(null);
   const [addons, setAddons] = useState<LicenseAddons>({
-    fastTrack: false,
     translationLetter: false,
     addressCertificate: false,
   });
@@ -362,7 +361,6 @@ export function DriverLicenseBookingWizard({
             <ul className="space-y-3">
               {(
                 [
-                  { key: "fastTrack" as const, label: "addonFastTrack", price: "addonFastTrackPrice" },
                   { key: "translationLetter" as const, label: "addonTranslation", price: "addonTranslationPrice" },
                   { key: "addressCertificate" as const, label: "addonAddress", price: "addonAddressPrice" },
                 ] as const
