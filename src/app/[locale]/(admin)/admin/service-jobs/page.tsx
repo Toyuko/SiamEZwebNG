@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { getServiceJobs, getServices, getClients, getStaffUsers, getFreelancerJobsAdmin } from "@/actions/admin";
+import { getServiceJobs, getServices, getClientsForPicker, getStaffUsers, getFreelancerJobsAdmin } from "@/actions/admin";
 import { ServiceJobsTable } from "./ServiceJobsTable";
 import { ServiceJobsFilter } from "./ServiceJobsFilter";
 import { ServiceJobsPageClient } from "./ServiceJobsPageClient";
@@ -50,7 +50,7 @@ export default async function AdminServiceJobsPage({
       status: jobStatus,
     });
 
-    const clientsResult = await getClients({ page: 1 });
+    const clients = await getClientsForPicker();
 
     return (
       <div>
@@ -66,7 +66,7 @@ export default async function AdminServiceJobsPage({
           </div>
           <ServiceJobsPageClient
             services={services}
-            clients={clientsResult.clients}
+            clients={clients}
             staffUsers={[]}
             marketplaceOnly
           />
@@ -100,7 +100,7 @@ export default async function AdminServiceJobsPage({
   const dateFrom = params.dateFrom ?? undefined;
   const dateTo = params.dateTo ?? undefined;
 
-  const [{ jobs, total, totalPages }, clientsResult, staffUsers] = await Promise.all([
+  const [{ jobs, total, totalPages }, clients, staffUsers] = await Promise.all([
     getServiceJobs({
       search,
       status: status ?? "all",
@@ -109,7 +109,7 @@ export default async function AdminServiceJobsPage({
       dateTo,
       page,
     }),
-    getClients({ page: 1 }),
+    getClientsForPicker(),
     getStaffUsers(),
   ]);
 
@@ -126,7 +126,7 @@ export default async function AdminServiceJobsPage({
         </div>
         <ServiceJobsPageClient
           services={services}
-          clients={clientsResult.clients}
+          clients={clients}
           staffUsers={staffUsers}
         />
       </div>

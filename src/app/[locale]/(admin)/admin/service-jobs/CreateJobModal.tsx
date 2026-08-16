@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { ClientSearchSelect } from "./ClientSearchSelect";
 import type { Service } from "@prisma/client";
 import { cn } from "@/lib/utils";
 
@@ -64,7 +65,7 @@ export function CreateJobModal({
     e.preventDefault();
     setError(null);
     const form = e.currentTarget;
-    const userId = (form.elements.namedItem("clientId") as HTMLSelectElement).value;
+    const userId = (form.elements.namedItem("clientId") as HTMLInputElement).value;
     const serviceId = (form.elements.namedItem("serviceId") as HTMLSelectElement).value;
     const amountRaw = (form.elements.namedItem("amount") as HTMLInputElement).value;
     const title = (form.elements.namedItem("title") as HTMLInputElement | null)?.value?.trim();
@@ -73,7 +74,10 @@ export function CreateJobModal({
     const status = (form.elements.namedItem("status") as HTMLSelectElement | null)?.value;
     const staffId = (form.elements.namedItem("staffId") as HTMLSelectElement | null)?.value;
 
-    if (!userId) return;
+    if (!userId) {
+      setError("Please select a client.");
+      return;
+    }
     const amount = Math.round(parseFloat(amountRaw || "0") * 100);
     if (amount <= 0) {
       setError("Amount must be greater than zero.");
@@ -177,14 +181,14 @@ export function CreateJobModal({
 
         <div>
           <Label htmlFor="create-client">Client *</Label>
-          <Select id="create-client" name="clientId" required className="mt-1">
-            <option value="">Select client</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name ?? c.email} {c.name ? `(${c.email})` : ""}
-              </option>
-            ))}
-          </Select>
+          <ClientSearchSelect
+            key={open ? "open" : "closed"}
+            id="create-client"
+            name="clientId"
+            clients={clients}
+            required
+            className="mt-1"
+          />
         </div>
 
         <div>

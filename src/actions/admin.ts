@@ -696,6 +696,16 @@ export async function getClients(options?: { search?: string; page?: number }) {
   return { clients, total, page, totalPages: Math.ceil(total / ITEMS_PER_PAGE) };
 }
 
+/** All customers for admin job-creation pickers (id/name/email only). */
+export async function getClientsForPicker() {
+  await ensureStaffAccess();
+  return prisma.user.findMany({
+    where: { role: "customer" },
+    select: { id: true, name: true, email: true },
+    orderBy: [{ name: "asc" }, { email: "asc" }],
+  });
+}
+
 export async function getClientById(id: string) {
   await ensureStaffAccess();
   return prisma.user.findUnique({
