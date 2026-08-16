@@ -1,7 +1,7 @@
 export type LicenseServiceCategory = "conversion" | "renewal" | "apply_new" | "idp";
 export type LicenseVehicleType = "bike" | "car" | "both";
 
-/** Share of total due at booking (remainder before DLT visit). */
+/** Share of total due at booking (remainder after you receive your license). */
 export const DRIVER_LICENSE_DEPOSIT_PERCENT = 50;
 
 export function computeDepositThb(totalThb: number): number {
@@ -68,6 +68,28 @@ export function parseLocalDate(dateStr: string): Date | null {
   const d = new Date(y, mo, da);
   if (d.getFullYear() !== y || d.getMonth() !== mo || d.getDate() !== da) return null;
   return d;
+}
+
+/** True when `YYYY-MM-DD` falls on Saturday or Sunday (local). */
+export function isWeekendYmd(dateStr: string): boolean {
+  const d = parseLocalDate(dateStr);
+  return d ? isWeekend(d) : false;
+}
+
+/**
+ * Advance a local `YYYY-MM-DD` to the next weekday if it falls on a weekend.
+ * Returns null for invalid input.
+ */
+export function toNearestWeekdayYmd(dateStr: string): string | null {
+  const d = parseLocalDate(dateStr);
+  if (!d) return null;
+  while (isWeekend(d)) {
+    d.setDate(d.getDate() + 1);
+  }
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 export function isValidDriverLicenseAppointmentDate(

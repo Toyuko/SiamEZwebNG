@@ -22,6 +22,8 @@ import {
   computeDepositThb,
   getMinimumAppointmentDateString,
   isValidDriverLicenseAppointmentDate,
+  isWeekendYmd,
+  toNearestWeekdayYmd,
   type LicenseAddons,
   type LicenseServiceCategory,
   type LicenseVehicleType,
@@ -423,7 +425,13 @@ export function DriverLicenseBookingWizard({
                 min={minYmd}
                 value={appointmentDate}
                 onChange={(e) => {
-                  setAppointmentDate(e.target.value);
+                  const raw = e.target.value;
+                  if (raw && isWeekendYmd(raw)) {
+                    setAppointmentDate(toNearestWeekdayYmd(raw) ?? "");
+                    setError(t("dateErrorWeekend"));
+                    return;
+                  }
+                  setAppointmentDate(raw);
                   setError(null);
                 }}
                 className="max-w-xs"

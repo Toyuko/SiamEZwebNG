@@ -36,7 +36,7 @@ export const SERVICE_PAYMENT_DEFAULTS: Record<string, ServicePaymentConfig> = {
   "basic-translation": config("LOW_EXPOSURE"),
   "translation-services": config("LOW_EXPOSURE"),
   "police-clearance": config("LOW_EXPOSURE"),
-  /** 50% deposit at booking; balance before DLT visit. */
+  /** 50% deposit at booking; balance after you get your license. */
   "driver-license": config("NORMAL_EXPOSURE", {
     default_initial_percentage: 50,
     maximum_normal_percentage: 50,

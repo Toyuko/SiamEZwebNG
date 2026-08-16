@@ -4,7 +4,11 @@ import type { Control, FieldErrors, FieldValues, Path } from "react-hook-form";
 import { Controller, useWatch } from "react-hook-form";
 import type { WizardFieldConfig } from "@/config/wizards/types";
 import { evaluateCondition } from "@/components/wizard/lib/conditionals";
-import { getMinimumAppointmentDateString } from "@/lib/driver-license-booking";
+import {
+  getMinimumAppointmentDateString,
+  isWeekendYmd,
+  toNearestWeekdayYmd,
+} from "@/lib/driver-license-booking";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -178,7 +182,26 @@ export function WizardField<T extends FieldValues>({
                     ? "number"
                     : "text";
 
-          return <Input {...common} type={inputType} min={dateMin} />;
+          return (
+            <Input
+              {...common}
+              type={inputType}
+              min={dateMin}
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (
+                  field.type === "date" &&
+                  field.customValidate === "driverLicenseAppointment" &&
+                  raw &&
+                  isWeekendYmd(raw)
+                ) {
+                  rhf.onChange(toNearestWeekdayYmd(raw) ?? "");
+                  return;
+                }
+                rhf.onChange(raw);
+              }}
+            />
+          );
         }}
       />
       {field.description ? <FieldDescription>{field.description}</FieldDescription> : null}

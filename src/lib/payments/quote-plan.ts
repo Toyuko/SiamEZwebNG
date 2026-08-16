@@ -170,7 +170,7 @@ function reasonForPercentage(percentage: number): string {
     return "A 20% initial payment allows our team to begin preparing and processing your service. This payment is applied toward your final balance.";
   }
   if (percentage >= 50) {
-    return "A 50% deposit reserves your appointment and starts document prep. The remaining balance is due before your DLT visit.";
+    return "A 50% deposit reserves your appointment and starts document prep. The remaining balance is due after you get your license.";
   }
   return "This is a more involved project, so a 30% start payment lets our team begin work. Remaining amounts follow your payment plan.";
 }
@@ -181,7 +181,7 @@ function customerMessage(
   percentage?: number
 ): string {
   if (percentage != null && percentage >= 50) {
-    return `Pay a ${percentage}% deposit of ${initialThbHint.toLocaleString("en-US")} THB today to reserve your booking. The balance is due before your DLT visit.`;
+    return `Pay a ${percentage}% deposit of ${initialThbHint.toLocaleString("en-US")} THB today to reserve your booking. The balance is due after you get your license.`;
   }
   if (model === "BOOK_NOW") {
     return `Secure your booking with a small ${initialThbHint.toLocaleString("en-US")} THB payment. This amount is applied toward your final service fee.`;

@@ -127,7 +127,7 @@ export const driverLicenseWizard: WizardConfig = {
       type: "fields",
       label: "Appointment",
       description:
-        "Choose a weekday at least 3 calendar days ahead (weekends are not available).",
+        "Choose a weekday (Monday–Friday) at least 3 calendar days ahead. Weekends are not available.",
       fields: [
         {
           name: "appointmentDate",
@@ -156,7 +156,7 @@ export const driverLicenseWizard: WizardConfig = {
       type: "documents",
       label: "Payment receipt",
       description:
-        "Upload your 50% deposit bank transfer / PromptPay receipt (required). The balance is due before your DLT visit. Signed-in uploads are linked to your booking via document IDs.",
+        "Upload your 50% deposit bank transfer / PromptPay receipt (required). The balance is due after you get your license. Signed-in uploads are linked to your booking via document IDs.",
       documentsRequired: true,
       requiredDocuments: [
         {
