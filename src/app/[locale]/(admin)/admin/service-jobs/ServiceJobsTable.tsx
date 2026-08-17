@@ -5,16 +5,22 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "./StatusBadge";
 import { EditJobModal } from "./EditJobModal";
 import { AssignStaffModal } from "./AssignStaffModal";
-import { Eye, Pencil, Users } from "lucide-react";
-import { useState } from "react";
+import { Eye, Pencil, Users, Banknote } from "lucide-react";
+import { useState, useTransition } from "react";
 import type { Prisma } from "@prisma/client";
+import { markServiceJobPaid } from "@/actions/admin";
+import { useRouter } from "next/navigation";
 
 type JobWithRelations = Prisma.CaseGetPayload<{
   include: {
     user: { select: { id: true; name: true; email: true; phone: true } };
     service: { select: { id: true; name: true; slug: true } };
     staffAssignments: { include: { user: { select: { id: true; name: true; email: true } } } };
-    invoices: { select: { id: true; amount: true }; orderBy: { createdAt: "desc" }; take: 1 };
+    invoices: {
+      select: { id: true; amount: true; status: true };
+      orderBy: { createdAt: "desc" };
+      take: 1;
+    };
   };
 }>;
 
@@ -65,6 +71,22 @@ export function ServiceJobsTable({
 }) {
   const [editJob, setEditJob] = useState<JobWithRelations | null>(null);
   const [assignJob, setAssignJob] = useState<JobWithRelations | null>(null);
+  const [markPaidPending, startMarkPaid] = useTransition();
+  const router = useRouter();
+
+  const handleMarkPaid = (job: JobWithRelations) => {
+    if (job.invoices[0]?.status === "paid") return;
+    startMarkPaid(async () => {
+      const res = await markServiceJobPaid(job.id, {
+        amountSatang: job.invoices[0]?.amount,
+      });
+      if (!res.success) {
+        window.alert(res.error ?? "Failed to mark as paid");
+        return;
+      }
+      router.refresh();
+    });
+  };
 
   if (jobs.length === 0) {
     return (
@@ -142,6 +164,20 @@ export function ServiceJobsTable({
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
+                    {job.invoices[0]?.status !== "paid" &&
+                      job.status !== "cancelled" &&
+                      job.status !== "refunded" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-green-700 hover:text-green-800"
+                          onClick={() => handleMarkPaid(job)}
+                          disabled={markPaidPending}
+                          title="Mark as paid (updates Finance)"
+                        >
+                          <Banknote className="h-4 w-4" />
+                        </Button>
+                      )}
                     <Button
                       variant="ghost"
                       size="icon"

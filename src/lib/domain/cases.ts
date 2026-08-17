@@ -66,6 +66,17 @@ export async function updateCaseStatus(caseId: string, status: CaseStatus) {
   if (!existing) {
     throw new Error("Case not found");
   }
+
+  // Manual "paid" settles Invoice + Payment (same as Stripe/webhook — bypasses transition graph).
+  if (status === "paid") {
+    const { markCasePaidManually } = await import("@/lib/payments/manual");
+    const result = await markCasePaidManually(caseId);
+    if (!result.success) {
+      throw new Error(result.error ?? "Failed to mark case as paid");
+    }
+    return prisma.case.findUniqueOrThrow({ where: { id: caseId } });
+  }
+
   assertCaseStatusTransition(existing.status, status);
   return prisma.case.update({
     where: { id: caseId },

@@ -2,7 +2,8 @@ import type { CaseStatus } from "@prisma/client";
 
 /**
  * Allowed staff-driven case status transitions.
- * Payment systems may set paid / initial_payment_paid via webhook (bypasses this graph).
+ * Payment systems (Stripe webhook, manual Mark as paid, Finance Add Payment)
+ * may set paid / initial_payment_paid directly (bypasses this graph).
  */
 export const CASE_STATUS_TRANSITIONS: Record<CaseStatus, readonly CaseStatus[]> = {
   new: ["under_review", "quoted", "awaiting_payment", "awaiting_initial_payment", "custom_quote_required", "cancelled"],

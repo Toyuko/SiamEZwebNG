@@ -1255,64 +1255,38 @@ export async function recordManualPayment(
       return { success: false, error: "Unauthorized" };
     }
 
-    const invoice = await prisma.invoice.findUnique({
-      where: { id: invoiceId },
-      include: { case: true },
-    });
-    if (!invoice) return { success: false, error: "Invoice not found" };
-    if (invoice.status === "paid") return { success: false, error: "Invoice is already paid" };
-    if (invoice.status === "rejected") {
-      return { success: false, error: "Invoice was rejected" };
+    const { settleManualInvoicePayment } = await import("@/lib/payments/manual");
+    const result = await settleManualInvoicePayment({ invoiceId });
+    if (!result.success) {
+      return { success: false, error: result.error ?? "Failed to record payment" };
     }
-
-    const existingApproved = await prisma.payment.findFirst({
-      where: { invoiceId, status: "approved" },
-    });
-    if (existingApproved) {
-      return { success: false, error: "This invoice already has an approved payment" };
+    if (result.alreadySettled) {
+      return { success: false, error: "Invoice is already paid" };
     }
-
-    const caseRow = invoice.case;
-    const shouldAdvanceCase =
-      caseRow.status !== "completed" && caseRow.status !== "cancelled";
-
-    await prisma.$transaction([
-      prisma.payment.create({
-        data: {
-          invoiceId: invoice.id,
-          caseId: invoice.caseId,
-          amount: invoice.amount,
-          currency: invoice.currency,
-          method: "bank",
-          status: "approved",
-          approvedAt: new Date(),
-          metadata: { manualEntry: true } as Prisma.InputJsonValue,
-        },
-      }),
-      prisma.invoice.update({
-        where: { id: invoice.id },
-        data: {
-          status: "paid",
-          paidAt: new Date(),
-          paymentMethod: "bank",
-        },
-      }),
-      ...(shouldAdvanceCase
-        ? [
-            prisma.case.update({
-              where: { id: invoice.caseId },
-              data: { status: "in_progress" },
-            }),
-          ]
-        : []),
-    ]);
-
     return { success: true };
   } catch (e) {
     console.error("recordManualPayment", e);
     return {
       success: false,
       error: e instanceof Error ? e.message : "Failed to record payment",
+    };
+  }
+}
+
+/** Mark a service job paid and sync Invoice + Payments & Orders. */
+export async function markServiceJobPaid(
+  caseId: string,
+  options?: { amountSatang?: number }
+): Promise<{ success: boolean; error?: string; alreadySettled?: boolean }> {
+  try {
+    await ensureStaffAccess();
+    const { markCasePaidManually } = await import("@/lib/payments/manual");
+    return markCasePaidManually(caseId, options);
+  } catch (e) {
+    console.error("markServiceJobPaid", e);
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to mark job as paid",
     };
   }
 }
@@ -1593,7 +1567,11 @@ export async function getServiceJobs(options?: {
         user: { select: { id: true, name: true, email: true, phone: true } },
         service: { select: { id: true, name: true, slug: true } },
         staffAssignments: { include: { user: { select: { id: true, name: true, email: true } } } },
-        invoices: { select: { id: true, amount: true }, orderBy: { createdAt: "desc" }, take: 1 },
+        invoices: {
+          select: { id: true, amount: true, status: true },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
       },
       orderBy: { createdAt: "desc" },
       skip,
@@ -1675,9 +1653,6 @@ export async function updateServiceJob(
   }
 ) {
   await ensureStaffAccess();
-  if (data.status !== undefined) {
-    await prisma.case.update({ where: { id }, data: { status: data.status } });
-  }
   if (data.serviceId !== undefined) {
     await prisma.case.update({ where: { id }, data: { serviceId: data.serviceId } });
   }
@@ -1701,6 +1676,18 @@ export async function updateServiceJob(
         data: { caseId: id, userId: uid, role: "support" },
       });
     }
+  }
+  // Selecting "Paid" settles Invoice + Payment so Finance stays in sync.
+  if (data.status === "paid") {
+    const { markCasePaidManually } = await import("@/lib/payments/manual");
+    const result = await markCasePaidManually(id, {
+      amountSatang: data.amount,
+    });
+    if (!result.success) {
+      throw new Error(result.error ?? "Failed to mark job as paid");
+    }
+  } else if (data.status !== undefined) {
+    await prisma.case.update({ where: { id }, data: { status: data.status } });
   }
   return prisma.case.findUnique({ where: { id } });
 }

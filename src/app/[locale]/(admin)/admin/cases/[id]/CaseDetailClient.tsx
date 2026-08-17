@@ -1,14 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Link } from "@/i18n/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { updateCaseStatus, assignStaff, addCaseNote } from "@/actions/case";
-import { createInvoice } from "@/actions/admin";
+import { createInvoice, markServiceJobPaid } from "@/actions/admin";
 import { formatCurrency } from "@/lib/utils";
 import type { CaseStatus } from "@prisma/client";
 import type { Case, CaseNote, User, StaffAssignment, Payment, Invoice, Quote } from "@prisma/client";
@@ -102,10 +102,37 @@ export function CaseDetailClient({
   const labels = { ...DEFAULT_LABELS, ...labelsProp };
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const hasUnpaidInvoice = caseData?.invoices.some(
+    (inv) => inv.status === "draft" || inv.status === "unpaid" || inv.status === "pending_verification"
+  );
+  const canMarkPaid =
+    caseData &&
+    caseData.status !== "cancelled" &&
+    caseData.status !== "refunded" &&
+    (hasUnpaidInvoice || caseData.invoices.length === 0 || caseData.status !== "paid");
 
   const handleStatusChange = (status: CaseStatus) => {
+    setActionError(null);
     startTransition(async () => {
-      await updateCaseStatus(caseId, status);
+      try {
+        await updateCaseStatus(caseId, status);
+        router.refresh();
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Failed to update status");
+      }
+    });
+  };
+
+  const handleMarkPaid = () => {
+    setActionError(null);
+    startTransition(async () => {
+      const res = await markServiceJobPaid(caseId);
+      if (!res.success) {
+        setActionError(res.error ?? "Failed to mark as paid");
+        return;
+      }
       router.refresh();
     });
   };
@@ -184,6 +211,11 @@ export function CaseDetailClient({
               </Select>
             </div>
             <div className="flex flex-col gap-2">
+              {canMarkPaid && (
+                <Button onClick={handleMarkPaid} disabled={pending}>
+                  Mark as paid
+                </Button>
+              )}
               <Button
                 onClick={handleCreateInvoice}
                 disabled={pending || staffUsers.length === 0}
@@ -196,6 +228,9 @@ export function CaseDetailClient({
                   {labels.createInvoiceWizard}
                 </Link>
               </Button>
+              {actionError && (
+                <p className="text-sm text-red-600 dark:text-red-400">{actionError}</p>
+              )}
             </div>
           </CardContent>
         </Card>
