@@ -211,12 +211,7 @@ export async function markCasePaidManually(
   const paidInvoice = caseRow.invoices.find((inv) => inv.status === "paid");
   if (paidInvoice) {
     const nextStatus = caseStatusAfterInvoiceKind(paidInvoice.kind);
-    if (
-      caseRow.status !== "completed" &&
-      caseRow.status !== "cancelled" &&
-      caseRow.status !== "refunded" &&
-      caseRow.status !== nextStatus
-    ) {
+    if (caseRow.status !== "completed" && caseRow.status !== nextStatus) {
       await prisma.case.update({
         where: { id: caseId },
         data: { status: nextStatus },
