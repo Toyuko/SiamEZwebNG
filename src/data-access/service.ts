@@ -86,29 +86,11 @@ export function publicPriceAmountForSlug(slug: string, priceAmount: number | nul
   return priceAmount;
 }
 
-async function ensureQuoteBasedVehicleFinder<
-  T extends { id: string; slug: string; type: string; priceAmount: number | null },
->(service: T): Promise<T> {
-  if (service.slug !== VEHICLE_FINDER_SLUG) return service;
-  if (service.type === "quote" && service.priceAmount == null) return service;
-  try {
-    return (await prisma.service.update({
-      where: { id: service.id },
-      data: { type: "quote", priceAmount: null },
-    })) as T;
-  } catch (error) {
-    console.warn("Failed to clear vehicle finder starting price:", error);
-    return { ...service, type: "quote", priceAmount: null };
-  }
-}
-
 export async function getServiceBySlug(slug: string) {
   try {
-    const service = await prisma.service.findFirst({
+    return await prisma.service.findFirst({
       where: { slug, active: true },
     });
-    if (!service) return null;
-    return ensureQuoteBasedVehicleFinder(service);
   } catch (error) {
     // If database is not available, return null to allow fallback to config
     console.warn("Database unavailable, falling back to config:", error);
