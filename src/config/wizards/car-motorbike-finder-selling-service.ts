@@ -74,7 +74,7 @@ export const carMotorbikeFinderWizard: WizardConfig = {
       type: "summary",
       label: "Service summary",
       description:
-        "Buy or sell cars and motorcycles with SiamEZ sourcing, negotiation, and paperwork support. Fixed upfront service fee: ฿5,000 — pay at checkout after you submit.",
+        "Buy or sell cars and motorcycles with SiamEZ sourcing, negotiation, and paperwork support. We'll quote the service fee after reviewing your request.",
     },
     {
       id: "serviceType",

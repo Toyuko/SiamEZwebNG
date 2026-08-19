@@ -39,7 +39,7 @@ export function buildPublicServicesList(
         name: row.name,
         shortDescription: row.shortDescription,
         description: row.description,
-        priceAmount: row.priceAmount,
+        priceAmount: publicPriceAmountForSlug(row.slug, row.priceAmount),
         priceCurrency: row.priceCurrency,
       });
     } else {
@@ -76,11 +76,39 @@ export async function getPublicServicesList(activeOnly = true) {
   return buildPublicServicesList(db);
 }
 
+const VEHICLE_FINDER_SLUG = "car-motorbike-finder-selling-service";
+
+/** Slugs that must not publish a starting price (quote after intake). */
+const QUOTE_BASED_PUBLIC_SLUGS = new Set([VEHICLE_FINDER_SLUG, "driver-license"]);
+
+export function publicPriceAmountForSlug(slug: string, priceAmount: number | null): number | null {
+  if (QUOTE_BASED_PUBLIC_SLUGS.has(slug)) return null;
+  return priceAmount;
+}
+
+async function ensureQuoteBasedVehicleFinder<
+  T extends { id: string; slug: string; type: string; priceAmount: number | null },
+>(service: T): Promise<T> {
+  if (service.slug !== VEHICLE_FINDER_SLUG) return service;
+  if (service.type === "quote" && service.priceAmount == null) return service;
+  try {
+    return (await prisma.service.update({
+      where: { id: service.id },
+      data: { type: "quote", priceAmount: null },
+    })) as T;
+  } catch (error) {
+    console.warn("Failed to clear vehicle finder starting price:", error);
+    return { ...service, type: "quote", priceAmount: null };
+  }
+}
+
 export async function getServiceBySlug(slug: string) {
   try {
-    return await prisma.service.findFirst({
+    const service = await prisma.service.findFirst({
       where: { slug, active: true },
     });
+    if (!service) return null;
+    return ensureQuoteBasedVehicleFinder(service);
   } catch (error) {
     // If database is not available, return null to allow fallback to config
     console.warn("Database unavailable, falling back to config:", error);
@@ -117,10 +145,8 @@ export async function getOrEnsureServiceBySlug(slug: string) {
         name,
         shortDescription: shortDesc,
         description,
-        type: slug === "car-motorbike-finder-selling-service" ? "fixed" : "quote",
-        ...(slug === "car-motorbike-finder-selling-service"
-          ? { priceAmount: 500_000, priceCurrency: "THB" }
-          : { priceCurrency: "THB" }),
+        type: "quote",
+        priceCurrency: "THB",
         sortOrder,
         active: true,
       },
@@ -129,6 +155,7 @@ export async function getOrEnsureServiceBySlug(slug: string) {
         shortDescription: shortDesc,
         description,
         active: true,
+        ...(slug === VEHICLE_FINDER_SLUG ? { type: "quote" as const, priceAmount: null } : {}),
       },
     });
   } catch (error) {

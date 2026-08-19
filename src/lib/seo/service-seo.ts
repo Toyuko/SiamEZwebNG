@@ -466,8 +466,8 @@ export const serviceSeoBySlug: Record<ServiceSlug, ServiceSeo> = {
           th: "บริการหารถและขายรถมีค่าใช้จ่ายเท่าไหร่?",
         },
         answer: {
-          en: "The service fee is a fixed ฿5,000 upfront when you book. That covers SiamEZ sourcing, negotiation, and paperwork support. Vehicle purchase price, DLT fees, and optional extras are separate.",
-          th: "ค่าบริการคงที่ 5,000 บาท จ่ายล่วงหน้าตอนจอง ครอบคลุมการค้นหา ต่อรอง และเอกสารโดย SiamEZ ราคารถ ค่า DLT และบริการเสริมแยกต่างหาก",
+          en: "Pricing is quote-based and depends on the vehicle, timeline, and whether you are buying, selling, or both. Vehicle purchase price, DLT fees, and optional extras are separate. Share your brief and we'll send a tailored quote.",
+          th: "คิดค่าบริการตามเคส ขึ้นกับประเภทรถ ระยะเวลา และว่าต้องการซื้อ ขาย หรือทั้งสองอย่าง ราคารถ ค่า DLT และบริการเสริมแยกต่างหาก ส่งรายละเอียดมาแล้วเราจะเสนอราคาให้",
         },
       },
     ],

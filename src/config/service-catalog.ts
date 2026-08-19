@@ -329,8 +329,8 @@ export const serviceCatalog: ServiceCatalogEntry[] = [
     iconStyle: { bg: "bg-yellow-100 dark:bg-yellow-900/30", text: "text-yellow-700 dark:text-yellow-400", shape: "circle" },
     name: { en: "Car & Motorbike Finding and Selling", th: "หารถซื้อ-ขายรถยนต์และมอเตอร์ไซค์" },
     shortDescription: {
-      en: "Buy or sell cars and motorcycles with negotiation, paperwork, and registration support — ฿5,000 upfront",
-      th: "ซื้อหรือขายรถยนต์และมอเตอร์ไซค์ พร้อมต่อรอง เอกสาร และจดทะเบียน — ค่าบริการล่วงหน้า 5,000 บาท",
+      en: "Buy or sell cars and motorcycles with negotiation, paperwork, and registration support — quote-based pricing",
+      th: "ซื้อหรือขายรถยนต์และมอเตอร์ไซค์ พร้อมต่อรอง เอกสาร และจดทะเบียน — เสนอราคาตามเคส",
     },
     active: true,
     sortOrder: 9,

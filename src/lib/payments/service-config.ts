@@ -55,11 +55,10 @@ export const SERVICE_PAYMENT_DEFAULTS: Record<string, ServicePaymentConfig> = {
     minimum_initial_payment: 1000,
     allow_milestones: true,
   }),
-  /** Fixed ฿5,000 at booking checkout — milestones unused for this service. */
-  "car-motorbike-finder-selling-service": config("LOW_EXPOSURE", {
-    minimum_initial_payment: 5000,
-    allow_milestones: false,
-    allow_full_payment: true,
+  /** Quote after intake — variable sourcing/selling work, same ladder as real estate. */
+  "car-motorbike-finder-selling-service": config("HIGH_EXPOSURE", {
+    minimum_initial_payment: 1000,
+    allow_milestones: true,
   }),
   "event-planning-venue-services": config("HIGH_EXPOSURE", {
     allow_milestones: true,

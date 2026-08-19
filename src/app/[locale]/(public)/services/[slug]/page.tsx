@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
-import { getServiceBySlug } from "@/data-access/service";
+import { getServiceBySlug, publicPriceAmountForSlug } from "@/data-access/service";
 import { ServiceDetailHero } from "@/components/sections/ServiceDetailHero";
 import { ServiceDetailTabs } from "@/components/sections/ServiceDetailTabs";
 import { ServiceDetailSidebar } from "@/components/sections/ServiceDetailSidebar";
@@ -480,7 +480,7 @@ const getServiceContent = (slug: string): ServiceDetailContent => {
       subtitle:
         "Buy or sell your car or motorcycle in Thailand with one trusted team handling the full journey from search to handover.",
       overview:
-        "At SiamEZ Auto & Bike Finder, we make buying and selling vehicles in Thailand simple, fast, and stress-free. Whether you are upgrading, relocating, or want a hassle-free deal, we handle everything from matching and negotiation to paperwork and registration.\n\nStart with our buy or sell form — no account needed — or book online for a fixed ฿5,000 upfront service fee. For buyers, we help you find the right car, motorcycle, van, or big bike based on your budget and needs. For sellers, we position your vehicle, screen serious buyers, and push for a fast sale at the best possible price.\n\nOur team has supported locals and expats for over 10 years. With transparent communication and start-to-finish support, you can move forward confidently without dealing with confusing steps alone.",
+        "At SiamEZ Auto & Bike Finder, we make buying and selling vehicles in Thailand simple, fast, and stress-free. Whether you are upgrading, relocating, or want a hassle-free deal, we handle everything from matching and negotiation to paperwork and registration.\n\nStart with our buy or sell form — no account needed — or book online and we'll send a custom quote. For buyers, we help you find the right car, motorcycle, van, or big bike based on your budget and needs. For sellers, we position your vehicle, screen serious buyers, and push for a fast sale at the best possible price.\n\nOur team has supported locals and expats for over 10 years. With transparent communication and start-to-finish support, you can move forward confidently without dealing with confusing steps alone.",
       features: [
         {
           icon: Car,
@@ -540,7 +540,7 @@ const getServiceContent = (slug: string): ServiceDetailContent => {
         ],
       },
       processingTime:
-        "฿5,000 upfront service fee; timeline varies by vehicle availability and buyer/seller readiness",
+        "Varies by vehicle availability and buyer/seller readiness",
       legalDisclaimer:
         "SiamEZ provides independent vehicle sourcing and selling assistance services. We are not connected to or endorsed by any government authority.",
       galleryImages: [
@@ -1004,20 +1004,19 @@ export default async function ServiceDetailPage({
 
   // Create fallback service object if database unavailable
   // Basic package from siam-ez.com; formatCurrency divides by 100 (satang).
-  // Driver license totals vary by type and add-ons — do not publish a starting price.
+  // Driver license and vehicle finder do not publish a starting price.
   const defaultPrice = slug === "marriage-registration" ? 850000 : null;
-  const hidePublicPrice = slug === "driver-license";
 
   const serviceData = service
     ? {
         ...service,
-        priceAmount: hidePublicPrice ? null : (service.priceAmount ?? defaultPrice),
+        priceAmount: publicPriceAmountForSlug(slug, service.priceAmount ?? defaultPrice),
       }
     : {
         name: displayName,
         shortDescription: serviceShortDescriptions[slug as ServiceSlug] || null,
         description: content.overview,
-        priceAmount: hidePublicPrice ? null : defaultPrice,
+        priceAmount: publicPriceAmountForSlug(slug, defaultPrice),
         priceCurrency: "THB" as const,
         slug,
       };

@@ -57,7 +57,7 @@ export const serviceShortDescriptions: Record<ServiceSlug, string> = {
   "real-estate-services":
     "Buy, sell, rent, or invest in property across Thailand — simple, safe, and stress-free with a trusted local team",
   "car-motorbike-finder-selling-service":
-    "Buy or sell cars and motorcycles with negotiation, paperwork, and registration support — ฿5,000 upfront service fee",
+    "Buy or sell cars and motorcycles with negotiation, paperwork, and registration support — quote-based pricing",
   "transportation-services":
     "Reliable airport transfers, city tours, and inter-city transportation with comfortable vehicles",
   "private-driver-service":
