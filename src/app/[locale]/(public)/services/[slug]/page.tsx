@@ -637,7 +637,7 @@ const getServiceContent = (slug: string): ServiceDetailContent => {
       subtitle:
         "We collect your car or motorcycle at home, go to the DLT on your behalf, and handle Bangkok registration — often in one day for BKK plates.",
       overview:
-        "SiamEZ provides professional vehicle registration assistance across Thailand. We come to pick up your car or motorcycle at your home, go to the Department of Land Transport (DLT) on your behalf, and return the vehicle when the work is done — so you do not have to queue at the office.\n\nWhether you need to transfer ownership, renew your tax and insurance, change plates, or update your registration book, our team handles the paperwork and DLT process. We specialize in Bangkok one-day processing for both cars and motorcycles. For BKK-plated vehicles, we can often complete your registration within a single working day. Vehicles from other provinces may require additional time, and our team will provide a clear timeline when you inquire.\n\nWhat we handle: ownership transfers; tax and insurance renewals; plate changes; color or engine updates in the book; lost book replacement; and documentation for modified vehicles. Contact us with your specific situation — we will advise on the process and cost.\n\nPricing is transparent and listed below. Contact us via LINE, email, or phone to get started, ask about other provinces, or submit documents for online inspection.",
+        "SiamEZ provides professional vehicle registration assistance across Thailand. We come to pick up your car or motorcycle at your home, go to the Department of Land Transport (DLT) on your behalf, and return the vehicle when the work is done — so you do not have to queue at the office.\n\nWhether you need to transfer ownership, renew your tax and insurance, change plates, or update your registration book, our team handles the paperwork and DLT process. We specialize in Bangkok one-day processing for both cars and motorcycles. For BKK-plated vehicles, we can often complete your registration within a single working day. Vehicles from other provinces may require additional time, and our team will provide a clear timeline when you inquire.\n\nWhat we handle: ownership transfers; tax and insurance renewals; plate changes; color or engine updates in the book; lost book replacement; and documentation for modified vehicles. Contact us with your specific situation — we will advise on the process.\n\nContact us via LINE, email, or phone to get started, ask about other provinces, or submit documents for online inspection.",
       features: [
         {
           icon: MapPin,
@@ -673,7 +673,7 @@ const getServiceContent = (slug: string): ServiceDetailContent => {
         {
           title: "Contact us",
           description:
-            "Reach us on LINE, email, or phone. You can submit documents for online inspection; we separate our service fees from DLT (government) fees.",
+            "Reach us on LINE, email, or phone. You can submit documents for online inspection before pickup.",
         },
         {
           title: "Home pickup",
@@ -703,36 +703,6 @@ const getServiceContent = (slug: string): ServiceDetailContent => {
         ],
       },
       processingTime: "Bangkok (BKK plates): often 1 business day; other provinces: timeline on inquiry",
-      pricingSections: [
-        {
-          title: "Car registration — service fees (Bangkok process)",
-          rows: [
-            { label: "BKK plate", price: "3,500 THB" },
-            { label: "Other province plate", price: "+1,500 THB" },
-            { label: "Swap plate", price: "1,500 THB" },
-          ],
-          vehicleRequirements: "Must be original, no modifications, no black smoke.",
-          footnote: "* Not including DLT fees.",
-        },
-        {
-          title: "Motorcycle registration — service fees (Bangkok process)",
-          rows: [
-            { label: "BKK plate", price: "2,000 THB" },
-            { label: "Different province", price: "+1,000 THB" },
-            { label: "Renew tax / insurance (under 5 years)", price: "700 THB" },
-            { label: "Renew tax / insurance (over 5 years)", price: "1,200 THB" },
-          ],
-          vehicleRequirements: "Must be original, no loud exhaust.",
-          footnote: "* Not including DLT fees.",
-        },
-      ],
-      additionalServicesTable: [
-        { service: "Change color", price: "1,000 THB", notes: "—" },
-        { service: "Change engine", price: "1,000 THB", notes: "Requires invoice" },
-        { service: "Lost book (green / blue)", price: "1,500 THB", notes: "Must be owner" },
-        { service: "Exhaust over 95 dB", price: "1,500 – 2,500 THB", notes: "—" },
-        { service: "Missing documents", price: "—", notes: "Staff inspection required" },
-      ],
       legalDisclaimer:
         "SiamEZ offers professional assistance and consultancy services as an independent company. We are not connected to or endorsed by the Thai government.",
       galleryVideoSrc: "/images/services/vehicle-registration/registration-video.mp4",
@@ -1004,7 +974,7 @@ export default async function ServiceDetailPage({
 
   // Create fallback service object if database unavailable
   // Basic package from siam-ez.com; formatCurrency divides by 100 (satang).
-  // Driver license and vehicle finder do not publish a starting price.
+  // Driver license, vehicle registration, and vehicle finder do not publish a starting price.
   const defaultPrice = slug === "marriage-registration" ? 850000 : null;
 
   const serviceData = service

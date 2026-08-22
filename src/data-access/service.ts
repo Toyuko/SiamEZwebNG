@@ -79,7 +79,11 @@ export async function getPublicServicesList(activeOnly = true) {
 const VEHICLE_FINDER_SLUG = "car-motorbike-finder-selling-service";
 
 /** Slugs that must not publish a starting price (quote after intake). */
-const QUOTE_BASED_PUBLIC_SLUGS = new Set([VEHICLE_FINDER_SLUG, "driver-license"]);
+const QUOTE_BASED_PUBLIC_SLUGS = new Set([
+  VEHICLE_FINDER_SLUG,
+  "driver-license",
+  "vehicle-registration",
+]);
 
 export function publicPriceAmountForSlug(slug: string, priceAmount: number | null): number | null {
   if (QUOTE_BASED_PUBLIC_SLUGS.has(slug)) return null;
