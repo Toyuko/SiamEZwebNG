@@ -240,11 +240,42 @@ describe("specialty formData transforms", () => {
     expect(dl.basePriceThb).toBe(10_000);
     expect(dl.addonsTotalThb).toBe(1500);
     expect(dl.totalThb).toBe(11_500);
-    expect(dl.depositThb).toBe(5750);
-    expect(dl.remainingThb).toBe(5750);
+    expect(dl.depositThb).toBe(2875);
+    expect(dl.remainingThb).toBe(8625);
     expect(dl.currency).toBe("THB");
     expect(dl.addons.translationLetter).toBe(true);
     expect(dl.addons.addressCertificate).toBe(false);
+  });
+
+  it("quotes 8,000 THB with a 25% deposit for own license + self residential certificate", () => {
+    const payload = buildDriverLicenseFormData({
+      name: "Ada",
+      email: "ada@example.com",
+      phone: "+66",
+      hasForeignLicense: "yes",
+      residentialCertificate: "self",
+      fitToDrive: "yes",
+      vehicleType: "both",
+      appointmentDate: "2026-08-10",
+    });
+    const dl = payload.driverLicense as {
+      category: string;
+      basePriceThb: number;
+      totalThb: number;
+      depositThb: number;
+      remainingThb: number;
+      depositPercent: number;
+      hasForeignLicense: boolean;
+      residentialCertificate: string;
+    };
+    expect(dl.category).toBe("conversion");
+    expect(dl.hasForeignLicense).toBe(true);
+    expect(dl.residentialCertificate).toBe("self");
+    expect(dl.basePriceThb).toBe(8_000);
+    expect(dl.totalThb).toBe(8_000);
+    expect(dl.depositPercent).toBe(25);
+    expect(dl.depositThb).toBe(2_000);
+    expect(dl.remainingThb).toBe(6_000);
   });
 
   it("prices apply_new the same as conversion", () => {

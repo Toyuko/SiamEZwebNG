@@ -2,10 +2,15 @@ import {
   computeAddonsTotalThb,
   computeBasePriceThb,
   computeDepositThb,
+  DRIVER_LICENSE_DEPOSIT_PERCENT,
+  isYesAnswer,
+  normalizeDriverLicenseRequirements,
   type LicenseAddons,
   type LicenseServiceCategory,
   type LicenseVehicleType,
+  type ResidentialCertificatePlan,
 } from "@/lib/driver-license-booking";
+import { driverLicenseQuoteQuestions } from "@/config/pricing/driver-license";
 import type { WizardConfig } from "./types";
 import { contactFields, notesField, quoteReviewStep } from "./shared";
 
@@ -15,18 +20,29 @@ function trimOrUndefined(value: unknown): string | undefined {
   return t.length > 0 ? t : undefined;
 }
 
+function asResidentialPlan(value: unknown): ResidentialCertificatePlan | null {
+  if (value === "self" || value === "need_help") return value;
+  return null;
+}
+
 /** Preserve nested `driverLicense` formData shape expected by marketplace pricing. */
 export function buildDriverLicenseFormData(
   values: Record<string, unknown>
 ): Record<string, unknown> {
-  const category = values.category as LicenseServiceCategory;
+  const normalized = normalizeDriverLicenseRequirements(values);
+  const category = normalized.category as LicenseServiceCategory;
   const vehicleType =
-    category === "idp" ? null : ((values.vehicleType as LicenseVehicleType) || null);
+    category === "idp" ? null : ((normalized.vehicleType as LicenseVehicleType) || null);
+  const residentialCertificate = asResidentialPlan(normalized.residentialCertificate);
   const addons: LicenseAddons = {
-    translationLetter: Boolean(values.addonTranslationLetter),
-    addressCertificate: Boolean(values.addonAddressCertificate),
+    translationLetter: Boolean(normalized.addonTranslationLetter),
+    addressCertificate:
+      residentialCertificate === "need_help" || Boolean(normalized.addonAddressCertificate),
   };
-  const basePriceThb = computeBasePriceThb(category, vehicleType);
+  const basePriceThb = computeBasePriceThb(category, vehicleType, {
+    hasForeignLicense: normalized.hasForeignLicense,
+    residentialCertificate: normalized.residentialCertificate,
+  });
   const addonsTotalThb = computeAddonsTotalThb(addons);
   const totalThb = basePriceThb + addonsTotalThb;
   const depositThb = computeDepositThb(totalThb);
@@ -38,13 +54,16 @@ export function buildDriverLicenseFormData(
     driverLicense: {
       category,
       vehicleType,
+      hasForeignLicense: isYesAnswer(normalized.hasForeignLicense),
+      residentialCertificate,
+      fitToDrive: isYesAnswer(normalized.fitToDrive),
       addons,
       appointmentDate: values.appointmentDate,
       basePriceThb,
       addonsTotalThb,
       totalThb,
       depositThb,
-      depositPercent: 50,
+      depositPercent: DRIVER_LICENSE_DEPOSIT_PERCENT,
       remainingThb: totalThb - depositThb,
       currency: "THB",
     },
@@ -63,12 +82,15 @@ export const driverLicenseWizard: WizardConfig = {
       type: "summary",
       label: "Service summary",
       description:
-        "Thai driver's license assistance: conversion, renewal, new license, or IDP. Quote totals are calculated from your selections.",
+        "Thai driver's license assistance: conversion, renewal, new license, or IDP. Answer each question so we can calculate your quote. Pay 25% now; the remaining 75% is due after you get your license.",
     },
     {
       id: "service",
       type: "fields",
-      label: "Service",
+      label: "Quote questions",
+      description:
+        "Take time to answer each question so we can give you a quotation. Your 25% deposit is due at booking; the remaining 75% is due after you get your license.",
+      generatesQuote: true,
       fields: [
         {
           name: "category",
@@ -82,42 +104,17 @@ export const driverLicenseWizard: WizardConfig = {
             { value: "idp", label: "International Driving Permit (IDP)" },
           ],
         },
-        {
-          name: "vehicleType",
-          type: "select",
-          label: "Vehicle type",
-          required: true,
-          showWhen: { field: "category", notEquals: "idp" },
-          options: [
-            { value: "bike", label: "Motorcycle / bike" },
-            { value: "car", label: "Car" },
-            { value: "both", label: "Both car and bike" },
-          ],
-        },
+        ...driverLicenseQuoteQuestions,
         {
           name: "nationality",
           type: "text",
           label: "Nationality",
           placeholder: "e.g. Canadian",
         },
-      ],
-    },
-    {
-      id: "addons",
-      type: "fields",
-      label: "Add-ons",
-      description: "Optional add-ons. You can skip this step with nothing selected.",
-      generatesQuote: true,
-      fields: [
         {
           name: "addonTranslationLetter",
           type: "checkbox",
           label: "Translation letter (+1,500 THB)",
-        },
-        {
-          name: "addonAddressCertificate",
-          type: "checkbox",
-          label: "Residential certificate (+2,500 THB)",
         },
       ],
     },
@@ -156,7 +153,7 @@ export const driverLicenseWizard: WizardConfig = {
       type: "documents",
       label: "Payment receipt",
       description:
-        "Upload your 50% deposit bank transfer / PromptPay receipt (required). The balance is due after you get your license. Signed-in uploads are linked to your booking via document IDs.",
+        "Upload your 25% deposit bank transfer / PromptPay receipt (required). The remaining 75% is due after you get your license. Signed-in uploads are linked to your booking via document IDs.",
       documentsRequired: true,
       requiredDocuments: [
         {

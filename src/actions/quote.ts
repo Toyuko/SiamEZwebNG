@@ -82,9 +82,13 @@ export async function generateSmartQuote(input: {
       return { success: false, error: "Service mismatch" };
     }
 
+    const requirements = pricing.normalizeRequirements
+      ? pricing.normalizeRequirements(input.requirements)
+      : input.requirements;
+
     const calculated = calculateQuote({
       config: pricing,
-      requirements: input.requirements,
+      requirements,
       dbPriceAmount: service.priceAmount,
       currency: service.priceCurrency ?? "THB",
     });
@@ -98,7 +102,7 @@ export async function generateSmartQuote(input: {
       config: paymentConfig,
       serviceSlug: service.slug,
       serviceName: service.name,
-      requirements: input.requirements,
+      requirements,
     });
     const snapshot = buildPricingSnapshot({ plan: paymentPlan, pricing: calculated });
 
@@ -116,7 +120,7 @@ export async function generateSmartQuote(input: {
       status: quoteStatus,
       quoteType: calculated.quoteType,
       validUntil,
-      requirements: input.requirements as unknown as Prisma.InputJsonValue,
+      requirements: requirements as unknown as Prisma.InputJsonValue,
       pricingBreakdown: {
         lineItems: calculated.lineItems,
         summaryLabel: calculated.summaryLabel,
@@ -198,7 +202,7 @@ export async function generateSmartQuote(input: {
       rangeMax: calculated.rangeMax,
       lineItems: calculated.lineItems,
       validUntil: validUntil.toISOString(),
-      requirements: input.requirements,
+      requirements,
       summaryLabel: calculated.summaryLabel,
       paymentPlan,
       pricingVersion: snapshot.pricing_version,

@@ -53,18 +53,35 @@ function ruleBasedExtract(input: {
     else if (/\bidp\b|international driving/.test(text)) requirements.category = "idp";
 
     if (/motor|bike|scooter/.test(text)) requirements.vehicleType = "bike";
-    else if (/car|automobile/.test(text)) requirements.vehicleType = "car";
     else if (/both/.test(text)) requirements.vehicleType = "both";
+    else if (/car|automobile/.test(text)) requirements.vehicleType = "car";
 
     if (/canadian|canada/.test(text)) requirements.nationality = "Canadian";
     if (/american|usa|united states/.test(text)) requirements.nationality = "American";
     if (/british|uk|united kingdom/.test(text)) requirements.nationality = "British";
     if (/australian|australia/.test(text)) requirements.nationality = "Australian";
 
-    if (/translat/.test(text)) requirements.addonTranslationLetter = true;
-    if (/residential|address.?cert|house.?book|yellow.?book/.test(text)) {
-      requirements.addonAddressCertificate = true;
+    if (/\b(valid|own|my|have).{0,24}(license|licence)\b|\b(license|licence).{0,16}(from my country|foreign)\b/.test(text)) {
+      if (/\bno\b|don't have|do not have|without/.test(text)) requirements.hasForeignLicense = "no";
+      else requirements.hasForeignLicense = "yes";
     }
+    if (/\bno (valid )?(foreign |country )?licen/.test(text)) requirements.hasForeignLicense = "no";
+
+    if (/help (me )?(get|obtain).{0,20}(residential|address)/.test(text) || /would like you to help/.test(text)) {
+      requirements.residentialCertificate = "need_help";
+    } else if (/embassy|immigration/.test(text) && /residential|address.?cert/.test(text)) {
+      requirements.residentialCertificate = "self";
+    } else if (/residential|address.?cert|house.?book|yellow.?book/.test(text)) {
+      if (/help|please/.test(text)) requirements.residentialCertificate = "need_help";
+      else if (/myself|i can|able to|already/.test(text)) requirements.residentialCertificate = "self";
+      else requirements.addonAddressCertificate = true;
+    }
+
+    if (/eyesight|fit (and healthy|to drive)|healthy to drive/.test(text)) {
+      requirements.fitToDrive = /\bno\b|not sure|not fit/.test(text) ? "no" : "yes";
+    }
+
+    if (/translat/.test(text)) requirements.addonTranslationLetter = true;
   }
 
   if (input.serviceSlug === "basic-translation" || input.serviceSlug === "translation-services") {

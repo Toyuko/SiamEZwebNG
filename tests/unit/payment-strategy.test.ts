@@ -119,10 +119,10 @@ describe("payment strategy — conversion-first 10/20/30", () => {
     expect(plan.percentage_rejected).toBe(true);
   });
 
-  it("driver-license uses a fixed 50% deposit", () => {
+  it("driver-license uses a fixed 25% deposit", () => {
     const config = getDefaultPaymentConfig("driver-license");
-    expect(config.default_initial_percentage).toBe(50);
-    expect(config.maximum_normal_percentage).toBe(50);
+    expect(config.default_initial_percentage).toBe(25);
+    expect(config.maximum_normal_percentage).toBe(25);
 
     const plan = buildQuotePaymentPlan({
       pricing: {
@@ -148,10 +148,12 @@ describe("payment strategy — conversion-first 10/20/30", () => {
       serviceSlug: "driver-license",
       aiRecommendedPercentage: 10,
     });
-    expect(plan.initial_percentage).toBe(50);
-    expect(plan.initial_payment_total).toBe(thbToSatang(7500));
-    expect(plan.remaining_balance).toBe(thbToSatang(7500));
+    expect(plan.initial_percentage).toBe(25);
+    expect(plan.initial_payment_total).toBe(thbToSatang(3750));
+    expect(plan.remaining_balance).toBe(thbToSatang(11_250));
     expect(plan.requires_human_review).toBe(false);
+    expect(plan.reason).toMatch(/25%/);
+    expect(plan.customer_message).toMatch(/75%/);
   });
 
   it("Test 7 — AI 90% is rejected", () => {

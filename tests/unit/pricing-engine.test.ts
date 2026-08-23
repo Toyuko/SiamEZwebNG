@@ -39,6 +39,34 @@ describe("pricing engine", () => {
     expect(result.addOnsTotal).toBe(thbToSatang(1500 + 2500));
   });
 
+  it("prices 8,000 THB when the customer has a country license and can obtain a residential certificate", () => {
+    const result = calculateQuote({
+      config: driverLicensePricing,
+      requirements: {
+        hasForeignLicense: "yes",
+        residentialCertificate: "self",
+        fitToDrive: "yes",
+        vehicleType: "car",
+      },
+    });
+    expect(result.total).toBe(thbToSatang(8_000));
+    expect(result.lineItems.map((l) => l.id)).toEqual(["conversion-self-cert"]);
+  });
+
+  it("keeps vehicle conversion rates and adds the residential-certificate fee when help is needed", () => {
+    const result = calculateQuote({
+      config: driverLicensePricing,
+      requirements: {
+        hasForeignLicense: "yes",
+        residentialCertificate: "need_help",
+        fitToDrive: "yes",
+        vehicleType: "car",
+      },
+    });
+    expect(result.total).toBe(thbToSatang(15_000 + 2500));
+    expect(result.addOnsTotal).toBe(thbToSatang(2500));
+  });
+
   it("applies conditional pricing (marriage foreign + translation)", () => {
     const result = calculateQuote({
       config: marriageRegistrationPricing,

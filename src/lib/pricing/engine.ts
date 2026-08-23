@@ -66,7 +66,10 @@ export interface CalculateQuoteInput {
  * Throws on missing config / invalid range mode without bounds.
  */
 export function calculateQuote(input: CalculateQuoteInput): PricingResult {
-  const { config, requirements } = input;
+  const { config } = input;
+  const requirements = config.normalizeRequirements
+    ? config.normalizeRequirements(input.requirements)
+    : input.requirements;
   const currency = input.currency ?? "THB";
 
   if (config.quoteMode === "range") {

@@ -51,6 +51,10 @@ export interface ServicePricingConfig {
   rangeThb?: { min: number; max: number; label?: string };
   /** Optional AI conversational prompt hint for this service. */
   conciergeHint?: string;
+  /** Optional pre-process so quote questions can fill derived fields (e.g. category). */
+  normalizeRequirements?: (
+    requirements: Record<string, unknown>
+  ) => Record<string, unknown>;
 }
 
 export interface PricingLineItem {

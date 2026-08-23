@@ -1,18 +1,73 @@
 export type LicenseServiceCategory = "conversion" | "renewal" | "apply_new" | "idp";
 export type LicenseVehicleType = "bike" | "car" | "both";
+export type ResidentialCertificatePlan = "self" | "need_help";
 
-/** Share of total due at booking (remainder after you receive your license). */
-export const DRIVER_LICENSE_DEPOSIT_PERCENT = 50;
+/** Share of total due at booking; remaining 75% is due after you get your license. */
+export const DRIVER_LICENSE_DEPOSIT_PERCENT = 25;
+
+/** Conversion package when the customer has a foreign license and can obtain a residential certificate. */
+export const SELF_CERT_CONVERSION_PRICE_THB = 8_000;
 
 export function computeDepositThb(totalThb: number): number {
   return Math.round((Math.max(0, totalThb) * DRIVER_LICENSE_DEPOSIT_PERCENT) / 100);
 }
 
+export function isYesAnswer(value: unknown): boolean {
+  return value === true || value === "yes" || value === "true";
+}
+
+export function isNoAnswer(value: unknown): boolean {
+  return value === false || value === "no" || value === "false";
+}
+
+export function qualifiesForSelfCertConversionPrice(
+  category: LicenseServiceCategory | string | null | undefined,
+  hasForeignLicense: unknown,
+  residentialCertificate: unknown
+): boolean {
+  if (category === "renewal" || category === "idp") return false;
+  return isYesAnswer(hasForeignLicense) && residentialCertificate === "self";
+}
+
+/**
+ * Fill category / residential add-on from the quote questions so pricing rules
+ * and nested booking payloads stay consistent.
+ */
+export function normalizeDriverLicenseRequirements(
+  requirements: Record<string, unknown>
+): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...requirements };
+  const category = next.category;
+  if (category !== "renewal" && category !== "idp") {
+    if (isYesAnswer(next.hasForeignLicense)) next.category = "conversion";
+    else if (isNoAnswer(next.hasForeignLicense)) next.category = "apply_new";
+  }
+  if (next.residentialCertificate === "need_help") {
+    next.addonAddressCertificate = true;
+  } else if (next.residentialCertificate === "self") {
+    next.addonAddressCertificate = false;
+  }
+  return next;
+}
+
 export function computeBasePriceThb(
   category: LicenseServiceCategory,
-  vehicle: LicenseVehicleType | null
+  vehicle: LicenseVehicleType | null,
+  answers: {
+    hasForeignLicense?: unknown;
+    residentialCertificate?: unknown;
+  } = {}
 ): number {
   if (category === "idp") return 3500;
+  if (
+    qualifiesForSelfCertConversionPrice(
+      category,
+      answers.hasForeignLicense,
+      answers.residentialCertificate
+    )
+  ) {
+    return SELF_CERT_CONVERSION_PRICE_THB;
+  }
   if (!vehicle) return 0;
   switch (category) {
     case "conversion":

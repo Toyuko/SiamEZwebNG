@@ -47,7 +47,7 @@ export const DEFAULT_MAXIMUM_NORMAL_PERCENTAGE = 30;
 
 /**
  * Default ceiling for the standard 10/20/30 exposure ladder.
- * Individual services may raise `maximum_normal_percentage` (e.g. 50% deposit).
+ * Individual services may raise or lock `maximum_normal_percentage` (e.g. driver-license 25% deposit).
  */
 export const HARD_MAX_SERVICE_PERCENTAGE = 30;
 
@@ -88,7 +88,7 @@ export interface ServicePaymentConfig {
   /** Catalog default / ceiling for the initial payment percentage (typically 10–50). */
   default_initial_percentage: number;
   minimum_initial_payment: number;
-  /** Ceiling for the SiamEZ booking percentage (default 30; some services allow 50). */
+  /** Ceiling for the SiamEZ booking percentage (default 30; driver-license locks 25). */
   maximum_normal_percentage: number;
   allow_milestones: boolean;
   allow_full_payment: boolean;

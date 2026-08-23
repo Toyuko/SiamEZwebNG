@@ -139,11 +139,11 @@ export function selectLowestPercentage(input: {
   );
 
   let percentage = ceiling;
-  let reason = reasonForPercentage(percentage);
+  let reason = reasonForPercentage(percentage, input.serviceSlug);
 
-  // Services with an explicit high deposit (e.g. driver-license 50%) keep that
-  // rate; AI may only lower percentages on the standard ≤30% ladder.
-  const allowAiLower = ceiling <= 30;
+  // Driver-license uses a fixed 25% deposit; AI may only lower percentages on
+  // the standard ≤30% ladder for other services.
+  const allowAiLower = ceiling <= 30 && input.serviceSlug !== "driver-license";
 
   if (
     allowAiLower &&
@@ -162,7 +162,10 @@ export function selectLowestPercentage(input: {
   return { percentage, reason };
 }
 
-function reasonForPercentage(percentage: number): string {
+function reasonForPercentage(percentage: number, serviceSlug?: string): string {
+  if (serviceSlug === "driver-license") {
+    return "A 25% deposit reserves your appointment and starts document prep. The remaining 75% is due after you get your license.";
+  }
   if (percentage <= 10) {
     return "This service has low upfront cost, so only a small payment is needed to secure your booking.";
   }
@@ -178,8 +181,12 @@ function reasonForPercentage(percentage: number): string {
 function customerMessage(
   model: PaymentModel,
   initialThbHint: number,
-  percentage?: number
+  percentage?: number,
+  serviceSlug?: string
 ): string {
+  if (serviceSlug === "driver-license") {
+    return `Pay a 25% deposit of ${initialThbHint.toLocaleString("en-US")} THB today to reserve your booking. The remaining 75% is due after you get your license.`;
+  }
   if (percentage != null && percentage >= 50) {
     return `Pay a ${percentage}% deposit of ${initialThbHint.toLocaleString("en-US")} THB today to reserve your booking. The balance is due after you get your license.`;
   }
@@ -296,7 +303,12 @@ export function buildQuotePaymentPlan(input: BuildPaymentPlanInput): QuotePaymen
     allow_milestones: config.allow_milestones,
     milestones,
     reason,
-    customer_message: customerMessage(model, initialThb, calc.initialPercentage),
+    customer_message: customerMessage(
+      model,
+      initialThb,
+      calc.initialPercentage,
+      input.serviceSlug
+    ),
     requires_human_review: review,
     confidence,
     percentage_rejected: calc.percentageRejected || aiOverMax,
