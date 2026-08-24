@@ -9,6 +9,7 @@ import { getStripe } from "@/lib/stripe";
 import { submitUserPayment } from "@/lib/domain/payments";
 import { isStripeEnabled } from "@/config/payments";
 import { confirmVerifiedPayment } from "@/lib/payments/confirm";
+import { invoiceAmountDueNow, sumApprovedPayments } from "@/lib/payments/invoice-deposit";
 
 export type PaymentMethodInput = "qr" | "bank" | "wise";
 
@@ -59,6 +60,15 @@ export async function createPaymentIntent(input: {
 
     if (!invoice) return { success: false, error: "Invoice not found" };
 
+    const approvedPayments = await prisma.payment.findMany({
+      where: { invoiceId: invoice.id, status: "approved" },
+      select: { amount: true, status: true },
+    });
+    const dueNow = invoiceAmountDueNow(invoice, sumApprovedPayments(approvedPayments));
+    if (dueNow <= 0) {
+      return { success: false, error: "Invoice has no remaining balance" };
+    }
+
     let stripe: import("stripe").Stripe;
     try {
       stripe = getStripe();
@@ -68,7 +78,7 @@ export async function createPaymentIntent(input: {
 
     const pi = await stripe.paymentIntents.create(
       {
-        amount: invoice.amount,
+        amount: dueNow,
         currency: invoice.currency.toLowerCase(),
         metadata: { caseId: invoice.caseId, invoiceId: invoice.id },
         automatic_payment_methods: { enabled: true },
@@ -86,7 +96,7 @@ export async function createPaymentIntent(input: {
         await paymentDA.createPayment({
           invoiceId: invoice.id,
           caseId: invoice.caseId,
-          amount: invoice.amount,
+          amount: dueNow,
           currency: invoice.currency,
           method: "stripe",
           stripePaymentIntentId: pi.id,
@@ -103,7 +113,7 @@ export async function createPaymentIntent(input: {
     return {
       success: true,
       clientSecret: pi.client_secret ?? undefined,
-      amount: invoice.amount,
+      amount: dueNow,
       currency: invoice.currency,
     };
   } catch (e) {

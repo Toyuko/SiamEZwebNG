@@ -14,10 +14,11 @@ import { paymentConfig } from "@/config/payments";
 type InvoiceWithRelations = {
   id: string;
   amount: number;
+  depositAmount?: number | null;
   currency: string;
   status: string;
   caseId: string;
-  payments: { id: string; status: string; proofDocument: { id: string } | null }[];
+  payments: { id: string; amount: number; status: string; proofDocument: { id: string } | null }[];
 };
 
 interface InvoiceDetailClientProps {
@@ -27,6 +28,8 @@ interface InvoiceDetailClientProps {
   hasPendingPayment: boolean;
   userId: string;
   paymentSettings: PaymentSettings;
+  /** Amount due on this payment (deposit or remaining balance). */
+  amountDueNow: number;
 }
 
 export function InvoiceDetailClient({
@@ -36,6 +39,7 @@ export function InvoiceDetailClient({
   hasPendingPayment,
   userId,
   paymentSettings,
+  amountDueNow,
 }: InvoiceDetailClientProps) {
   const router = useRouter();
   const [selectedMethod, setSelectedMethod] = useState<"qr" | "bank" | "wise" | null>(null);
@@ -53,7 +57,7 @@ export function InvoiceDetailClient({
       Branch: paymentSettings.bankBranch,
       "Account Name": paymentSettings.bankAccountName,
       "Account Number": paymentSettings.bankAccountNumber,
-      Amount: `${(invoice.amount / 100).toFixed(2)} ${invoice.currency}`,
+      Amount: `${(amountDueNow / 100).toFixed(2)} ${invoice.currency}`,
       Reference: reference,
     },
   };
@@ -63,7 +67,7 @@ export function InvoiceDetailClient({
       Beneficiary: paymentSettings.wiseBeneficiary,
       "Account ID": paymentSettings.wiseAccountId,
       Currency: paymentSettings.wiseCurrency,
-      Amount: `${(invoice.amount / 100).toFixed(2)} ${invoice.currency}`,
+      Amount: `${(amountDueNow / 100).toFixed(2)} ${invoice.currency}`,
       Reference: reference,
       Details: paymentSettings.wiseDetails.replace("[Your invoice reference]", reference),
       Note: paymentSettings.wiseNote,
@@ -172,14 +176,14 @@ export function InvoiceDetailClient({
               </p>
               <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
                 <InvoiceQRCode
-                  amountCents={invoice.amount}
+                  amountCents={amountDueNow}
                   reference={reference}
                   promptPayId={paymentSettings.promptPayId}
                   size={220}
                   className="rounded-lg border border-gray-200 bg-white p-2"
                 />
                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                  <p>Amount: {formatCurrency(invoice.amount, invoice.currency)}</p>
+                  <p>Amount: {formatCurrency(amountDueNow, invoice.currency)}</p>
                   <p>Reference: {reference}</p>
                   <p className="mt-2">Scan with your bank app or PromptPay.</p>
                 </div>

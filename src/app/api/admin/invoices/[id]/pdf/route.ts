@@ -186,11 +186,22 @@ export async function GET(
   doc.setFontSize(10);
   doc.text("SUBTOTAL", pageW - margin - 50, finalY + 8);
   doc.text(subtotalText, pageW - margin, finalY + 8, { align: "right" });
-  doc.text("TOTAL DUE", pageW - margin - 50, finalY + 14);
+  let yTotals = finalY + 14;
+  if (inv.depositAmount != null && inv.depositAmount > 0 && inv.depositAmount < inv.amount) {
+    const depositText = formatMoney(inv.depositAmount, inv.currency);
+    const balanceText = formatMoney(inv.amount - inv.depositAmount, inv.currency);
+    doc.text("DEPOSIT DUE NOW", pageW - margin - 50, yTotals);
+    doc.text(depositText, pageW - margin, yTotals, { align: "right" });
+    yTotals += 6;
+    doc.text("BALANCE AFTER DEPOSIT", pageW - margin - 50, yTotals);
+    doc.text(balanceText, pageW - margin, yTotals, { align: "right" });
+    yTotals += 6;
+  }
+  doc.text("TOTAL DUE", pageW - margin - 50, yTotals);
   doc.setFont("helvetica", "bold");
-  doc.text(subtotalText, pageW - margin, finalY + 14, { align: "right" });
+  doc.text(subtotalText, pageW - margin, yTotals, { align: "right" });
   doc.setFont("helvetica", "normal");
-  doc.text("Thank you for your business!", margin, finalY + 18);
+  doc.text("Thank you for your business!", margin, yTotals + 4);
 
   // Page 2 - payment details
   doc.addPage();
@@ -225,7 +236,7 @@ export async function GET(
     headStyles: { fillColor: [245, 245, 245], textColor: [20, 20, 20], fontStyle: "bold" },
     head: [["Method", "Details"]],
     body: [
-      ["PromptPay", `ID: ${textOrDash(paymentSettings.promptPayId)}\nReference: ${invoiceRef}\nAmount: ${subtotalText}`],
+      ["PromptPay", `ID: ${textOrDash(paymentSettings.promptPayId)}\nReference: ${invoiceRef}\nAmount: ${inv.depositAmount != null && inv.depositAmount > 0 && inv.depositAmount < inv.amount ? formatMoney(inv.depositAmount, inv.currency) + " deposit (total " + subtotalText + ")" : subtotalText}`],
       [
         "Bank Transfer",
         `Bank: ${textOrDash(paymentSettings.bankName)}\nBranch: ${textOrDash(paymentSettings.bankBranch)}\nAccount Name: ${textOrDash(paymentSettings.bankAccountName)}\nAccount Number: ${textOrDash(paymentSettings.bankAccountNumber)}\nReference: ${invoiceRef}\nAmount: ${subtotalText}`,

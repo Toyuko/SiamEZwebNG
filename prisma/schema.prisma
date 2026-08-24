@@ -748,7 +748,13 @@ model Invoice {
   caseId           String               @map("case_id")
   quoteId          String?              @map("quote_id")
   userId           String?              @map("user_id") // billing contact; null for guest invoices
+  /** Full invoice total in satang. */
   amount           Int
+  /**
+   * Optional deposit due first (satang). When set, clients pay this before the
+   * remaining balance; `amount` stays the full total. Null = pay full amount.
+   */
+  depositAmount    Int?                 @map("deposit_amount")
   currency         String               @default("THB")
   status           InvoiceStatus        @default(draft)
   kind             InvoiceKind          @default(full)

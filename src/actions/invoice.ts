@@ -36,6 +36,8 @@ const wizardSchema = z
     dueDate: z.string().nullable().optional(),
     currency: z.string().optional(),
     initialStatus: z.enum(["draft", "unpaid"]),
+    /** Optional deposit due now in satang; omit/null = pay full amount. */
+    depositAmount: z.coerce.number().int().positive().nullable().optional(),
   })
   .superRefine((val, ctx) => {
     if (val.mode === "existing_case") {
@@ -200,10 +202,23 @@ export async function createInvoiceViaWizard(raw: unknown) {
       }
     }
 
+    let depositAmount: number | null = null;
+    if (input.depositAmount != null) {
+      const d = Math.round(input.depositAmount);
+      if (d <= 0 || d >= amount) {
+        return {
+          success: false as const,
+          error: "Deposit must be greater than 0 and less than the invoice total",
+        };
+      }
+      depositAmount = d;
+    }
+
     const invoice = await invoiceDA.createInvoice({
       caseId,
       userId,
       amount,
+      depositAmount,
       currency,
       status: "draft",
       dueDate,

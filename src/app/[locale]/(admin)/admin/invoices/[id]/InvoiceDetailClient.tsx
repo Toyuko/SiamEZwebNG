@@ -37,6 +37,9 @@ export function InvoiceDetailClient({ invoice }: { invoice: InvoiceDetail }) {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editAmountThb, setEditAmountThb] = useState(() => (invoice.amount / 100).toFixed(2));
+  const [editDepositThb, setEditDepositThb] = useState(() =>
+    invoice.depositAmount != null ? (invoice.depositAmount / 100).toFixed(2) : ""
+  );
   const [editDueDate, setEditDueDate] = useState(() => {
     if (!invoice.dueDate) return "";
     return new Date(invoice.dueDate).toISOString().slice(0, 10);
@@ -87,10 +90,26 @@ export function InvoiceDetailClient({ invoice }: { invoice: InvoiceDetail }) {
     }
     const amountSatang = Math.round(amountNum * 100);
 
+    let depositSatang: number | null = null;
+    const depositRaw = editDepositThb.trim();
+    if (depositRaw) {
+      const depositNum = Number(depositRaw);
+      if (!Number.isFinite(depositNum) || depositNum < 0) {
+        setMessage({ type: "err", text: "Deposit must be a valid number (THB)." });
+        return;
+      }
+      depositSatang = Math.round(depositNum * 100);
+      if (depositSatang <= 0 || depositSatang >= amountSatang) {
+        setMessage({ type: "err", text: "Deposit must be greater than 0 and less than the invoice total." });
+        return;
+      }
+    }
+
     startEditTransition(async () => {
       const dueDateValue = editDueDate ? editDueDate : null;
       const res = await updateInvoice(invoice.id, {
         amount: amountSatang,
+        depositAmount: depositSatang,
         status: editStatus,
         dueDate: dueDateValue,
         clientAddress: editClientAddress.trim() ? editClientAddress.trim() : null,
@@ -168,6 +187,15 @@ export function InvoiceDetailClient({ invoice }: { invoice: InvoiceDetail }) {
           <p>
             <span className="text-gray-500">Amount:</span> {formatCurrency(invoice.amount)}
           </p>
+          {invoice.depositAmount != null && invoice.depositAmount > 0 && (
+            <p>
+              <span className="text-gray-500">Deposit due now:</span>{" "}
+              {formatCurrency(invoice.depositAmount)}
+              <span className="ml-2 text-gray-500">
+                (balance {formatCurrency(Math.max(0, invoice.amount - invoice.depositAmount))})
+              </span>
+            </p>
+          )}
           <p>
             <span className="text-gray-500">Status:</span> {invoice.status}
           </p>
@@ -264,6 +292,20 @@ export function InvoiceDetailClient({ invoice }: { invoice: InvoiceDetail }) {
                 min={0}
                 value={editAmountThb}
                 onChange={(e) => setEditAmountThb(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-deposit">Deposit due now (optional, THB)</Label>
+              <Input
+                id="edit-deposit"
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min={0}
+                placeholder="Leave empty for full amount due"
+                value={editDepositThb}
+                onChange={(e) => setEditDepositThb(e.target.value)}
               />
             </div>
 

@@ -10,6 +10,7 @@ import { ManualCheckout } from "@/components/checkout/ManualCheckout";
 import { Button } from "@/components/ui/button";
 import { isStripeEnabled } from "@/config/payments";
 import { getPaymentSettings } from "@/lib/payment-settings";
+import { invoiceAmountDueNow, invoiceRemainingBalance, sumApprovedPayments } from "@/lib/payments/invoice-deposit";
 
 export default async function CheckoutPage({
   params,
@@ -76,16 +77,19 @@ export default async function CheckoutPage({
     const portalInvoiceHref =
       !isGuestCheckout && session?.user?.id ? `/portal/invoices/${invoice.id}` : null;
     const quote = c.quotes?.[0];
+    const approvedPaid = sumApprovedPayments(invoice.payments ?? []);
+    const dueNowSatang = invoiceAmountDueNow(invoice, approvedPaid);
     const totalSatang = quote?.amount ?? invoice.amount;
     const remainingSatang =
-      quote?.remainingBalance ?? Math.max(0, totalSatang - invoice.amount);
+      quote?.remainingBalance ??
+      invoiceRemainingBalance(invoice, approvedPaid);
 
     return (
       <div className="container mx-auto max-w-lg px-4 py-8">
         <ManualCheckout
           caseNumber={c.caseNumber}
           serviceName={c.service.name}
-          amountSatang={invoice.amount}
+          amountSatang={dueNowSatang}
           currency={invoice.currency}
           paymentSettings={paymentSettings}
           portalInvoiceHref={portalInvoiceHref}

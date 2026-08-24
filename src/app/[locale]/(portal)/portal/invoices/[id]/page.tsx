@@ -4,6 +4,7 @@ import { requireAuth } from "@/lib/auth";
 import { getInvoiceByIdForUser } from "@/data-access/invoice";
 import { InvoiceDetailClient } from "./InvoiceDetailClient";
 import { formatCurrency } from "@/lib/utils";
+import { invoiceAmountDueNow, invoiceHasOptionalDeposit, invoiceRemainingBalance, sumApprovedPayments } from "@/lib/payments/invoice-deposit";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getPaymentSettings } from "@/lib/payment-settings";
 
@@ -23,6 +24,10 @@ export default async function PortalInvoiceDetailPage({
   if (!invoice) notFound();
 
   const reference = invoice.case.caseNumber;
+  const approvedPaid = sumApprovedPayments(invoice.payments ?? []);
+  const dueNow = invoiceAmountDueNow(invoice, approvedPaid);
+  const remaining = invoiceRemainingBalance(invoice, approvedPaid);
+  const hasDeposit = invoiceHasOptionalDeposit(invoice);
   const canPay =
     invoice.status === "unpaid" || invoice.status === "draft";
   const hasPendingPayment = invoice.payments.some((p) => p.status === "submitted");
@@ -43,9 +48,19 @@ export default async function PortalInvoiceDetailPage({
                 Case {invoice.case.caseNumber}
               </p>
             </div>
-            <p className="text-xl font-bold text-siam-blue">
-              {formatCurrency(invoice.amount, invoice.currency)}
-            </p>
+            <div className="text-right">
+              <p className="text-xl font-bold text-siam-blue">
+                {formatCurrency(dueNow > 0 ? dueNow : invoice.amount, invoice.currency)}
+              </p>
+              {hasDeposit && (
+                <p className="text-xs text-gray-500">
+                  Due now
+                  {remaining !== dueNow
+                    ? ` · Total ${formatCurrency(invoice.amount, invoice.currency)} · Remaining ${formatCurrency(remaining, invoice.currency)}`
+                    : ` of ${formatCurrency(invoice.amount, invoice.currency)}`}
+                </p>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -56,6 +71,7 @@ export default async function PortalInvoiceDetailPage({
             hasPendingPayment={hasPendingPayment}
             userId={session.user.id}
             paymentSettings={paymentSettings}
+            amountDueNow={dueNow > 0 ? dueNow : invoice.amount}
           />
         </CardContent>
       </Card>

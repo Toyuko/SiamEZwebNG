@@ -92,6 +92,8 @@ export function CreateInvoiceWizard({
 
   const [dueDate, setDueDate] = useState("");
   const [initialStatus, setInitialStatus] = useState<"draft" | "unpaid">("draft");
+  /** Optional deposit due now (THB). Empty = pay full invoice total. */
+  const [depositThb, setDepositThb] = useState("");
 
   const searchCases = useCallback(async (q: string) => {
     const r = await searchCasesForInvoiceWizard(q);
@@ -174,6 +176,12 @@ export function CreateInvoiceWizard({
       dueDate: dueDate || null,
       currency: "THB",
       initialStatus,
+      depositAmount: (() => {
+        const raw = depositThb.trim();
+        if (!raw) return null;
+        const satang = thbToSatang(raw);
+        return satang > 0 ? satang : null;
+      })(),
     };
 
     startTransition(async () => {
@@ -540,6 +548,22 @@ export function CreateInvoiceWizard({
                 <option value="unpaid">Unpaid (sent)</option>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="deposit">Deposit due now (optional, THB)</Label>
+              <Input
+                id="deposit"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="0.01"
+                placeholder="Leave empty to charge the full total"
+                value={depositThb}
+                onChange={(e) => setDepositThb(e.target.value)}
+              />
+              <p className="text-xs text-gray-500">
+                If set, the client pays this deposit first. The invoice total stays the full amount; the balance remains after the deposit is paid.
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -572,6 +596,16 @@ export function CreateInvoiceWizard({
             <p>
               <span className="text-gray-500">Status:</span> {initialStatus}
             </p>
+            {depositThb.trim() && (
+              <p>
+                <span className="text-gray-500">Deposit due now:</span>{" "}
+                {new Intl.NumberFormat("th-TH", {
+                  style: "currency",
+                  currency: "THB",
+                  minimumFractionDigits: 2,
+                }).format(Number(depositThb.replace(/,/g, "")) || 0)}
+              </p>
+            )}
             {clientAddress.trim() && (
               <p>
                 <span className="text-gray-500">Client address:</span> {clientAddress}

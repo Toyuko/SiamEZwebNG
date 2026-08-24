@@ -1,12 +1,21 @@
 /**
  * Manual (offline) payment settlement shared by Finance "Add Payment"
  * and Service Jobs "Mark as paid".
+ *
+ * When an invoice has optional depositAmount, "mark paid" / add payment settles
+ * the amount due now (deposit first, then remaining balance). The invoice stays
+ * open until approved payments cover the full total.
  */
 
 import { prisma } from "@/lib/db";
 import { confirmVerifiedPayment } from "@/lib/payments/confirm";
 import type { InvoiceKind, PaymentMethod, Prisma } from "@prisma/client";
 import { trackPlatformEvent } from "@/lib/analytics/track";
+import {
+  invoiceAmountDueNow,
+  isInvoiceFullyPaid,
+  sumApprovedPayments,
+} from "@/lib/payments/invoice-deposit";
 
 const OPEN_INVOICE_STATUSES = new Set(["draft", "unpaid", "pending_verification"]);
 
@@ -51,8 +60,8 @@ export async function settleManualInvoicePayment(input: {
     return { success: false, error: "Invoice was rejected" };
   }
 
-  const approved = invoice.payments.find((p) => p.status === "approved");
-  if (invoice.status === "paid" || approved) {
+  const approvedPaid = sumApprovedPayments(invoice.payments);
+  if (invoice.status === "paid" || isInvoiceFullyPaid(invoice, approvedPaid)) {
     const nextStatus = caseStatusAfterInvoiceKind(invoice.kind);
     if (
       invoice.case.status !== "completed" &&
@@ -65,6 +74,7 @@ export async function settleManualInvoicePayment(input: {
         data: { status: nextStatus },
       });
     }
+    const approved = invoice.payments.find((p) => p.status === "approved");
     return {
       success: true,
       alreadySettled: true,
@@ -93,87 +103,62 @@ export async function settleManualInvoicePayment(input: {
     return { success: false, error: `Invoice cannot be marked paid (status: ${invoice.status})` };
   }
 
-  if (invoice.amount <= 0) {
-    return { success: false, error: "Invoice amount must be greater than zero" };
+  const dueNow = invoiceAmountDueNow(invoice, approvedPaid);
+  if (dueNow <= 0) {
+    return { success: false, error: "Nothing due on this invoice" };
   }
 
-  const paymentId = await prisma.$transaction(async (tx) => {
-    const payment = await tx.payment.create({
-      data: {
-        invoiceId: invoice.id,
-        caseId: invoice.caseId,
-        amount: invoice.amount,
-        currency: invoice.currency,
-        method,
-        status: "approved",
-        approvedAt: new Date(),
-        kind: invoice.kind,
-        metadata: { manualEntry: true } as Prisma.InputJsonValue,
-      },
-    });
+  const payment = await prisma.payment.create({
+    data: {
+      invoiceId: invoice.id,
+      caseId: invoice.caseId,
+      amount: dueNow,
+      currency: invoice.currency,
+      method,
+      status: "submitted",
+      kind: invoice.kind,
+      metadata: { manualEntry: true } as Prisma.InputJsonValue,
+    },
+  });
 
-    await tx.invoice.update({
-      where: { id: invoice.id },
-      data: {
-        status: "paid",
-        paidAt: new Date(),
-        paymentMethod: method,
-      },
-    });
+  const result = await confirmVerifiedPayment({
+    invoiceId: invoice.id,
+    caseId: invoice.caseId,
+    paymentId: payment.id,
+  });
+  if (!result.applied && result.reason !== "already_approved") {
+    return { success: false, error: `Failed to settle payment (${result.reason})` };
+  }
 
-    if (invoice.milestoneId) {
-      await tx.paymentMilestone.update({
-        where: { id: invoice.milestoneId },
-        data: { status: "paid", paidAt: new Date() },
-      });
-    }
-
-    if (invoice.quoteId) {
-      const quote = await tx.quote.findUnique({ where: { id: invoice.quoteId } });
-      if (quote) {
-        const remaining = Math.max(0, (quote.remainingBalance ?? quote.amount) - invoice.amount);
-        await tx.quote.update({
-          where: { id: quote.id },
-          data: { remainingBalance: remaining },
-        });
-      }
-    }
-
-    const nextStatus = caseStatusAfterInvoiceKind(invoice.kind);
-    if (
-      invoice.case.status !== "completed" &&
-      invoice.case.status !== "cancelled" &&
-      invoice.case.status !== "refunded"
-    ) {
-      await tx.case.update({
-        where: { id: invoice.caseId },
-        data: { status: nextStatus },
-      });
-    }
-
-    return payment.id;
+  await prisma.invoice.update({
+    where: { id: invoice.id },
+    data: { paymentMethod: method },
   });
 
   void trackPlatformEvent(
-    invoice.kind === "milestone"
-      ? "milestone_payment_completed"
-      : invoice.kind === "initial"
-        ? "initial_payment_completed"
-        : "booking_confirmed",
+    result.fullyPaid
+      ? invoice.kind === "milestone"
+        ? "milestone_payment_completed"
+        : invoice.kind === "initial"
+          ? "initial_payment_completed"
+          : "booking_confirmed"
+      : "initial_payment_completed",
     {
       caseId: invoice.caseId,
       invoiceId: invoice.id,
       kind: invoice.kind,
-      amount: invoice.amount,
+      amount: dueNow,
       manualEntry: true,
+      fullyPaid: result.fullyPaid ?? false,
     }
   );
 
-  return { success: true, paymentId };
+  return { success: true, paymentId: payment.id };
 }
 
 /**
  * Mark a service job (Case) as paid and sync Invoice + Payment rows.
+ * With deposit invoices, settles the amount due now (may leave a balance).
  */
 export async function markCasePaidManually(
   caseId: string,

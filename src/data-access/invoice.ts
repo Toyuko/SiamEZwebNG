@@ -45,6 +45,7 @@ export async function createInvoice(data: {
   quoteId?: string | null;
   userId?: string | null;
   amount: number;
+  depositAmount?: number | null;
   currency?: string;
   status?: InvoiceStatus;
   paymentMethod?: InvoicePaymentMethod | null;
@@ -60,6 +61,7 @@ export async function createInvoice(data: {
       quoteId: data.quoteId ?? undefined,
       userId: data.userId ?? undefined,
       amount: data.amount,
+      depositAmount: data.depositAmount ?? undefined,
       currency: data.currency ?? "THB",
       status: data.status ?? "draft",
       paymentMethod: data.paymentMethod ?? undefined,

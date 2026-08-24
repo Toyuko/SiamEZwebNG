@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import * as paymentDA from "@/data-access/payment";
 import * as invoiceDA from "@/data-access/invoice";
 import type { PaymentMethod } from "@prisma/client";
+import { invoiceAmountDueNow, sumApprovedPayments } from "@/lib/payments/invoice-deposit";
 
 export interface SubmitPaymentInput {
   userId: string;
@@ -36,10 +37,19 @@ export async function submitUserPayment(input: SubmitPaymentInput) {
     }
   }
 
+  const existingPayments = await prisma.payment.findMany({
+    where: { invoiceId: invoice.id, status: "approved" },
+    select: { amount: true, status: true },
+  });
+  const dueNow = invoiceAmountDueNow(invoice, sumApprovedPayments(existingPayments));
+  if (dueNow <= 0) {
+    throw new Error("Invoice has no remaining balance");
+  }
+
   const payment = await paymentDA.createPayment({
     invoiceId: input.invoiceId,
     caseId: invoice.caseId,
-    amount: invoice.amount,
+    amount: dueNow,
     currency: invoice.currency,
     method: input.method,
     proofDocumentId: input.proofDocumentId,

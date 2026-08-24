@@ -23,7 +23,11 @@ export { buildQuotePaymentPlan, payableAmountForChoice, buildPricingSnapshot } f
 export type { QuotePaymentPlan, PaymentChoice } from "./quote-plan";
 export { buildValidatedAiQuoteResponse } from "./ai-quote";
 export {
-  validateCheckoutAmount,
-  shouldProcessWebhookEvent,
-  CheckoutValidationError,
-} from "./checkout-guard";
+  normalizeDepositAmount,
+  sumApprovedPayments,
+  invoiceRemainingBalance,
+  isInvoiceFullyPaid,
+  isDepositSatisfied,
+  invoiceAmountDueNow,
+  invoiceHasOptionalDeposit,
+} from "./invoice-deposit";

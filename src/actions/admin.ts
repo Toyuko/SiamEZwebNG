@@ -1069,6 +1069,7 @@ export async function updateInvoice(
   id: string,
   data: {
     amount?: number;
+    depositAmount?: number | null;
     status?: InvoiceStatus;
     dueDate?: Date | string | null;
     clientAddress?: string | null;
@@ -1084,10 +1085,25 @@ export async function updateInvoice(
           ? new Date(data.dueDate)
           : data.dueDate;
 
+  if (data.amount !== undefined || data.depositAmount !== undefined) {
+    const current = await prisma.invoice.findUnique({
+      where: { id },
+      select: { amount: true, depositAmount: true },
+    });
+    if (!current) return null;
+    const nextAmount = data.amount ?? current.amount;
+    const nextDeposit =
+      data.depositAmount === undefined ? current.depositAmount : data.depositAmount;
+    if (nextDeposit != null && (nextDeposit <= 0 || nextDeposit >= nextAmount)) {
+      throw new Error("Deposit must be greater than 0 and less than the invoice total");
+    }
+  }
+
   return prisma.invoice.update({
     where: { id },
     data: {
       ...(data.amount !== undefined ? { amount: data.amount } : {}),
+      ...(data.depositAmount !== undefined ? { depositAmount: data.depositAmount } : {}),
       ...(data.status !== undefined ? { status: data.status } : {}),
       ...(dueDate !== undefined ? { dueDate: dueDate ?? undefined } : {}),
       ...(data.clientAddress !== undefined ? { clientAddress: data.clientAddress ?? undefined } : {}),
