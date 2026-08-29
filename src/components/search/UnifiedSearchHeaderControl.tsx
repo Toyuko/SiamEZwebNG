@@ -15,7 +15,9 @@ export function UnifiedSearchHeaderControl({ className }: { className?: string }
       locale={searchLocale}
       labels={{
         placeholder: t("placeholder"),
-        empty: t("empty"),
+        // Keep literal "{query}" for UnifiedSearchPalette.replace — next-intl
+        // requires the ICU var at format time.
+        empty: t("empty", { query: "{query}" }),
         loading: t("loading"),
         shortcutHint: t("shortcutHint"),
         navigateHint: t("navigateHint"),
