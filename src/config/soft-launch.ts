@@ -14,8 +14,8 @@ export const softLaunch = {
    */
   showSellerListings: true,
 
-  /** Public marketplace freelancers directory in primary nav. */
-  showFreelancers: false,
+  /** Public marketplace freelancers directory in primary nav (synced with mobile). */
+  showFreelancers: true,
 
   /** Life-event journeys & goals teasers on homepage / portal. */
   showLifeEvents: false,

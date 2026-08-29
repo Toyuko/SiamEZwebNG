@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { auth } from "@/auth";
 import { ok, fail } from "@/lib/api-response";
+import { resolveApiUserId } from "@/lib/auth/resolveApiUserId";
 import { createJobReview } from "@/lib/jobs/reviews";
 
 export async function POST(
@@ -8,8 +8,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const clientId = await resolveApiUserId(request);
+    if (!clientId) {
       return fail("Unauthorized", 401);
     }
 
@@ -27,7 +27,7 @@ export async function POST(
           : NaN;
 
     const result = await createJobReview({
-      clientId: session.user.id,
+      clientId,
       jobId: id,
       rating,
       comment: typeof body.comment === "string" ? body.comment : null,

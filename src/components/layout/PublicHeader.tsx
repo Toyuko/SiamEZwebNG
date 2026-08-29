@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { UnifiedSearchHeaderControl } from "@/components/search";
 import { AskSiamEzButton } from "@/components/ai/AskSiamEzButton";
 import { publicNav, site, type PublicNavLink } from "@/config/site";
+import { softLaunch } from "@/config/soft-launch";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useLocale } from "next-intl";
@@ -41,6 +42,15 @@ function isGroupActive(items: PublicNavLink[], pathname: string): boolean {
   return items.some((item) => isNavActive(item, pathname));
 }
 
+function visiblePublicNav() {
+  return publicNav.filter((entry) => {
+    if (entry.type === "link" && entry.href === "/freelancers") {
+      return !softLaunch.enabled || softLaunch.showFreelancers;
+    }
+    return true;
+  });
+}
+
 export function PublicHeader({ user = null }: PublicHeaderProps) {
   const [open, setOpen] = useState(false);
   const [mobileGroups, setMobileGroups] = useState<Record<string, boolean>>({});
@@ -55,6 +65,7 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
   };
 
   const closeMenu = () => setOpen(false);
+  const navEntries = visiblePublicNav();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-header-border bg-header-bg shadow-sm">
@@ -75,7 +86,7 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex lg:gap-2">
-          {publicNav.map((entry) => {
+          {navEntries.map((entry) => {
             if (entry.type === "link") {
               const active = isNavActive(entry, pathname);
               return (
@@ -233,7 +244,7 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
         )}
       >
         <nav className="container mx-auto flex flex-col gap-1 px-4 py-4">
-          {publicNav.map((entry) => {
+          {navEntries.map((entry) => {
             if (entry.type === "link") {
               const active = isNavActive(entry, pathname);
               return (

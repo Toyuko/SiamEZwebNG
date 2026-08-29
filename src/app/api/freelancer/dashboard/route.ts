@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
             isPublic: profile.isPublic,
             title: profile.title,
             hourlyRate: profile.hourlyRate,
+            isSpecialMember: profile.isSpecialMember,
           }
         : null,
       revenue: {

@@ -82,7 +82,28 @@ export async function PUT(request: NextRequest) {
     }
 
     const profile = await upsertFreelancerPublicProfile(userId, data);
-    return ok({ profile: serializeOwnerProfile(profile) });
+
+    // Role may have been promoted customer → freelancer on first public save.
+    const refreshed = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true, image: true, role: true },
+    });
+
+    return ok({
+      profile: serializeOwnerProfile(profile),
+      user: refreshed
+        ? {
+            id: refreshed.id,
+            name: refreshed.name,
+            email: refreshed.email,
+            image: refreshed.image,
+            role: refreshed.role,
+          }
+        : {
+            id: user.id,
+            role: user.role === "customer" ? "freelancer" : user.role,
+          },
+    });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Failed to save freelancer profile";
     const status = message === "Unauthorized" || message === "Forbidden" ? 401 : 500;

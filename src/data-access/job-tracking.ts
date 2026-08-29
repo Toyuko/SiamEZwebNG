@@ -166,11 +166,17 @@ export async function getFreelancerJobTracking(jobId: string, freelancerId: stri
   return {
     job: {
       id: job.id,
+      title: job.title,
+      description: job.description,
       status: job.status,
       trackingStatus: job.trackingStatus,
       trackingNotes: job.trackingNotes,
+      isCurrentlyInTransit: job.isCurrentlyInTransit,
       completionSubmittedAt: job.completionSubmittedAt?.toISOString() ?? null,
       updatedAt: job.updatedAt.toISOString(),
+      service: job.service
+        ? { id: job.service.id, slug: job.service.slug, name: job.service.name }
+        : null,
     },
     trackingHistory,
     steps,

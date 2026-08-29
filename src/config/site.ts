@@ -54,14 +54,15 @@ export type PublicNavEntry =
 
 /**
  * Soft-launch public navigation.
- * Keep freelancers / gallery reachable via footer or direct URL,
- * but out of the primary nav so conversion stays focused.
+ * Freelancer directory is included when softLaunch.showFreelancers is enabled
+ * so web and mobile stay aligned.
  */
 export const publicNav: PublicNavEntry[] = [
   { type: "link", labelKey: "home", href: "/", match: "exact" },
   { type: "link", labelKey: "services", href: "/services", match: "prefix" },
   { type: "link", labelKey: "sales", href: "/sales", match: "prefix" },
   { type: "link", labelKey: "realEstate", href: "/real-estate", match: "prefix" },
+  { type: "link", labelKey: "freelancers", href: "/freelancers", match: "prefix" },
   { type: "link", labelKey: "testimonials", href: "/testimonials", match: "exact" },
   { type: "link", labelKey: "contact", href: "/contact", match: "exact" },
 ];

@@ -3,29 +3,22 @@ import * as bcrypt from "bcryptjs";
 import { z } from "zod";
 import { getUserByEmail } from "@/data-access/user";
 import { linkGuestCasesToUser } from "@/data-access/case";
+import { ensureFreelancerProfile } from "@/data-access/freelancer";
 import { createApiJwtForUser } from "@/lib/auth/api-jwt";
 import { ok, fail } from "@/lib/api-response";
 import { prisma } from "@/lib/db";
-import { toSlug } from "@/lib/slug";
+import { sendWelcomeEmail } from "@/lib/email/messages";
+import {
+  displayNameFromEmail,
+  resolvePublicRegistrationRole,
+} from "@/lib/auth/public-registration";
 
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  name: z.string().min(1, "Name is required"),
+  name: z.string().trim().max(120).optional(),
   phone: z.string().optional(),
-  accountType: z.enum(["customer", "freelancer", "company"]).optional(),
 });
-
-async function uniqueCompanySlug(baseName: string): Promise<string> {
-  const base = toSlug(baseName) || "company";
-  let slug = base;
-  let attempt = 0;
-  while (await prisma.company.findUnique({ where: { slug } })) {
-    attempt += 1;
-    slug = `${base}-${attempt}`;
-  }
-  return slug;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,9 +26,8 @@ export async function POST(request: NextRequest) {
     const parsed = registerSchema.safeParse({
       email: body?.email,
       password: body?.password,
-      name: body?.name,
+      name: body?.name || undefined,
       phone: body?.phone,
-      accountType: body?.accountType,
     });
 
     if (!parsed.success) {
@@ -44,8 +36,11 @@ export async function POST(request: NextRequest) {
     }
 
     const email = parsed.data.email.toLowerCase().trim();
-    const name = parsed.data.name.trim();
+    const name = parsed.data.name?.trim() || displayNameFromEmail(email);
     const password = parsed.data.password;
+    const role = resolvePublicRegistrationRole(
+      typeof body?.accountType === "string" ? body.accountType : null
+    );
 
     const existing = await getUserByEmail(email);
     if (existing) {
@@ -53,36 +48,27 @@ export async function POST(request: NextRequest) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const role =
-      parsed.data.accountType === "freelancer"
-        ? "freelancer"
-        : parsed.data.accountType === "company"
-          ? "company"
-          : "customer";
     const newUser = await prisma.user.create({
       data: {
         email,
         name,
         passwordHash,
         role,
-        ...(role === "freelancer"
-          ? { freelancerProfile: { create: {} } }
-          : role === "company"
-            ? {
-                company: {
-                  create: {
-                    companyName: name,
-                    slug: await uniqueCompanySlug(name),
-                  },
-                },
-              }
-            : {}),
+        ...(parsed.data.phone?.trim() ? { phone: parsed.data.phone.trim() } : {}),
       },
     });
 
-    if (role === "customer") {
-      await linkGuestCasesToUser(email, newUser.id);
+    await linkGuestCasesToUser(email, newUser.id);
+
+    if (newUser.role === "freelancer") {
+      await ensureFreelancerProfile(newUser.id);
     }
+
+    sendWelcomeEmail({
+      to: newUser.email,
+      name: newUser.name,
+      role: newUser.role,
+    });
 
     const token = await createApiJwtForUser({
       id: newUser.id,
