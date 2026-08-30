@@ -35,7 +35,9 @@ const wizardSchema = z
     lineItems: z.array(lineItemSchema).min(1),
     dueDate: z.string().nullable().optional(),
     currency: z.string().optional(),
-    initialStatus: z.enum(["draft", "unpaid"]),
+    initialStatus: z.enum(["draft", "unpaid", "paid"]),
+    /** How the customer already paid, used when initialStatus is paid. */
+    paidVia: z.enum(["bank", "qr", "wise"]).optional(),
     /** Optional deposit due now in satang; omit/null = pay full amount. */
     depositAmount: z.coerce.number().int().positive().nullable().optional(),
   })
@@ -203,7 +205,7 @@ export async function createInvoiceViaWizard(raw: unknown) {
     }
 
     let depositAmount: number | null = null;
-    if (input.depositAmount != null) {
+    if (input.initialStatus !== "paid" && input.depositAmount != null) {
       const d = Math.round(input.depositAmount);
       if (d <= 0 || d >= amount) {
         return {
@@ -226,8 +228,22 @@ export async function createInvoiceViaWizard(raw: unknown) {
       clientAddress,
     });
 
-    if (input.initialStatus === "unpaid") {
+    if (input.initialStatus === "unpaid" || input.initialStatus === "paid") {
       await invoiceDA.updateInvoiceStatus(invoice.id, "unpaid");
+    }
+
+    if (input.initialStatus === "paid") {
+      const { settleManualInvoicePayment } = await import("@/lib/payments/manual");
+      const settled = await settleManualInvoicePayment({
+        invoiceId: invoice.id,
+        method: input.paidVia ?? "bank",
+      });
+      if (!settled.success) {
+        return {
+          success: false as const,
+          error: settled.error ?? "Invoice created but could not mark it paid",
+        };
+      }
     }
 
     const updated = await prisma.invoice.findUnique({ where: { id: invoice.id } });

@@ -7,6 +7,7 @@ import path from "node:path";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { NextResponse } from "next/server";
+import { invoiceDocumentTitle, invoiceTotalLabel } from "@/lib/invoices/status";
 
 function formatMoney(satang: number, currency: string) {
   return new Intl.NumberFormat("en-TH", {
@@ -109,12 +110,26 @@ export async function GET(
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("INVOICE", pageW - margin, margin + 2, { align: "right" });
+  doc.text(invoiceDocumentTitle(inv.status), pageW - margin, margin + 2, { align: "right" });
+  if (inv.status === "paid") {
+    doc.setTextColor(22, 163, 74);
+    doc.setFontSize(12);
+    doc.text("PAID", pageW - margin, margin + 8, { align: "right" });
+    doc.setTextColor(0, 0, 0);
+  }
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text(`INVOICE NO. ${invoiceRef}`, pageW - margin, margin + 9, { align: "right" });
-  doc.text(`DATE ${issueDate}`, pageW - margin, margin + 14, { align: "right" });
-  doc.text(`DUE ${dueDate}`, pageW - margin, margin + 19, { align: "right" });
+  const headerY = inv.status === "paid" ? 14 : 9;
+  doc.text(`INVOICE NO. ${invoiceRef}`, pageW - margin, margin + headerY, { align: "right" });
+  doc.text(`DATE ${issueDate}`, pageW - margin, margin + headerY + 5, { align: "right" });
+  doc.text(
+    inv.status === "paid" && inv.paidAt
+      ? `PAID ${formatDate(inv.paidAt)}`
+      : `DUE ${dueDate}`,
+    pageW - margin,
+    margin + headerY + 10,
+    { align: "right" }
+  );
 
   y += 10;
   doc.setDrawColor(220);
@@ -141,7 +156,9 @@ export async function GET(
   doc.text(`Service: ${inv.case.service.name}`, margin, y);
 
   const instructions = doc.splitTextToSize(
-    "Please make payment as soon as possible to secure your reservation. Payment details are on page 2.",
+    inv.status === "paid"
+      ? "This invoice has been paid in full. Thank you. Keep this copy for your records."
+      : "Please make payment as soon as possible to secure your reservation. Payment details are on page 2.",
     pageW / 2 - margin - 8
   );
   doc.text(instructions, pageW / 2 + 10, y - 18);
@@ -197,7 +214,7 @@ export async function GET(
     doc.text(balanceText, pageW - margin, yTotals, { align: "right" });
     yTotals += 6;
   }
-  doc.text("TOTAL DUE", pageW - margin - 50, yTotals);
+  doc.text(invoiceTotalLabel(inv.status), pageW - margin - 50, yTotals);
   doc.setFont("helvetica", "bold");
   doc.text(subtotalText, pageW - margin, yTotals, { align: "right" });
   doc.setFont("helvetica", "normal");
@@ -214,7 +231,9 @@ export async function GET(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(
-    "Please use one of the methods below and include your invoice reference with payment.",
+    inv.status === "paid"
+      ? "Payment has already been received for this invoice. Details below are for your records."
+      : "Please use one of the methods below and include your invoice reference with payment.",
     margin,
     p2y
   );

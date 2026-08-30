@@ -3,6 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import type { Prisma } from "@prisma/client";
+import { INVOICE_STATUS_BADGE_CLASS, invoiceStatusLabel } from "@/lib/invoices/status";
 
 type InvoiceWithRelations = Prisma.InvoiceGetPayload<{
   include: {
@@ -20,14 +21,10 @@ function formatCurrency(cents: number) {
 }
 
 function statusColor(s: string): string {
-  const map: Record<string, string> = {
-    draft: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
-    unpaid: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
-    pending_verification: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-    paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-    rejected: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-  };
-  return map[s] ?? "bg-gray-100 text-gray-800";
+  return (
+    INVOICE_STATUS_BADGE_CLASS[s as keyof typeof INVOICE_STATUS_BADGE_CLASS] ??
+    "bg-gray-100 text-gray-800"
+  );
 }
 
 function buildInvoicePageUrl(searchParams: { status?: string; page?: string }, p: number) {
@@ -90,7 +87,7 @@ export function InvoiceTable({
               <td className="px-4 py-3">{formatCurrency(inv.amount)}</td>
               <td className="px-4 py-3">
                 <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusColor(inv.status)}`}>
-                  {inv.status}
+                  {invoiceStatusLabel(inv.status)}
                 </span>
               </td>
               <td className="px-4 py-3 text-gray-500">
@@ -99,7 +96,7 @@ export function InvoiceTable({
               <td className="px-4 py-3">
                 <div className="flex flex-wrap gap-x-3 gap-y-1">
                   <Link href={`/admin/invoices/${inv.id}`} className="text-siam-blue hover:underline">
-                    View
+                    Edit
                   </Link>
                   <a
                     href={`/api/admin/invoices/${inv.id}/pdf`}

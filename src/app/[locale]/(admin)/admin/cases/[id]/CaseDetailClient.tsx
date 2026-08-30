@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/select";
 import { updateCaseStatus, assignStaff, addCaseNote } from "@/actions/case";
 import { createInvoice, markServiceJobPaid } from "@/actions/admin";
 import { formatCurrency } from "@/lib/utils";
+import { invoiceStatusLabel } from "@/lib/invoices/status";
 import type { CaseStatus } from "@prisma/client";
 import type { Case, CaseNote, User, StaffAssignment, Payment, Invoice, Quote } from "@prisma/client";
 
@@ -299,7 +300,7 @@ export function CaseDetailClient({
                         href={`/admin/invoices/${inv.id}`}
                         className="text-siam-blue hover:underline"
                       >
-                        {formatCurrency(inv.amount, inv.currency)} · {inv.status}
+                        {formatCurrency(inv.amount, inv.currency)} · {invoiceStatusLabel(inv.status)}
                       </Link>
                     </li>
                   ))}

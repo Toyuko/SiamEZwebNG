@@ -13,26 +13,44 @@ import {
   searchCasesForInvoiceWizard,
   searchClientsForInvoiceWizard,
 } from "@/actions/invoice";
+import { InvoiceLineItemsEditor } from "@/components/invoices/InvoiceLineItemsEditor";
+import {
+  areFormLinesValid,
+  thbToSatang,
+  totalSatangFromForm,
+  type InvoiceLineForm,
+} from "@/lib/invoices/line-items";
+import { invoiceStatusLabel } from "@/lib/invoices/status";
 
 type ServiceOption = { id: string; name: string; slug: string };
 
 type CaseHit = Awaited<ReturnType<typeof searchCasesForInvoiceWizard>>[number];
 type ClientHit = Awaited<ReturnType<typeof searchClientsForInvoiceWizard>>[number];
 
-type LineForm = { description: string; quantity: string; unitThb: string };
-
 const STEPS = [
   { id: "case", label: "Case & client", description: "Link or create" },
   { id: "lines", label: "Line items", description: "Amounts" },
-  { id: "terms", label: "Due & status", description: "Send options" },
+  { id: "terms", label: "Due & status", description: "Send or mark paid" },
   { id: "review", label: "Review", description: "Create" },
 ];
 
-function thbToSatang(s: string): number {
-  const n = Number(String(s).replace(/,/g, ""));
-  if (!Number.isFinite(n) || n < 0) return -1;
-  return Math.round(n * 100);
-}
+const STATUS_CHOICES = [
+  {
+    value: "draft" as const,
+    title: "Draft",
+    description: "Keep internal. The client is not asked to pay yet.",
+  },
+  {
+    value: "unpaid" as const,
+    title: "Unpaid (send)",
+    description: "Mark as sent. The client can pay in the portal.",
+  },
+  {
+    value: "paid" as const,
+    title: "Paid",
+    description: "Customer already paid. The invoice and PDF show Paid.",
+  },
+];
 
 function formatCaseLabel(c: CaseHit): string {
   const who =
@@ -86,12 +104,13 @@ export function CreateInvoiceWizard({
   const [guestPhone, setGuestPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
 
-  const [lines, setLines] = useState<LineForm[]>([
+  const [lines, setLines] = useState<InvoiceLineForm[]>([
     { description: "", quantity: "1", unitThb: "" },
   ]);
 
   const [dueDate, setDueDate] = useState("");
-  const [initialStatus, setInitialStatus] = useState<"draft" | "unpaid">("draft");
+  const [initialStatus, setInitialStatus] = useState<"draft" | "unpaid" | "paid">("draft");
+  const [paidVia, setPaidVia] = useState<"bank" | "qr" | "wise">("bank");
   /** Optional deposit due now (THB). Empty = pay full invoice total. */
   const [depositThb, setDepositThb] = useState("");
 
@@ -131,12 +150,7 @@ export function CreateInvoiceWizard({
     return () => clearTimeout(t);
   }, [clientQuery, clientType, mode, step, searchClients]);
 
-  const totalSatang = lines.reduce((sum, row) => {
-    const q = Math.max(1, Math.floor(Number(row.quantity) || 0));
-    const u = thbToSatang(row.unitThb);
-    if (u < 0) return sum;
-    return sum + q * u;
-  }, 0);
+  const totalSatang = totalSatangFromForm(lines);
 
   function canAdvanceFromStep0(): boolean {
     if (mode === "existing_case") return !!caseId;
@@ -146,14 +160,7 @@ export function CreateInvoiceWizard({
   }
 
   function canAdvanceFromStep1(): boolean {
-    if (lines.length === 0) return false;
-    for (const row of lines) {
-      if (!row.description.trim()) return false;
-      const q = Math.floor(Number(row.quantity) || 0);
-      if (q < 1) return false;
-      if (thbToSatang(row.unitThb) < 0) return false;
-    }
-    return totalSatang > 0;
+    return areFormLinesValid(lines);
   }
 
   function handleSubmit() {
@@ -176,6 +183,7 @@ export function CreateInvoiceWizard({
       dueDate: dueDate || null,
       currency: "THB",
       initialStatus,
+      paidVia: initialStatus === "paid" ? paidVia : undefined,
       depositAmount: (() => {
         const raw = depositThb.trim();
         if (!raw) return null;
@@ -436,84 +444,8 @@ export function CreateInvoiceWizard({
             <CardTitle>Line items</CardTitle>
             <CardDescription>Enter amounts in THB (baht). Quantity must be at least 1.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {lines.map((row, idx) => (
-              <div
-                key={idx}
-                className="grid gap-3 border-b border-gray-100 pb-4 dark:border-gray-800 sm:grid-cols-12"
-              >
-                <div className="sm:col-span-5">
-                  <Label htmlFor={`d-${idx}`}>Description</Label>
-                  <Input
-                    id={`d-${idx}`}
-                    value={row.description}
-                    onChange={(e) => {
-                      const next = [...lines];
-                      next[idx] = { ...next[idx], description: e.target.value };
-                      setLines(next);
-                    }}
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <Label htmlFor={`q-${idx}`}>Qty</Label>
-                  <Input
-                    id={`q-${idx}`}
-                    type="number"
-                    min={1}
-                    value={row.quantity}
-                    onChange={(e) => {
-                      const next = [...lines];
-                      next[idx] = { ...next[idx], quantity: e.target.value };
-                      setLines(next);
-                    }}
-                  />
-                </div>
-                <div className="sm:col-span-3">
-                  <Label htmlFor={`u-${idx}`}>Unit (THB)</Label>
-                  <Input
-                    id={`u-${idx}`}
-                    type="number"
-                    inputMode="decimal"
-                    min={0}
-                    step="0.01"
-                    value={row.unitThb}
-                    onChange={(e) => {
-                      const next = [...lines];
-                      next[idx] = { ...next[idx], unitThb: e.target.value };
-                      setLines(next);
-                    }}
-                  />
-                </div>
-                <div className="flex items-end sm:col-span-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    disabled={lines.length <= 1}
-                    onClick={() => setLines(lines.filter((_, i) => i !== idx))}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setLines([...lines, { description: "", quantity: "1", unitThb: "" }])}
-            >
-              Add line
-            </Button>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Subtotal:{" "}
-              {new Intl.NumberFormat("th-TH", {
-                style: "currency",
-                currency: "THB",
-                minimumFractionDigits: 2,
-              }).format(totalSatang / 100)}
-            </p>
+          <CardContent>
+            <InvoiceLineItemsEditor lines={lines} onChange={setLines} />
           </CardContent>
         </Card>
       )}
@@ -523,8 +455,7 @@ export function CreateInvoiceWizard({
           <CardHeader>
             <CardTitle>Due date & status</CardTitle>
             <CardDescription>
-              Draft stays internal; Unpaid marks the invoice as sent (client can pay in the portal when linked to
-              their account).
+              Choose whether this stays a draft, is sent as unpaid, or is issued as already paid.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -537,33 +468,71 @@ export function CreateInvoiceWizard({
                 onChange={(e) => setDueDate(e.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="status">Initial status</Label>
-              <Select
-                id="status"
-                value={initialStatus}
-                onChange={(e) => setInitialStatus(e.target.value as "draft" | "unpaid")}
-              >
-                <option value="draft">Draft</option>
-                <option value="unpaid">Unpaid (sent)</option>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="deposit">Deposit due now (optional, THB)</Label>
-              <Input
-                id="deposit"
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step="0.01"
-                placeholder="Leave empty to charge the full total"
-                value={depositThb}
-                onChange={(e) => setDepositThb(e.target.value)}
-              />
-              <p className="text-xs text-gray-500">
-                If set, the client pays this deposit first. The invoice total stays the full amount; the balance remains after the deposit is paid.
-              </p>
-            </div>
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium">Invoice status</legend>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {STATUS_CHOICES.map((choice) => {
+                  const selected = initialStatus === choice.value;
+                  return (
+                    <label
+                      key={choice.value}
+                      className={`flex cursor-pointer flex-col rounded-lg border p-3 text-sm transition-colors ${
+                        selected
+                          ? "border-siam-blue bg-siam-blue/5 ring-1 ring-siam-blue"
+                          : "border-gray-200 hover:border-siam-blue/40 dark:border-gray-700"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2 font-medium">
+                        <input
+                          type="radio"
+                          name="initial-status"
+                          className="accent-siam-blue"
+                          checked={selected}
+                          onChange={() => setInitialStatus(choice.value)}
+                        />
+                        {choice.title}
+                      </span>
+                      <span className="mt-1 text-xs text-gray-500">{choice.description}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+            {initialStatus === "paid" && (
+              <div className="space-y-2">
+                <Label htmlFor="paid-via">Paid via</Label>
+                <Select
+                  id="paid-via"
+                  value={paidVia}
+                  onChange={(e) => setPaidVia(e.target.value as typeof paidVia)}
+                >
+                  <option value="bank">Bank transfer</option>
+                  <option value="qr">QR / PromptPay</option>
+                  <option value="wise">Wise</option>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  Records a payment so the invoice PDF and portal both show Paid.
+                </p>
+              </div>
+            )}
+            {initialStatus !== "paid" && (
+              <div className="space-y-2">
+                <Label htmlFor="deposit">Deposit due now (optional, THB)</Label>
+                <Input
+                  id="deposit"
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step="0.01"
+                  placeholder="Leave empty to charge the full total"
+                  value={depositThb}
+                  onChange={(e) => setDepositThb(e.target.value)}
+                />
+                <p className="text-xs text-gray-500">
+                  If set, the client pays this deposit first. The invoice total stays the full amount; the balance remains after the deposit is paid.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -594,9 +563,10 @@ export function CreateInvoiceWizard({
               }).format(totalSatang / 100)}
             </p>
             <p>
-              <span className="text-gray-500">Status:</span> {initialStatus}
+              <span className="text-gray-500">Status:</span> {invoiceStatusLabel(initialStatus)}
+              {initialStatus === "paid" ? ` · via ${paidVia}` : ""}
             </p>
-            {depositThb.trim() && (
+            {initialStatus !== "paid" && depositThb.trim() && (
               <p>
                 <span className="text-gray-500">Deposit due now:</span>{" "}
                 {new Intl.NumberFormat("th-TH", {
@@ -644,7 +614,11 @@ export function CreateInvoiceWizard({
             </Button>
           ) : (
             <Button type="button" disabled={pending || !canAdvanceFromStep1()} onClick={handleSubmit}>
-              {pending ? "Creating…" : "Create invoice"}
+              {pending
+                ? "Creating…"
+                : initialStatus === "paid"
+                  ? "Create paid invoice"
+                  : "Create invoice"}
             </Button>
           )}
         </div>
