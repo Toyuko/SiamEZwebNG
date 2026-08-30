@@ -1,4 +1,5 @@
 import Script from "next/script";
+import { getGtmId } from "@/lib/gtm";
 
 function envId(name: string): string | undefined {
   const value = process.env[name]?.trim();
@@ -7,23 +8,27 @@ function envId(name: string): string | undefined {
 
 /**
  * Initializes `dataLayer` so `trackEvent()` always has a sink.
- * Loads GTM when `NEXT_PUBLIC_GTM_ID` is set.
- * Loads gtag GA4/Ads only when GTM is NOT set, to avoid duplicate tags.
+ * Loads GTM (default GTM-T6C7CWGM) as a native head script unless disabled.
+ * Loads gtag GA4/Ads only when GTM is NOT loaded, to avoid duplicate tags.
  */
 export function AnalyticsScripts() {
-  const gtmId = envId("NEXT_PUBLIC_GTM_ID");
+  const gtmId = getGtmId();
   const gaId = envId("NEXT_PUBLIC_GA_MEASUREMENT_ID");
   const adsId = envId("NEXT_PUBLIC_GOOGLE_ADS_ID");
 
   return (
     <>
-      <Script id="siamez-datalayer" strategy="beforeInteractive">
-        {`window.dataLayer=window.dataLayer||[];`}
-      </Script>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `window.dataLayer=window.dataLayer||[];`,
+        }}
+      />
       {gtmId ? (
-        <Script id="siamez-gtm" strategy="afterInteractive">
-          {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':Date.now(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`}
-        </Script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`,
+          }}
+        />
       ) : null}
       {!gtmId && gaId ? (
         <>
@@ -41,7 +46,7 @@ export function AnalyticsScripts() {
 }
 
 export function GtmNoscript() {
-  const gtmId = envId("NEXT_PUBLIC_GTM_ID");
+  const gtmId = getGtmId();
   if (!gtmId) return null;
   return (
     <noscript>

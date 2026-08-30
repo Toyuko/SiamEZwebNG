@@ -1,7 +1,8 @@
 /**
  * Marketing analytics helper.
  * Pushes to window.dataLayer (GTM / gtag) and logs in development.
- * Configure GTM or GA4 via NEXT_PUBLIC_GTM_ID / NEXT_PUBLIC_GA_MEASUREMENT_ID.
+ * GTM container defaults to GTM-T6C7CWGM. Override via NEXT_PUBLIC_GTM_ID
+ * or disable with NEXT_PUBLIC_GTM_DISABLED. GA4 gtag loads only when GTM is off.
  * Do not fire the same conversion twice from two call sites.
  */
 

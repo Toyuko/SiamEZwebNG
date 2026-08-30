@@ -30,9 +30,11 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <html lang={locale} className={rootFontClassName} suppressHydrationWarning>
+      <head>
+        <AnalyticsScripts />
+      </head>
       <body className="min-h-screen antialiased font-sans bg-background text-foreground">
         <GtmNoscript />
-        <AnalyticsScripts />
         <JsonLdScript data={[organizationJsonLd(), localBusinessJsonLd(), websiteJsonLd()]} />
         <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <ThemeProvider>
