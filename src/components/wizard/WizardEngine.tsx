@@ -86,6 +86,8 @@ function defaultValuesFromConfig(
         defaults[field.name] = false;
       } else if (field.type === "multiselect") {
         defaults[field.name] = [];
+      } else if (field.name === "depositPaymentMethod") {
+        defaults[field.name] = "online";
       } else {
         defaults[field.name] = "";
       }
@@ -248,7 +250,7 @@ function WizardEngineInner({
   );
 
   const handleSubmit = useCallback(async () => {
-    const requiresDocs = config.steps.some(
+    const requiresDocs = visibleSteps.some(
       (s) => s.type === "documents" && s.documentsRequired
     );
     if (requiresDocs && documents.length < 1) {
@@ -310,7 +312,7 @@ function WizardEngineInner({
         is_guest: isGuest,
         is_fixed: Boolean(result.isFixed),
       });
-      if (result.isFixed) {
+      if (result.isFixed && !result.payAtOffice) {
         const base = `/checkout/${result.caseId}`;
         const url =
           isGuest && result.guestCheckoutToken
@@ -320,6 +322,11 @@ function WizardEngineInner({
       } else {
         const params = new URLSearchParams();
         params.set("caseNumber", result.caseNumber);
+        if (result.payAtOffice) {
+          params.set("payAtOffice", "1");
+          const appointmentDate = String(values.appointmentDate ?? "").trim();
+          if (appointmentDate) params.set("appointmentDate", appointmentDate);
+        }
         if (isGuest) {
           params.set("guest", "1");
           params.set("email", String(values.email ?? ""));
@@ -345,9 +352,8 @@ function WizardEngineInner({
     quote,
     quoteAccepted,
     paymentChoice,
+    visibleSteps,
   ]);
-
-  const runGenerateQuote = useCallback(async () => {
     if (!config.enableSmartQuote) return true;
     setLoading(true);
     setError(null);
@@ -732,7 +738,11 @@ function WizardEngineInner({
 
         <WizardStepRenderer stepKey={currentStep.id}>
           {currentStep.type === "summary" ? (
-            <SummaryStep service={service} description={currentStep.description} />
+            <SummaryStep
+              service={service}
+              serviceSlug={serviceSlug}
+              description={currentStep.description}
+            />
           ) : null}
           {currentStep.type === "fields" ? (
             <>

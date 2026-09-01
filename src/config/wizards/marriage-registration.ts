@@ -1,4 +1,5 @@
 import type { WizardConfig } from "./types";
+import { depositPaymentMethodField } from "./shared";
 
 /**
  * Live generic wizard config for Marriage Registration (quote service).
@@ -48,6 +49,7 @@ export const marriageRegistrationWizard: WizardConfig = {
           required: true,
           maxLength: 30,
         },
+        depositPaymentMethodField,
       ],
     },
     {

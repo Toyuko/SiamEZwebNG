@@ -2,7 +2,8 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Building2, Sparkles, CalendarDays, BookOpen } from "lucide-react";
+import { CheckCircle2, CalendarDays, BookOpen } from "lucide-react";
+import { DriverLicensePriceGuide } from "@/components/sections/DriverLicensePriceGuide";
 import { site } from "@/config/site";
 
 type Resource = { title: string; body: string };
@@ -10,8 +11,14 @@ type Resource = { title: string; body: string };
 export async function DriverLicenseExtras() {
   const t = await getTranslations("driverLicensePage");
   const trustPoints = t.raw("trustPoints") as string[];
-  const packageRows = t.raw("packageRows") as string[];
-  const addonRows = t.raw("addonRows") as string[];
+  const priceGuideSections = t.raw("priceGuideSections") as Array<{
+    title: string;
+    rows: Array<{ label: string; price: string }>;
+  }>;
+  const priceGuideAdditionalRows = t.raw("priceGuideAdditionalRows") as Array<{
+    label: string;
+    price: string;
+  }>;
   const resources = t.raw("resources") as Resource[];
 
   return (
@@ -29,46 +36,14 @@ export async function DriverLicenseExtras() {
         </ul>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-0 bg-gray-50 shadow-sm dark:bg-gray-800/50">
-          <CardContent className="p-6">
-            <div className="mb-4 flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-siam-blue" />
-              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t("packagesTitle")}</h3>
-            </div>
-            <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">{t("packagesIntro")}</p>
-            <ul className="space-y-3">
-              {packageRows.map((name, i) => (
-                <li
-                  key={i}
-                  className="border-b border-gray-200 pb-3 last:border-0 dark:border-gray-600"
-                >
-                  <span className="font-medium text-gray-900 dark:text-gray-100">{name}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 bg-gray-50 shadow-sm dark:bg-gray-800/50">
-          <CardContent className="p-6">
-            <div className="mb-4 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-siam-blue" />
-              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t("addonsTitle")}</h3>
-            </div>
-            <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">{t("addonsIntro")}</p>
-            <ul className="space-y-3">
-              {addonRows.map((name, i) => (
-                <li
-                  key={i}
-                  className="border-b border-gray-200 pb-3 last:border-0 dark:border-gray-600"
-                >
-                  <span className="font-medium text-gray-900 dark:text-gray-100">{name}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+      <section>
+        <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">{t("packagesIntro")}</p>
+        <DriverLicensePriceGuide
+          title={t("priceGuideTitle")}
+          sections={priceGuideSections}
+          additionalTitle={t("priceGuideAdditionalTitle")}
+          additionalRows={priceGuideAdditionalRows}
+        />
       </section>
 
       <Card className="border-0 bg-amber-50/80 shadow-sm dark:bg-amber-950/20">

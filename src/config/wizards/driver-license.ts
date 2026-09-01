@@ -12,7 +12,7 @@ import {
 } from "@/lib/driver-license-booking";
 import { driverLicenseQuoteQuestions } from "@/config/pricing/driver-license";
 import type { WizardConfig } from "./types";
-import { contactFields, notesField, quoteReviewStep } from "./shared";
+import { contactFields, notesField, quoteReviewStep, depositPaymentMethodAppointmentField } from "./shared";
 
 function trimOrUndefined(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
@@ -39,10 +39,7 @@ export function buildDriverLicenseFormData(
     addressCertificate:
       residentialCertificate === "need_help" || Boolean(normalized.addonAddressCertificate),
   };
-  const basePriceThb = computeBasePriceThb(category, vehicleType, {
-    hasForeignLicense: normalized.hasForeignLicense,
-    residentialCertificate: normalized.residentialCertificate,
-  });
+  const basePriceThb = computeBasePriceThb(category, vehicleType);
   const addonsTotalThb = computeAddonsTotalThb(addons);
   const totalThb = basePriceThb + addonsTotalThb;
   const depositThb = computeDepositThb(totalThb);
@@ -51,6 +48,7 @@ export function buildDriverLicenseFormData(
     email: values.email,
     phone: values.phone,
     notes: trimOrUndefined(values.notes),
+    depositPaymentMethod: values.depositPaymentMethod ?? "online",
     driverLicense: {
       category,
       vehicleType,
@@ -59,13 +57,15 @@ export function buildDriverLicenseFormData(
       fitToDrive: isYesAnswer(normalized.fitToDrive),
       addons,
       appointmentDate: values.appointmentDate,
+      depositPaymentMethod: values.depositPaymentMethod ?? "online",
       basePriceThb,
       addonsTotalThb,
       totalThb,
-      depositThb,
-      depositPercent: DRIVER_LICENSE_DEPOSIT_PERCENT,
-      remainingThb: totalThb - depositThb,
-      currency: "THB",
+    depositThb,
+    depositPercent: DRIVER_LICENSE_DEPOSIT_PERCENT,
+    remainingThb: totalThb - depositThb,
+    depositPaymentMethod: values.depositPaymentMethod ?? "online",
+    currency: "THB",
     },
   };
 }
@@ -82,7 +82,7 @@ export const driverLicenseWizard: WizardConfig = {
       type: "summary",
       label: "Service summary",
       description:
-        "Thai driver's license assistance: conversion, renewal, new license, or IDP. Answer each question so we can calculate your quote. Pay 25% now; the remaining 75% is due after you get your license.",
+        "Thai driver's license assistance: conversion, renewal, new license, or IDP. See the quick price guide below, then answer each question so we can calculate your quote. Pay 25% now online or in cash at our Bangkok office on your appointment day; the remaining 75% is due after you get your license.",
     },
     {
       id: "service",
@@ -133,6 +133,7 @@ export const driverLicenseWizard: WizardConfig = {
           required: true,
           customValidate: "driverLicenseAppointment",
         },
+        depositPaymentMethodAppointmentField,
       ],
     },
     {
@@ -154,6 +155,7 @@ export const driverLicenseWizard: WizardConfig = {
       label: "Payment receipt",
       description:
         "Upload your 25% deposit bank transfer / PromptPay receipt (required). The remaining 75% is due after you get your license. Signed-in uploads are linked to your booking via document IDs.",
+      showWhen: { field: "depositPaymentMethod", notEquals: "office_cash" },
       documentsRequired: true,
       requiredDocuments: [
         {

@@ -8,7 +8,6 @@ import { completeFirstRunProfile } from "@/actions/auth";
 import {
   FIRST_RUN_WELCOME_STORAGE_KEY,
   isRecentCustomer,
-  needsFirstRunProfile,
   type FirstRunUserSnapshot,
 } from "@/lib/auth-first-run";
 import {
@@ -53,12 +52,9 @@ export function FirstRunOnboarding({ user }: { user: FirstRunUserSnapshot }) {
 
     const showWelcome =
       forceWelcome || ((!welcomeSeen && isRecentCustomer(user)) as boolean);
-    const showProfile = needsFirstRunProfile(user);
 
     if (showWelcome) {
       setPhase("welcome");
-    } else if (showProfile) {
-      setPhase("profile");
     }
   }, [searchParams, user]);
 
@@ -72,10 +68,6 @@ export function FirstRunOnboarding({ user }: { user: FirstRunUserSnapshot }) {
 
   function finishWelcome() {
     markWelcomeSeen();
-    if (needsFirstRunProfile({ ...user, phone: phone || user.phone })) {
-      setPhase("profile");
-      return;
-    }
     setPhase(null);
     clearWelcomeQuery();
   }
@@ -173,7 +165,7 @@ export function FirstRunOnboarding({ user }: { user: FirstRunUserSnapshot }) {
                     {t("welcomeSkip")}
                   </Button>
                   <Button type="button" variant="primary" onClick={finishWelcome}>
-                    {needsFirstRunProfile(user) ? t("welcomeContinue") : t("welcomeDone")}
+                    {t("welcomeDone")}
                   </Button>
                 </DialogFooter>
               </motion.div>

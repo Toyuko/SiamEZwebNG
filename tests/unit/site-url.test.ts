@@ -42,6 +42,7 @@ describe("resolvePublicSiteUrl", () => {
 
 describe("getCanonicalHostRedirect", () => {
   const attached = { VERCEL_PROJECT_PRODUCTION_URL: "siam-ez.com" };
+  const aliasesLive = { ...attached, CANONICAL_ALIAS_REDIRECT: "true" };
 
   it("redirects www to the apex host and preserves path + query", () => {
     expect(
@@ -49,26 +50,32 @@ describe("getCanonicalHostRedirect", () => {
     ).toBe("https://siam-ez.com/en/services?utm=ads");
   });
 
-  it("redirects the retired Vercel production alias after the custom domain is attached", () => {
+  it("redirects the retired Vercel production alias after DNS cutover is opted in", () => {
     expect(
       getCanonicalHostRedirect(
         "siam-e-zweb-ng.vercel.app",
         "/en/services/driver-license",
         "",
-        attached
+        aliasesLive
       )
     ).toBe("https://siam-ez.com/en/services/driver-license");
   });
 
-  it("redirects the team production alias after the custom domain is attached", () => {
+  it("redirects the team production alias after DNS cutover is opted in", () => {
     expect(
       getCanonicalHostRedirect(
         "siam-e-zweb-ng-toyukos-projects.vercel.app",
         "/th/contact",
         "",
-        attached
+        aliasesLive
       )
     ).toBe("https://siam-ez.com/th/contact");
+  });
+
+  it("does not redirect the Vercel alias when the custom domain is only attached in Vercel", () => {
+    expect(
+      getCanonicalHostRedirect("siam-e-zweb-ng.vercel.app", "/en/vehicle/sell", "?source=line", attached)
+    ).toBeNull();
   });
 
   it("does not redirect the Vercel alias before siam-ez.com is the production domain", () => {
@@ -77,7 +84,7 @@ describe("getCanonicalHostRedirect", () => {
         "siam-e-zweb-ng.vercel.app",
         "/en",
         "",
-        { VERCEL_PROJECT_PRODUCTION_URL: "siam-e-zweb-ng.vercel.app" }
+        { VERCEL_PROJECT_PRODUCTION_URL: "siam-e-zweb-ng.vercel.app", CANONICAL_ALIAS_REDIRECT: "true" }
       )
     ).toBeNull();
   });
@@ -88,21 +95,21 @@ describe("getCanonicalHostRedirect", () => {
         "siam-e-zweb-ng-git-feat-toyukos-projects.vercel.app",
         "/en",
         "",
-        attached
+        aliasesLive
       )
     ).toBeNull();
   });
 
   it("does not redirect API, webhook, or cron paths", () => {
     expect(
-      getCanonicalHostRedirect("www.siam-ez.com", "/api/stripe/webhook", "", attached)
+      getCanonicalHostRedirect("www.siam-ez.com", "/api/stripe/webhook", "", aliasesLive)
     ).toBeNull();
     expect(
       getCanonicalHostRedirect(
         "siam-e-zweb-ng.vercel.app",
         "/api/cron/jobs/auto-approve",
         "",
-        attached
+        aliasesLive
       )
     ).toBeNull();
   });

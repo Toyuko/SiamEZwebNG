@@ -824,19 +824,46 @@
       "Optional add-ons only when you need them"
     ],
     "packagesTitle": "License services",
-    "packagesIntro": "Totals depend on your license type and add-ons. Anyone with a valid country license who can obtain a residential certificate is quoted 8,000 THB. Pay 25% now; the remaining 75% is due after you get your license.",
-    "packageRows": [
-      "Conversion with your own country license and residential certificate — 8,000 THB",
-      "Conversion (foreign license) — motorcycle 10,000 / car 15,000 / both 20,000 THB",
-      "Renewal",
-      "Apply new",
-      "International Driving Permit (IDP)"
+    "packagesIntro": "Pay 25% now; the remaining 75% is due after you get your license. Your coordinator confirms the total for your case before payment.",
+    "priceGuideTitle": "Quick price guide",
+    "priceGuideSections": [
+      {
+        "title": "New license",
+        "rows": [
+          { "label": "Car", "price": "15,000 THB" },
+          { "label": "Bike", "price": "10,000 THB" },
+          { "label": "Both", "price": "20,000 THB" }
+        ]
+      },
+      {
+        "title": "Conversion",
+        "rows": [
+          { "label": "Car", "price": "4,500 THB" },
+          { "label": "Bike", "price": "4,500 THB" },
+          { "label": "Both", "price": "4,500 THB" }
+        ]
+      },
+      {
+        "title": "International license",
+        "rows": [
+          { "label": "IDP", "price": "4,500 THB" }
+        ]
+      },
+      {
+        "title": "Renewal",
+        "rows": [
+          { "label": "Car", "price": "4,500 THB" },
+          { "label": "Bike", "price": "4,500 THB" },
+          { "label": "Both", "price": "4,500 THB" }
+        ]
+      }
     ],
-    "addonsTitle": "Optional add-ons",
-    "addonsIntro": "Add these only if your case needs them. Your coordinator confirms the total before payment.",
-    "addonRows": [
-      "Translation letter",
-      "Residential certificate"
+    "priceGuideAdditionalTitle": "Additional",
+    "priceGuideAdditionalRows": [
+      { "label": "Residential certificate", "price": "2,500 THB" },
+      { "label": "Translation letter", "price": "1,500 THB" },
+      { "label": "Booking only", "price": "1,500 THB" },
+      { "label": "Lost license / address update", "price": "1,500 THB" }
     ],
     "schedulingTitle": "Scheduling note",
     "schedulingBody": "Allow at least three business days before your preferred date. Weekends are usually unavailable. If you process car and motorcycle together, expect a longer appointment block.",
@@ -959,15 +986,15 @@
     "stepPayment": "Payment",
     "stepLabel": "Step {current} of {total}",
     "selectServiceTitle": "Answer each question for your quote",
-    "selectServiceHint": "Take time on every question. Anyone with a valid country license who can obtain a residential certificate is quoted 8,000 THB.",
+    "selectServiceHint": "Take time on every question. See the quick price guide on the previous step for standard rates.",
     "categoryConversion": "Conversion (foreign license)",
     "categoryRenewal": "Renewal",
     "categoryApplyNew": "Apply new",
     "categoryIdp": "International Driving Permit (IDP)",
-    "categoryPriceConversion": "8,000 THB with your own license and residential certificate · otherwise bike 10,000 / car 15,000 / both 20,000 THB",
-    "categoryPriceRenewal": "Car or bike 3,500 / Both 4,500 THB",
+    "categoryPriceConversion": "4,500 THB (car, bike, or both)",
+    "categoryPriceRenewal": "4,500 THB (car, bike, or both)",
     "categoryPriceApplyNew": "Bike 10,000 / Car 15,000 / Both 20,000 THB",
-    "categoryPriceIdp": "3,500 THB",
+    "categoryPriceIdp": "4,500 THB",
     "qForeignLicense": "Do you have a valid license from your country?",
     "qForeignLicenseYes": "Yes, I have a valid license from my country",
     "qForeignLicenseNo": "No, I do not have a valid foreign license",

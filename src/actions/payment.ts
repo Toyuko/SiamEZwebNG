@@ -11,7 +11,7 @@ import { isStripeEnabled } from "@/config/payments";
 import { confirmVerifiedPayment } from "@/lib/payments/confirm";
 import { invoiceAmountDueNow, sumApprovedPayments } from "@/lib/payments/invoice-deposit";
 
-export type PaymentMethodInput = "qr" | "bank" | "wise";
+export type PaymentMethodInput = "qr" | "bank" | "wise" | "cash";
 
 export interface CreatePaymentIntentResult {
   success: boolean;

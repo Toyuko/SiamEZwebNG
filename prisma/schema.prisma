@@ -601,6 +601,7 @@ enum PaymentMethod {
   bank    // Bank transfer
   wise    // Wise international
   stripe  // Phase 2: online payment
+  cash    // In-person cash at SiamEZ office
 }
 
 enum PaymentStatus {
@@ -709,6 +710,7 @@ enum InvoicePaymentMethod {
   bank   // Bank transfer
   wise   // Wise international
   stripe // Phase 2
+  cash   // In-person cash at SiamEZ office
 }
 
 enum PaymentMilestoneStatus {

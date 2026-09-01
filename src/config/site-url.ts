@@ -103,6 +103,23 @@ function customProductionDomainIsAttached(env: SiteUrlEnv): boolean {
   return productionHost === PRODUCTION_SITE_HOST || productionHost === WWW_SITE_HOST;
 }
 
+function isTruthyEnvFlag(value: string | undefined): boolean {
+  const normalized = value?.trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes";
+}
+
+/**
+ * Vercel can list siam-ez.com as the project production URL before DNS
+ * actually points at this app. Require an explicit opt-in before bouncing
+ * vercel.app traffic onto that hostname, or customers land on the old PHP host.
+ */
+function canonicalAliasRedirectsEnabled(env: SiteUrlEnv): boolean {
+  return (
+    customProductionDomainIsAttached(env) &&
+    isTruthyEnvFlag(firstDefined(env.CANONICAL_ALIAS_REDIRECT))
+  );
+}
+
 /**
  * Path-preserving 308 target when the request host is www or a retired
  * production Vercel alias. Returns null when no redirect should occur.
@@ -111,8 +128,9 @@ function customProductionDomainIsAttached(env: SiteUrlEnv): boolean {
  * endpoints on the Vercel alias keep working until they are updated.
  *
  * Legacy Vercel-host redirects only fire after `siam-ez.com` is attached as
- * the project's production domain — otherwise we would send live traffic to
- * the previous PHP site still hosted on that hostname.
+ * the project's production domain *and* `CANONICAL_ALIAS_REDIRECT=true` is
+ * set — otherwise we would send live traffic to the previous PHP site still
+ * hosted on that hostname.
  */
 export function getCanonicalHostRedirect(
   hostHeader: string,
@@ -133,7 +151,7 @@ export function getCanonicalHostRedirect(
 
   if (
     (LEGACY_VERCEL_PRODUCTION_HOSTS as readonly string[]).includes(host) &&
-    customProductionDomainIsAttached(env)
+    canonicalAliasRedirectsEnabled(env)
   ) {
     return destination;
   }

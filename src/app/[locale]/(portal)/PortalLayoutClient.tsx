@@ -8,6 +8,7 @@ import { usePathname } from "@/i18n/navigation";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 import type { SessionUser } from "@/lib/auth";
 
 export function PortalLayoutClient({
@@ -21,6 +22,7 @@ export function PortalLayoutClient({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const t = useTranslations("portal");
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -69,10 +71,10 @@ export function PortalLayoutClient({
           userName={user.name || user.email}
           userRole={
             user.role === "freelancer"
-              ? "Freelancer Account"
+              ? t("roleFreelancer")
               : user.role === "company"
-                ? "Corporate Account"
-                : "Client Account"
+                ? t("roleCompany")
+                : t("roleCustomer")
           }
           userAvatar={user.image ?? undefined}
         />

@@ -4,6 +4,7 @@ export const translationServicesWizard = createGenericBookingWizard(
   "translation-services",
   {
     enableSmartQuote: true,
+    enableOfficeCashDeposit: true,
     summaryDescription:
       "Answer a few questions for a calculated translation quote. Government/MFA fees are labeled when estimated.",
     extraDetailsFields: [

@@ -160,6 +160,7 @@ export function sendBookingConfirmationEmail(input: {
   serviceName: string;
   isGuest: boolean;
   isFixed: boolean;
+  payAtOffice?: boolean;
   guestCheckoutToken?: string;
 }): void {
   const checkoutPath =
@@ -167,9 +168,11 @@ export function sendBookingConfirmationEmail(input: {
       ? `/checkout/${input.caseId}?token=${encodeURIComponent(input.guestCheckoutToken)}`
       : `/portal/cases/${input.caseId}`;
 
-  const nextStep = input.isFixed
-    ? "Complete payment when ready so we can start your case."
-    : "Our team will review your request and send a quote.";
+  const nextStep = input.payAtOffice
+    ? `Bring cash for your deposit when you visit our Bangkok office (${site.address.line1}). Your case is reserved.`
+    : input.isFixed
+      ? "Complete payment when ready so we can start your case."
+      : "Our team will review your request and send a quote.";
 
   sendEmailBackground({
     to: input.to,
@@ -184,10 +187,23 @@ export function sendBookingConfirmationEmail(input: {
         detailTable([
           { label: "Case", value: input.caseNumber },
           { label: "Service", value: input.serviceName },
-          { label: "Type", value: input.isFixed ? "Fixed price" : "Custom quote" },
+          {
+            label: "Type",
+            value: input.payAtOffice
+              ? "Office cash deposit"
+              : input.isFixed
+                ? "Fixed price"
+                : "Custom quote",
+          },
+          ...(input.payAtOffice
+            ? [{ label: "Office", value: site.address.full }]
+            : []),
         ]),
         paragraph(nextStep),
-        ctaButton(portalUrl(checkoutPath), input.isFixed ? "View checkout" : "View case"),
+        ctaButton(
+          portalUrl(checkoutPath),
+          input.payAtOffice ? "View case" : input.isFixed ? "View checkout" : "View case"
+        ),
       ].join(""),
     }),
     tags: [{ name: "type", value: "booking-confirmation" }],
@@ -210,6 +226,7 @@ export function sendAdminNewBookingEmail(input: {
   customerPhone?: string | null;
   isGuest: boolean;
   isFixed: boolean;
+  payAtOffice?: boolean;
 }): void {
   sendEmailBackground({
     to: getOpsInboxes(),
@@ -222,7 +239,14 @@ export function sendAdminNewBookingEmail(input: {
         detailTable([
           { label: "Case", value: input.caseNumber },
           { label: "Service", value: input.serviceName },
-          { label: "Type", value: input.isFixed ? "Fixed price" : "Custom quote" },
+          {
+            label: "Type",
+            value: input.payAtOffice
+              ? "Office cash deposit"
+              : input.isFixed
+                ? "Fixed price"
+                : "Custom quote",
+          },
           { label: "Customer", value: input.customerName?.trim() || "—" },
           { label: "Email", value: input.customerEmail },
           ...(input.customerPhone

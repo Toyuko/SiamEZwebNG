@@ -1,14 +1,18 @@
 "use client";
 
 import type { Service } from "@prisma/client";
+import { useTranslations } from "next-intl";
+import { DriverLicensePriceGuide } from "@/components/sections/DriverLicensePriceGuide";
 import { formatCurrency } from "@/lib/utils";
 
 interface SummaryStepProps {
   service: Service;
+  serviceSlug?: string;
   description?: string;
 }
 
-export function SummaryStep({ service, description }: SummaryStepProps) {
+export function SummaryStep({ service, serviceSlug, description }: SummaryStepProps) {
+  const tPriceGuide = useTranslations("driverLicensePage");
   const priceAmount = service.priceAmount;
   const priceCurrency = service.priceCurrency ?? "THB";
   const isFixed = service.type === "fixed";
@@ -36,6 +40,20 @@ export function SummaryStep({ service, description }: SummaryStepProps) {
           )}
         </div>
       </div>
+      {serviceSlug === "driver-license" ? (
+        <DriverLicensePriceGuide
+          title={tPriceGuide("priceGuideTitle")}
+          sections={tPriceGuide.raw("priceGuideSections") as Array<{
+            title: string;
+            rows: Array<{ label: string; price: string }>;
+          }>}
+          additionalTitle={tPriceGuide("priceGuideAdditionalTitle")}
+          additionalRows={
+            tPriceGuide.raw("priceGuideAdditionalRows") as Array<{ label: string; price: string }>
+          }
+          compact
+        />
+      ) : null}
     </div>
   );
 }

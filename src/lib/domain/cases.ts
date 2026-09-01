@@ -14,6 +14,7 @@ import { sendAdminNewBookingEmail, sendBookingConfirmationEmail } from "@/lib/em
 import { parseStoredPaymentPlan } from "@/lib/payments/quote-plan";
 import { CheckoutValidationError, validateCheckoutAmount } from "@/lib/payments/checkout-guard";
 import { trackPlatformEvent } from "@/lib/analytics/track";
+import { isOfficeCashDeposit } from "@/lib/payments/deposit-method";
 
 export interface CreateBookingCaseInput {
   serviceId: string;
@@ -168,6 +169,8 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
     invoiceAmount = service.priceAmount;
   }
 
+  const payAtOffice = isOfficeCashDeposit(input.formData);
+
   const c = await createCaseRecord({
     caseNumber: nextCaseNumber(),
     userId: userId ?? null,
@@ -227,6 +230,7 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
       status: "unpaid",
       quoteId: input.quoteId ?? undefined,
       kind: invoiceKind,
+      paymentMethod: payAtOffice ? "cash" : undefined,
       milestoneId:
         invoiceKind === "initial" && firstMilestone ? firstMilestone.id : undefined,
     });
@@ -277,6 +281,7 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
     customerPhone: recipientPhone,
     isGuest: input.isGuest,
     isFixed: treatAsPayable && invoiceAmount != null && invoiceAmount > 0,
+    payAtOffice,
   });
 
   if (recipientEmail) {
@@ -288,6 +293,7 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
       serviceName: service.name,
       isGuest: input.isGuest,
       isFixed: treatAsPayable && invoiceAmount != null && invoiceAmount > 0,
+      payAtOffice,
       guestCheckoutToken,
     });
   }
@@ -296,6 +302,7 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
     caseId: c.id,
     caseNumber: c.caseNumber,
     isFixed: treatAsPayable && invoiceAmount != null && invoiceAmount > 0,
+    payAtOffice: payAtOffice && treatAsPayable && invoiceAmount != null && invoiceAmount > 0,
     guestCheckoutToken,
   };
 }

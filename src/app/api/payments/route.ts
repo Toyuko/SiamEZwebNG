@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     if (!invoiceId) {
       return fail("invoiceId is required", 400);
     }
-    const validMethods: PaymentMethod[] = ["qr", "bank", "wise", "stripe"];
+    const validMethods: PaymentMethod[] = ["qr", "bank", "wise", "stripe", "cash"];
     if (!validMethods.includes(method)) {
       return fail("Invalid payment method", 400);
     }

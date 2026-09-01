@@ -1,12 +1,11 @@
+import { DRIVER_LICENSE_PRICES } from "@/config/driver-license-price-guide";
+
 export type LicenseServiceCategory = "conversion" | "renewal" | "apply_new" | "idp";
 export type LicenseVehicleType = "bike" | "car" | "both";
 export type ResidentialCertificatePlan = "self" | "need_help";
 
 /** Share of total due at booking; remaining 75% is due after you get your license. */
 export const DRIVER_LICENSE_DEPOSIT_PERCENT = 25;
-
-/** Conversion package when the customer has a foreign license and can obtain a residential certificate. */
-export const SELF_CERT_CONVERSION_PRICE_THB = 8_000;
 
 export function computeDepositThb(totalThb: number): number {
   return Math.round((Math.max(0, totalThb) * DRIVER_LICENSE_DEPOSIT_PERCENT) / 100);
@@ -18,15 +17,6 @@ export function isYesAnswer(value: unknown): boolean {
 
 export function isNoAnswer(value: unknown): boolean {
   return value === false || value === "no" || value === "false";
-}
-
-export function qualifiesForSelfCertConversionPrice(
-  category: LicenseServiceCategory | string | null | undefined,
-  hasForeignLicense: unknown,
-  residentialCertificate: unknown
-): boolean {
-  if (category === "renewal" || category === "idp") return false;
-  return isYesAnswer(hasForeignLicense) && residentialCertificate === "self";
 }
 
 /**
@@ -52,32 +42,17 @@ export function normalizeDriverLicenseRequirements(
 
 export function computeBasePriceThb(
   category: LicenseServiceCategory,
-  vehicle: LicenseVehicleType | null,
-  answers: {
-    hasForeignLicense?: unknown;
-    residentialCertificate?: unknown;
-  } = {}
+  vehicle: LicenseVehicleType | null
 ): number {
-  if (category === "idp") return 3500;
-  if (
-    qualifiesForSelfCertConversionPrice(
-      category,
-      answers.hasForeignLicense,
-      answers.residentialCertificate
-    )
-  ) {
-    return SELF_CERT_CONVERSION_PRICE_THB;
-  }
+  if (category === "idp") return DRIVER_LICENSE_PRICES.idp;
   if (!vehicle) return 0;
   switch (category) {
     case "conversion":
+      return DRIVER_LICENSE_PRICES.conversion[vehicle];
     case "apply_new":
-      if (vehicle === "bike") return 10_000;
-      if (vehicle === "car") return 15_000;
-      return 20_000;
+      return DRIVER_LICENSE_PRICES.newLicense[vehicle];
     case "renewal":
-      if (vehicle === "both") return 4500;
-      return 3500;
+      return DRIVER_LICENSE_PRICES.renewal[vehicle];
     default:
       return 0;
   }
@@ -90,8 +65,8 @@ export type LicenseAddons = {
 
 export function computeAddonsTotalThb(addons: LicenseAddons): number {
   let t = 0;
-  if (addons.translationLetter) t += 1500;
-  if (addons.addressCertificate) t += 2500;
+  if (addons.translationLetter) t += DRIVER_LICENSE_PRICES.addons.translationLetter;
+  if (addons.addressCertificate) t += DRIVER_LICENSE_PRICES.addons.residentialCertificate;
   return t;
 }
 

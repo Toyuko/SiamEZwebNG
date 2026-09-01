@@ -5,6 +5,7 @@ export const basicTranslationWizard = createGenericBookingWizard(
   "basic-translation",
   {
     enableSmartQuote: true,
+    enableOfficeCashDeposit: true,
     summaryDescription:
       "Fixed price per page. Review your quote, then continue to checkout to pay.",
     extraDetailsFields: [

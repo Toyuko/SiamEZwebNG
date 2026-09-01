@@ -1,4 +1,5 @@
 import type { WizardConfig, WizardFieldConfig, WizardStepConfig } from "./types";
+import { depositPaymentMethodField } from "./shared";
 
 /** Standard contact fields used by most booking wizards. */
 export const contactFields: WizardFieldConfig[] = [
@@ -39,6 +40,39 @@ export const notesField: WizardFieldConfig = {
   maxLength: 2000,
 };
 
+/** Deposit payment preference for online transfer vs in-person cash at the Bangkok office. */
+export const depositPaymentMethodField: WizardFieldConfig = {
+  name: "depositPaymentMethod",
+  type: "select",
+  label: "How will you pay your deposit?",
+  required: true,
+  options: [
+    {
+      value: "online",
+      label: "Pay online now (PromptPay / bank transfer)",
+    },
+    {
+      value: "office_cash",
+      label: "Pay deposit in cash at the SiamEZ Bangkok office",
+    },
+  ],
+};
+
+/** Same as depositPaymentMethodField but tied to a scheduled appointment visit. */
+export const depositPaymentMethodAppointmentField: WizardFieldConfig = {
+  ...depositPaymentMethodField,
+  options: [
+    {
+      value: "online",
+      label: "Pay online now (PromptPay / bank transfer)",
+    },
+    {
+      value: "office_cash",
+      label: "Pay deposit in cash at the SiamEZ office on your appointment day",
+    },
+  ],
+};
+
 export const quoteReviewStep: WizardStepConfig = {
   id: "quote",
   type: "quote_review",
@@ -60,6 +94,8 @@ type GenericWizardOptions = {
   documentsRequired?: boolean;
   /** Enable AI / pricing-engine quote review step. */
   enableSmartQuote?: boolean;
+  /** Offer in-person cash deposit at the SiamEZ office (smart-quote services). */
+  enableOfficeCashDeposit?: boolean;
 };
 
 /**
@@ -75,7 +111,13 @@ export function createGenericBookingWizard(
     type: "fields",
     label: "Your details",
     labelKey: "steps.details",
-    fields: [...contactFields, ...(options.extraDetailsFields ?? [])],
+    fields: [
+      ...contactFields,
+      ...(options.extraDetailsFields ?? []),
+      ...(options.enableOfficeCashDeposit && options.enableSmartQuote
+        ? [depositPaymentMethodField]
+        : []),
+    ],
     generatesQuote: Boolean(options.enableSmartQuote && !options.questionsStep),
   };
 

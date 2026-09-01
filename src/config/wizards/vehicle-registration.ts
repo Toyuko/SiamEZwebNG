@@ -4,6 +4,7 @@ export const vehicleRegistrationWizard = createGenericBookingWizard(
   "vehicle-registration",
   {
     enableSmartQuote: true,
+    enableOfficeCashDeposit: true,
     summaryDescription:
       "Answer a few questions for a calculated vehicle registration quote. DLT fees are estimated.",
     extraDetailsFields: [

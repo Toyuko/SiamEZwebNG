@@ -26,6 +26,8 @@ export interface SubmitBookingResult {
   caseId?: string;
   caseNumber?: string;
   isFixed?: boolean;
+  /** Customer chose to pay deposit in cash at the SiamEZ office. */
+  payAtOffice?: boolean;
   /** For guest checkout – secure token to access checkout page */
   guestCheckoutToken?: string;
   error?: string;
@@ -62,6 +64,7 @@ export async function submitBooking(input: SubmitBookingInput): Promise<SubmitBo
       caseId: result.caseId,
       caseNumber: result.caseNumber,
       isFixed: result.isFixed,
+      payAtOffice: result.payAtOffice,
       guestCheckoutToken: result.guestCheckoutToken,
     };
   } catch (e) {

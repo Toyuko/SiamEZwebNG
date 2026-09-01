@@ -1,14 +1,7 @@
+import { DRIVER_LICENSE_PRICES } from "@/config/driver-license-price-guide";
 import { normalizeDriverLicenseRequirements } from "@/lib/driver-license-booking";
-import type { WizardCondition, WizardFieldConfig } from "@/config/wizards/types";
+import type { WizardFieldConfig } from "@/config/wizards/types";
 import type { ServicePricingConfig } from "@/lib/pricing/types";
-
-/** Skip standard conversion / new-license vehicle prices when the 8,000 THB self-cert package applies. */
-const notSelfCertConversion: WizardCondition = {
-  or: [
-    { field: "hasForeignLicense", notEquals: "yes" },
-    { field: "residentialCertificate", notEquals: "self" },
-  ],
-};
 
 export const driverLicenseQuoteQuestions: WizardFieldConfig[] = [
   {
@@ -73,7 +66,7 @@ export const driverLicensePricing: ServicePricingConfig = {
   validityDays: 14,
   normalizeRequirements: normalizeDriverLicenseRequirements,
   conciergeHint:
-    "Ask each quote question in turn: valid foreign license, residential certificate (self vs we help), fitness/eyesight, and car vs motorcycle vs both. Anyone with their own country license who can obtain a residential certificate is 8,000 THB. Deposit is 25% now and 75% after they get the license. Never invent prices.",
+    "Ask each quote question in turn: valid foreign license, residential certificate (self vs we help), fitness/eyesight, and car vs motorcycle vs both. Conversion, renewal, and IDP are 4,500 THB. New license is bike 10,000 / car 15,000 / both 20,000 THB. Deposit is 25% now and 75% after they get the license. Never invent prices.",
   questions: [
     {
       name: "category",
@@ -102,30 +95,14 @@ export const driverLicensePricing: ServicePricingConfig = {
   ],
   rules: [
     {
-      id: "conversion-self-cert",
-      label: "License conversion (own country license + residential certificate)",
-      category: "service",
-      amountThb: 8_000,
-      when: {
-        and: [
-          { field: "hasForeignLicense", equals: "yes" },
-          { field: "residentialCertificate", equals: "self" },
-          { field: "category", notEquals: "renewal" },
-          { field: "category", notEquals: "idp" },
-        ],
-      },
-    },
-    // Conversion (standard rates when the 8,000 THB self-cert package does not apply)
-    {
       id: "conversion-bike",
       label: "License conversion (motorcycle)",
       category: "service",
-      amountThb: 10_000,
+      amountThb: DRIVER_LICENSE_PRICES.conversion.bike,
       when: {
         and: [
           { field: "category", equals: "conversion" },
           { field: "vehicleType", equals: "bike" },
-          notSelfCertConversion,
         ],
       },
     },
@@ -133,12 +110,11 @@ export const driverLicensePricing: ServicePricingConfig = {
       id: "conversion-car",
       label: "License conversion (car)",
       category: "service",
-      amountThb: 15_000,
+      amountThb: DRIVER_LICENSE_PRICES.conversion.car,
       when: {
         and: [
           { field: "category", equals: "conversion" },
           { field: "vehicleType", equals: "car" },
-          notSelfCertConversion,
         ],
       },
     },
@@ -146,21 +122,19 @@ export const driverLicensePricing: ServicePricingConfig = {
       id: "conversion-both",
       label: "License conversion (car + bike)",
       category: "service",
-      amountThb: 20_000,
+      amountThb: DRIVER_LICENSE_PRICES.conversion.both,
       when: {
         and: [
           { field: "category", equals: "conversion" },
           { field: "vehicleType", equals: "both" },
-          notSelfCertConversion,
         ],
       },
     },
-    // Renewal — same rate for car or bike; both is discounted vs two singles
     {
       id: "renewal-bike",
       label: "License renewal (motorcycle)",
       category: "service",
-      amountThb: 3500,
+      amountThb: DRIVER_LICENSE_PRICES.renewal.bike,
       when: {
         and: [
           { field: "category", equals: "renewal" },
@@ -172,7 +146,7 @@ export const driverLicensePricing: ServicePricingConfig = {
       id: "renewal-car",
       label: "License renewal (car)",
       category: "service",
-      amountThb: 3500,
+      amountThb: DRIVER_LICENSE_PRICES.renewal.car,
       when: {
         and: [
           { field: "category", equals: "renewal" },
@@ -184,7 +158,7 @@ export const driverLicensePricing: ServicePricingConfig = {
       id: "renewal-both",
       label: "License renewal (car + bike)",
       category: "service",
-      amountThb: 4500,
+      amountThb: DRIVER_LICENSE_PRICES.renewal.both,
       when: {
         and: [
           { field: "category", equals: "renewal" },
@@ -192,12 +166,11 @@ export const driverLicensePricing: ServicePricingConfig = {
         ],
       },
     },
-    // New — same rates as conversion
     {
       id: "new-bike",
       label: "New license (motorcycle)",
       category: "service",
-      amountThb: 10_000,
+      amountThb: DRIVER_LICENSE_PRICES.newLicense.bike,
       when: {
         and: [
           { field: "category", equals: "apply_new" },
@@ -209,7 +182,7 @@ export const driverLicensePricing: ServicePricingConfig = {
       id: "new-car",
       label: "New license (car)",
       category: "service",
-      amountThb: 15_000,
+      amountThb: DRIVER_LICENSE_PRICES.newLicense.car,
       when: {
         and: [
           { field: "category", equals: "apply_new" },
@@ -221,7 +194,7 @@ export const driverLicensePricing: ServicePricingConfig = {
       id: "new-both",
       label: "New license (car + bike)",
       category: "service",
-      amountThb: 20_000,
+      amountThb: DRIVER_LICENSE_PRICES.newLicense.both,
       when: {
         and: [
           { field: "category", equals: "apply_new" },
@@ -229,27 +202,25 @@ export const driverLicensePricing: ServicePricingConfig = {
         ],
       },
     },
-    // IDP
     {
       id: "idp",
       label: "International Driving Permit",
       category: "service",
-      amountThb: 3500,
+      amountThb: DRIVER_LICENSE_PRICES.idp,
       when: { field: "category", equals: "idp" },
     },
-    // Add-ons
     {
       id: "translation-letter",
       label: "Translation letter",
       category: "addon",
-      amountThb: 1500,
+      amountThb: DRIVER_LICENSE_PRICES.addons.translationLetter,
       when: { field: "addonTranslationLetter", truthy: true },
     },
     {
       id: "address-certificate",
       label: "Residential certificate",
       category: "addon",
-      amountThb: 2500,
+      amountThb: DRIVER_LICENSE_PRICES.addons.residentialCertificate,
       when: {
         or: [
           { field: "addonAddressCertificate", truthy: true },

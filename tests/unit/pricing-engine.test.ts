@@ -20,7 +20,7 @@ describe("pricing engine", () => {
       requirements: { category: "conversion", vehicleType: "car" },
     });
     expect(result.quoteType).toBe("calculated");
-    expect(result.total).toBe(thbToSatang(15_000));
+    expect(result.total).toBe(thbToSatang(4_500));
     expect(result.addOnsTotal).toBe(0);
     expect(result.lineItems).toHaveLength(1);
   });
@@ -35,11 +35,11 @@ describe("pricing engine", () => {
         addonAddressCertificate: true,
       },
     });
-    expect(result.total).toBe(thbToSatang(15_000 + 1500 + 2500));
+    expect(result.total).toBe(thbToSatang(4_500 + 1500 + 2500));
     expect(result.addOnsTotal).toBe(thbToSatang(1500 + 2500));
   });
 
-  it("prices 8,000 THB when the customer has a country license and can obtain a residential certificate", () => {
+  it("prices conversion at 4,500 THB when the customer has a country license and residential certificate", () => {
     const result = calculateQuote({
       config: driverLicensePricing,
       requirements: {
@@ -49,11 +49,11 @@ describe("pricing engine", () => {
         vehicleType: "car",
       },
     });
-    expect(result.total).toBe(thbToSatang(8_000));
-    expect(result.lineItems.map((l) => l.id)).toEqual(["conversion-self-cert"]);
+    expect(result.total).toBe(thbToSatang(4_500));
+    expect(result.lineItems.map((l) => l.id)).toEqual(["conversion-car"]);
   });
 
-  it("keeps vehicle conversion rates and adds the residential-certificate fee when help is needed", () => {
+  it("adds the residential-certificate fee when help is needed", () => {
     const result = calculateQuote({
       config: driverLicensePricing,
       requirements: {
@@ -63,7 +63,7 @@ describe("pricing engine", () => {
         vehicleType: "car",
       },
     });
-    expect(result.total).toBe(thbToSatang(15_000 + 2500));
+    expect(result.total).toBe(thbToSatang(4_500 + 2500));
     expect(result.addOnsTotal).toBe(thbToSatang(2500));
   });
 
@@ -159,6 +159,6 @@ describe("admin override math", () => {
     const original = calculated.total;
     const adjustment = thbToSatang(-500);
     const finalAmount = Math.max(0, original + adjustment);
-    expect(finalAmount).toBe(thbToSatang(14_500));
+    expect(finalAmount).toBe(thbToSatang(4_000));
   });
 });

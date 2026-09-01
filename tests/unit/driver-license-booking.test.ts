@@ -1,32 +1,23 @@
 import { describe, expect, it } from "vitest";
+import { DRIVER_LICENSE_PRICES } from "@/config/driver-license-price-guide";
 import {
   computeBasePriceThb,
   computeDepositThb,
   DRIVER_LICENSE_DEPOSIT_PERCENT,
   normalizeDriverLicenseRequirements,
-  SELF_CERT_CONVERSION_PRICE_THB,
 } from "@/lib/driver-license-booking";
 
 describe("driver license quote answers", () => {
   it("uses a 25% deposit", () => {
     expect(DRIVER_LICENSE_DEPOSIT_PERCENT).toBe(25);
-    expect(computeDepositThb(8_000)).toBe(2_000);
+    expect(computeDepositThb(4_500)).toBe(1_125);
     expect(computeDepositThb(15_000)).toBe(3_750);
   });
 
-  it("applies the self-cert conversion package regardless of vehicle type", () => {
-    expect(
-      computeBasePriceThb("conversion", "car", {
-        hasForeignLicense: "yes",
-        residentialCertificate: "self",
-      })
-    ).toBe(SELF_CERT_CONVERSION_PRICE_THB);
-    expect(
-      computeBasePriceThb("conversion", "both", {
-        hasForeignLicense: "yes",
-        residentialCertificate: "self",
-      })
-    ).toBe(SELF_CERT_CONVERSION_PRICE_THB);
+  it("applies flat conversion pricing for any vehicle type", () => {
+    expect(computeBasePriceThb("conversion", "car")).toBe(DRIVER_LICENSE_PRICES.conversion.car);
+    expect(computeBasePriceThb("conversion", "bike")).toBe(DRIVER_LICENSE_PRICES.conversion.bike);
+    expect(computeBasePriceThb("conversion", "both")).toBe(DRIVER_LICENSE_PRICES.conversion.both);
   });
 
   it("derives conversion vs new license from the foreign-license question", () => {
@@ -55,11 +46,7 @@ describe("driver license quote answers", () => {
         residentialCertificate: "self",
       }).category
     ).toBe("renewal");
-    expect(
-      computeBasePriceThb("renewal", "car", {
-        hasForeignLicense: "yes",
-        residentialCertificate: "self",
-      })
-    ).toBe(3500);
+    expect(computeBasePriceThb("renewal", "car")).toBe(DRIVER_LICENSE_PRICES.renewal.car);
+    expect(computeBasePriceThb("idp", null)).toBe(DRIVER_LICENSE_PRICES.idp);
   });
 });

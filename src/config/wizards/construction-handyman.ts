@@ -4,6 +4,7 @@ export const constructionHandymanWizard = createGenericBookingWizard(
   "construction-handyman",
   {
     enableSmartQuote: true,
+    enableOfficeCashDeposit: true,
     summaryDescription:
       "Complex projects receive an estimated range. A SiamEZ representative will confirm the final quotation.",
     extraDetailsFields: [
