@@ -1,5 +1,4 @@
 import type { WizardConfig, WizardFieldConfig, WizardStepConfig } from "./types";
-import { depositPaymentMethodField } from "./shared";
 
 /** Standard contact fields used by most booking wizards. */
 export const contactFields: WizardFieldConfig[] = [

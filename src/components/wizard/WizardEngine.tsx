@@ -354,6 +354,8 @@ function WizardEngineInner({
     paymentChoice,
     visibleSteps,
   ]);
+
+  const runGenerateQuote = useCallback(async () => {
     if (!config.enableSmartQuote) return true;
     setLoading(true);
     setError(null);
