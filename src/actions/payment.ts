@@ -145,7 +145,12 @@ export async function submitPaymentWithProof(
 ): Promise<SubmitPaymentWithProofResult> {
   try {
     const session = await requireAuth();
-    const methodMap = { qr: "qr" as const, bank: "bank" as const, wise: "wise" as const };
+    const methodMap = {
+      qr: "qr" as const,
+      bank: "bank" as const,
+      wise: "wise" as const,
+      cash: "cash" as const,
+    };
     await submitUserPayment({
       userId: session.user.id,
       invoiceId: input.invoiceId,

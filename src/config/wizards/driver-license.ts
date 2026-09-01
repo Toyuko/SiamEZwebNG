@@ -61,11 +61,10 @@ export function buildDriverLicenseFormData(
       basePriceThb,
       addonsTotalThb,
       totalThb,
-    depositThb,
-    depositPercent: DRIVER_LICENSE_DEPOSIT_PERCENT,
-    remainingThb: totalThb - depositThb,
-    depositPaymentMethod: values.depositPaymentMethod ?? "online",
-    currency: "THB",
+      depositThb,
+      depositPercent: DRIVER_LICENSE_DEPOSIT_PERCENT,
+      remainingThb: totalThb - depositThb,
+      currency: "THB",
     },
   };
 }
