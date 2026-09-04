@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { paymentConfig } from "@/config/payments";
 import { site } from "@/config/site";
 import { prisma } from "@/lib/db";
 import { getPaymentSettings } from "@/lib/payment-settings";
@@ -37,13 +38,9 @@ function textOrDash(v: string | null | undefined) {
   return v?.trim() || "-";
 }
 
-async function readThaiQrDataUrl(configured: string | null) {
-  const candidates = [
-    configured,
-    path.join(process.cwd(), "public", "images", "payments", "thai-qr-payment.png"),
-  ].filter(Boolean) as string[];
-
+async function readPngDataUrl(candidates: (string | null | undefined)[]) {
   for (const filePath of candidates) {
+    if (!filePath) continue;
     try {
       const bytes = await readFile(filePath);
       return `data:image/png;base64,${bytes.toString("base64")}`;
@@ -52,6 +49,19 @@ async function readThaiQrDataUrl(configured: string | null) {
     }
   }
   return null;
+}
+
+async function readThaiQrDataUrl(configured: string | null) {
+  return readPngDataUrl([
+    configured,
+    path.join(process.cwd(), "public", "images", "payments", "thai-qr-payment.png"),
+  ]);
+}
+
+async function readWiseQrDataUrl() {
+  return readPngDataUrl([
+    path.join(process.cwd(), "public", "images", "payment", "wise-qr.png"),
+  ]);
 }
 
 export async function GET(
@@ -88,7 +98,10 @@ export async function GET(
   const dueDate = inv.dueDate ? formatDate(inv.dueDate) : "-";
   const invoiceRef = `INV-${inv.id.slice(0, 8).toUpperCase()}`;
   const paymentSettings = await getPaymentSettings();
-  const thaiQrDataUrl = await readThaiQrDataUrl(paymentSettings.qrImagePath);
+  const [thaiQrDataUrl, wiseQrDataUrl] = await Promise.all([
+    readThaiQrDataUrl(paymentSettings.qrImagePath),
+    readWiseQrDataUrl(),
+  ]);
 
   const doc = new jsPDF();
   const margin = 16;
@@ -239,14 +252,32 @@ export async function GET(
   );
   p2y += 8;
 
-  if (thaiQrDataUrl) {
+  if (thaiQrDataUrl || wiseQrDataUrl) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    doc.text("Thai QR Payment", margin, p2y);
+    if (thaiQrDataUrl) doc.text("Thai QR Payment", margin, p2y);
+    if (wiseQrDataUrl) doc.text("Wise", thaiQrDataUrl ? margin + 90 : margin, p2y);
     p2y += 3;
-    doc.addImage(thaiQrDataUrl, "PNG", margin, p2y, 62, 84);
-    p2y += 90;
+    if (thaiQrDataUrl) {
+      doc.addImage(thaiQrDataUrl, "PNG", margin, p2y, 62, 84);
+    }
+    if (wiseQrDataUrl) {
+      doc.addImage(wiseQrDataUrl, "PNG", thaiQrDataUrl ? margin + 90 : margin, p2y, 62, 62);
+    }
+    p2y += thaiQrDataUrl ? 90 : 70;
   }
+
+  const wisePayUrl = paymentConfig.wise.payUrl;
+  const wiseDetailsText = [
+    `Beneficiary: ${textOrDash(paymentSettings.wiseBeneficiary)}`,
+    `Wise tag: ${textOrDash(paymentSettings.wiseAccountId)}`,
+    `Currency: ${textOrDash(paymentSettings.wiseCurrency)}`,
+    wisePayUrl ? `Pay link: ${wisePayUrl}` : null,
+    `Details: ${textOrDash(paymentSettings.wiseDetails).replace("[Your invoice reference]", invoiceRef)}`,
+    `Note: ${textOrDash(paymentSettings.wiseNote)}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   autoTable(doc, {
     startY: p2y,
@@ -260,10 +291,7 @@ export async function GET(
         "Bank Transfer",
         `Bank: ${textOrDash(paymentSettings.bankName)}\nBranch: ${textOrDash(paymentSettings.bankBranch)}\nAccount Name: ${textOrDash(paymentSettings.bankAccountName)}\nAccount Number: ${textOrDash(paymentSettings.bankAccountNumber)}\nReference: ${invoiceRef}\nAmount: ${subtotalText}`,
       ],
-      [
-        "Wise",
-        `Beneficiary: ${textOrDash(paymentSettings.wiseBeneficiary)}\nAccount ID: ${textOrDash(paymentSettings.wiseAccountId)}\nCurrency: ${textOrDash(paymentSettings.wiseCurrency)}\nDetails: ${textOrDash(paymentSettings.wiseDetails).replace("[Your invoice reference]", invoiceRef)}\nNote: ${textOrDash(paymentSettings.wiseNote)}`,
-      ],
+      ["Wise", wiseDetailsText],
     ],
     columnStyles: {
       0: { cellWidth: 35, fontStyle: "bold" },

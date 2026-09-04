@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import type { PaymentSettings } from "@/lib/payment-settings";
+import { paymentConfig } from "@/config/payments";
 
 type ManualCheckoutProps = {
   caseNumber: string;
@@ -75,6 +76,11 @@ export function ManualCheckout({
           bankName: paymentSettings.bankName || undefined,
           accountName: paymentSettings.bankAccountName || undefined,
           accountNumber: paymentSettings.bankAccountNumber || undefined,
+        }}
+        wiseDetails={{
+          accountId: paymentSettings.wiseAccountId || undefined,
+          beneficiary: paymentSettings.wiseBeneficiary || undefined,
+          payUrl: paymentConfig.wise.payUrl || undefined,
         }}
       />
 

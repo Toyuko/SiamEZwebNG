@@ -2,12 +2,18 @@
  * Payment configuration for Thailand-based platform.
  * Bank transfer, QR (PromptPay), Wise - Stripe in Phase 2.
  *
- * Never ship real account numbers as code defaults — configure via env.
+ * Never ship bank account numbers as code defaults — configure those via env.
+ * Wise uses a public receive tag, so product defaults are safe to ship.
  */
 
 function envOrEmpty(name: string): string {
   const value = process.env[name];
   return typeof value === "string" && value.trim() !== "" ? value.trim() : "";
+}
+
+function envOrDefault(name: string, fallback: string): string {
+  const value = envOrEmpty(name);
+  return value || fallback;
 }
 
 export const paymentConfig = {
@@ -25,14 +31,20 @@ export const paymentConfig = {
     accountNumber: envOrEmpty("BANK_ACCOUNT_NUMBER"),
   },
 
-  /** Wise transfer instructions */
+  /** Wise transfer instructions (public receive tag) */
   wise: {
-    beneficiary: envOrEmpty("WISE_BENEFICIARY"),
-    accountId: envOrEmpty("WISE_ACCOUNT_ID"),
+    beneficiary: envOrDefault("WISE_BENEFICIARY", "Touy Smith"),
+    accountId: envOrDefault("WISE_ACCOUNT_ID", "@touygordondouglasphanchanas"),
     currency: "THB",
-    payUrl: envOrEmpty("WISE_PAY_URL"),
+    payUrl: envOrDefault(
+      "WISE_PAY_URL",
+      "https://wise.com/pay/me/touygordondouglasphanchanas"
+    ),
     qrImage: "/images/payment/wise-qr.png",
-    details: envOrEmpty("WISE_DETAILS"),
+    details: envOrDefault(
+      "WISE_DETAILS",
+      "Wise tag: @touygordondouglasphanchanas\nReference: [Your invoice reference]"
+    ),
     note: "Please include the invoice reference in the transfer details.",
   },
 } as const;

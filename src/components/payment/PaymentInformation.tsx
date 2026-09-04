@@ -20,6 +20,13 @@ export type PaymentInformationBankDetails = {
   accountNumber?: string;
 };
 
+export type PaymentInformationWiseDetails = {
+  accountId?: string;
+  beneficiary?: string;
+  payUrl?: string;
+  qrImage?: string;
+};
+
 export type PaymentInformationProps = {
   /** Amount in Thai Baht (e.g. 1500.25). When set (> 0), a PromptPay QR is generated for this exact amount. */
   totalAmountThb?: number;
@@ -34,6 +41,8 @@ export type PaymentInformationProps = {
   staticQrSrc?: string;
   /** Override displayed bank fields (defaults from `paymentConfig.bank`). */
   bankDetails?: PaymentInformationBankDetails;
+  /** Override displayed Wise fields (defaults from `paymentConfig.wise`). */
+  wiseDetails?: PaymentInformationWiseDetails;
   className?: string;
 };
 
@@ -45,12 +54,14 @@ export function PaymentInformation({
   onTransferSlipChange,
   staticQrSrc = DEFAULT_STATIC_QR,
   bankDetails,
+  wiseDetails,
   className,
 }: PaymentInformationProps) {
   const t = useTranslations("paymentInformation");
   const slipInputId = useId();
   const [uncontrolledSlip, setUncontrolledSlip] = useState<File | null>(null);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
+  const [wiseCopyState, setWiseCopyState] = useState<"idle" | "copied" | "error">("idle");
   const [dynamicQrDataUrl, setDynamicQrDataUrl] = useState<string | null>(null);
   const [dynamicQrError, setDynamicQrError] = useState(false);
 
@@ -70,6 +81,10 @@ export function PaymentInformation({
   const bankName = bankDetails?.bankName ?? paymentConfig.bank.name;
   const accountName = bankDetails?.accountName ?? paymentConfig.bank.accountName;
   const accountNumber = bankDetails?.accountNumber ?? paymentConfig.bank.accountNumber;
+  const wiseAccountId = wiseDetails?.accountId ?? paymentConfig.wise.accountId;
+  const wiseBeneficiary = wiseDetails?.beneficiary ?? paymentConfig.wise.beneficiary;
+  const wisePayUrl = wiseDetails?.payUrl ?? paymentConfig.wise.payUrl;
+  const wiseQrSrc = wiseDetails?.qrImage ?? paymentConfig.wise.qrImage;
 
   const showDynamicQr =
     typeof totalAmountThb === "number" && Number.isFinite(totalAmountThb) && totalAmountThb > 0;
@@ -117,6 +132,17 @@ export function PaymentInformation({
     } catch {
       setCopyState("error");
       window.setTimeout(() => setCopyState("idle"), 2500);
+    }
+  };
+
+  const copyWiseTag = async () => {
+    try {
+      await navigator.clipboard.writeText(wiseAccountId);
+      setWiseCopyState("copied");
+      window.setTimeout(() => setWiseCopyState("idle"), 2000);
+    } catch {
+      setWiseCopyState("error");
+      window.setTimeout(() => setWiseCopyState("idle"), 2500);
     }
   };
 
@@ -250,36 +276,80 @@ export function PaymentInformation({
           </dl>
         </section>
 
-        <section aria-labelledby="payment-wise-heading" className="space-y-4">
-          <div className="border-t border-border pt-6">
-            <h3 id="payment-wise-heading" className="text-base font-semibold text-gray-900 dark:text-gray-100">
-              {t("wiseTitle")}
-            </h3>
-            <p className="mt-1 text-sm text-muted">{t("wiseHint")}</p>
-          </div>
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-            {/* eslint-disable-next-line @next/next/no-img-element -- public static Wise QR asset */}
-            <img
-              src={paymentConfig.wise.qrImage}
-              alt={t("wiseQrAlt")}
-              width={180}
-              height={180}
-              className="h-40 w-40 rounded-lg border border-border bg-white object-contain p-2 dark:bg-gray-950"
-            />
-            <dl className="grid flex-1 gap-3 text-sm">
-              <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-4">
-                <dt className="min-w-[8rem] shrink-0 font-medium text-gray-600 dark:text-gray-400">{t("wiseIdLabel")}</dt>
-                <dd className="font-mono font-semibold text-gray-900 dark:text-gray-100">
-                  {paymentConfig.wise.accountId}
-                </dd>
-              </div>
-              <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-4">
-                <dt className="min-w-[8rem] shrink-0 font-medium text-gray-600 dark:text-gray-400">{t("accountNameLabel")}</dt>
-                <dd className="text-gray-900 dark:text-gray-100">{paymentConfig.wise.beneficiary}</dd>
-              </div>
-            </dl>
-          </div>
-        </section>
+        {wiseAccountId ? (
+          <section aria-labelledby="payment-wise-heading" className="space-y-4">
+            <div className="border-t border-border pt-6">
+              <h3 id="payment-wise-heading" className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                {t("wiseTitle")}
+              </h3>
+              <p className="mt-1 text-sm text-muted">{t("wiseHint")}</p>
+            </div>
+            <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+              {/* eslint-disable-next-line @next/next/no-img-element -- public static Wise QR asset */}
+              <img
+                src={wiseQrSrc}
+                alt={t("wiseQrAlt")}
+                width={180}
+                height={180}
+                className="h-40 w-40 rounded-lg border border-border bg-white object-contain p-2 dark:bg-gray-950"
+              />
+              <dl className="grid flex-1 gap-3 text-sm">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
+                  <dt className="min-w-[8rem] shrink-0 font-medium text-gray-600 dark:text-gray-400">{t("wiseIdLabel")}</dt>
+                  <dd className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
+                    <span className="break-all font-mono font-semibold text-gray-900 dark:text-gray-100">
+                      {wiseAccountId}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 self-start sm:self-center"
+                      onClick={copyWiseTag}
+                      aria-label={t("copy")}
+                    >
+                      {wiseCopyState === "copied" ? (
+                        <>
+                          <Check className="h-4 w-4" aria-hidden />
+                          {t("copied")}
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4" aria-hidden />
+                          {t("copy")}
+                        </>
+                      )}
+                    </Button>
+                    {wiseCopyState === "error" ? (
+                      <span className="text-xs text-red-600 dark:text-red-400">{t("copyFailed")}</span>
+                    ) : null}
+                  </dd>
+                </div>
+                {wiseBeneficiary ? (
+                  <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-4">
+                    <dt className="min-w-[8rem] shrink-0 font-medium text-gray-600 dark:text-gray-400">{t("accountNameLabel")}</dt>
+                    <dd className="text-gray-900 dark:text-gray-100">{wiseBeneficiary}</dd>
+                  </div>
+                ) : null}
+                {wisePayUrl ? (
+                  <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-4">
+                    <dt className="min-w-[8rem] shrink-0 font-medium text-gray-600 dark:text-gray-400">{t("wisePayLinkLabel")}</dt>
+                    <dd>
+                      <a
+                        href={wisePayUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="break-all font-medium text-siam-blue hover:underline"
+                      >
+                        {wisePayUrl.replace(/^https?:\/\//, "")}
+                      </a>
+                    </dd>
+                  </div>
+                ) : null}
+              </dl>
+            </div>
+          </section>
+        ) : null}
 
         <section aria-labelledby="payment-slip-heading" className="space-y-2 border-t border-border pt-6">
           <h3 id="payment-slip-heading" className="sr-only">

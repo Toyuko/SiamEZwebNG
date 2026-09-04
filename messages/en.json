@@ -1869,8 +1869,8 @@
     "unavailable": "Messaging opens once a coordinator is assigned to your job."
   },
   "paymentInformation": {
-    "title": "Bank transfer & PromptPay",
-    "description": "Pay from any Thai bank app using the QR code or transfer to the account below, then upload your payment slip.",
+    "title": "Payment details",
+    "description": "Pay by PromptPay QR, Thai bank transfer, or Wise, then upload your payment slip.",
     "bankTransferTitle": "Bank transfer",
     "bankNameLabel": "Bank",
     "accountNameLabel": "Account name",
@@ -1890,7 +1890,8 @@
     "kbankName": "Bangkok Bank",
     "wiseTitle": "Wise (international)",
     "wiseHint": "Scan the Wise QR or send to the Wise tag below.",
-    "wiseIdLabel": "Wise ID",
+    "wiseIdLabel": "Wise tag",
+    "wisePayLinkLabel": "Pay link",
     "wiseQrAlt": "Wise payment QR code",
     "qrAlt": "PromptPay QR code",
     "qrLoading": "Generating payment QR…",

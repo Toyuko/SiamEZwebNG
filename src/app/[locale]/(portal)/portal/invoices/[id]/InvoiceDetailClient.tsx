@@ -61,17 +61,17 @@ export function InvoiceDetailClient({
       Reference: reference,
     },
   };
+  const wisePayUrl = paymentConfig.wise.payUrl;
   const wiseInstructions = {
     label: "Wise (International Transfer)",
     details: {
       Beneficiary: paymentSettings.wiseBeneficiary,
-      "Account ID": paymentSettings.wiseAccountId,
+      "Wise tag": paymentSettings.wiseAccountId,
       Currency: paymentSettings.wiseCurrency,
       Amount: `${(amountDueNow / 100).toFixed(2)} ${invoice.currency}`,
       Reference: reference,
       Details: paymentSettings.wiseDetails.replace("[Your invoice reference]", reference),
       Note: paymentSettings.wiseNote,
-      "Pay link": paymentConfig.wise.payUrl,
     },
   };
 
@@ -222,12 +222,29 @@ export function InvoiceDetailClient({
                   className="h-40 w-40 rounded-lg border border-gray-200 bg-white object-contain p-2 dark:border-gray-600"
                 />
                 <dl className="space-y-2 text-sm">
-                  {Object.entries(wiseInstructions.details).map(([k, v]) => (
-                    <div key={k} className="flex flex-col gap-0.5">
-                      <dt className="font-medium text-gray-600 dark:text-gray-400">{k}</dt>
-                      <dd className="whitespace-pre-wrap text-gray-900 dark:text-white">{v}</dd>
+                  {Object.entries(wiseInstructions.details)
+                    .filter(([, v]) => Boolean(v?.trim()))
+                    .map(([k, v]) => (
+                      <div key={k} className="flex flex-col gap-0.5">
+                        <dt className="font-medium text-gray-600 dark:text-gray-400">{k}</dt>
+                        <dd className="whitespace-pre-wrap text-gray-900 dark:text-white">{v}</dd>
+                      </div>
+                    ))}
+                  {wisePayUrl ? (
+                    <div className="flex flex-col gap-0.5">
+                      <dt className="font-medium text-gray-600 dark:text-gray-400">Pay link</dt>
+                      <dd>
+                        <a
+                          href={wisePayUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="break-all font-medium text-siam-blue hover:underline"
+                        >
+                          {wisePayUrl.replace(/^https?:\/\//, "")}
+                        </a>
+                      </dd>
                     </div>
-                  ))}
+                  ) : null}
                 </dl>
               </div>
             </div>

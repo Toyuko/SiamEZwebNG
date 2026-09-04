@@ -29,12 +29,12 @@ export function getDefaultConciergeSettings(): ConciergeSettings {
     contactHintTh: `ติดต่อ SiamEZ: ${site.phone} · LINE ${site.line} · ${site.email}`,
     faqEn: [
       "How do I book a service? Browse Services, choose a service, then Book Now.",
-      "What payment methods do you accept? PromptPay QR, bank transfer, and Wise (when configured).",
+      "What payment methods do you accept? PromptPay QR, bank transfer, and Wise (@touygordondouglasphanchanas).",
       "Can I ask about cars or real estate? Yes — Ask SiamEZ can search published listings.",
     ].join("\n"),
     faqTh: [
       "จองบริการอย่างไร? ไปที่บริการ เลือกบริการ แล้วกดจองเลย",
-      "ชำระเงินอย่างไร? PromptPay QR โอนธนาคาร และ Wise (ถ้าเปิดใช้)",
+      "ชำระเงินอย่างไร? PromptPay QR โอนธนาคาร และ Wise (@touygordondouglasphanchanas)",
       "ถามเรื่องรถหรืออสังหาได้ไหม? ได้ — Ask SiamEZ ค้นหาจากประกาศที่เผยแพร่จริงเท่านั้น",
     ].join("\n"),
     knowledgeEn: [

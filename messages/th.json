@@ -1869,8 +1869,8 @@
     "unavailable": "แชทจะเปิดเมื่อมีผู้ประสานงานรับงานแล้ว"
   },
   "paymentInformation": {
-    "title": "โอนธนาคาร และ PromptPay",
-    "description": "ชำระผ่านแอปธนาคารด้วย QR หรือโอนเข้าบัญชีด้านล่าง แล้วอัปโหลดสลิปยืนยันการชำระ",
+    "title": "รายละเอียดการชำระเงิน",
+    "description": "ชำระผ่าน PromptPay QR, โอนธนาคาร หรือ Wise แล้วอัปโหลดสลิปยืนยันการชำระ",
     "bankTransferTitle": "โอนเงินธนาคาร",
     "bankNameLabel": "ธนาคาร",
     "accountNameLabel": "ชื่อ",
@@ -1890,7 +1890,8 @@
     "kbankName": "ธนาคารกรุงเทพ",
     "wiseTitle": "Wise (โอนระหว่างประเทศ)",
     "wiseHint": "สแกน QR ของ Wise หรือโอนไปที่แท็กด้านล่าง",
-    "wiseIdLabel": "Wise ID",
+    "wiseIdLabel": "แท็ก Wise",
+    "wisePayLinkLabel": "ลิงก์ชำระเงิน",
     "wiseQrAlt": "QR ชำระเงิน Wise",
     "qrAlt": "QR PromptPay",
     "qrLoading": "กำลังสร้าง QR ชำระเงิน…",

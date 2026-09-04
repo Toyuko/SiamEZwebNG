@@ -48,7 +48,7 @@ export const depositPaymentMethodField: WizardFieldConfig = {
   options: [
     {
       value: "online",
-      label: "Pay online now (PromptPay / bank transfer)",
+      label: "Pay online now (PromptPay / bank transfer / Wise)",
     },
     {
       value: "office_cash",
@@ -63,7 +63,7 @@ export const depositPaymentMethodAppointmentField: WizardFieldConfig = {
   options: [
     {
       value: "online",
-      label: "Pay online now (PromptPay / bank transfer)",
+      label: "Pay online now (PromptPay / bank transfer / Wise)",
     },
     {
       value: "office_cash",

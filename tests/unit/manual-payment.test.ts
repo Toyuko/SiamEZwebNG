@@ -1,8 +1,22 @@
 import { describe, expect, it } from "vitest";
+import { isManualPaymentConfigured, paymentConfig } from "@/config/payments";
 import {
   caseStatusAfterInvoiceKind,
   pickOpenInvoiceForManualPayment,
 } from "@/lib/payments/manual";
+
+describe("Wise payment defaults", () => {
+  it("exposes the public Wise receive tag, pay link, and QR", () => {
+    expect(paymentConfig.wise.accountId).toBe("@touygordondouglasphanchanas");
+    expect(paymentConfig.wise.beneficiary).toBe("Touy Smith");
+    expect(paymentConfig.wise.payUrl).toBe(
+      "https://wise.com/pay/me/touygordondouglasphanchanas"
+    );
+    expect(paymentConfig.wise.qrImage).toBe("/images/payment/wise-qr.png");
+    expect(paymentConfig.wise.details).toContain("@touygordondouglasphanchanas");
+    expect(isManualPaymentConfigured()).toBe(true);
+  });
+});
 
 describe("manual payment settlement helpers", () => {
   it("maps full invoices to case status paid", () => {
