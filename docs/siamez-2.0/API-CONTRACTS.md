@@ -9,9 +9,32 @@
 | Method | Path | Auth |
 |--------|------|------|
 | POST | `/api/auth/login` | none |
+| POST | `/api/auth/register` | none |
 | GET | `/api/auth/me` | Bearer JWT |
+| POST | `/api/auth/oauth/exchange` | none · mobile OAuth code → Bearer JWT |
 
 Mobile clients use `Authorization: Bearer <API_JWT>`. Middleware sets `x-api-user-id` after verify on protected prefixes.
+
+**Mobile OAuth handoff (unlocalized):**
+1. App opens `GET /auth/{google|facebook|line}?redirect_uri=siamez://…`
+2. Auth.js completes → `GET /auth/mobile/complete` mints a short-lived code
+3. Redirect to `redirect_uri?code=…` (never put the long-lived JWT in the query)
+4. App calls `POST /api/auth/oauth/exchange` `{ code, redirectUri? }`
+
+## Push tokens
+
+| Method | Path | Auth |
+|--------|------|------|
+| POST | `/api/users/push-token` | Bearer · `{ token }` Expo push token |
+| DELETE | `/api/users/push-token` | Bearer · clear on logout |
+
+## Bookings
+
+| Method | Path | Auth |
+|--------|------|------|
+| POST | `/api/bookings` | optional Bearer · guest needs `guestEmail`; returns `guestCheckoutToken` |
+
+Guest checkout URL: `{site}/checkout/{caseId}?token={guestCheckoutToken}`
 
 ## Protected REST (Bearer)
 

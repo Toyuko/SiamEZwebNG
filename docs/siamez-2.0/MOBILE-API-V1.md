@@ -98,3 +98,9 @@ Reply may include `journey`, `goalChange`, `explanations`, and `reason` on recom
 |--------|------|-------|
 | GET | `/api/dashboard/overview` | Mobile hub counts |
 | GET | `/api/documents` | Lists docs for Bearer user |
+| POST | `/api/bookings` | Guest + auth booking (canonical) |
+| POST/DELETE | `/api/users/push-token` | Register / clear Expo push token |
+| GET | `/auth/{provider}?redirect_uri=` | Mobile OAuth start (unlocalized) |
+| POST | `/api/auth/oauth/exchange` | Code → Bearer JWT |
+
+**Canonical site origin for mobile:** `https://siam-ez.com` (`EXPO_PUBLIC_API_URL` / `EXPO_PUBLIC_WEB_BASE_URL`).

@@ -118,6 +118,17 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Mobile OAuth bridge (Expo AuthSession) — must stay unlocalized:
+  // `/auth/{provider}?redirect_uri=siamez://…` and `/auth/mobile/complete`.
+  if (pathname.startsWith("/auth/")) {
+    return NextResponse.next();
+  }
+
+  // Universal Links / App Links association files (no locale prefix).
+  if (pathname.startsWith("/.well-known/")) {
+    return NextResponse.next();
+  }
+
   // Booking gate: /book/* – allow guests; /checkout/* – allow guests with valid token (verified in page)
   // Only portal requires auth for booking-related routes
 

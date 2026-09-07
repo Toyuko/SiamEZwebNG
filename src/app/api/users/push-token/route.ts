@@ -10,6 +10,18 @@ const bodySchema = z.object({
   token: z.string().min(1),
 });
 
+async function clearExpoPushToken(userId: string) {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { expoPushToken: null },
+  });
+
+  await prisma.freelancerProfile.updateMany({
+    where: { userId },
+    data: { expoPushToken: null },
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await getApiUser(request);
@@ -38,6 +50,18 @@ export async function POST(request: NextRequest) {
     return ok({ saved: true });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Failed to save push token";
+    return fail(message, message === "Unauthorized" ? 401 : 500);
+  }
+}
+
+/** Mobile logout: clear the stored Expo push token for the authenticated user. */
+export async function DELETE(request: NextRequest) {
+  try {
+    const { userId } = await getApiUser(request);
+    await clearExpoPushToken(userId);
+    return ok({ cleared: true });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Failed to clear push token";
     return fail(message, message === "Unauthorized" ? 401 : 500);
   }
 }
