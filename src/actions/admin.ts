@@ -1730,3 +1730,49 @@ export async function updateServiceJob(
   }
   return prisma.case.findUnique({ where: { id } });
 }
+
+/** Hard-delete a service job (Case). Blocked when payments or paid invoices exist. */
+export async function deleteServiceJob(
+  id: string
+): Promise<{ success: boolean; error?: string }> {
+  await ensureStaffAccess();
+  try {
+    const existing = await prisma.case.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) return { success: false, error: "Job not found" };
+
+    const paymentCount = await prisma.payment.count({ where: { caseId: id } });
+    if (paymentCount > 0) {
+      return {
+        success: false,
+        error: "Cannot delete a job that has payments. Set status to cancelled instead.",
+      };
+    }
+
+    const paidInvoiceCount = await prisma.invoice.count({
+      where: { caseId: id, status: "paid" },
+    });
+    if (paidInvoiceCount > 0) {
+      return {
+        success: false,
+        error: "Cannot delete a job with paid invoices. Set status to cancelled instead.",
+      };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // Invoice → Case is Restrict; clear unpaid invoices before deleting the case.
+      await tx.invoice.deleteMany({ where: { caseId: id } });
+      await tx.case.delete({ where: { id } });
+    });
+
+    return { success: true };
+  } catch (e) {
+    console.error("deleteServiceJob error", e);
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to delete job",
+    };
+  }
+}

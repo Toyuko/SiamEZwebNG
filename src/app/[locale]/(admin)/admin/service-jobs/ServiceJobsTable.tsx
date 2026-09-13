@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "./StatusBadge";
 import { EditJobModal } from "./EditJobModal";
 import { AssignStaffModal } from "./AssignStaffModal";
-import { Eye, Pencil, Users, Banknote } from "lucide-react";
+import { Eye, Pencil, Users, Banknote, Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import type { Prisma } from "@prisma/client";
-import { markServiceJobPaid } from "@/actions/admin";
+import { deleteServiceJob, markServiceJobPaid } from "@/actions/admin";
 import { useRouter } from "next/navigation";
 
 type JobWithRelations = Prisma.CaseGetPayload<{
@@ -71,17 +71,35 @@ export function ServiceJobsTable({
 }) {
   const [editJob, setEditJob] = useState<JobWithRelations | null>(null);
   const [assignJob, setAssignJob] = useState<JobWithRelations | null>(null);
-  const [markPaidPending, startMarkPaid] = useTransition();
+  const [pending, startTransition] = useTransition();
   const router = useRouter();
 
   const handleMarkPaid = (job: JobWithRelations) => {
     if (job.invoices[0]?.status === "paid") return;
-    startMarkPaid(async () => {
+    startTransition(async () => {
       const res = await markServiceJobPaid(job.id, {
         amountSatang: job.invoices[0]?.amount,
       });
       if (!res.success) {
         window.alert(res.error ?? "Failed to mark as paid");
+        return;
+      }
+      router.refresh();
+    });
+  };
+
+  const handleDelete = (job: JobWithRelations) => {
+    if (
+      !confirm(
+        `Delete job ${job.caseNumber}? This permanently removes it from the database and cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    startTransition(async () => {
+      const res = await deleteServiceJob(job.id);
+      if (!res.success) {
+        window.alert(res.error ?? "Failed to delete job");
         return;
       }
       router.refresh();
@@ -172,7 +190,7 @@ export function ServiceJobsTable({
                           size="icon"
                           className="h-8 w-8 text-green-700 hover:text-green-800"
                           onClick={() => handleMarkPaid(job)}
-                          disabled={markPaidPending}
+                          disabled={pending}
                           title="Mark as paid (updates Finance)"
                         >
                           <Banknote className="h-4 w-4" />
@@ -186,6 +204,16 @@ export function ServiceJobsTable({
                       title="Assign staff"
                     >
                       <Users className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleDelete(job)}
+                      disabled={pending}
+                      title="Delete job"
+                    >
+                      <Trash2 className="h-4 w-4 text-red-600" />
                     </Button>
                   </div>
                 </td>
