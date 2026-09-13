@@ -1735,44 +1735,100 @@ export async function updateServiceJob(
 export async function deleteServiceJob(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
+  const result = await deleteServiceJobs([id]);
+  if (result.deleted > 0) return { success: true };
+  return {
+    success: false,
+    error: result.failed[0]?.error ?? result.error ?? "Failed to delete job",
+  };
+}
+
+/** Bulk hard-delete service jobs. Skips jobs with payments or paid invoices. */
+export async function deleteServiceJobs(ids: string[]): Promise<{
+  success: boolean;
+  deleted: number;
+  failed: { id: string; caseNumber?: string; error: string }[];
+  error?: string;
+}> {
   await ensureStaffAccess();
   try {
-    const existing = await prisma.case.findUnique({
-      where: { id },
-      select: { id: true },
-    });
-    if (!existing) return { success: false, error: "Job not found" };
-
-    const paymentCount = await prisma.payment.count({ where: { caseId: id } });
-    if (paymentCount > 0) {
-      return {
-        success: false,
-        error: "Cannot delete a job that has payments. Set status to cancelled instead.",
-      };
+    const uniqueIds = [...new Set(ids.filter(Boolean))];
+    if (uniqueIds.length === 0) {
+      return { success: false, deleted: 0, failed: [], error: "No jobs selected" };
     }
 
-    const paidInvoiceCount = await prisma.invoice.count({
-      where: { caseId: id, status: "paid" },
-    });
-    if (paidInvoiceCount > 0) {
-      return {
-        success: false,
-        error: "Cannot delete a job with paid invoices. Set status to cancelled instead.",
-      };
+    const [cases, paymentRows, paidInvoiceRows] = await Promise.all([
+      prisma.case.findMany({
+        where: { id: { in: uniqueIds } },
+        select: { id: true, caseNumber: true },
+      }),
+      prisma.payment.findMany({
+        where: { caseId: { in: uniqueIds } },
+        select: { caseId: true },
+        distinct: ["caseId"],
+      }),
+      prisma.invoice.findMany({
+        where: { caseId: { in: uniqueIds }, status: "paid" },
+        select: { caseId: true },
+        distinct: ["caseId"],
+      }),
+    ]);
+
+    const caseById = new Map(cases.map((c) => [c.id, c]));
+    const withPayments = new Set(paymentRows.map((p) => p.caseId));
+    const withPaidInvoices = new Set(paidInvoiceRows.map((i) => i.caseId));
+
+    const failed: { id: string; caseNumber?: string; error: string }[] = [];
+    const deletable: string[] = [];
+
+    for (const id of uniqueIds) {
+      const job = caseById.get(id);
+      if (!job) {
+        failed.push({ id, error: "Job not found" });
+        continue;
+      }
+      if (withPayments.has(id)) {
+        failed.push({
+          id,
+          caseNumber: job.caseNumber,
+          error: "Cannot delete a job that has payments. Set status to cancelled instead.",
+        });
+        continue;
+      }
+      if (withPaidInvoices.has(id)) {
+        failed.push({
+          id,
+          caseNumber: job.caseNumber,
+          error: "Cannot delete a job with paid invoices. Set status to cancelled instead.",
+        });
+        continue;
+      }
+      deletable.push(id);
     }
 
-    await prisma.$transaction(async (tx) => {
-      // Invoice → Case is Restrict; clear unpaid invoices before deleting the case.
-      await tx.invoice.deleteMany({ where: { caseId: id } });
-      await tx.case.delete({ where: { id } });
-    });
+    if (deletable.length > 0) {
+      await prisma.$transaction(async (tx) => {
+        // Invoice → Case is Restrict; clear unpaid invoices before deleting cases.
+        await tx.invoice.deleteMany({ where: { caseId: { in: deletable } } });
+        await tx.case.deleteMany({ where: { id: { in: deletable } } });
+      });
+    }
 
-    return { success: true };
+    return {
+      success: failed.length === 0 && deletable.length > 0,
+      deleted: deletable.length,
+      failed,
+      ...(deletable.length === 0 && failed.length > 0
+        ? { error: "None of the selected jobs could be deleted." }
+        : {}),
+    };
   } catch (e) {
-    console.error("deleteServiceJob error", e);
+    console.error("deleteServiceJobs error", e);
     return {
       success: false,
-      error: e instanceof Error ? e.message : "Failed to delete job",
+      deleted: 0,
+      failed: [],
+      error: e instanceof Error ? e.message : "Failed to delete jobs",
     };
   }
 }

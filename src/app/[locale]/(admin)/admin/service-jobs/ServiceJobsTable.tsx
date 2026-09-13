@@ -8,7 +8,7 @@ import { AssignStaffModal } from "./AssignStaffModal";
 import { Eye, Pencil, Users, Banknote, Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import type { Prisma } from "@prisma/client";
-import { deleteServiceJob, markServiceJobPaid } from "@/actions/admin";
+import { deleteServiceJob, deleteServiceJobs, markServiceJobPaid } from "@/actions/admin";
 import { useRouter } from "next/navigation";
 
 type JobWithRelations = Prisma.CaseGetPayload<{
@@ -71,8 +71,32 @@ export function ServiceJobsTable({
 }) {
   const [editJob, setEditJob] = useState<JobWithRelations | null>(null);
   const [assignJob, setAssignJob] = useState<JobWithRelations | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+
+  const allVisibleSelected = jobs.length > 0 && jobs.every((job) => selectedIds.has(job.id));
+  const someVisibleSelected = jobs.some((job) => selectedIds.has(job.id));
+
+  const toggleOne = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const toggleAllVisible = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const job of jobs) {
+        if (checked) next.add(job.id);
+        else next.delete(job.id);
+      }
+      return next;
+    });
+  };
 
   const handleMarkPaid = (job: JobWithRelations) => {
     if (job.invoices[0]?.status === "paid") return;
@@ -102,6 +126,45 @@ export function ServiceJobsTable({
         window.alert(res.error ?? "Failed to delete job");
         return;
       }
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(job.id);
+        return next;
+      });
+      router.refresh();
+    });
+  };
+
+  const handleBulkDelete = () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    if (
+      !confirm(
+        `Delete ${ids.length} selected job${ids.length === 1 ? "" : "s"}? This permanently removes them from the database and cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    startTransition(async () => {
+      const res = await deleteServiceJobs(ids);
+      if (res.deleted > 0) {
+        setSelectedIds(new Set());
+      }
+      if (res.failed.length > 0) {
+        const detail = res.failed
+          .slice(0, 5)
+          .map((f) => `${f.caseNumber ?? f.id}: ${f.error}`)
+          .join("\n");
+        const more =
+          res.failed.length > 5 ? `\n…and ${res.failed.length - 5} more` : "";
+        window.alert(
+          `Deleted ${res.deleted} job${res.deleted === 1 ? "" : "s"}.\n` +
+            `${res.failed.length} could not be deleted:\n${detail}${more}`
+        );
+      } else if (!res.success) {
+        window.alert(res.error ?? "Failed to delete jobs");
+        return;
+      }
       router.refresh();
     });
   };
@@ -119,10 +182,52 @@ export function ServiceJobsTable({
 
   return (
     <>
+      {selectedIds.size > 0 && (
+        <div className="flex items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-800 dark:bg-gray-900/50">
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {selectedIds.size} selected
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={pending}
+              onClick={() => setSelectedIds(new Set())}
+            >
+              Clear
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={pending}
+              className="border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+              onClick={handleBulkDelete}
+            >
+              <Trash2 className="mr-1.5 h-4 w-4" />
+              Delete selected
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50">
+              <th className="w-10 px-4 py-3">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300 text-siam-blue focus:ring-siam-blue"
+                  checked={allVisibleSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = someVisibleSelected && !allVisibleSelected;
+                  }}
+                  onChange={(e) => toggleAllVisible(e.target.checked)}
+                  aria-label="Select all jobs on this page"
+                  disabled={pending}
+                />
+              </th>
               <th className="px-4 py-3 font-medium">Job ID</th>
               <th className="px-4 py-3 font-medium">Service</th>
               <th className="px-4 py-3 font-medium">Client</th>
@@ -139,6 +244,16 @@ export function ServiceJobsTable({
                 key={job.id}
                 className="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900/50"
               >
+                <td className="px-4 py-3">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 text-siam-blue focus:ring-siam-blue"
+                    checked={selectedIds.has(job.id)}
+                    onChange={(e) => toggleOne(job.id, e.target.checked)}
+                    aria-label={`Select job ${job.caseNumber}`}
+                    disabled={pending}
+                  />
+                </td>
                 <td className="px-4 py-3 font-mono text-siam-blue">{job.caseNumber}</td>
                 <td className="px-4 py-3">{job.service.name}</td>
                 <td className="px-4 py-3">
