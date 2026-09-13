@@ -4,7 +4,9 @@ import { ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getClientById, updateClient } from "@/actions/admin";
+import { getClientDriverLicenseRenewals } from "@/actions/driver-license-renewals";
 import { ClientForm } from "../../ClientForm";
+import { ClientDriverLicenseSection } from "@/components/admin/ClientDriverLicenseSection";
 
 export default async function AdminEditClientPage({
   params,
@@ -12,7 +14,10 @@ export default async function AdminEditClientPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const client = await getClientById(id);
+  const [client, renewals] = await Promise.all([
+    getClientById(id),
+    getClientDriverLicenseRenewals(id),
+  ]);
   if (!client) notFound();
 
   async function handleSubmit(formData: FormData) {
@@ -26,14 +31,14 @@ export default async function AdminEditClientPage({
       name: name?.trim() || null,
       phone: phone?.trim() || null,
     });
-    redirect("/admin/clients");
+    redirect(`/admin/clients/${id}`);
   }
 
   return (
     <div>
       <div className="mb-6 flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin/clients">
+          <Link href={`/admin/clients/${id}`}>
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -65,6 +70,8 @@ export default async function AdminEditClientPage({
           />
         </CardContent>
       </Card>
+
+      <ClientDriverLicenseSection clientId={id} renewals={renewals} />
     </div>
   );
 }

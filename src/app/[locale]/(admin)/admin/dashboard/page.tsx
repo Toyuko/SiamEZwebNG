@@ -10,10 +10,12 @@ import {
   AlertCircle,
   Building2,
   Megaphone,
+  IdCard,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getAdminStats, getRecentActivity, getRecentFreelancerJobs } from "@/actions/admin";
+import { getDriverLicenseDashboardStats } from "@/actions/driver-license-renewals";
 import { formatJobAmount } from "@/lib/jobs/format";
 
 function formatCurrency(cents: number) {
@@ -32,10 +34,11 @@ const jobStatusLabel: Record<string, string> = {
 };
 
 export default async function AdminDashboardPage() {
-  const [stats, activity, recentFreelancerJobs] = await Promise.all([
+  const [stats, activity, recentFreelancerJobs, dlStats] = await Promise.all([
     getAdminStats(),
     getRecentActivity(),
     getRecentFreelancerJobs(),
+    getDriverLicenseDashboardStats(),
   ]);
 
   return (
@@ -82,6 +85,75 @@ export default async function AdminDashboardPage() {
             <p className="text-sm text-gray-500">Payments to review</p>
           </CardContent>
         </Card>
+      </div>
+
+      <h2 className="mt-8 text-lg font-semibold text-gray-900 dark:text-white">
+        Driver&apos;s License Follow-Ups
+      </h2>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+        <Link href="/admin/driver-license-followups?range=30d&status=due_soon">
+          <Card className="transition hover:border-siam-blue/40">
+            <CardContent className="p-6">
+              <IdCard className="h-8 w-8 text-siam-blue" />
+              <p className="mt-2 text-2xl font-bold">{dlStats.renewalsNext30}</p>
+              <p className="text-sm text-gray-500">Renewals in next 30 days</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/driver-license-followups?range=90d">
+          <Card className="transition hover:border-siam-blue/40">
+            <CardContent className="p-6">
+              <p className="mt-2 text-2xl font-bold">{dlStats.renewalsNext90}</p>
+              <p className="text-sm text-gray-500">Renewals in next 90 days</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/driver-license-followups?status=REMINDER_DUE">
+          <Card className="transition hover:border-siam-blue/40">
+            <CardContent className="p-6">
+              <AlertCircle className="h-8 w-8 text-amber-500" />
+              <p className="mt-2 text-2xl font-bold">{dlStats.remindersDue}</p>
+              <p className="text-sm text-gray-500">Reminders due</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/driver-license-followups?status=REMINDER_SENT">
+          <Card className="transition hover:border-siam-blue/40">
+            <CardContent className="p-6">
+              <p className="mt-2 text-2xl font-bold">{dlStats.remindersSent}</p>
+              <p className="text-sm text-gray-500">Reminders sent</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/driver-license-followups?status=CONTACTED">
+          <Card className="transition hover:border-siam-blue/40">
+            <CardContent className="p-6">
+              <p className="mt-2 text-2xl font-bold">{dlStats.contacted}</p>
+              <p className="text-sm text-gray-500">Contacted</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/driver-license-followups?status=RENEWED">
+          <Card className="transition hover:border-siam-blue/40">
+            <CardContent className="p-6">
+              <p className="mt-2 text-2xl font-bold">{dlStats.renewed}</p>
+              <p className="text-sm text-gray-500">Renewed</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/driver-license-followups?status=due_soon">
+          <Card className="transition hover:border-siam-blue/40">
+            <CardContent className="p-6">
+              <p className="mt-2 text-2xl font-bold">{dlStats.overdue}</p>
+              <p className="text-sm text-gray-500">Overdue</p>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+      <div className="mt-4">
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/admin/driver-license-followups">Open DL follow-ups</Link>
+        </Button>
       </div>
 
       <h2 className="mt-8 text-lg font-semibold text-gray-900 dark:text-white">Freelancers</h2>

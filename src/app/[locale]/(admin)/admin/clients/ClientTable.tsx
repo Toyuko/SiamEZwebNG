@@ -3,7 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { Pencil, Ban } from "lucide-react";
+import { Pencil, Ban, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deactivateClient } from "@/actions/admin";
 
@@ -72,7 +72,14 @@ export function ClientTable({
                 key={c.id}
                 className="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900/50"
               >
-                <td className="px-4 py-3 font-medium">{c.name ?? "—"}</td>
+                <td className="px-4 py-3 font-medium">
+                  <Link
+                    href={`/admin/clients/${c.id}`}
+                    className="text-siam-blue hover:underline"
+                  >
+                    {c.name ?? "—"}
+                  </Link>
+                </td>
                 <td className="px-4 py-3">{c.email}</td>
                 <td className="px-4 py-3 text-gray-500">{c.phone ?? "—"}</td>
                 <td className="px-4 py-3 text-gray-500">{c.legacyCustomerId ?? "—"}</td>
@@ -90,16 +97,22 @@ export function ClientTable({
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" asChild title="View profile">
+                      <Link href={`/admin/clients/${c.id}`}>
+                        <Eye className="h-4 w-4" />
+                      </Link>
+                    </Button>
                     {onEdit ? (
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => onEdit(c)}
+                        title="Quick edit"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
                     ) : (
-                      <Button variant="ghost" size="icon" asChild>
+                      <Button variant="ghost" size="icon" asChild title="Edit">
                         <Link href={`/admin/clients/${c.id}/edit`}>
                           <Pencil className="h-4 w-4" />
                         </Link>

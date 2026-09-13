@@ -775,6 +775,12 @@ async function main() {
   // Platform Wave M7 — universal workflow templates (inspection + viewing).
   await seedWorkflowTemplates();
 
+  // Driver's license renewal follow-up demo records.
+  await seedDriverLicenseRenewals();
+
+  // Generalized follow-up templates + cross-service examples.
+  await seedFollowUpSystem();
+
   // Platform 2.0 — configurable recommendation graph defaults.
   await seedRecommendationEdges();
 }
@@ -784,6 +790,502 @@ async function main() {
  * property → translation → driver license → vehicle finder → vehicle registration
  * Links existing service slugs / marketplace directories (cuid listing URLs when listingId set).
  */
+/** Demo driver's license renewal follow-ups for local/dev. */
+async function seedDriverLicenseRenewals() {
+  const admin = await prisma.user.findFirst({
+    where: { role: "admin" },
+    select: { id: true },
+  });
+  const dlService = await prisma.service.findUnique({
+    where: { slug: "driver-license" },
+    select: { id: true },
+  });
+
+  const customers = [
+    {
+      email: "dl-customer-a@example.com",
+      name: "Customer A (2→5 future)",
+      phone: "+66811110001",
+    },
+    {
+      email: "dl-customer-b@example.com",
+      name: "Customer B (reminder due)",
+      phone: "+66811110002",
+    },
+    {
+      email: "dl-customer-c@example.com",
+      name: "Customer C (reminder sent)",
+      phone: "+66811110003",
+    },
+    {
+      email: "dl-customer-d@example.com",
+      name: "Customer D (renewed)",
+      phone: "+66811110004",
+    },
+    {
+      email: "dl-no-email@invalid.local",
+      name: "Customer E (no usable email path)",
+      phone: "+66811110005",
+    },
+  ];
+
+  const ids: string[] = [];
+  for (const c of customers) {
+    const user = await prisma.user.upsert({
+      where: { email: c.email },
+      create: {
+        email: c.email,
+        name: c.name,
+        phone: c.phone,
+        role: "customer",
+        active: true,
+      },
+      update: {
+        name: c.name,
+        phone: c.phone,
+        role: "customer",
+        active: true,
+      },
+    });
+    ids.push(user.id);
+  }
+
+  // Also attach a sample renewal to the primary seed customer when present
+  const primary = await prisma.user.findUnique({
+    where: { email: (process.env.SEED_CUSTOMER_EMAIL ?? "customer@example.com").toLowerCase() },
+    select: { id: true },
+  });
+
+  const utc = (y: number, m: number, d: number) => new Date(Date.UTC(y, m - 1, d));
+
+  const samples: Array<{
+    clientId: string;
+    renewalType: "DRIVER_LICENSE_2_TO_5" | "DRIVER_LICENSE_5_TO_5";
+    issueDate: Date;
+    expiryDate: Date;
+    nextRenewalDate: Date;
+    reminderDate: Date;
+    status: "UPCOMING" | "REMINDER_DUE" | "REMINDER_SENT" | "RENEWED";
+    reminderSentAt?: Date | null;
+    notes: string;
+  }> = [
+    {
+      clientId: ids[0]!,
+      renewalType: "DRIVER_LICENSE_2_TO_5",
+      issueDate: utc(2026, 9, 15),
+      expiryDate: utc(2031, 9, 15),
+      nextRenewalDate: utc(2031, 9, 15),
+      reminderDate: utc(2031, 8, 15),
+      status: "UPCOMING",
+      notes: "Seed: 2→5 renewed recently, future reminder",
+    },
+    {
+      clientId: ids[1]!,
+      renewalType: "DRIVER_LICENSE_5_TO_5",
+      issueDate: utc(2021, 9, 20),
+      expiryDate: utc(2026, 9, 20),
+      nextRenewalDate: utc(2026, 9, 20),
+      reminderDate: utc(2026, 8, 20),
+      status: "REMINDER_DUE",
+      notes: "Seed: reminder due soon / overdue for demo",
+    },
+    {
+      clientId: ids[2]!,
+      renewalType: "DRIVER_LICENSE_5_TO_5",
+      issueDate: utc(2021, 3, 10),
+      expiryDate: utc(2026, 3, 10),
+      nextRenewalDate: utc(2026, 3, 10),
+      reminderDate: utc(2026, 2, 10),
+      status: "REMINDER_SENT",
+      reminderSentAt: utc(2026, 2, 10),
+      notes: "Seed: reminder already sent",
+    },
+    {
+      clientId: ids[3]!,
+      renewalType: "DRIVER_LICENSE_2_TO_5",
+      issueDate: utc(2020, 1, 5),
+      expiryDate: utc(2025, 1, 5),
+      nextRenewalDate: utc(2025, 1, 5),
+      reminderDate: utc(2024, 12, 5),
+      status: "RENEWED",
+      reminderSentAt: utc(2024, 12, 5),
+      notes: "Seed: already renewed",
+    },
+    {
+      clientId: ids[4]!,
+      renewalType: "DRIVER_LICENSE_5_TO_5",
+      issueDate: utc(2021, 6, 1),
+      expiryDate: utc(2026, 6, 1),
+      nextRenewalDate: utc(2026, 6, 1),
+      reminderDate: utc(2026, 5, 1),
+      status: "REMINDER_DUE",
+      notes: "Seed: customer with odd email for missing-email cron path",
+    },
+  ];
+
+  if (primary?.id) {
+    samples.push({
+      clientId: primary.id,
+      renewalType: "DRIVER_LICENSE_2_TO_5",
+      issueDate: utc(2026, 9, 1),
+      expiryDate: utc(2031, 9, 1),
+      nextRenewalDate: utc(2031, 9, 1),
+      reminderDate: utc(2031, 8, 1),
+      status: "UPCOMING",
+      notes: "Seed: primary demo customer license",
+    });
+  }
+
+  // Clear previous seed samples for these clients then recreate (idempotent-ish)
+  const clientIds = [...ids, ...(primary?.id ? [primary.id] : [])];
+  await prisma.driverLicenseRenewal.deleteMany({
+    where: { clientId: { in: clientIds } },
+  });
+  await prisma.followUp.deleteMany({
+    where: {
+      clientId: { in: clientIds },
+      followUpType: "RENEWAL",
+      metadata: { path: ["seed"], equals: true },
+    },
+  });
+
+  for (const s of samples) {
+    const followUp = await prisma.followUp.create({
+      data: {
+        clientId: s.clientId,
+        serviceId: dlService?.id ?? null,
+        title: "Driver's License Renewal Reminder",
+        description: s.notes,
+        followUpType: "RENEWAL",
+        dueDate: s.reminderDate,
+        status:
+          s.status === "RENEWED"
+            ? "COMPLETED"
+            : s.status === "REMINDER_DUE" || s.status === "REMINDER_SENT"
+              ? "DUE"
+              : "PENDING",
+        priority: "HIGH",
+        assignedStaffId: admin?.id ?? null,
+        emailReminderEnabled: true,
+        emailReminderDate: s.reminderDate,
+        reminderSentAt: s.reminderSentAt ?? null,
+        reminderStatus: s.reminderSentAt ? "SENT" : "SCHEDULED",
+        reminderSendMethod: s.reminderSentAt ? "AUTOMATIC" : null,
+        completedAt: s.status === "RENEWED" ? s.reminderSentAt ?? new Date() : null,
+        notes: s.notes,
+        createdById: admin?.id ?? null,
+        metadata: {
+          domain: "driver_license_renewal",
+          renewalType: s.renewalType,
+          seed: true,
+        },
+      },
+    });
+
+    const created = await prisma.driverLicenseRenewal.create({
+      data: {
+        clientId: s.clientId,
+        assignedStaffId: admin?.id ?? null,
+        followUpId: followUp.id,
+        renewalType: s.renewalType,
+        issueDate: s.issueDate,
+        expiryDate: s.expiryDate,
+        nextRenewalDate: s.nextRenewalDate,
+        reminderDate: s.reminderDate,
+        status: s.status,
+        reminderSentAt: s.reminderSentAt ?? null,
+        reminderSendMethod: s.reminderSentAt ? "AUTOMATIC" : null,
+        notes: s.notes,
+      },
+    });
+    await prisma.driverLicenseRenewalActivity.create({
+      data: {
+        renewalId: created.id,
+        type: "CREATED",
+        toStatus: s.status,
+        actorId: admin?.id ?? null,
+        note: "Seeded development record",
+      },
+    });
+    await prisma.followUpActivity.create({
+      data: {
+        followUpId: followUp.id,
+        type: "CREATED",
+        toStatus: followUp.status,
+        actorId: admin?.id ?? null,
+        note: "Seeded DL renewal follow-up",
+      },
+    });
+  }
+
+
+  console.log("Driver's license renewals seeded:", samples.length);
+}
+
+/** Generalized follow-up templates and sample follow-ups across services. */
+async function seedFollowUpSystem() {
+  const admin = await prisma.user.findFirst({
+    where: { role: "admin" },
+    select: { id: true },
+  });
+  const customer = await prisma.user.findUnique({
+    where: { email: (process.env.SEED_CUSTOMER_EMAIL ?? "customer@example.com").toLowerCase() },
+    select: { id: true, name: true },
+  });
+
+  const bySlug = async (slug: string) =>
+    prisma.service.findUnique({ where: { slug }, select: { id: true, name: true, slug: true } });
+
+  const [dl, vehicleReg, vehicleRepair, translation, realEstate] = await Promise.all([
+    bySlug("driver-license"),
+    bySlug("vehicle-registration"),
+    bySlug("construction-handyman"),
+    bySlug("translation-services"),
+    bySlug("real-estate-services"),
+  ]);
+
+  const templates: Array<{
+    name: string;
+    serviceSlug: string | null;
+    serviceId: string | null;
+    followUpType: "RENEWAL" | "CHECK_IN" | "SALES" | "QUOTE" | "DOCUMENT_REQUEST" | "REVIEW";
+    delayValue: number;
+    delayUnit: "DAYS" | "MONTHS";
+    delayDirection: "BEFORE" | "AFTER";
+    triggerEvent: "CASE_COMPLETED" | "QUOTE_SENT" | "EXPIRY_DATE" | "MANUAL" | "SERVICE_COMPLETED";
+    autoApply: boolean;
+    priority: "NORMAL" | "HIGH";
+    emailSubject: string;
+    emailBody: string;
+    description: string;
+  }> = [
+    {
+      name: "Driver's license renewal (30 days before expiry)",
+      serviceSlug: "driver-license",
+      serviceId: dl?.id ?? null,
+      followUpType: "RENEWAL",
+      delayValue: 30,
+      delayUnit: "DAYS",
+      delayDirection: "BEFORE",
+      triggerEvent: "EXPIRY_DATE",
+      autoApply: false,
+      priority: "HIGH",
+      emailSubject: "Your Thai Driver's License Renewal is Coming Up – SiamEZ",
+      emailBody:
+        "Hello [Customer Name],\n\nThis is a friendly reminder that your Thai driver's license renewal is coming up.\n\nIf you would like SiamEZ to assist, please contact us.\n\nSiamEZ",
+      description: "Remind customer 30 days before license expiry",
+    },
+    {
+      name: "Vehicle registration / tax renewal",
+      serviceSlug: "vehicle-registration",
+      serviceId: vehicleReg?.id ?? null,
+      followUpType: "RENEWAL",
+      delayValue: 30,
+      delayUnit: "DAYS",
+      delayDirection: "BEFORE",
+      triggerEvent: "EXPIRY_DATE",
+      autoApply: false,
+      priority: "HIGH",
+      emailSubject: "SiamEZ Follow-Up – Vehicle registration renewal",
+      emailBody:
+        "Hello [Customer Name],\n\nYour vehicle registration / tax renewal is coming up. SiamEZ can help with the paperwork.\n\nSiamEZ",
+      description: "30 days before registration/tax renewal",
+    },
+    {
+      name: "Vehicle / project check-in",
+      serviceSlug: "construction-handyman",
+      serviceId: vehicleRepair?.id ?? null,
+      followUpType: "CHECK_IN",
+      delayValue: 7,
+      delayUnit: "DAYS",
+      delayDirection: "AFTER",
+      triggerEvent: "CASE_COMPLETED",
+      autoApply: true,
+      priority: "NORMAL",
+      emailSubject: "SiamEZ Follow-Up – How did everything go?",
+      emailBody:
+        "Hello [Customer Name],\n\nThis is a friendly check-in from SiamEZ after your recent service. Is everything working as expected?\n\nSiamEZ",
+      description: "7 days after completion (repair / construction / handyman)",
+    },
+    {
+      name: "Check customer satisfaction",
+      serviceSlug: null,
+      serviceId: null,
+      followUpType: "REVIEW",
+      delayValue: 7,
+      delayUnit: "DAYS",
+      delayDirection: "AFTER",
+      triggerEvent: "SERVICE_COMPLETED",
+      autoApply: false,
+      priority: "NORMAL",
+      emailSubject: "SiamEZ Follow-Up – How was your experience?",
+      emailBody:
+        "Hello [Customer Name],\n\nThank you for choosing SiamEZ. We would love to know how your recent service went.\n\nSiamEZ",
+      description: "7 days after any service completion",
+    },
+    {
+      name: "Quote follow-up",
+      serviceSlug: null,
+      serviceId: null,
+      followUpType: "QUOTE",
+      delayValue: 3,
+      delayUnit: "DAYS",
+      delayDirection: "AFTER",
+      triggerEvent: "QUOTE_SENT",
+      autoApply: true,
+      priority: "HIGH",
+      emailSubject: "SiamEZ Follow-Up – Your quote",
+      emailBody:
+        "Hello [Customer Name],\n\nJust checking in on the quote we sent. Happy to answer any questions.\n\nSiamEZ",
+      description: "3 days after quote sent",
+    },
+    {
+      name: "Translation document follow-up",
+      serviceSlug: "translation-services",
+      serviceId: translation?.id ?? null,
+      followUpType: "DOCUMENT_REQUEST",
+      delayValue: 3,
+      delayUnit: "DAYS",
+      delayDirection: "AFTER",
+      triggerEvent: "CASE_COMPLETED",
+      autoApply: false,
+      priority: "NORMAL",
+      emailSubject: "SiamEZ Follow-Up – Additional documents",
+      emailBody:
+        "Hello [Customer Name],\n\nFollowing up regarding your translation / legalization request. Please let us know if additional documents are needed.\n\nSiamEZ",
+      description: "Document completion follow-up",
+    },
+    {
+      name: "Real estate lead follow-up",
+      serviceSlug: "real-estate-services",
+      serviceId: realEstate?.id ?? null,
+      followUpType: "SALES",
+      delayValue: 2,
+      delayUnit: "DAYS",
+      delayDirection: "AFTER",
+      triggerEvent: "MANUAL",
+      autoApply: false,
+      priority: "HIGH",
+      emailSubject: "SiamEZ Follow-Up – Property viewing",
+      emailBody:
+        "Hello [Customer Name],\n\nFollowing up after your property enquiry / viewing. How can we help with next steps?\n\nSiamEZ",
+      description: "2 days after contact or viewing",
+    },
+  ];
+
+  for (const t of templates) {
+    const existing = await prisma.followUpTemplate.findFirst({
+      where: { name: t.name },
+      select: { id: true },
+    });
+    const data = {
+      name: t.name,
+      description: t.description,
+      serviceId: t.serviceId,
+      serviceSlug: t.serviceSlug,
+      followUpType: t.followUpType,
+      priority: t.priority,
+      delayValue: t.delayValue,
+      delayUnit: t.delayUnit,
+      delayDirection: t.delayDirection,
+      triggerEvent: t.triggerEvent,
+      reminderEnabled: true,
+      reminderOffsetValue: 0,
+      reminderOffsetUnit: "DAYS" as const,
+      reminderOffsetDirection: "BEFORE" as const,
+      emailEnabled: true,
+      emailSubject: t.emailSubject,
+      emailBody: t.emailBody,
+      defaultAssigneeId: admin?.id ?? null,
+      autoApply: t.autoApply,
+      active: true,
+      createdById: admin?.id ?? null,
+    };
+    if (existing) {
+      await prisma.followUpTemplate.update({ where: { id: existing.id }, data });
+    } else {
+      await prisma.followUpTemplate.create({ data });
+    }
+  }
+
+  if (customer?.id) {
+    const utc = (y: number, m: number, d: number) => new Date(Date.UTC(y, m - 1, d));
+    const examples = [
+      {
+        title: "Vehicle registration tax renewal",
+        serviceId: vehicleReg?.id ?? null,
+        followUpType: "RENEWAL" as const,
+        dueDate: utc(2026, 10, 12),
+        priority: "NORMAL" as const,
+        description: "Follow up about annual vehicle tax / registration renewal.",
+      },
+      {
+        title: "Project / repair check-in",
+        serviceId: vehicleRepair?.id ?? null,
+        followUpType: "CHECK_IN" as const,
+        dueDate: utc(2026, 9, 20),
+        priority: "NORMAL" as const,
+        description: "Confirm everything is operating correctly after the service.",
+      },
+      {
+        title: "Translation — additional documents",
+        serviceId: translation?.id ?? null,
+        followUpType: "DOCUMENT_REQUEST" as const,
+        dueDate: utc(2026, 9, 16),
+        priority: "HIGH" as const,
+        description: "Request remaining source documents for legalization.",
+      },
+      {
+        title: "Quote follow-up",
+        serviceId: null,
+        followUpType: "QUOTE" as const,
+        dueDate: utc(2026, 9, 16),
+        priority: "HIGH" as const,
+        description: "Follow up on the quote sent 3 days ago.",
+      },
+      {
+        title: "Real estate viewing follow-up",
+        serviceId: realEstate?.id ?? null,
+        followUpType: "SALES" as const,
+        dueDate: utc(2026, 9, 15),
+        priority: "NORMAL" as const,
+        description: "Follow up after property viewing.",
+      },
+    ];
+
+    await prisma.followUp.deleteMany({
+      where: {
+        clientId: customer.id,
+        metadata: { path: ["seedExample"], equals: true },
+      },
+    });
+
+    for (const ex of examples) {
+      await prisma.followUp.create({
+        data: {
+          clientId: customer.id,
+          serviceId: ex.serviceId,
+          title: ex.title,
+          description: ex.description,
+          followUpType: ex.followUpType,
+          dueDate: ex.dueDate,
+          status: "PENDING",
+          priority: ex.priority,
+          assignedStaffId: admin?.id ?? null,
+          emailReminderEnabled: true,
+          emailReminderDate: ex.dueDate,
+          reminderStatus: "SCHEDULED",
+          createdById: admin?.id ?? null,
+          metadata: { seedExample: true },
+        },
+      });
+    }
+    console.log("Follow-up examples seeded for", customer.name);
+  }
+
+  console.log("Follow-up templates seeded:", templates.length);
+}
+
 async function seedMovingToThailandLifeEvent() {
   const key = "moving-to-thailand";
   const event = await prisma.lifeEvent.upsert({

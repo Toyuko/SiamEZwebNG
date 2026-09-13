@@ -504,6 +504,36 @@ export function PortalSettings({ user: initial, hasPassword }: PortalSettingsPro
                 <span className="block text-xs text-gray-500 dark:text-gray-400">{t("notifMarketingDesc")}</span>
               </span>
             </label>
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-600">
+              <input
+                type="checkbox"
+                name="emailRenewalReminders"
+                defaultChecked={initial.notificationPreferences.emailRenewalReminders}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-siam-blue focus:ring-siam-blue"
+              />
+              <span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  Driver&apos;s license renewal reminders
+                </span>
+                <span className="block text-xs text-gray-500 dark:text-gray-400">
+                  Email one month before your Thai driver&apos;s license renewal date.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-600">
+              <input
+                type="checkbox"
+                name="emailFollowUpReminders"
+                defaultChecked={initial.notificationPreferences.emailFollowUpReminders}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-siam-blue focus:ring-siam-blue"
+              />
+              <span>
+                <span className="font-medium text-gray-900 dark:text-white">Service follow-up reminders</span>
+                <span className="block text-xs text-gray-500 dark:text-gray-400">
+                  Email reminders for scheduled SiamEZ follow-ups.
+                </span>
+              </span>
+            </label>
             <Button type="submit" disabled={pending} className="bg-siam-blue hover:bg-siam-blue/90">
               {pending ? t("saving") : t("saveNotifications")}
             </Button>

@@ -31,6 +31,8 @@ import {
 } from "@/lib/portal/workspace-sections";
 import { getPopularRecommendations, getServiceBySlug } from "@/lib/ai/recommend";
 import type { ConciergeLocale } from "@/lib/ai/types";
+import { getMyDriverLicenseRenewals } from "@/actions/driver-license-renewals";
+import { PortalDriverLicenseCard } from "@/components/portal/PortalDriverLicenseCard";
 import { buildUserOwner } from "@/lib/marketplace-engagement";
 import { loadRecommendationContext, recommendSync } from "@/lib/recommendations";
 
@@ -66,6 +68,7 @@ export default async function PortalDashboardPage({
     activeEventsCount,
     sellerStats,
     newEnquiriesCount,
+    driverLicenseRenewals,
   ] = await Promise.all([
     getCasesByUserId(session.user.id),
     getInvoicesByUserId(session.user.id),
@@ -77,6 +80,7 @@ export default async function PortalDashboardPage({
     countActiveLifeEventProgressForUser(session.user.id),
     getSellerListingViewStats(session.user.id),
     countNewListingEnquiriesForSeller(session.user.id),
+    getMyDriverLicenseRenewals(),
   ]);
 
   const sections = resolveCustomerWorkspaceSections({
@@ -263,6 +267,12 @@ export default async function PortalDashboardPage({
         emptyLabel={t("nextSteps.empty")}
         steps={nextSteps}
       />
+
+      {driverLicenseRenewals.length > 0 && (
+        <div className="mb-8 max-w-lg">
+          <PortalDriverLicenseCard renewals={driverLicenseRenewals} />
+        </div>
+      )}
 
       <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {softLaunch.enabled ? null : (

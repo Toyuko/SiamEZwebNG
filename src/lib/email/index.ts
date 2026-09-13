@@ -24,4 +24,6 @@ export {
   sendWelcomeEmail,
   sendAdminNewBookingEmail,
   sendAdminNewUserEmail,
+  sendDriverLicenseRenewalReminderEmail,
+  sendFollowUpReminderEmail,
 } from "@/lib/email/messages";

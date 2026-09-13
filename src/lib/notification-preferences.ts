@@ -6,6 +6,10 @@ export const notificationPreferencesSchema = z.object({
   emailInvoiceReminders: z.boolean(),
   emailDocumentAlerts: z.boolean(),
   emailMarketing: z.boolean(),
+  /** Generalized follow-up reminder emails (default on). */
+  emailFollowUpReminders: z.boolean().default(true),
+  /** Driver's license renewal follow-up emails (default on). */
+  emailRenewalReminders: z.boolean().default(true),
   passportInfo: z.string(),
   address: z.string(),
   bankName: z.string(),
@@ -22,6 +26,8 @@ export function defaultNotificationPreferences(): NotificationPreferences {
     emailInvoiceReminders: true,
     emailDocumentAlerts: true,
     emailMarketing: false,
+    emailFollowUpReminders: true,
+    emailRenewalReminders: true,
     passportInfo: "",
     address: "",
     bankName: "",
@@ -31,7 +37,9 @@ export function defaultNotificationPreferences(): NotificationPreferences {
 }
 
 export function parseNotificationPreferences(value: unknown): NotificationPreferences {
-  const parsed = notificationPreferencesSchema.safeParse(value);
+  const defaults = defaultNotificationPreferences();
+  if (!value || typeof value !== "object") return defaults;
+  const parsed = notificationPreferencesSchema.safeParse({ ...defaults, ...(value as object) });
   if (parsed.success) return parsed.data;
-  return defaultNotificationPreferences();
+  return defaults;
 }

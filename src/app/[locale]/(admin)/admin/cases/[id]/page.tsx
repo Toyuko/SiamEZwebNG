@@ -12,6 +12,8 @@ import { CaseDocumentsPanel } from "@/components/admin/CaseDocumentsPanel";
 import { CaseSchedulePanel } from "@/components/admin/CaseSchedulePanel";
 import { CaseDetailClient } from "./CaseDetailClient";
 import { AttachUnassignedDocument } from "./AttachUnassignedDocument";
+import { CaseDriverLicenseFollowUpPanel } from "@/components/admin/CaseDriverLicenseFollowUpPanel";
+import { isDriverLicenseServiceSlug } from "@/lib/driver-license-renewal/constants";
 import { formatCurrency } from "@/lib/utils";
 
 function formDataKeys(formData: unknown): string[] {
@@ -239,6 +241,13 @@ export default async function AdminCaseDetailPage({
         </div>
 
         <div className="space-y-6">
+          {isDriverLicenseServiceSlug(caseData.service.slug) && (
+            <CaseDriverLicenseFollowUpPanel
+              caseId={caseData.id}
+              clientId={caseData.userId}
+              serviceName={caseData.service.name}
+            />
+          )}
           <CaseDetailClient
             caseId={caseData.id}
             caseNotes={caseData.caseNotes}

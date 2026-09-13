@@ -1,0 +1,148 @@
+/**
+ * Calendar-aware date helpers for driver's license renewals.
+ * Prefer staff-supplied expiry dates; only derive when issue date + type is given.
+ * All date-only values use UTC midnight to match Prisma @db.Date.
+ */
+
+export type DateParts = { year: number; month: number; day: number };
+
+const DATE_ONLY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+export function isLeapYear(year: number): boolean {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+}
+
+export function daysInMonth(year: number, month: number): number {
+  if (month < 1 || month > 12) throw new Error(`Invalid month: ${month}`);
+  const lengths = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return lengths[month - 1]!;
+}
+
+/** Parse YYYY-MM-DD or a Date (UTC date components for @db.Date). */
+export function parseDateOnly(input: string | Date): DateParts {
+  if (typeof input === "string") {
+    const trimmed = input.trim().slice(0, 10);
+    const match = DATE_ONLY_RE.exec(trimmed);
+    if (!match) throw new Error(`Invalid date: ${input}`);
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    if (month < 1 || month > 12 || day < 1 || day > daysInMonth(year, month)) {
+      throw new Error(`Invalid calendar date: ${input}`);
+    }
+    return { year, month, day };
+  }
+  return {
+    year: input.getUTCFullYear(),
+    month: input.getUTCMonth() + 1,
+    day: input.getUTCDate(),
+  };
+}
+
+export function formatDateOnly(parts: DateParts): string {
+  const y = String(parts.year).padStart(4, "0");
+  const m = String(parts.month).padStart(2, "0");
+  const d = String(parts.day).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/** Store as UTC midnight for Prisma @db.Date. */
+export function toUtcDateOnly(parts: DateParts): Date {
+  return new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
+}
+
+export function addCalendarYears(parts: DateParts, years: number): DateParts {
+  const year = parts.year + years;
+  const day = Math.min(parts.day, daysInMonth(year, parts.month));
+  return { year, month: parts.month, day };
+}
+
+/**
+ * Subtract N calendar months, clamping the day to the target month's length
+ * (e.g. 31 Mar → 28/29 Feb when subtracting 1 month).
+ */
+export function subtractCalendarMonths(parts: DateParts, months: number): DateParts {
+  if (months < 0) throw new Error("months must be non-negative");
+  const total = parts.year * 12 + (parts.month - 1) - months;
+  const year = Math.floor(total / 12);
+  const month = (total % 12) + 1;
+  const day = Math.min(parts.day, daysInMonth(year, month));
+  return { year, month, day };
+}
+
+/** Compare two date-only values (-1 / 0 / 1). */
+export function compareDateOnly(a: DateParts, b: DateParts): number {
+  if (a.year !== b.year) return a.year < b.year ? -1 : 1;
+  if (a.month !== b.month) return a.month < b.month ? -1 : 1;
+  if (a.day !== b.day) return a.day < b.day ? -1 : 1;
+  return 0;
+}
+
+/** Today's calendar date in Asia/Bangkok (SiamEZ ops timezone). */
+export function todayInBangkok(now: Date = new Date()): DateParts {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  // en-CA yields YYYY-MM-DD
+  return parseDateOnly(formatter.format(now));
+}
+
+export function formatDisplayDate(
+  input: string | Date | DateParts,
+  locale: string = "en-GB"
+): string {
+  const parts =
+    typeof input === "object" && "year" in input ? input : parseDateOnly(input as string | Date);
+  const date = toUtcDateOnly(parts);
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+/** New Thai licenses after 2→5 or 5→5 renewal are always 5-year licenses. */
+export const NEW_LICENSE_VALIDITY_YEARS = 5;
+
+/**
+ * Compute expiry / next renewal / reminder from staff input.
+ * Prefer explicit expiryDate; otherwise issueDate + 5 years.
+ * Reminder = exactly one calendar month before next renewal.
+ */
+export function calculateRenewalDates(input: {
+  issueDate: string | Date;
+  expiryDate?: string | Date | null;
+}): {
+  issueDate: Date;
+  expiryDate: Date;
+  nextRenewalDate: Date;
+  reminderDate: Date;
+  issueParts: DateParts;
+  expiryParts: DateParts;
+  reminderParts: DateParts;
+} {
+  const issueParts = parseDateOnly(input.issueDate);
+  const expiryParts = input.expiryDate
+    ? parseDateOnly(input.expiryDate)
+    : addCalendarYears(issueParts, NEW_LICENSE_VALIDITY_YEARS);
+
+  if (compareDateOnly(expiryParts, issueParts) < 0) {
+    throw new Error("Expiry date cannot be before issue date");
+  }
+
+  const reminderParts = subtractCalendarMonths(expiryParts, 1);
+
+  return {
+    issueDate: toUtcDateOnly(issueParts),
+    expiryDate: toUtcDateOnly(expiryParts),
+    nextRenewalDate: toUtcDateOnly(expiryParts),
+    reminderDate: toUtcDateOnly(reminderParts),
+    issueParts,
+    expiryParts,
+    reminderParts,
+  };
+}

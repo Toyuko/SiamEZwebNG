@@ -17,6 +17,8 @@ Sidebar groups (`AdminSidebar.tsx`):
 | `/admin/dashboard` | Overview counters |
 | `/admin/service-jobs` | Service job board |
 | `/admin/cases` | Case list + workspace |
+| `/admin/driver-license-followups` | Driver's license renewal follow-ups |
+| `/admin/followups` | Generalized client follow-ups |
 | `/admin/calendar` | Appointments |
 | `/admin/work-queue` | **2.1** Unified pending inbox |
 

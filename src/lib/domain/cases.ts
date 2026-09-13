@@ -62,7 +62,17 @@ export async function getUserCaseById(userId: string, caseId: string) {
 export async function updateCaseStatus(caseId: string, status: CaseStatus) {
   const existing = await prisma.case.findUnique({
     where: { id: caseId },
-    select: { status: true },
+    select: {
+      status: true,
+      userId: true,
+      serviceId: true,
+      service: { select: { slug: true, name: true } },
+      staffAssignments: {
+        where: { role: "primary" },
+        select: { userId: true },
+        take: 1,
+      },
+    },
   });
   if (!existing) {
     throw new Error("Case not found");
@@ -79,10 +89,50 @@ export async function updateCaseStatus(caseId: string, status: CaseStatus) {
   }
 
   assertCaseStatusTransition(existing.status, status);
-  return prisma.case.update({
+  const updated = await prisma.case.update({
     where: { id: caseId },
-    data: { status },
+    data: {
+      status,
+      ...(status === "completed" ? { completedAt: new Date() } : {}),
+    },
   });
+
+  if (status === "completed" && existing.userId) {
+    try {
+      const { autoApplyTemplatesForTrigger } = await import(
+        "@/lib/follow-ups/templates"
+      );
+      await autoApplyTemplatesForTrigger({
+        trigger: "CASE_COMPLETED",
+        clientId: existing.userId,
+        caseId,
+        serviceId: existing.serviceId,
+        serviceSlug: existing.service.slug,
+        anchorDate: new Date(),
+        assignedStaffId: existing.staffAssignments[0]?.userId ?? null,
+        vars: {
+          "Service Name": existing.service.name,
+        },
+      });
+      // Also fire SERVICE_COMPLETED templates
+      await autoApplyTemplatesForTrigger({
+        trigger: "SERVICE_COMPLETED",
+        clientId: existing.userId,
+        caseId,
+        serviceId: existing.serviceId,
+        serviceSlug: existing.service.slug,
+        anchorDate: new Date(),
+        assignedStaffId: existing.staffAssignments[0]?.userId ?? null,
+        vars: {
+          "Service Name": existing.service.name,
+        },
+      });
+    } catch (err) {
+      console.error("[follow-ups] auto-apply on case complete failed", caseId, err);
+    }
+  }
+
+  return updated;
 }
 
 export async function createBookingCase(input: CreateBookingCaseInput) {

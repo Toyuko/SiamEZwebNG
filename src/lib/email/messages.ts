@@ -3,6 +3,7 @@ import { getAppBaseUrl, getOpsInboxes } from "@/lib/email/config";
 import {
   ctaButton,
   detailTable,
+  EMAIL_BRAND,
   emailLayout,
   escapeHtml,
   heading,
@@ -621,5 +622,163 @@ export async function sendTestEmail(to: string): Promise<SendEmailResult> {
       ].join(""),
     }),
     tags: [{ name: "type", value: "test" }],
+  });
+}
+
+function formatEmailDate(date: Date, locale: "en" | "th"): string {
+  return new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-GB", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+/** Customer's Thai driver's license renewal reminder (1 calendar month before expiry). */
+export async function sendDriverLicenseRenewalReminderEmail(input: {
+  to: string;
+  customerName: string;
+  expiryDate: Date;
+  renewalDate: Date;
+  isTest?: boolean;
+  locale?: "en" | "th";
+}): Promise<SendEmailResult> {
+  const locale = input.locale ?? "en";
+  const expiry = formatEmailDate(input.expiryDate, locale);
+  const renewal = formatEmailDate(input.renewalDate, locale);
+  const testPrefix = input.isTest ? "[TEST] " : "";
+
+  const enBody = [
+    heading("Driver's license renewal reminder"),
+    paragraph(`Hello ${escapeHtml(input.customerName)},`),
+    paragraph(
+      "This is a friendly reminder from SiamEZ that your Thai driver's license is coming up for renewal."
+    ),
+    detailTable([
+      { label: "Current license expiry", value: expiry },
+      { label: "Next renewal due around", value: renewal },
+    ]),
+    paragraph(
+      "If you would like SiamEZ to assist you with your driver's license renewal, please contact us."
+    ),
+    paragraph(
+      `SiamEZ — Thailand Driver's License Services<br/>Phone: ${escapeHtml(site.phone)} · LINE: ${escapeHtml(site.line)} · <a href="${escapeHtml(site.url)}" style="color:${EMAIL_BRAND.blue};">siam-ez.com</a>`
+    ),
+    ctaButton(portalUrl("/contact"), "Contact SiamEZ"),
+  ];
+
+  const thBody = [
+    heading("แจ้งเตือนต่ออายุใบขับขี่"),
+    paragraph(`สวัสดีคุณ ${escapeHtml(input.customerName)}`),
+    paragraph(
+      "นี่คือการแจ้งเตือนจาก SiamEZ ว่าใบขับขี่ไทยของคุณใกล้ถึงกำหนดต่ออายุแล้ว"
+    ),
+    detailTable([
+      { label: "วันหมดอายุใบขับขี่ปัจจุบัน", value: expiry },
+      { label: "กำหนดต่ออายุโดยประมาณ", value: renewal },
+    ]),
+    paragraph("หากต้องการให้ SiamEZ ช่วยดำเนินการต่ออายุใบขับขี่ กรุณาติดต่อเรา"),
+    paragraph(
+      `SiamEZ — บริการใบขับขี่ไทย<br/>โทร: ${escapeHtml(site.phone)} · LINE: ${escapeHtml(site.line)} · <a href="${escapeHtml(site.url)}" style="color:${EMAIL_BRAND.blue};">siam-ez.com</a>`
+    ),
+    ctaButton(portalUrl("/contact"), "ติดต่อ SiamEZ"),
+  ];
+
+  const bodyHtml =
+    locale === "th"
+      ? [...thBody, `<hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;" />`, ...enBody].join("")
+      : [...enBody, `<hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;" />`, ...thBody].join("");
+
+  return sendEmail({
+    to: input.to,
+    subject: `${testPrefix}Your Thai Driver's License Renewal is Coming Up – SiamEZ`,
+    html: emailLayout({
+      title: input.isTest
+        ? "TEST — Driver's license renewal reminder"
+        : "Driver's license renewal reminder",
+      preheader: input.isTest
+        ? `TEST email — renewal around ${renewal}`
+        : `Your license renews around ${renewal}`,
+      bodyHtml: [
+        input.isTest
+          ? `<p style="margin:0 0 16px;padding:10px 14px;background:#fef3c7;border-radius:8px;font-size:13px;color:#92400e;"><strong>TEST EMAIL</strong> — This does not mark the production reminder as sent.</p>`
+          : "",
+        bodyHtml,
+      ].join(""),
+    }),
+    tags: [
+      { name: "type", value: input.isTest ? "dl-renewal-reminder-test" : "dl-renewal-reminder" },
+    ],
+  });
+}
+
+/** Generalized client follow-up reminder email. */
+export async function sendFollowUpReminderEmail(input: {
+  to: string;
+  customerName: string;
+  title: string;
+  description?: string | null;
+  serviceName?: string | null;
+  emailSubject?: string | null;
+  emailBody?: string | null;
+  dueDate?: Date | null;
+  locale?: "en" | "th";
+}): Promise<SendEmailResult> {
+  const locale = input.locale ?? "en";
+  const due = input.dueDate ? formatEmailDate(input.dueDate, locale) : null;
+
+  const defaultSubject = `SiamEZ Follow-Up – ${input.title}`;
+  const subject = input.emailSubject?.trim() || defaultSubject;
+
+  if (input.emailBody?.trim()) {
+    const customHtml = emailLayout({
+      title: input.title,
+      preheader: input.title,
+      bodyHtml: [
+        paragraph(`Hello ${escapeHtml(input.customerName)},`),
+        `<div style="margin:0;font-size:15px;line-height:1.55;color:#334155;white-space:pre-wrap;">${escapeHtml(input.emailBody.trim())}</div>`,
+        paragraph(
+          `SiamEZ<br/>Phone: ${escapeHtml(site.phone)} · LINE: ${escapeHtml(site.line)} · <a href="${escapeHtml(site.url)}" style="color:#2c54c6;">https://siam-ez.com</a>`
+        ),
+      ].join(""),
+    });
+    return sendEmail({
+      to: input.to,
+      subject,
+      html: customHtml,
+      tags: [{ name: "type", value: "follow-up-reminder" }],
+    });
+  }
+
+  const enBody = [
+    heading("Follow-up from SiamEZ"),
+    paragraph(`Hello ${escapeHtml(input.customerName)},`),
+    paragraph("This is a friendly follow-up from SiamEZ regarding:"),
+    detailTable([
+      ...(input.serviceName
+        ? [{ label: "Service", value: input.serviceName }]
+        : []),
+      { label: "Follow-up", value: input.title },
+      ...(due ? [{ label: "Due", value: due }] : []),
+    ]),
+    input.description
+      ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.55;color:#334155;white-space:pre-wrap;">${escapeHtml(input.description)}</p>`
+      : "",
+    paragraph("If you need assistance, please contact us."),
+    paragraph(
+      `SiamEZ<br/>Phone: ${escapeHtml(site.phone)} · LINE: ${escapeHtml(site.line)} · <a href="${escapeHtml(site.url)}" style="color:#2c54c6;">https://siam-ez.com</a>`
+    ),
+    ctaButton(portalUrl("/contact"), "Contact SiamEZ"),
+  ];
+
+  return sendEmail({
+    to: input.to,
+    subject,
+    html: emailLayout({
+      title: input.title,
+      preheader: `Follow-up: ${input.title}`,
+      bodyHtml: enBody.join(""),
+    }),
+    tags: [{ name: "type", value: "follow-up-reminder" }],
   });
 }

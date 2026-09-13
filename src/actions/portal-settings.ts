@@ -105,11 +105,14 @@ export async function updateNotificationSettings(_prev: unknown, formData: FormD
 
   const pushEnabled = formData.get("pushEnabled") === "on";
   const raw = {
+    ...currentPrefs,
     pushEnabled,
     emailCaseUpdates: pushEnabled ? formData.get("emailCaseUpdates") === "on" : false,
     emailInvoiceReminders: pushEnabled ? formData.get("emailInvoiceReminders") === "on" : false,
     emailDocumentAlerts: pushEnabled ? formData.get("emailDocumentAlerts") === "on" : false,
     emailMarketing: formData.get("emailMarketing") === "on",
+    emailRenewalReminders: formData.get("emailRenewalReminders") === "on",
+    emailFollowUpReminders: formData.get("emailFollowUpReminders") === "on",
     passportInfo: currentPrefs.passportInfo,
     address: currentPrefs.address,
   };

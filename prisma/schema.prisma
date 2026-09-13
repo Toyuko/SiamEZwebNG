@@ -85,6 +85,18 @@ model User {
   vehicleStatusChanges VehicleLeadStatusHistory[] @relation("VehicleLeadStatusActor")
   vehicleSocialApprovals VehicleSocialContent[] @relation("VehicleSocialApprover")
   vehicleSocialPosts VehicleSocialPost[] @relation("VehicleSocialPoster")
+  driverLicenseRenewals DriverLicenseRenewal[] @relation("DriverLicenseClient")
+  driverLicenseRenewalsAssigned DriverLicenseRenewal[] @relation("DriverLicenseAssignee")
+  driverLicenseRemindersSent DriverLicenseRenewal[] @relation("DriverLicenseReminderSender")
+  driverLicenseRenewalActivities DriverLicenseRenewalActivity[] @relation("DriverLicenseActivityActor")
+
+  followUpsAsClient       FollowUp[]         @relation("FollowUpClient")
+  followUpsAssigned       FollowUp[]         @relation("FollowUpAssignee")
+  followUpsCompleted      FollowUp[]         @relation("FollowUpCompletedBy")
+  followUpsCreated        FollowUp[]         @relation("FollowUpCreatedBy")
+  followUpActivities      FollowUpActivity[] @relation("FollowUpActivityActor")
+  followUpTemplatesAssigned FollowUpTemplate[] @relation("FollowUpTemplateAssignee")
+  followUpTemplatesCreated  FollowUpTemplate[] @relation("FollowUpTemplateCreatedBy")
 }
 
 enum FreelancerVerificationStatus {
@@ -416,9 +428,11 @@ model Service {
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
-  cases  Case[]
-  jobs   Job[]
-  quotes Quote[]
+  cases              Case[]
+  jobs               Job[]
+  quotes             Quote[]
+  followUps          FollowUp[]
+  followUpTemplates  FollowUpTemplate[]
 }
 
 // ----- Cases (every booking becomes a case) -----
@@ -475,6 +489,8 @@ model Case {
   workflowRuns    WorkflowRun[] @relation("WorkflowRunLinkedCase")
   paymentMilestones PaymentMilestone[]
   vehicleLead     VehicleLead?
+  driverLicenseRenewals DriverLicenseRenewal[]
+  followUps       FollowUp[]
 }
 
 enum MarketplaceJobStatus {
@@ -1744,4 +1760,315 @@ model VehicleSocialPost {
 
   @@index([leadId, platform])
   @@map("vehicle_social_posts")
+}
+
+// ----- Driver's License Renewal Follow-Ups -----
+
+enum DriverLicenseRenewalType {
+  DRIVER_LICENSE_2_TO_5
+  DRIVER_LICENSE_5_TO_5
+}
+
+enum DriverLicenseFollowUpStatus {
+  UPCOMING
+  REMINDER_DUE
+  REMINDER_SENT
+  CONTACTED
+  RENEWED
+  CANCELLED
+  NOT_INTERESTED
+}
+
+enum DriverLicenseReminderSendMethod {
+  AUTOMATIC
+  MANUAL
+}
+
+enum DriverLicenseActivityType {
+  CREATED
+  UPDATED
+  REMINDER_SENT
+  REMINDER_FAILED
+  REMINDER_TEST
+  STATUS_CHANGED
+  CONTACTED
+  RENEWED
+  RESCHEDULED
+  CANCELLED
+  NOT_INTERESTED
+  NOTE_ADDED
+}
+
+/**
+ * Records a newly issued Thai driver's license after a SiamEZ DL service.
+ * nextRenewalDate mirrors expiryDate (source of truth from staff entry).
+ * reminderDate is exactly one calendar month before nextRenewalDate.
+ */
+model DriverLicenseRenewal {
+  id              String                      @id @default(cuid())
+  clientId        String                      @map("client_id")
+  caseId          String?                     @map("case_id")
+  assignedStaffId String?                     @map("assigned_staff_id")
+  /// Linked generalized follow-up (reminders/status/assignment live there).
+  followUpId      String?                     @unique @map("follow_up_id")
+
+  previousLicenseType String?                   @map("previous_license_type")
+  renewalType         DriverLicenseRenewalType  @map("renewal_type")
+
+  /// New license issue date (staff-recorded).
+  issueDate       DateTime @map("issue_date") @db.Date
+  /// New license expiry date — source of truth for next renewal.
+  expiryDate      DateTime @map("expiry_date") @db.Date
+  /// Expected next renewal (= expiryDate).
+  nextRenewalDate DateTime @map("next_renewal_date") @db.Date
+  /// Exactly one calendar month before nextRenewalDate.
+  reminderDate    DateTime @map("reminder_date") @db.Date
+
+  reminderSentAt       DateTime?                        @map("reminder_sent_at")
+  reminderSentById     String?                          @map("reminder_sent_by_id")
+  reminderSendMethod   DriverLicenseReminderSendMethod? @map("reminder_send_method")
+
+  status DriverLicenseFollowUpStatus @default(UPCOMING)
+  notes  String?                     @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  client         User                           @relation("DriverLicenseClient", fields: [clientId], references: [id], onDelete: Cascade)
+  case           Case?                          @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  assignedStaff  User?                          @relation("DriverLicenseAssignee", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  reminderSentBy User?                          @relation("DriverLicenseReminderSender", fields: [reminderSentById], references: [id], onDelete: SetNull)
+  followUp       FollowUp?                      @relation(fields: [followUpId], references: [id], onDelete: SetNull)
+  activities     DriverLicenseRenewalActivity[]
+
+  @@index([status, reminderDate])
+  @@index([status, nextRenewalDate])
+  @@index([clientId, createdAt])
+  @@index([reminderDate])
+  @@index([nextRenewalDate])
+  @@index([caseId])
+  @@map("driver_license_renewals")
+}
+
+model DriverLicenseRenewalActivity {
+  id         String                         @id @default(cuid())
+  renewalId  String                         @map("renewal_id")
+  type       DriverLicenseActivityType
+  fromStatus DriverLicenseFollowUpStatus?   @map("from_status")
+  toStatus   DriverLicenseFollowUpStatus?   @map("to_status")
+  sendMethod DriverLicenseReminderSendMethod? @map("send_method")
+  note       String?                        @db.Text
+  actorId    String?                        @map("actor_id")
+  meta       Json?
+  createdAt  DateTime                       @default(now()) @map("created_at")
+
+  renewal DriverLicenseRenewal @relation(fields: [renewalId], references: [id], onDelete: Cascade)
+  actor   User?                @relation("DriverLicenseActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([renewalId, createdAt])
+  @@map("driver_license_renewal_activities")
+}
+
+// ----- Generalized Client Follow-Ups -----
+
+enum FollowUpStatus {
+  PENDING
+  DUE
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  SNOOZED
+}
+
+enum FollowUpPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum FollowUpType {
+  CUSTOM
+  CLIENT_CONTACT
+  DOCUMENT_REQUEST
+  PAYMENT
+  SERVICE_COMPLETION
+  RENEWAL
+  REVIEW
+  CHECK_IN
+  SALES
+  QUOTE
+  APPOINTMENT
+  OTHER
+}
+
+enum FollowUpReminderStatus {
+  NONE
+  SCHEDULED
+  SENT
+  FAILED
+  SKIPPED
+}
+
+enum FollowUpReminderSendMethod {
+  AUTOMATIC
+  MANUAL
+}
+
+enum FollowUpActivityType {
+  CREATED
+  UPDATED
+  STATUS_CHANGED
+  ASSIGNED
+  SNOOZED
+  COMPLETED
+  CANCELLED
+  NOTE_ADDED
+  EMAIL_SENT
+  EMAIL_FAILED
+  EMAIL_SKIPPED
+  REMINDER_SCHEDULED
+  TEMPLATE_APPLIED
+}
+
+enum RelativeDateUnit {
+  DAYS
+  WEEKS
+  MONTHS
+}
+
+enum RelativeDateDirection {
+  BEFORE
+  AFTER
+}
+
+enum FollowUpTemplateTrigger {
+  MANUAL
+  CASE_COMPLETED
+  QUOTE_SENT
+  SERVICE_COMPLETED
+  CUSTOM_DATE
+  EXPIRY_DATE
+}
+
+/**
+ * Reusable follow-up across all SiamEZ services.
+ * Driver's license renewals link via DriverLicenseRenewal.followUpId.
+ */
+model FollowUp {
+  id          String           @id @default(cuid())
+  clientId    String           @map("client_id")
+  caseId      String?          @map("case_id")
+  serviceId   String?          @map("service_id")
+  title       String
+  description String?          @db.Text
+  followUpType FollowUpType    @default(CUSTOM) @map("follow_up_type")
+  dueDate     DateTime         @map("due_date") @db.Date
+  /// Optional local time HH:mm (Asia/Bangkok ops).
+  dueTime     String?          @map("due_time")
+  status      FollowUpStatus   @default(PENDING)
+  priority    FollowUpPriority @default(NORMAL)
+  assignedStaffId String?      @map("assigned_staff_id")
+
+  emailReminderEnabled Boolean @default(true) @map("email_reminder_enabled")
+  emailReminderDate    DateTime? @map("email_reminder_date") @db.Date
+  emailSubject         String?   @map("email_subject")
+  emailBody            String?   @map("email_body") @db.Text
+  reminderSentAt       DateTime? @map("reminder_sent_at")
+  reminderStatus       FollowUpReminderStatus @default(NONE) @map("reminder_status")
+  reminderSendMethod   FollowUpReminderSendMethod? @map("reminder_send_method")
+
+  completedAt   DateTime? @map("completed_at")
+  completedById String?   @map("completed_by_id")
+  notes         String?   @db.Text
+  createdById   String?   @map("created_by_id")
+  templateId    String?   @map("template_id")
+  /// Domain extras (e.g. DL renewalType, expiryDate mirrors).
+  metadata      Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  client        User              @relation("FollowUpClient", fields: [clientId], references: [id], onDelete: Cascade)
+  case          Case?             @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  service       Service?          @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  assignedStaff User?             @relation("FollowUpAssignee", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  completedBy   User?             @relation("FollowUpCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
+  createdBy     User?             @relation("FollowUpCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  template      FollowUpTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  activities    FollowUpActivity[]
+  driverLicenseRenewal DriverLicenseRenewal?
+
+  @@index([status, dueDate])
+  @@index([status, emailReminderDate])
+  @@index([clientId, status, dueDate])
+  @@index([assignedStaffId, status, dueDate])
+  @@index([serviceId, status])
+  @@index([followUpType, status])
+  @@index([caseId])
+  @@index([dueDate])
+  @@index([emailReminderDate])
+  @@map("follow_ups")
+}
+
+model FollowUpTemplate {
+  id          String        @id @default(cuid())
+  name        String
+  description String?       @db.Text
+  serviceId   String?       @map("service_id")
+  /// Portable slug match when serviceId is unset (e.g. "driver-license").
+  serviceSlug String?       @map("service_slug")
+  followUpType FollowUpType @default(CUSTOM) @map("follow_up_type")
+  priority    FollowUpPriority @default(NORMAL)
+
+  delayValue     Int                   @default(7) @map("delay_value")
+  delayUnit      RelativeDateUnit      @default(DAYS) @map("delay_unit")
+  delayDirection RelativeDateDirection @default(AFTER) @map("delay_direction")
+  triggerEvent   FollowUpTemplateTrigger @default(MANUAL) @map("trigger_event")
+
+  reminderEnabled          Boolean               @default(true) @map("reminder_enabled")
+  reminderOffsetValue      Int                   @default(0) @map("reminder_offset_value")
+  reminderOffsetUnit       RelativeDateUnit      @default(DAYS) @map("reminder_offset_unit")
+  reminderOffsetDirection  RelativeDateDirection @default(BEFORE) @map("reminder_offset_direction")
+
+  emailEnabled Boolean @default(true) @map("email_enabled")
+  emailSubject String? @map("email_subject")
+  emailBody    String? @map("email_body") @db.Text
+
+  defaultAssigneeId String? @map("default_assignee_id")
+  autoApply         Boolean @default(false) @map("auto_apply")
+  active            Boolean @default(true)
+  createdById       String? @map("created_by_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  service         Service?   @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  defaultAssignee User?      @relation("FollowUpTemplateAssignee", fields: [defaultAssigneeId], references: [id], onDelete: SetNull)
+  createdBy       User?      @relation("FollowUpTemplateCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  followUps       FollowUp[]
+
+  @@index([serviceId, active])
+  @@index([serviceSlug, active])
+  @@index([triggerEvent, autoApply, active])
+  @@map("follow_up_templates")
+}
+
+model FollowUpActivity {
+  id         String                   @id @default(cuid())
+  followUpId String                   @map("follow_up_id")
+  type       FollowUpActivityType
+  fromStatus FollowUpStatus?          @map("from_status")
+  toStatus   FollowUpStatus?          @map("to_status")
+  sendMethod FollowUpReminderSendMethod? @map("send_method")
+  note       String?                  @db.Text
+  actorId    String?                  @map("actor_id")
+  meta       Json?
+  createdAt  DateTime                 @default(now()) @map("created_at")
+
+  followUp FollowUp @relation(fields: [followUpId], references: [id], onDelete: Cascade)
+  actor    User?    @relation("FollowUpActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([followUpId, createdAt])
+  @@map("follow_up_activities")
 }

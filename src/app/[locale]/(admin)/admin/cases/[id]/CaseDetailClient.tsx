@@ -9,10 +9,18 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { updateCaseStatus, assignStaff, addCaseNote } from "@/actions/case";
 import { createInvoice, markServiceJobPaid } from "@/actions/admin";
+import { CaseCreateFollowUpButton } from "@/components/admin/CaseCreateFollowUpButton";
 import { formatCurrency } from "@/lib/utils";
 import { invoiceStatusLabel } from "@/lib/invoices/status";
 import type { CaseStatus } from "@prisma/client";
 import type { Case, CaseNote, User, StaffAssignment, Payment, Invoice, Quote } from "@prisma/client";
+
+const FOLLOW_UP_READY_STATUSES = new Set<CaseStatus>([
+  "completed",
+  "in_progress",
+  "milestone_due",
+  "pending_docs",
+]);
 
 const STATUS_OPTIONS: { value: CaseStatus; label: string }[] = [
   { value: "new", label: "New" },
@@ -34,7 +42,7 @@ const STATUS_OPTIONS: { value: CaseStatus; label: string }[] = [
 
 type CaseWithRelations = Case & {
   user: User | null;
-  service: { name: string; priceAmount: number | null };
+  service: { id: string; name: string; priceAmount: number | null; slug?: string };
   quotes: Quote[];
   staffAssignments: (StaffAssignment & { user: User })[];
   caseNotes: (CaseNote & { user: { name: string | null; email: string } })[];
@@ -229,6 +237,31 @@ export function CaseDetailClient({
                   {labels.createInvoiceWizard}
                 </Link>
               </Button>
+              {caseData.userId &&
+              caseData.user &&
+              FOLLOW_UP_READY_STATUSES.has(caseData.status) ? (
+                <CaseCreateFollowUpButton
+                  clientId={caseData.userId}
+                  caseId={caseId}
+                  serviceId={caseData.serviceId}
+                  serviceName={caseData.service.name}
+                  staff={staffUsers}
+                  clients={[
+                    {
+                      id: caseData.user.id,
+                      name: caseData.user.name,
+                      email: caseData.user.email,
+                    },
+                  ]}
+                  services={[
+                    {
+                      id: caseData.service.id,
+                      name: caseData.service.name,
+                      slug: caseData.service.slug ?? "",
+                    },
+                  ]}
+                />
+              ) : null}
               {actionError && (
                 <p className="text-sm text-red-600 dark:text-red-400">{actionError}</p>
               )}
