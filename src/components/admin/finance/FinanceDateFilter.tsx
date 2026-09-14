@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
-import { DATE_PRESET_OPTIONS } from "./FinanceUi";
+import { DATE_PRESET_LABELS } from "@/lib/finance/dates";
 
 export function FinanceDateFilter({
   defaultPreset = "this_month",
@@ -33,7 +33,7 @@ export function FinanceDateFilter({
         value={preset}
         onChange={(e) => update(e.target.value)}
       >
-        {DATE_PRESET_OPTIONS.map((o) => (
+        {DATE_PRESET_LABELS.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
           </option>

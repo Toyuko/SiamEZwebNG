@@ -121,6 +121,7 @@ const allNavGroups: NavGroup[] = [
     icon: CreditCard,
     items: [
       { label: "financials", href: "/admin/financials", icon: Wallet },
+      { label: "financialAnalytics", href: "/admin/financials/analytics", icon: BarChart3 },
       { label: "invoices", href: "/admin/invoices", icon: FileText },
       { label: "quotes", href: "/admin/quotes", icon: Sparkles },
       { label: "paymentsOrders", href: "/admin/payments", icon: CreditCard },

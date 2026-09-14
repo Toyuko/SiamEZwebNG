@@ -1,10 +1,12 @@
 import { fetchFinancialDashboardAction } from "@/actions/finance";
+import { getFinancialDashboardPrefsAction } from "@/actions/finance-analytics";
 import type { DatePreset } from "@/lib/finance/dates";
 import { FinanceKpiCard, FinanceSection, money } from "@/components/admin/finance/FinanceUi";
 import { FinanceDateFilter } from "@/components/admin/finance/FinanceDateFilter";
 import { RevenueExpenseChart } from "@/components/admin/finance/RevenueExpenseChart";
 import { ExportCsvButton } from "@/components/admin/finance/ExportCsvButton";
 import { FinancialsSubnav } from "@/components/admin/finance/FinancialsSubnav";
+import { DashboardPrefsPanel } from "@/components/admin/finance/DashboardPrefsPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function FinancialsOverviewPage({
@@ -13,13 +15,15 @@ export default async function FinancialsOverviewPage({
   searchParams: Promise<{ preset?: string; start?: string; end?: string }>;
 }) {
   const params = await searchParams;
-  const preset = (params.preset ?? "this_month") as DatePreset;
+  const prefs = await getFinancialDashboardPrefsAction();
+  const preset = (params.preset ?? prefs.defaultPreset ?? "this_month") as DatePreset;
   const data = await fetchFinancialDashboardAction({
     preset,
     start: params.start,
     end: params.end,
   });
   const { summary, series, staffStats } = data;
+  const hidden = new Set(prefs.hiddenKpis ?? []);
 
   return (
     <div className="space-y-6">
@@ -31,53 +35,66 @@ export default async function FinancialsOverviewPage({
             transactions — never entered as a single profit number.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <FinanceDateFilter defaultPreset="this_month" />
+        <div className="flex flex-wrap items-center gap-2">
+          <FinanceDateFilter defaultPreset={preset} />
           <ExportCsvButton report="pnl" preset={preset} />
+          <DashboardPrefsPanel initial={prefs} />
         </div>
       </div>
 
       <FinancialsSubnav current="/admin/financials" />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        <FinanceKpiCard
-          label="Revenue"
-          value={money(summary.netRevenue)}
-          hint="Paid customer revenue − refunds"
-          href="/admin/financials/revenue"
-          tone="positive"
-        />
-        <FinanceKpiCard
-          label="Gross Profit"
-          value={money(summary.grossProfit)}
-          hint={`Margin ${summary.grossMargin}%`}
-          tone={summary.grossProfit >= 0 ? "positive" : "negative"}
-        />
-        <FinanceKpiCard
-          label="Net Profit"
-          value={money(summary.netProfit)}
-          hint={`Margin ${summary.netMargin}% · after operating expenses`}
-          href="/admin/financials/reports"
-          tone={summary.netProfit >= 0 ? "positive" : "negative"}
-        />
-        <FinanceKpiCard
-          label="Operating Expenses"
-          value={money(summary.operatingExpenses)}
-          href="/admin/financials/expenses"
-        />
-        <FinanceKpiCard
-          label="Outstanding Receivables"
-          value={money(summary.accountsReceivable)}
-          href="/admin/financials/receivables"
-          tone={summary.accountsReceivable > 0 ? "warn" : "default"}
-        />
-        <FinanceKpiCard
-          label="Unpaid Staff Payments"
-          value={money(staffStats.unpaidTotal)}
-          hint={`${staffStats.unpaidCount} open`}
-          href="/admin/financials/staff-payments"
-          tone={staffStats.unpaidTotal > 0 ? "warn" : "default"}
-        />
+        {!hidden.has("netRevenue") ? (
+          <FinanceKpiCard
+            label="Revenue"
+            value={money(summary.netRevenue)}
+            hint="Paid customer revenue − refunds"
+            href="/admin/financials/analytics"
+            tone="positive"
+          />
+        ) : null}
+        {!hidden.has("grossProfit") ? (
+          <FinanceKpiCard
+            label="Gross Profit"
+            value={money(summary.grossProfit)}
+            hint={`Margin ${summary.grossMargin}%`}
+            tone={summary.grossProfit >= 0 ? "positive" : "negative"}
+          />
+        ) : null}
+        {!hidden.has("netProfit") ? (
+          <FinanceKpiCard
+            label="Net Profit"
+            value={money(summary.netProfit)}
+            hint={`Margin ${summary.netMargin}% · after operating expenses`}
+            href="/admin/financials/reports"
+            tone={summary.netProfit >= 0 ? "positive" : "negative"}
+          />
+        ) : null}
+        {!hidden.has("operatingExpenses") ? (
+          <FinanceKpiCard
+            label="Operating Expenses"
+            value={money(summary.operatingExpenses)}
+            href="/admin/financials/expenses"
+          />
+        ) : null}
+        {!hidden.has("accountsReceivable") ? (
+          <FinanceKpiCard
+            label="Outstanding Receivables"
+            value={money(summary.accountsReceivable)}
+            href="/admin/financials/receivables"
+            tone={summary.accountsReceivable > 0 ? "warn" : "default"}
+          />
+        ) : null}
+        {!hidden.has("staffCosts") ? (
+          <FinanceKpiCard
+            label="Unpaid Staff Payments"
+            value={money(staffStats.unpaidTotal)}
+            hint={`${staffStats.unpaidCount} open`}
+            href="/admin/financials/staff-payments"
+            tone={staffStats.unpaidTotal > 0 ? "warn" : "default"}
+          />
+        ) : null}
         <FinanceKpiCard
           label="Accounts Payable"
           value={money(summary.accountsPayable)}

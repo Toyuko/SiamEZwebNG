@@ -2,6 +2,7 @@ import { Link } from "@/i18n/navigation";
 
 const SUBNAV = [
   { href: "/admin/financials", label: "Overview" },
+  { href: "/admin/financials/analytics", label: "Analytics" },
   { href: "/admin/financials/transactions", label: "Transactions" },
   { href: "/admin/financials/revenue", label: "Revenue" },
   { href: "/admin/financials/expenses", label: "Expenses" },
@@ -10,6 +11,7 @@ const SUBNAV = [
   { href: "/admin/financials/payables", label: "Payables" },
   { href: "/admin/financials/profitability", label: "Profitability" },
   { href: "/admin/financials/reports", label: "Reports" },
+  { href: "/admin/financials/saved-reports", label: "Saved Reports" },
 ];
 
 export function FinancialsSubnav({ current }: { current: string }) {

@@ -103,6 +103,8 @@ model User {
   financialTransactionsCreated  FinancialTransaction[] @relation("FinancialCreatedBy")
   financialTransactionsCancelled FinancialTransaction[] @relation("FinancialCancelledBy")
   financialAuditLogs            FinancialAuditLog[]    @relation("FinancialAuditActor")
+  savedFinancialReports         SavedFinancialReport[] @relation("SavedFinancialReportOwner")
+  financialDashboardPreference  FinancialDashboardPreference? @relation("FinancialDashboardOwner")
 }
 
 enum FreelancerVerificationStatus {
@@ -660,6 +662,11 @@ model Payment {
   invoice       Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
   case          Case      @relation(fields: [caseId], references: [id], onDelete: Restrict)
   proofDocument Document? @relation("PaymentProof", fields: [proofDocumentId], references: [id], onDelete: SetNull)
+
+  @@index([status, approvedAt])
+  @@index([status, submittedAt])
+  @@index([caseId, status])
+  @@index([method, status])
 }
 
 // ----- Documents -----
@@ -2165,6 +2172,8 @@ model FinancialTransaction {
   @@index([serviceId, transactionDate])
   @@index([clientId, paymentStatus])
   @@index([transactionDate])
+  @@index([category, type, transactionDate])
+  @@index([paymentMethod, transactionDate])
   @@map("financial_transactions")
 }
 
@@ -2184,4 +2193,35 @@ model FinancialAuditLog {
   @@index([transactionId, createdAt])
   @@index([actorId, createdAt])
   @@map("financial_audit_logs")
+}
+
+/// Saved analytics configurations for Financials → Saved Reports.
+model SavedFinancialReport {
+  id          String   @id @default(cuid())
+  ownerId     String   @map("owner_id")
+  name        String
+  description String?  @db.Text
+  /// JSON: { preset, start, end, groupBy, metrics, filters, compare, chartType }
+  config      Json
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  owner User @relation("SavedFinancialReportOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, updatedAt])
+  @@map("saved_financial_reports")
+}
+
+/// Per-user Financial Overview dashboard preferences.
+model FinancialDashboardPreference {
+  id              String   @id @default(cuid())
+  ownerId         String   @unique @map("owner_id")
+  /// JSON: { kpiOrder, hiddenKpis, defaultPreset, defaultGroupBy, hiddenCharts }
+  preferences     Json
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  owner User @relation("FinancialDashboardOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@map("financial_dashboard_preferences")
 }
