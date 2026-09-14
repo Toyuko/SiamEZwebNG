@@ -97,6 +97,12 @@ model User {
   followUpActivities      FollowUpActivity[] @relation("FollowUpActivityActor")
   followUpTemplatesAssigned FollowUpTemplate[] @relation("FollowUpTemplateAssignee")
   followUpTemplatesCreated  FollowUpTemplate[] @relation("FollowUpTemplateCreatedBy")
+
+  financialTransactionsAsClient FinancialTransaction[] @relation("FinancialClient")
+  financialTransactionsAsStaff  FinancialTransaction[] @relation("FinancialStaff")
+  financialTransactionsCreated  FinancialTransaction[] @relation("FinancialCreatedBy")
+  financialTransactionsCancelled FinancialTransaction[] @relation("FinancialCancelledBy")
+  financialAuditLogs            FinancialAuditLog[]    @relation("FinancialAuditActor")
 }
 
 enum FreelancerVerificationStatus {
@@ -433,6 +439,7 @@ model Service {
   quotes             Quote[]
   followUps          FollowUp[]
   followUpTemplates  FollowUpTemplate[]
+  financialTransactions FinancialTransaction[]
 }
 
 // ----- Cases (every booking becomes a case) -----
@@ -491,6 +498,7 @@ model Case {
   vehicleLead     VehicleLead?
   driverLicenseRenewals DriverLicenseRenewal[]
   followUps       FollowUp[]
+  financialTransactions FinancialTransaction[]
 }
 
 enum MarketplaceJobStatus {
@@ -670,6 +678,7 @@ model Document {
   case           Case?   @relation(fields: [caseId], references: [id], onDelete: SetNull)
   uploader       User?   @relation("DocumentUploader", fields: [uploadedBy], references: [id], onDelete: SetNull)
   paymentProof   Payment? @relation("PaymentProof")
+  financialReceipt FinancialTransaction? @relation("FinancialReceipt")
 }
 
 // ----- Staff assignments -----
@@ -2071,4 +2080,108 @@ model FollowUpActivity {
 
   @@index([followUpId, createdAt])
   @@map("follow_up_activities")
+}
+
+// ----- Financial Management (ledger + job profitability) -----
+// Money amounts use Int satang (smallest THB unit), matching Payment/Invoice.
+// Customer PAID revenue is sourced from Payment (status=approved) — never duplicated here.
+// This ledger stores staff payments, case expenses, operating expenses, refunds, and other income/expense.
+
+enum FinancialTransactionType {
+  REVENUE
+  OPERATING_EXPENSE
+  STAFF_PAYMENT
+  CASE_EXPENSE
+  REFUND
+  OTHER_INCOME
+  OTHER_EXPENSE
+}
+
+enum FinancialPaymentStatus {
+  UNPAID
+  APPROVED
+  PAID
+  CANCELLED
+}
+
+enum FinancialPaymentMethod {
+  cash
+  bank
+  qr
+  credit_card
+  debit_card
+  stripe
+  wise
+  other
+}
+
+model FinancialTransaction {
+  id              String                   @id @default(cuid())
+  caseId          String?                  @map("case_id")
+  clientId        String?                  @map("client_id")
+  staffId         String?                  @map("staff_id")
+  serviceId       String?                  @map("service_id")
+  type            FinancialTransactionType
+  category        String
+  description     String
+  /// Amount in satang (smallest currency unit). Always positive; sign implied by type.
+  amount          Int
+  currency        String                   @default("THB")
+  /// Optional FX fields for future multi-currency support (never silently convert).
+  originalAmount  Int?                     @map("original_amount")
+  originalCurrency String?                 @map("original_currency")
+  exchangeRate    Decimal?                 @map("exchange_rate") @db.Decimal(18, 8)
+  convertedThbAmount Int?                  @map("converted_thb_amount")
+  transactionDate DateTime                 @map("transaction_date")
+  dueDate         DateTime?                @map("due_date")
+  paymentStatus   FinancialPaymentStatus   @default(UNPAID) @map("payment_status")
+  paymentMethod   FinancialPaymentMethod?  @map("payment_method")
+  reference       String?
+  vendor          String?
+  notes           String?                  @db.Text
+  receiptDocumentId String?                @unique @map("receipt_document_id")
+  isRecurring     Boolean                  @default(false) @map("is_recurring")
+  /// Link to existing customer Payment when this row is a REFUND against that payment.
+  relatedPaymentId String?                 @map("related_payment_id")
+  createdById     String?                  @map("created_by_id")
+  cancelledAt     DateTime?                @map("cancelled_at")
+  cancelledById   String?                  @map("cancelled_by_id")
+  paidAt          DateTime?                @map("paid_at")
+  createdAt       DateTime                 @default(now()) @map("created_at")
+  updatedAt       DateTime                 @updatedAt @map("updated_at")
+
+  case            Case?     @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  client          User?     @relation("FinancialClient", fields: [clientId], references: [id], onDelete: SetNull)
+  staff           User?     @relation("FinancialStaff", fields: [staffId], references: [id], onDelete: SetNull)
+  service         Service?  @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  createdBy       User?     @relation("FinancialCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  cancelledBy     User?     @relation("FinancialCancelledBy", fields: [cancelledById], references: [id], onDelete: SetNull)
+  receiptDocument Document? @relation("FinancialReceipt", fields: [receiptDocumentId], references: [id], onDelete: SetNull)
+  auditLogs       FinancialAuditLog[]
+
+  @@index([type, paymentStatus, transactionDate])
+  @@index([caseId, type, paymentStatus])
+  @@index([staffId, paymentStatus, transactionDate])
+  @@index([serviceId, transactionDate])
+  @@index([clientId, paymentStatus])
+  @@index([transactionDate])
+  @@map("financial_transactions")
+}
+
+model FinancialAuditLog {
+  id            String   @id @default(cuid())
+  transactionId String?  @map("transaction_id")
+  action        String
+  actorId       String?  @map("actor_id")
+  oldValues     Json?    @map("old_values")
+  newValues     Json?    @map("new_values")
+  note          String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  transaction FinancialTransaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  actor       User?                 @relation("FinancialAuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([transactionId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("financial_audit_logs")
 }

@@ -13,6 +13,7 @@ import { CaseSchedulePanel } from "@/components/admin/CaseSchedulePanel";
 import { CaseDetailClient } from "./CaseDetailClient";
 import { AttachUnassignedDocument } from "./AttachUnassignedDocument";
 import { CaseDriverLicenseFollowUpPanel } from "@/components/admin/CaseDriverLicenseFollowUpPanel";
+import { CaseFinancialsPanelServer } from "@/components/admin/CaseFinancialsPanelServer";
 import { isDriverLicenseServiceSlug } from "@/lib/driver-license-renewal/constants";
 import { formatCurrency } from "@/lib/utils";
 
@@ -219,6 +220,8 @@ export default async function AdminCaseDetailPage({
               <AttachUnassignedDocument caseId={caseData.id} unassigned={unassignedDocs} />
             }
           />
+
+          <CaseFinancialsPanelServer caseId={caseData.id} />
 
           <CaseSchedulePanel
             caseId={caseData.id}

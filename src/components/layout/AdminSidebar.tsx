@@ -30,6 +30,8 @@ import {
   Activity,
   Flag,
   Bell,
+  Wallet,
+  Banknote,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -118,9 +120,11 @@ const allNavGroups: NavGroup[] = [
     label: "groupFinance",
     icon: CreditCard,
     items: [
+      { label: "financials", href: "/admin/financials", icon: Wallet },
       { label: "invoices", href: "/admin/invoices", icon: FileText },
       { label: "quotes", href: "/admin/quotes", icon: Sparkles },
       { label: "paymentsOrders", href: "/admin/payments", icon: CreditCard },
+      { label: "staffPayments", href: "/admin/financials/staff-payments", icon: Banknote },
       { label: "documents", href: "/admin/documents", icon: FileStack },
     ],
   },

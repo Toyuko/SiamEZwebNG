@@ -9,3 +9,4 @@ export * from "./invoice";
 export * from "./payment";
 export * from "./document";
 export * from "./quote";
+export * from "./financial";

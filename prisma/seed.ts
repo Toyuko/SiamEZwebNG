@@ -781,6 +781,9 @@ async function main() {
   // Generalized follow-up templates + cross-service examples.
   await seedFollowUpSystem();
 
+  // Financial management demo cases + operating expenses.
+  await seedFinancialDemoData();
+
   // Platform 2.0 — configurable recommendation graph defaults.
   await seedRecommendationEdges();
 }
@@ -1707,6 +1710,342 @@ async function seedRecommendationEdges() {
   }
   console.log("Recommendation edges seeded:", edges.length);
 }
+
+/**
+ * Demo financial data: 5 cases with payments, staff costs, expenses + operating costs.
+ * Idempotent via fixed case numbers SE-FIN-DEMO-*.
+ */
+async function seedFinancialDemoData() {
+  const customerEmail = (process.env.SEED_CUSTOMER_EMAIL ?? "customer@example.com").toLowerCase();
+  const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? "admin@siamez.com").toLowerCase();
+  const freelancerEmail = (
+    process.env.SEED_FREELANCER_EMAIL ?? "freelancer@example.com"
+  ).toLowerCase();
+
+  const [customer, admin, freelancer, staffGrace] = await Promise.all([
+    prisma.user.findUnique({ where: { email: customerEmail } }),
+    prisma.user.findUnique({ where: { email: adminEmail } }),
+    prisma.user.findUnique({ where: { email: freelancerEmail } }),
+    prisma.user.upsert({
+      where: { email: "grace@siamez.com" },
+      create: {
+        email: "grace@siamez.com",
+        name: "Grace",
+        role: "staff",
+        passwordHash: await bcrypt.hash("Staff123!", 10),
+        active: true,
+      },
+      update: { name: "Grace", role: "staff", active: true },
+    }),
+  ]);
+
+  if (!customer || !admin) {
+    console.log("Skipping financial demo seed (missing customer/admin).");
+    return;
+  }
+
+  const somchai =
+    freelancer ??
+    (await prisma.user.upsert({
+      where: { email: "somchai@example.com" },
+      create: {
+        email: "somchai@example.com",
+        name: "Somchai",
+        role: "freelancer",
+        passwordHash: await bcrypt.hash("Freelancer123!", 10),
+        active: true,
+      },
+      update: { name: "Somchai", active: true },
+    }));
+
+  const demos: {
+    caseNumber: string;
+    serviceSlug: string;
+    paidSatang: number;
+    invoiceSatang: number;
+    staff: { userId: string; amount: number; category: string; status: "PAID" | "UNPAID" | "APPROVED" }[];
+    expenses: { amount: number; category: string; description: string }[];
+  }[] = [
+    {
+      caseNumber: "SE-FIN-DEMO-001",
+      serviceSlug: "driver-license",
+      paidSatang: 500_000,
+      invoiceSatang: 500_000,
+      staff: [
+        {
+          userId: staffGrace.id,
+          amount: 100_000,
+          category: "service_handling",
+          status: "PAID",
+        },
+        {
+          userId: somchai.id,
+          amount: 50_000,
+          category: "transportation",
+          status: "UNPAID",
+        },
+      ],
+      expenses: [
+        { amount: 80_000, category: "government_fee", description: "DLT fee" },
+      ],
+    },
+    {
+      caseNumber: "SE-FIN-DEMO-002",
+      serviceSlug: "marriage-registration",
+      paidSatang: 1_500_000,
+      invoiceSatang: 2_000_000,
+      staff: [
+        {
+          userId: staffGrace.id,
+          amount: 400_000,
+          category: "coordination",
+          status: "PAID",
+        },
+      ],
+      expenses: [
+        { amount: 200_000, category: "translation_fee", description: "Document translation" },
+        { amount: 150_000, category: "mfa_fee", description: "MFA legalization" },
+      ],
+    },
+    {
+      caseNumber: "SE-FIN-DEMO-003",
+      serviceSlug: "vehicle-registration",
+      paidSatang: 800_000,
+      invoiceSatang: 800_000,
+      staff: [
+        {
+          userId: somchai.id,
+          amount: 200_000,
+          category: "service_handling",
+          status: "PAID",
+        },
+      ],
+      expenses: [
+        { amount: 120_000, category: "government_fee", description: "Registration tax" },
+        { amount: 30_000, category: "parking", description: "Parking at DLT" },
+      ],
+    },
+    {
+      caseNumber: "SE-FIN-DEMO-004",
+      serviceSlug: "translation-services",
+      paidSatang: 350_000,
+      invoiceSatang: 350_000,
+      staff: [
+        {
+          userId: somchai.id,
+          amount: 150_000,
+          category: "translation",
+          status: "APPROVED",
+        },
+      ],
+      expenses: [
+        { amount: 20_000, category: "printing", description: "Certified copies" },
+      ],
+    },
+    {
+      caseNumber: "SE-FIN-DEMO-005",
+      serviceSlug: "police-clearance",
+      paidSatang: 600_000,
+      invoiceSatang: 600_000,
+      staff: [
+        {
+          userId: staffGrace.id,
+          amount: 120_000,
+          category: "service_handling",
+          status: "PAID",
+        },
+        {
+          userId: somchai.id,
+          amount: 80_000,
+          category: "courier",
+          status: "UNPAID",
+        },
+      ],
+      expenses: [
+        { amount: 100_000, category: "government_fee", description: "Police clearance fee" },
+        { amount: 40_000, category: "courier", description: "Document courier" },
+      ],
+    },
+  ];
+
+  const now = new Date();
+
+  for (const demo of demos) {
+    const service = await prisma.service.findUnique({
+      where: { slug: demo.serviceSlug },
+    });
+    if (!service) continue;
+
+    let caseRow = await prisma.case.findUnique({
+      where: { caseNumber: demo.caseNumber },
+    });
+
+    if (!caseRow) {
+      caseRow = await prisma.case.create({
+        data: {
+          caseNumber: demo.caseNumber,
+          userId: customer.id,
+          serviceId: service.id,
+          status: demo.paidSatang >= demo.invoiceSatang ? "completed" : "in_progress",
+          completedAt: demo.paidSatang >= demo.invoiceSatang ? now : null,
+        },
+      });
+    }
+
+    await prisma.staffAssignment.upsert({
+      where: {
+        caseId_userId: { caseId: caseRow.id, userId: staffGrace.id },
+      },
+      create: { caseId: caseRow.id, userId: staffGrace.id, role: "primary" },
+      update: {},
+    });
+    if (somchai.id !== staffGrace.id) {
+      await prisma.staffAssignment.upsert({
+        where: {
+          caseId_userId: { caseId: caseRow.id, userId: somchai.id },
+        },
+        create: { caseId: caseRow.id, userId: somchai.id, role: "support" },
+        update: {},
+      });
+    }
+
+    let invoice = await prisma.invoice.findFirst({
+      where: { caseId: caseRow.id },
+    });
+    if (!invoice) {
+      invoice = await prisma.invoice.create({
+        data: {
+          caseId: caseRow.id,
+          userId: customer.id,
+          amount: demo.invoiceSatang,
+          currency: "THB",
+          status: demo.paidSatang >= demo.invoiceSatang ? "paid" : "unpaid",
+          kind: "full",
+          dueDate: new Date(now.getTime() + 7 * 86_400_000),
+          paidAt: demo.paidSatang >= demo.invoiceSatang ? now : null,
+        },
+      });
+    }
+
+    const existingPayment = await prisma.payment.findFirst({
+      where: { caseId: caseRow.id, status: "approved" },
+    });
+    if (!existingPayment && demo.paidSatang > 0) {
+      await prisma.payment.create({
+        data: {
+          invoiceId: invoice.id,
+          caseId: caseRow.id,
+          amount: demo.paidSatang,
+          currency: "THB",
+          method: "qr",
+          status: "approved",
+          approvedAt: now,
+          kind: "full",
+        },
+      });
+    }
+
+    const existingTx = await prisma.financialTransaction.count({
+      where: { caseId: caseRow.id },
+    });
+    if (existingTx === 0) {
+      for (const s of demo.staff) {
+        await prisma.financialTransaction.create({
+          data: {
+            caseId: caseRow.id,
+            clientId: customer.id,
+            staffId: s.userId,
+            serviceId: service.id,
+            type: "STAFF_PAYMENT",
+            category: s.category,
+            description: `${s.category} for ${demo.caseNumber}`,
+            amount: s.amount,
+            currency: "THB",
+            transactionDate: now,
+            paymentStatus: s.status,
+            paymentMethod: "bank",
+            createdById: admin.id,
+            paidAt: s.status === "PAID" ? now : null,
+          },
+        });
+      }
+      for (const e of demo.expenses) {
+        await prisma.financialTransaction.create({
+          data: {
+            caseId: caseRow.id,
+            clientId: customer.id,
+            serviceId: service.id,
+            type: "CASE_EXPENSE",
+            category: e.category,
+            description: e.description,
+            amount: e.amount,
+            currency: "THB",
+            transactionDate: now,
+            paymentStatus: "PAID",
+            paymentMethod: "cash",
+            createdById: admin.id,
+            paidAt: now,
+          },
+        });
+      }
+    }
+  }
+
+  const opExKey = "SEED_OP_EX_RENT";
+  const existingOp = await prisma.financialTransaction.findFirst({
+    where: { reference: opExKey },
+  });
+  if (!existingOp) {
+    const operating = [
+      {
+        category: "office_rent",
+        description: "Office rent — September",
+        amount: 2_500_000,
+        reference: opExKey,
+      },
+      {
+        category: "internet",
+        description: "Office internet",
+        amount: 89_000,
+        reference: "SEED_OP_EX_NET",
+      },
+      {
+        category: "software",
+        description: "SaaS subscriptions",
+        amount: 150_000,
+        reference: "SEED_OP_EX_SOFT",
+      },
+      {
+        category: "facebook_ads",
+        description: "Meta Ads",
+        amount: 500_000,
+        reference: "SEED_OP_EX_ADS",
+      },
+    ];
+    for (const o of operating) {
+      await prisma.financialTransaction.create({
+        data: {
+          type: "OPERATING_EXPENSE",
+          category: o.category,
+          description: o.description,
+          amount: o.amount,
+          currency: "THB",
+          transactionDate: now,
+          paymentStatus: "PAID",
+          paymentMethod: "bank",
+          reference: o.reference,
+          isRecurring: o.category === "office_rent" || o.category === "internet",
+          createdById: admin.id,
+          paidAt: now,
+          vendor: "Various",
+        },
+      });
+    }
+  }
+
+  console.log("Financial demo data seeded:", demos.length, "cases + operating expenses");
+}
+
 
 main()
   .catch((e) => {
