@@ -23,6 +23,7 @@ const STATIC_PATHS = [
   "/partner",
   "/terms",
   "/privacy",
+  "/delete-account",
   "/refund",
   "/vehicle",
   "/vehicle/buy",

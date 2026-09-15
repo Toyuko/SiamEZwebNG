@@ -48,8 +48,16 @@ export default async function PrivacyPage({
         </p>
         <p>
           {isThai
-            ? "หากคุณต้องการแก้ไขหรือลบข้อมูล โปรดติดต่อเราทางอีเมลที่ระบุในหน้า Contact"
-            : "If you need data correction or deletion, please contact us using the email listed on the Contact page."}
+            ? "หากคุณต้องการแก้ไขหรือลบข้อมูล คุณสามารถใช้หน้าลบบัญชีได้โดยตรง หรือติดต่อเราทางอีเมลที่ระบุในหน้า Contact"
+            : "If you need data correction or deletion, you can use our account deletion page, or contact us using the email listed on the Contact page."}
+        </p>
+        <p>
+          <a
+            href={`/${locale}/delete-account`}
+            className="font-medium text-siam-blue hover:underline"
+          >
+            {isThai ? "ลบบัญชี SiamEZ" : "Delete your SiamEZ account"}
+          </a>
         </p>
       </section>
     </>

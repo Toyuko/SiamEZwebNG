@@ -749,8 +749,95 @@ export function PortalSettings({ user: initial, hasPassword }: PortalSettingsPro
               </a>
             </section>
             <section className="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-900/50 dark:bg-red-950/20">
-              <h2 className="text-lg font-semibold text-red-900 dark:text-red-200">{t("dangerZone")}</h2>
-              <p className="mt-1 text-sm text-red-800/90 dark:text-red-300/90">{t("deactivateHint")}</p>
+              <h2 className="text-lg font-semibold text-red-900 dark:text-red-200">{t("deleteZoneTitle")}</h2>
+              <p className="mt-1 text-sm text-red-800/90 dark:text-red-300/90">{t("deleteZoneHint")}</p>
+              <form
+                className="mt-4 max-w-md space-y-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  clearMessage();
+                  const fd = new FormData(e.currentTarget);
+                  const confirmPhrase = String(fd.get("confirmPhrase") ?? "");
+                  const password = String(fd.get("password") ?? "");
+                  const understood = fd.get("understood") === "on";
+                  if (!understood) {
+                    setMessage({ kind: "err", text: t("deleteCheckbox") });
+                    return;
+                  }
+                  startTransition(async () => {
+                    try {
+                      const res = await fetch("/api/account/delete", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          confirmPhrase,
+                          password: password || undefined,
+                          locale: initial.preferredLocale === "th" ? "th" : "en",
+                        }),
+                      });
+                      const data = (await res.json()) as { success?: boolean; error?: string };
+                      if (!res.ok || !data.success) {
+                        setMessage({
+                          kind: "err",
+                          text: data.error || t("genericError"),
+                        });
+                        return;
+                      }
+                      setMessage({ kind: "ok", text: t("deleteSuccess") });
+                      const loc = initial.preferredLocale === "th" ? "th" : "en";
+                      router.replace(`/${loc}/login`);
+                    } catch {
+                      setMessage({ kind: "err", text: t("genericError") });
+                    }
+                  });
+                }}
+              >
+                <label className="flex items-start gap-2 text-sm text-red-900 dark:text-red-200">
+                  <input type="checkbox" name="understood" className="mt-1 h-4 w-4 rounded border-gray-300" />
+                  <span>{t("deleteCheckbox")}</span>
+                </label>
+                <div>
+                  <Label htmlFor="confirmPhrase">{t("deleteConfirmPhraseLabel")}</Label>
+                  <Input
+                    id="confirmPhrase"
+                    name="confirmPhrase"
+                    className="mt-1"
+                    autoComplete="off"
+                    aria-label={t("deleteConfirmPhraseLabel")}
+                  />
+                </div>
+                {hasPassword && (
+                  <div>
+                    <Label htmlFor="deletePassword">{t("deletePasswordLabel")}</Label>
+                    <Input
+                      id="deletePassword"
+                      name="password"
+                      type="password"
+                      className="mt-1"
+                      autoComplete="current-password"
+                      required
+                    />
+                  </div>
+                )}
+                <Button
+                  type="submit"
+                  variant="outline"
+                  disabled={pending}
+                  className="border-red-300 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40"
+                >
+                  {pending ? t("saving") : t("deleteAccount")}
+                </Button>
+              </form>
+              <p className="mt-4 text-xs text-red-800/80 dark:text-red-300/80">
+                <Link href="/delete-account" className="underline hover:no-underline">
+                  {t("publicDeletionPage")}
+                </Link>
+              </p>
+            </section>
+
+            <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("dangerZone")}</h2>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{t("deactivateHint")}</p>
               <form
                 className="mt-4 max-w-md space-y-3"
                 onSubmit={(e) => {
@@ -777,7 +864,7 @@ export function PortalSettings({ user: initial, hasPassword }: PortalSettingsPro
                     aria-label={t("confirmEmailLabel")}
                   />
                 </div>
-                <Button type="submit" variant="outline" disabled={pending} className="border-red-300 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40">
+                <Button type="submit" variant="outline" disabled={pending}>
                   {pending ? t("saving") : t("deactivateAccount")}
                 </Button>
               </form>

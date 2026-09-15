@@ -782,3 +782,103 @@ export async function sendFollowUpReminderEmail(input: {
     tags: [{ name: "type", value: "follow-up-reminder" }],
   });
 }
+
+export async function sendAccountDeletionRequestReceivedEmail(input: {
+  to: string;
+  processingDays: number;
+  locale?: string;
+}): Promise<SendEmailResult> {
+  const isThai = input.locale === "th";
+  const days = String(input.processingDays);
+  const html = emailLayout({
+    title: isThai ? "ได้รับคำขอลบบัญชีแล้ว" : "Account deletion request received",
+    preheader: isThai
+      ? `คำขอของคุณจะดำเนินการภายในประมาณ ${days} วัน`
+      : `Your request will normally be processed within ${days} days`,
+    bodyHtml: [
+      heading(isThai ? "เราได้รับคำขอของคุณแล้ว" : "We've received your request"),
+      paragraph(
+        isThai
+          ? "หากมีบัญชีที่เชื่อมโยงกับอีเมลนี้ เราจะดำเนินการลบบัญชีและข้อมูลส่วนบุคคลที่เกี่ยวข้องตามนโยบายการลบบัญชีของเรา"
+          : "If an account associated with this email exists, we will process deletion of the account and associated personal data according to our account deletion policy."
+      ),
+      paragraph(
+        isThai
+          ? `โดยปกติจะดำเนินการภายใน ${days} วัน ข้อมูลบางส่วนอาจถูกเก็บไว้ตามที่กฎหมายหรือข้อกำหนดทางบัญชี ความปลอดภัย หรือการระงับข้อพิพาทกำหนด`
+          : `Requests are normally processed within ${days} days. Certain information may be retained where required by law or where reasonably necessary for legitimate legal, accounting, security, fraud-prevention, or dispute-resolution purposes.`
+      ),
+      paragraph(
+        isThai
+          ? `หากต้องการความช่วยเหลือ ติดต่อ ${site.email} หรือโทร ${site.phone}`
+          : `Need help? Contact ${site.email} or call ${site.phone}.`
+      ),
+      ctaButton(portalUrl("/delete-account"), isThai ? "ดูรายละเอียดการลบบัญชี" : "Account deletion info"),
+    ].join(""),
+  });
+
+  return sendEmail({
+    to: input.to,
+    subject: isThai
+      ? "ได้รับคำขอลบบัญชี SiamEZ แล้ว"
+      : "SiamEZ account deletion request received",
+    html,
+    tags: [{ name: "type", value: "account-deletion-request" }],
+  });
+}
+
+export async function sendAccountDeletionCompletedEmail(input: {
+  to: string;
+  processingDays: number;
+}): Promise<SendEmailResult> {
+  const html = emailLayout({
+    title: "Account deletion completed",
+    preheader: "Your SiamEZ account deletion has been processed",
+    bodyHtml: [
+      heading("Account deletion completed"),
+      paragraph(
+        "Your SiamEZ account deletion request has been processed. Personal profile and account access data associated with this email have been removed where applicable."
+      ),
+      paragraph(
+        "Certain information may be retained where required by law or where reasonably necessary for legitimate legal, accounting, security, fraud-prevention, or dispute-resolution purposes."
+      ),
+      paragraph(`Questions? Contact ${site.email} or call ${site.phone}.`),
+      ctaButton(portalUrl("/"), "Visit SiamEZ"),
+    ].join(""),
+  });
+
+  return sendEmail({
+    to: input.to,
+    subject: "SiamEZ account deletion completed",
+    html,
+    tags: [{ name: "type", value: "account-deletion-completed" }],
+  });
+}
+
+export async function sendAccountDeletionOpsAlert(input: {
+  requestId: string;
+  email: string;
+  source: string;
+  processingDays: number;
+}): Promise<SendEmailResult> {
+  const html = emailLayout({
+    title: "Account deletion request",
+    preheader: `Request ${input.requestId}`,
+    bodyHtml: [
+      heading("New account deletion request"),
+      detailTable([
+        { label: "Request ID", value: input.requestId },
+        { label: "Source", value: input.source },
+        { label: "Processing window", value: `${input.processingDays} days` },
+      ]),
+      paragraph("Review and process in Admin → Account Deletion Requests."),
+      ctaButton(portalUrl("/admin/account-deletion-requests"), "Open admin queue"),
+    ].join(""),
+  });
+
+  return sendEmail({
+    to: getOpsInboxes(),
+    subject: `[SiamEZ] Account deletion request ${input.requestId}`,
+    html,
+    tags: [{ name: "type", value: "account-deletion-ops" }],
+  });
+}

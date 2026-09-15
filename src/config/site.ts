@@ -27,6 +27,7 @@ export const site = {
     companyName: "SiamEZ Professional Services Co., Ltd.",
     termsUrl: "/terms",
     privacyUrl: "/privacy",
+    deleteAccountUrl: "/delete-account",
     refundUrl: "/refund",
     partnerUrl: "/partner",
   },
@@ -80,6 +81,7 @@ export const footerQuickLinks = [
 export const footerLegal = [
   { label: "Terms of Service", href: "/terms" },
   { label: "Privacy Policy", href: "/privacy" },
+  { label: "Delete Account", href: "/delete-account" },
   { label: "Refund Policy", href: "/refund" },
   { label: "Partner Program", href: "/partner" },
 ] as const;

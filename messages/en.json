@@ -194,7 +194,8 @@
     "workQueue": "Work queue",
     "staffActivity": "Staff activity",
     "analytics": "Analytics",
-    "featureFlags": "Feature flags"
+    "featureFlags": "Feature flags",
+    "accountDeletionRequests": "Account Deletion"
   },
   "sales": {
     "inventoryTitle": "Sales Inventory",
@@ -835,40 +836,82 @@
       {
         "title": "New license",
         "rows": [
-          { "label": "Car", "price": "15,000 THB" },
-          { "label": "Bike", "price": "10,000 THB" },
-          { "label": "Both", "price": "20,000 THB" }
+          {
+            "label": "Car",
+            "price": "15,000 THB"
+          },
+          {
+            "label": "Bike",
+            "price": "10,000 THB"
+          },
+          {
+            "label": "Both",
+            "price": "20,000 THB"
+          }
         ]
       },
       {
         "title": "Conversion",
         "rows": [
-          { "label": "Car", "price": "4,500 THB" },
-          { "label": "Bike", "price": "4,500 THB" },
-          { "label": "Both", "price": "4,500 THB" }
+          {
+            "label": "Car",
+            "price": "4,500 THB"
+          },
+          {
+            "label": "Bike",
+            "price": "4,500 THB"
+          },
+          {
+            "label": "Both",
+            "price": "4,500 THB"
+          }
         ]
       },
       {
         "title": "International license",
         "rows": [
-          { "label": "IDP", "price": "4,500 THB" }
+          {
+            "label": "IDP",
+            "price": "4,500 THB"
+          }
         ]
       },
       {
         "title": "Renewal",
         "rows": [
-          { "label": "Car", "price": "4,500 THB" },
-          { "label": "Bike", "price": "4,500 THB" },
-          { "label": "Both", "price": "4,500 THB" }
+          {
+            "label": "Car",
+            "price": "4,500 THB"
+          },
+          {
+            "label": "Bike",
+            "price": "4,500 THB"
+          },
+          {
+            "label": "Both",
+            "price": "4,500 THB"
+          }
         ]
       }
     ],
     "priceGuideAdditionalTitle": "Additional",
     "priceGuideAdditionalRows": [
-      { "label": "Residential certificate", "price": "2,500 THB" },
-      { "label": "Translation letter", "price": "1,500 THB" },
-      { "label": "Booking only", "price": "1,500 THB" },
-      { "label": "Lost license / address update", "price": "1,500 THB" }
+      {
+        "label": "Residential certificate",
+        "price": "2,500 THB"
+      },
+      {
+        "label": "Translation letter",
+        "price": "1,500 THB"
+      },
+      {
+        "label": "Booking only",
+        "price": "1,500 THB"
+      },
+      {
+        "label": "Lost license / address update",
+        "price": "1,500 THB"
+      }
     ],
     "schedulingTitle": "Scheduling note",
     "schedulingBody": "Allow at least three business days before your preferred date. Weekends are usually unavailable. If you process car and motorcycle together, expect a longer appointment block.",
@@ -1567,11 +1610,19 @@
       "exportTitle": "Export your data",
       "exportHint": "Download a JSON copy of your profile and related case and invoice summaries.",
       "downloadJson": "Download data export",
-      "dangerZone": "Deactivate account",
-      "deactivateHint": "This will disable your account. You will need to contact support to reactivate.",
+      "dangerZone": "Delete account",
+      "deactivateHint": "Deactivating disables sign-in. Prefer permanent deletion below if you want your personal data removed.",
       "confirmEmailLabel": "Type your email to confirm",
       "deactivateAccount": "Deactivate my account",
-      "genericError": "Something went wrong. Please try again."
+      "genericError": "Something went wrong. Please try again.",
+      "deleteZoneTitle": "Delete account permanently",
+      "deleteZoneHint": "This permanently deletes your SiamEZ account and removes or anonymizes associated personal data. Some records may be retained where required by law.",
+      "deleteConfirmPhraseLabel": "Type “Delete my SiamEZ account permanently” to confirm",
+      "deletePasswordLabel": "Current password",
+      "deleteAccount": "Delete my account permanently",
+      "deleteCheckbox": "I understand that account deletion is permanent.",
+      "deleteSuccess": "Your account has been deleted.",
+      "publicDeletionPage": "Or use the public deletion request page"
     },
     "publicProfile": "Public Profile",
     "myRealEstate": "My Properties",
@@ -2365,7 +2416,11 @@
     "phoneOrLine": "Phone or LINE ID is required so we can reach you.",
     "registrationHint": "You do not need to enter document numbers. Photos of the book are enough if you have them.",
     "photosHint": "Photos from your phone camera are perfect. Registration documents stay private and are never used in ads.",
-    "kind": { "car": "Car", "motorcycle": "Motorcycle", "other": "Other vehicle" },
+    "kind": {
+      "car": "Car",
+      "motorcycle": "Motorcycle",
+      "other": "Other vehicle"
+    },
     "sellSteps": {
       "type": "Vehicle type",
       "info": "Vehicle details",
@@ -2475,7 +2530,11 @@
       "fair": "Fair",
       "needs_work": "Needs work"
     },
-    "yesNo": { "yes": "Yes", "no": "No", "unknown": "Not sure" },
+    "yesNo": {
+      "yes": "Yes",
+      "no": "No",
+      "unknown": "Not sure"
+    },
     "ownership": {
       "owner": "I am the owner",
       "family": "Family member",
@@ -2500,8 +2559,16 @@
       "evening": "Evening",
       "anytime": "Anytime"
     },
-    "newOrUsed": { "new": "New", "used": "Used", "either": "Either" },
-    "payment": { "cash": "Cash", "financing": "Financing", "either": "Either" },
+    "newOrUsed": {
+      "new": "New",
+      "used": "Used",
+      "either": "Either"
+    },
+    "payment": {
+      "cash": "Cash",
+      "financing": "Financing",
+      "either": "Either"
+    },
     "purchaseTimeframe": {
       "asap": "As soon as possible",
       "1_month": "Within a month",
@@ -2524,5 +2591,45 @@
     "wizardBannerBody": "Use the quick vehicle form — the same information feeds SiamEZ leads and can become a booking later.",
     "wizardSell": "Sell my vehicle",
     "wizardBuy": "Find a vehicle"
+  },
+  "accountDeletion": {
+    "metaTitle": "Delete Your SiamEZ Account",
+    "metaDescription": "Request permanent deletion of your SiamEZ account and associated personal data. Normally processed within {days} days.",
+    "title": "Delete Your SiamEZ Account",
+    "description": "Request permanent deletion of your SiamEZ account and associated personal data.",
+    "emailLabel": "Email address associated with your account",
+    "warning": "This action is permanent. Deleting your account may remove your profile, account information, booking history, and other personal information associated with your account.",
+    "confirmation": "I understand that account deletion is permanent.",
+    "submit": "Request Account Deletion",
+    "submitting": "Submitting…",
+    "whatHappens": {
+      "title": "What will happen?",
+      "account": "Your SiamEZ account will be deleted.",
+      "profile": "Personal profile information will be removed where applicable.",
+      "personal": "Associated personal information will be deleted or anonymized.",
+      "retained": "Some legally required records may be retained."
+    },
+    "timeframe": {
+      "title": "How long does it take?",
+      "body": "Your account deletion request will normally be processed within {days} days."
+    },
+    "retention": {
+      "title": "Data that may be retained",
+      "body": "Certain information may be retained where required by law or where reasonably necessary for legitimate legal, accounting, security, fraud-prevention, or dispute-resolution purposes."
+    },
+    "needHelp": "Need help? Contact SiamEZ Support:",
+    "privacyPolicy": "Privacy Policy",
+    "contactSupport": "Contact Support",
+    "signedInLink": "Already signed in? Delete from account settings",
+    "success": {
+      "title": "Request Received",
+      "body": "We've received your account deletion request. If an account associated with this email exists, your request will be processed according to our account deletion policy.",
+      "returnHome": "Return to SiamEZ"
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again later.",
+      "rateLimited": "Too many requests. Please try again later.",
+      "invalidEmail": "Please enter a valid email address."
+    }
   }
 }

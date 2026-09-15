@@ -77,12 +77,14 @@ const allNavGroups: NavGroup[] = [
     items: softLaunch.enabled && !softLaunch.showFreelancerOps
       ? [
           { label: "clients", href: "/admin/clients", icon: Users },
+          { label: "accountDeletionRequests", href: "/admin/account-deletion-requests", icon: UserCog },
           { label: "staff", href: "/admin/staff", icon: UserCog },
         ]
       : [
           { label: "clients", href: "/admin/clients", icon: Users },
           { label: "freelancers", href: "/admin/freelancers", icon: UserCheck },
           { label: "freelancerJobs", href: "/admin/service-jobs?source=freelancer", icon: ClipboardList },
+          { label: "accountDeletionRequests", href: "/admin/account-deletion-requests", icon: UserCog },
           { label: "staff", href: "/admin/staff", icon: UserCog },
         ],
   },

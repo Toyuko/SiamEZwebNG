@@ -105,6 +105,10 @@ model User {
   financialAuditLogs            FinancialAuditLog[]    @relation("FinancialAuditActor")
   savedFinancialReports         SavedFinancialReport[] @relation("SavedFinancialReportOwner")
   financialDashboardPreference  FinancialDashboardPreference? @relation("FinancialDashboardOwner")
+
+  accountDeletionRequests       AccountDeletionRequest[] @relation("AccountDeletionRequestUser")
+  accountDeletionRequestsProcessed AccountDeletionRequest[] @relation("AccountDeletionRequestProcessor")
+  accountDeletionAuditLogs      AccountDeletionAuditLog[] @relation("AccountDeletionAuditActor")
 }
 
 enum FreelancerVerificationStatus {
@@ -2224,4 +2228,68 @@ model FinancialDashboardPreference {
   owner User @relation("FinancialDashboardOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@map("financial_dashboard_preferences")
+}
+
+// ----- Account deletion (Google Play / privacy compliance) -----
+
+enum AccountDeletionRequestStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  REJECTED
+}
+
+enum AccountDeletionRequestSource {
+  PUBLIC
+  AUTHENTICATED
+  ADMIN
+}
+
+/// Public or in-app request to delete a SiamEZ account and associated personal data.
+model AccountDeletionRequest {
+  id            String                        @id @default(cuid())
+  /// Normalized lowercase email used for lookup; retained after user deletion for audit.
+  email         String
+  userId        String?                       @map("user_id")
+  status        AccountDeletionRequestStatus  @default(PENDING)
+  source        AccountDeletionRequestSource  @default(PUBLIC)
+  locale        String?
+  /// Hashed client IP (never store raw IP).
+  ipHash        String?                       @map("ip_hash")
+  adminNotes    String?                       @db.Text @map("admin_notes")
+  processedById String?                       @map("processed_by_id")
+  requestedAt   DateTime                      @default(now()) @map("requested_at")
+  processingAt  DateTime?                     @map("processing_at")
+  completedAt   DateTime?                     @map("completed_at")
+  rejectedAt    DateTime?                     @map("rejected_at")
+  createdAt     DateTime                      @default(now()) @map("created_at")
+  updatedAt     DateTime                      @updatedAt @map("updated_at")
+
+  user        User? @relation("AccountDeletionRequestUser", fields: [userId], references: [id], onDelete: SetNull)
+  processedBy User? @relation("AccountDeletionRequestProcessor", fields: [processedById], references: [id], onDelete: SetNull)
+  auditLogs   AccountDeletionAuditLog[]
+
+  @@index([email, status])
+  @@index([status, requestedAt])
+  @@index([userId])
+  @@map("account_deletion_requests")
+}
+
+model AccountDeletionAuditLog {
+  id        String   @id @default(cuid())
+  requestId String?  @map("request_id")
+  /// May be null after the user row is deleted.
+  userId    String?  @map("user_id")
+  action    String
+  actorId   String?  @map("actor_id")
+  /// Non-PII metadata only (counts, status transitions, reason codes).
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  request AccountDeletionRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  actor   User?                   @relation("AccountDeletionAuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([requestId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("account_deletion_audit_logs")
 }
