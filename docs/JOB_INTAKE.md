@@ -7,7 +7,7 @@ Staff create a confirmed customer job from a phone at `/admin/jobs/new`. The job
 1. Staff open **+ New Job** (admin header, dashboard, service jobs, or `/admin/jobs`).
 2. They enter the customer, who closed the job, who will do the work, schedule, service, price, deposit, location, and documents.
 3. They review the summary and press **CREATE CONFIRMED JOB**.
-4. One database transaction writes the case, sales attribution, staff assignment, invoice, deposit payment, and calendar event.
+4. One database transaction writes the case, sales attribution, staff assignment, invoice, deposit payment, optional receipt, and calendar event.
 5. The success screen shows the saved invoice number and can view, download, print, share, or copy the job text.
 
 The copy text is built from the row that was just saved, not from the unsaved form.
@@ -25,6 +25,7 @@ The copy text is built from the row that was just saved, not from the unsaved fo
 | Deposit | `Invoice.depositAmount` and an approved `Payment` | Cash collected is the payment, not the full price |
 | Outstanding | Derived | Invoice total minus approved payments |
 | Invoice | `Invoice` | `invoiceNumber` such as `INV-2026-00001`, allocated in the transaction |
+| Receipt | `Payment.receiptNumber` | Optional `RCP-2026-00001` for the amount received |
 | Documents to prepare | `Case.documentsRequired` (JSON list) | Names only. Uploaded files stay on `Document`. |
 | Calendar | `Event` | One appointment per job, marked `[job-intake]`, updated in place |
 | Double submit | `Case.intakeIdempotencyKey` | Unique. A repeat returns the first job. |
@@ -36,6 +37,12 @@ Times are entered as Asia/Bangkok wall time and stored as UTC. Thailand has no d
 Intake uses the existing invoice PDF (`/api/admin/invoices/[id]/pdf`) and admin invoice page. The PDF still uses the SiamEZ header, payment page, and line-item table. Job intake adds schedule, staff, documents, deposit, and outstanding when those fields exist. Older invoices keep their previous layout and `INV-` plus id prefix when `invoiceNumber` is empty.
 
 Invoice numbers are generated on the server inside the create transaction. The browser never supplies one.
+
+## Receipt
+
+The payment step includes **Create receipt**. It is on by default. When it is on and a deposit was collected, the same transaction also allocates `RCP-2026-00001` on that deposit payment. A zero deposit does not create a receipt, because a receipt records money already received. The invoice is still created either way.
+
+The receipt PDF is `/api/admin/invoices/[id]/receipt`. The staff link uses the same signed token as the invoice. Saving a job again keeps an existing receipt number. Checking the option on a job that does not have one issues the next number for the current deposit.
 
 ## Financial reporting
 

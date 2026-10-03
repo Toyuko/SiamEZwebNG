@@ -18,7 +18,7 @@ import {
   type JobIntakeInput,
   type ScheduleWindow,
 } from "@/lib/jobs/intake";
-import { intakeInvoicePdfPath } from "@/lib/jobs/invoice-access";
+import { intakeInvoicePdfPath, intakeReceiptPdfPath } from "@/lib/jobs/invoice-access";
 import { checkRateLimit } from "@/lib/security/rate-limit";
 
 export type JobIntakeActionResult<T> =
@@ -79,7 +79,12 @@ export async function lookupPublicJobCustomerAction(email: string, phone?: strin
 export async function createPublicJobAction(
   raw: JobIntakeInput
 ): Promise<
-  JobIntakeActionResult<Awaited<ReturnType<typeof createConfirmedJob>> & { invoicePdfPath: string | null }>
+  JobIntakeActionResult<
+    Awaited<ReturnType<typeof createConfirmedJob>> & {
+      invoicePdfPath: string | null;
+      receiptPdfPath: string | null;
+    }
+  >
 > {
   const limit = await publicIntakeAllowed("create", 20);
   if (!limit.allowed) {
@@ -87,7 +92,14 @@ export async function createPublicJobAction(
   }
   try {
     const data = await createConfirmedJob(null, raw);
-    return { ok: true, data: { ...data, invoicePdfPath: intakeInvoicePdfPath(data.invoiceId) } };
+    return {
+      ok: true,
+      data: {
+        ...data,
+        invoicePdfPath: intakeInvoicePdfPath(data.invoiceId),
+        receiptPdfPath: data.receiptNumber ? intakeReceiptPdfPath(data.invoiceId) : null,
+      },
+    };
   } catch (error) {
     return fail(error, "Unable to create job. Please try again.");
   }

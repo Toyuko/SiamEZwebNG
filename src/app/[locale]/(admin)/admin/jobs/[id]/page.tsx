@@ -15,6 +15,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   ]);
   if (!job) notFound();
   const pdf = job.invoiceId ? `/api/admin/invoices/${job.invoiceId}/pdf` : null;
+  const receiptPdf = job.invoiceId && job.receiptNumber ? `/api/admin/invoices/${job.invoiceId}/receipt` : null;
 
   return (
     <div className="mx-auto w-full max-w-lg">
@@ -29,7 +30,12 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         )}
         {pdf && (
           <Button asChild variant="outline" size="sm" className="min-h-11">
-            <a href={pdf}>Download</a>
+            <a href={pdf}>Download invoice</a>
+          </Button>
+        )}
+        {receiptPdf && (
+          <Button asChild size="sm" className="min-h-11">
+            <a href={receiptPdf}>View receipt</a>
           </Button>
         )}
         <form
@@ -54,6 +60,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         services={services.filter((service) => service.active).map((service) => ({ id: service.id, name: service.name }))}
         staff={staff}
         initial={jobFormValuesFromRecord(job)}
+        issuedReceiptNumber={job.receiptNumber}
       />
     </div>
   );

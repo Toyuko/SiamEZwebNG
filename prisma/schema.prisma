@@ -710,6 +710,8 @@ model Payment {
   webhookEventId        String?        @unique @map("webhook_event_id")
   /// Integer PK from siam-ez.com/admin payments.php orders
   legacyOrderId         Int?           @unique @map("legacy_order_id")
+  /// Server-allocated receipt for money received, e.g. RCP-2026-00001. Null when staff did not issue a receipt.
+  receiptNumber         String?        @unique @map("receipt_number")
   metadata              Json?
   createdAt             DateTime       @default(now()) @map("created_at")
   updatedAt             DateTime       @updatedAt @map("updated_at")

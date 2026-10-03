@@ -33,6 +33,8 @@ type CreatedJob = {
   invoiceNumber: string;
   invoiceId: string | null;
   invoicePdfPath: string | null;
+  receiptNumber: string | null;
+  receiptPdfPath: string | null;
   copyText: string;
 };
 
@@ -59,6 +61,7 @@ export type JobFormValues = {
   location: string;
   documents: string[];
   status: CaseStatus;
+  createReceipt: boolean;
 };
 
 const EMPTY: JobFormValues = {
@@ -80,6 +83,7 @@ const EMPTY: JobFormValues = {
   location: "",
   documents: [],
   status: "confirmed",
+  createReceipt: true,
 };
 
 const fieldClass = "mt-1 min-h-11 w-full text-base";
@@ -181,6 +185,7 @@ export function JobIntakeForm({
   staff,
   initial,
   access = "admin",
+  issuedReceiptNumber = null,
 }: {
   mode: "create" | "edit";
   caseId?: string;
@@ -189,6 +194,7 @@ export function JobIntakeForm({
   initial?: Partial<JobFormValues>;
   /** "link" is the no-login page staff can open from a shared URL. */
   access?: "admin" | "link";
+  issuedReceiptNumber?: string | null;
 }) {
   const idempotencyKey = useRef(
     typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : ""
@@ -204,6 +210,7 @@ export function JobIntakeForm({
   const [customerChoice, setCustomerChoice] = useState<"use_existing" | "create_new" | null>(null);
   const [existingCustomerId, setExistingCustomerId] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedJob | null>(null);
+  const [knownReceipt, setKnownReceipt] = useState<string | null>(issuedReceiptNumber);
   const [copied, setCopied] = useState(false);
   const [shareNote, setShareNote] = useState<string | null>(null);
 
@@ -283,6 +290,7 @@ export function JobIntakeForm({
       customerChoice,
       existingCustomerId,
       status: values.status,
+      createReceipt: values.createReceipt,
     };
     const result =
       mode === "edit"
@@ -316,8 +324,15 @@ export function JobIntakeForm({
         (typeof result.data.invoicePdfPath === "string" || result.data.invoicePdfPath === null)
           ? result.data.invoicePdfPath
           : null,
+      receiptNumber: result.data.receiptNumber,
+      receiptPdfPath:
+        "receiptPdfPath" in result.data &&
+        (typeof result.data.receiptPdfPath === "string" || result.data.receiptPdfPath === null)
+          ? result.data.receiptPdfPath
+          : null,
       copyText: result.data.copyText,
     });
+    setKnownReceipt(result.data.receiptNumber);
   }
 
   async function copyDetails(text: string) {
@@ -330,10 +345,9 @@ export function JobIntakeForm({
     }
   }
 
-  async function shareInvoice(text: string, invoiceId: string, pdfPath: string | null) {
-    const path = pdfPath ?? `/admin/invoices/${invoiceId}`;
+  async function shareDocument(title: string, text: string, path: string, copiedLabel: string) {
     const url = `${window.location.origin}${path}`;
-    const payload = { title: "SiamEZ invoice", text, url };
+    const payload = { title, text, url };
     if (typeof navigator.share === "function") {
       try {
         await navigator.share(payload);
@@ -344,7 +358,7 @@ export function JobIntakeForm({
     }
     try {
       await navigator.clipboard.writeText(`${text}\n${url}`);
-      setShareNote("Invoice link copied.");
+      setShareNote(copiedLabel);
     } catch {
       setShareNote(url);
     }
@@ -353,11 +367,14 @@ export function JobIntakeForm({
   if (created && mode === "create") {
     const pdf = created.invoicePdfPath ?? (created.invoiceId ? `/api/admin/invoices/${created.invoiceId}/pdf` : null);
     const viewHref = access === "link" ? pdf : created.invoiceId ? `/admin/invoices/${created.invoiceId}` : null;
+    const receiptPdf =
+      created.receiptPdfPath ??
+      (created.receiptNumber && created.invoiceId ? `/api/admin/invoices/${created.invoiceId}/receipt` : null);
     return (
       <div className="mx-auto w-full max-w-lg space-y-4 pb-8">
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/40">
           <p className="text-sm font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">
-            Invoice ready
+            {created.receiptNumber ? "Invoice and receipt ready" : "Invoice ready"}
           </p>
           <h1 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">Job created successfully</h1>
           <dl className="mt-4 space-y-2 text-base">
@@ -367,6 +384,7 @@ export function JobIntakeForm({
             <Row label="Deposit" value={formatThb(created.depositSatang)} />
             <Row label="Outstanding" value={formatThb(created.outstandingSatang)} />
             <Row label="Invoice" value={created.invoiceNumber} />
+            <Row label="Receipt" value={created.receiptNumber ?? "Not created"} />
           </dl>
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -400,9 +418,54 @@ export function JobIntakeForm({
               type="button"
               variant="primary"
               className="min-h-11"
-              onClick={() => shareInvoice(created.copyText, created.invoiceId!, created.invoicePdfPath)}
+              onClick={() =>
+                shareDocument(
+                  "SiamEZ invoice",
+                  created.copyText,
+                  created.invoicePdfPath ?? `/admin/invoices/${created.invoiceId}`,
+                  "Invoice link copied."
+                )
+              }
             >
               Share Invoice
+            </Button>
+          )}
+          {receiptPdf && (
+            <Button asChild variant="outline" className="min-h-11">
+              <a href={receiptPdf} target="_blank" rel="noreferrer">
+                View Receipt
+              </a>
+            </Button>
+          )}
+          {receiptPdf && (
+            <Button asChild variant="outline" className="min-h-11">
+              <a href={receiptPdf} download>
+                Download Receipt
+              </a>
+            </Button>
+          )}
+          {receiptPdf && (
+            <Button asChild variant="outline" className="min-h-11">
+              <a href={receiptPdf} target="_blank" rel="noreferrer">
+                Print Receipt
+              </a>
+            </Button>
+          )}
+          {created.receiptNumber && created.invoiceId && (
+            <Button
+              type="button"
+              variant="primary"
+              className="min-h-11"
+              onClick={() =>
+                shareDocument(
+                  "SiamEZ receipt",
+                  created.copyText,
+                  created.receiptPdfPath ?? `/api/admin/invoices/${created.invoiceId}/receipt`,
+                  "Receipt link copied."
+                )
+              }
+            >
+              Share Receipt
             </Button>
           )}
           <Button type="button" variant="outline" className="min-h-11" onClick={() => copyDetails(created.copyText)}>
@@ -422,6 +485,11 @@ export function JobIntakeForm({
     );
   }
 
+  const receiptSummary = knownReceipt
+    ? knownReceipt
+    : values.createReceipt && depositSatang > 0
+      ? `Will be created for ${formatThb(depositSatang)}`
+      : "Not created";
   const closedByName = staffOptions.find((person) => person.id === values.closedByStaffId)?.name ?? "—";
   const assignedName =
     values.assignedStaffId && values.assignedStaffId !== "tbd"
@@ -460,6 +528,7 @@ export function JobIntakeForm({
           <Row label="Total" value={formatThb(totalSatang)} />
           <Row label="Deposit" value={formatThb(depositSatang)} />
           <Row label="Outstanding" value={formatThb(outstanding)} />
+          <Row label="Receipt" value={receiptSummary} />
           <Row label="Location" value={values.location || "—"} />
           <div>
             <p className="text-sm text-gray-500">Documents</p>
@@ -689,10 +758,25 @@ export function JobIntakeForm({
                 />
               </div>
             </Field>
+            <label className="flex min-h-11 items-start gap-3 text-base">
+              <input
+                type="checkbox"
+                className="mt-1 h-5 w-5"
+                checked={values.createReceipt}
+                onChange={(event) => set("createReceipt", event.target.checked)}
+              />
+              <span>
+                Create receipt
+                <span className="mt-0.5 block text-sm text-gray-500">
+                  Also issue a receipt for the amount received. The invoice is still created.
+                </span>
+              </span>
+            </label>
             <div className="rounded-xl bg-gray-50 p-3 text-base dark:bg-gray-900">
               <Row label="Total" value={formatThb(totalSatang)} />
               <Row label="Deposit" value={formatThb(depositSatang)} />
               <Row label="Outstanding" value={formatThb(Math.max(0, outstanding))} />
+              <Row label="Receipt" value={receiptSummary} />
             </div>
           </section>
 
@@ -757,7 +841,8 @@ export function JobIntakeForm({
 
       {created && mode === "edit" && (
         <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-          Job saved. Invoice {created.invoiceNumber}.{" "}
+          Job saved. Invoice {created.invoiceNumber}
+          {created.receiptNumber ? `. Receipt ${created.receiptNumber}` : ""}.{" "}
           <button type="button" className="underline" onClick={() => copyDetails(created.copyText)}>
             {copied ? "Copied!" : "Copy Job Details"}
           </button>

@@ -15,9 +15,12 @@ import {
   decideCustomer,
   displayInvoiceNumber,
   formatSequentialInvoiceNumber,
+  formatSequentialReceiptNumber,
   invoiceLineItems,
   invoiceStatusForDeposit,
   nextInvoiceSequence,
+  nextReceiptSequence,
+  shouldIssueReceipt,
   parseDocumentsRequired,
   paymentStanding,
   phoneDigits,
@@ -75,6 +78,11 @@ function toJobView(row: JobRow) {
   const jobType = caseServiceName(row);
   const documents = parseDocumentsRequired(row.documentsRequired);
   const invoiceNumber = invoice ? displayInvoiceNumber(invoice) : "—";
+  const receiptPayment =
+    row.invoices
+      .flatMap((item) => item.payments)
+      .find((payment) => payment.status === "approved" && payment.receiptNumber) ?? null;
+  const receiptNumber = receiptPayment?.receiptNumber ?? null;
   const copyText = buildJobCopyText({
     customerName: row.user?.name ?? row.guestName ?? "—",
     customerEmail: row.user?.email ?? row.guestEmail ?? "—",
@@ -92,6 +100,7 @@ function toJobView(row: JobRow) {
     location: row.location,
     documents,
     invoiceNumber,
+    receiptNumber,
   });
   return {
     id: row.id,
@@ -129,6 +138,7 @@ function toJobView(row: JobRow) {
     invoiceId: invoice?.id ?? null,
     invoiceNumber,
     invoiceStatus: invoice?.status ?? null,
+    receiptNumber,
     copyText,
     events: row.events.map((event) => ({
       id: event.id,
@@ -157,6 +167,19 @@ async function allocateInvoiceNumber(tx: Prisma.TransactionClient, now: Date): P
     year
   );
   return formatSequentialInvoiceNumber(year, sequence);
+}
+
+async function allocateReceiptNumber(tx: Prisma.TransactionClient, now: Date): Promise<string> {
+  const year = Number(bangkokDateInputValue(now).slice(0, 4));
+  const rows = await tx.payment.findMany({
+    where: { receiptNumber: { startsWith: `RCP-${year}-` } },
+    select: { receiptNumber: true },
+  });
+  const sequence = nextReceiptSequence(
+    rows.map((row) => row.receiptNumber).filter((value): value is string => Boolean(value)),
+    year
+  );
+  return formatSequentialReceiptNumber(year, sequence);
 }
 
 async function resolveCustomer(
@@ -294,7 +317,14 @@ async function syncSchedule(
 
 async function syncDepositPayment(
   tx: Prisma.TransactionClient,
-  input: { caseId: string; invoiceId: string; depositSatang: number; totalSatang: number; now: Date }
+  input: {
+    caseId: string;
+    invoiceId: string;
+    depositSatang: number;
+    totalSatang: number;
+    now: Date;
+    issueReceipt: boolean;
+  }
 ) {
   const payments = await tx.payment.findMany({ where: { invoiceId: input.invoiceId } });
   const intake = payments.find(
@@ -303,6 +333,9 @@ async function syncDepositPayment(
   if (input.depositSatang <= 0) {
     if (intake) await tx.payment.delete({ where: { id: intake.id } });
   } else if (intake) {
+    const receiptNumber =
+      intake.receiptNumber ??
+      (input.issueReceipt ? await allocateReceiptNumber(tx, input.now) : null);
     await tx.payment.update({
       where: { id: intake.id },
       data: {
@@ -310,6 +343,7 @@ async function syncDepositPayment(
         status: "approved",
         approvedAt: intake.approvedAt ?? input.now,
         kind: input.depositSatang >= input.totalSatang ? "full" : "initial",
+        receiptNumber,
       },
     });
   } else {
@@ -323,6 +357,7 @@ async function syncDepositPayment(
         status: "approved",
         approvedAt: input.now,
         kind: input.depositSatang >= input.totalSatang ? "full" : "initial",
+        receiptNumber: input.issueReceipt ? await allocateReceiptNumber(tx, input.now) : null,
         metadata: { source: JOB_INTAKE_DEPOSIT_SOURCE },
       },
     });
@@ -517,6 +552,9 @@ export async function createConfirmedJob(
             status: "approved",
             approvedAt: now,
             kind: input.depositSatang >= input.totalSatang ? "full" : "initial",
+            receiptNumber: shouldIssueReceipt(input.createReceipt, input.depositSatang)
+              ? await allocateReceiptNumber(tx, now)
+              : null,
             metadata: { source: JOB_INTAKE_DEPOSIT_SOURCE },
           },
         });
@@ -537,7 +575,9 @@ export async function createConfirmedJob(
         data: {
           caseId: created.id,
           userId: actorId ?? input.closedByStaffId,
-          content: `Confirmed job created. Total ${input.totalSatang} satang, deposit ${input.depositSatang} satang.`,
+          content: `Confirmed job created. Total ${input.totalSatang} satang, deposit ${input.depositSatang} satang.${
+            shouldIssueReceipt(input.createReceipt, input.depositSatang) ? " Receipt issued for the amount received." : ""
+          }`,
           isInternal: true,
         },
       });
@@ -701,6 +741,7 @@ export async function updateConfirmedJob(
       depositSatang: input.depositSatang,
       totalSatang: input.totalSatang,
       now,
+      issueReceipt: shouldIssueReceipt(input.createReceipt, input.depositSatang),
     });
     await tx.invoice.update({
       where: { id: invoice.id },

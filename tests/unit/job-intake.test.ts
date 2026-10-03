@@ -8,15 +8,19 @@ import {
   buildJobCopyText,
   decideCustomer,
   formatSequentialInvoiceNumber,
+  formatSequentialReceiptNumber,
   formatThb,
   invoiceSequenceFromNumber,
   invoiceStatusForDeposit,
   jobMoneyReconciliation,
   nextInvoiceSequence,
+  nextReceiptSequence,
   outstandingSatang,
   paymentStanding,
   phonesMatch,
   planCalendarEvent,
+  receiptSequenceFromNumber,
+  shouldIssueReceipt,
   validateJobIntake,
 } from "@/lib/jobs/intake";
 
@@ -166,6 +170,17 @@ describe("confirmed job intake", () => {
     expect(formatSequentialInvoiceNumber(2026, 3)).not.toBe(formatSequentialInvoiceNumber(2026, 2));
   });
 
+  it("allocates a receipt only when money was received and the option is on", () => {
+    expect(formatSequentialReceiptNumber(2026, 1)).toBe("RCP-2026-00001");
+    expect(nextReceiptSequence(["RCP-2026-00001", "INV-2026-00009", "RCP-2025-00004"], 2026)).toBe(2);
+    expect(receiptSequenceFromNumber("RCP-2026-00007", 2026)).toBe(7);
+    expect(shouldIssueReceipt(true, 500_000)).toBe(true);
+    expect(shouldIssueReceipt(true, 0)).toBe(false);
+    expect(shouldIssueReceipt(false, 500_000)).toBe(false);
+    expect(validateJobIntake({ ...base, createReceipt: true }).createReceipt).toBe(true);
+    expect(validateJobIntake(base).createReceipt).toBe(false);
+  });
+
   it("plans one calendar event for a confirmed time and none when the date is missing", () => {
     const scheduled = planCalendarEvent({
       customerName: "John Smith",
@@ -244,6 +259,27 @@ describe("confirmed job intake", () => {
         "Invoice: INV-2026-00042",
       ].join("\n")
     );
+    expect(
+      buildJobCopyText({
+        customerName: "John Smith",
+        customerEmail: "john@example.com",
+        customerPhone: null,
+        leadSource: "line",
+        leadSourceDetail: null,
+        staffName: "Grace",
+        scheduledAt: null,
+        timeTbd: true,
+        jobType: "Visa",
+        jobDescription: null,
+        totalSatang: 100,
+        depositSatang: 100,
+        outstandingSatang: 0,
+        location: null,
+        documents: [],
+        invoiceNumber: "INV-2026-00001",
+        receiptNumber: "RCP-2026-00001",
+      })
+    ).toContain("Receipt: RCP-2026-00001");
   });
 
   it("refuses customers and other non-staff roles", () => {

@@ -50,6 +50,8 @@ export type JobIntakeInput = {
   idempotencyKey?: string | null;
   customerChoice?: CustomerChoice | null;
   existingCustomerId?: string | null;
+  /** When true and a deposit was collected, also issue a numbered receipt. */
+  createReceipt?: boolean;
 };
 
 export type ValidatedJobIntake = {
@@ -75,6 +77,7 @@ export type ValidatedJobIntake = {
   idempotencyKey: string | null;
   customerChoice: CustomerChoice | null;
   existingCustomerId: string | null;
+  createReceipt: boolean;
 };
 
 export type FieldErrors = Record<string, string>;
@@ -330,7 +333,13 @@ export function validateJobIntake(raw: JobIntakeInput, options?: { requireIdempo
     idempotencyKey: requireKey ? idempotencyKey : null,
     customerChoice: raw.customerChoice ?? null,
     existingCustomerId: raw.existingCustomerId?.trim() || null,
+    createReceipt: raw.createReceipt === true,
   };
+}
+
+/** A receipt records money already received, so it is only issued with a deposit. */
+export function shouldIssueReceipt(createReceipt: boolean, depositSatang: number): boolean {
+  return createReceipt && depositSatang > 0;
 }
 
 export type CustomerRecord = {
@@ -376,9 +385,32 @@ export function invoiceSequenceFromNumber(invoiceNumber: string, year: number): 
 }
 
 export function nextInvoiceSequence(existingNumbers: string[], year: number): number {
+  return nextDocumentSequence(existingNumbers, year, invoiceSequenceFromNumber);
+}
+
+export function formatSequentialReceiptNumber(year: number, sequence: number): string {
+  return `RCP-${year}-${String(sequence).padStart(5, "0")}`;
+}
+
+export function receiptSequenceFromNumber(receiptNumber: string, year: number): number | null {
+  const match = new RegExp(`^RCP-${year}-(\\d+)$`).exec(receiptNumber);
+  if (!match) return null;
+  const n = Number(match[1]);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+export function nextReceiptSequence(existingNumbers: string[], year: number): number {
+  return nextDocumentSequence(existingNumbers, year, receiptSequenceFromNumber);
+}
+
+function nextDocumentSequence(
+  existingNumbers: string[],
+  year: number,
+  parse: (value: string, year: number) => number | null
+): number {
   let max = 0;
   for (const value of existingNumbers) {
-    const n = invoiceSequenceFromNumber(value, year);
+    const n = parse(value, year);
     if (n != null && n > max) max = n;
   }
   return max + 1;
@@ -406,6 +438,7 @@ export type JobCopyInput = {
   location: string | null;
   documents: string[];
   invoiceNumber: string;
+  receiptNumber?: string | null;
 };
 
 export function buildJobCopyText(input: JobCopyInput): string {
@@ -440,6 +473,7 @@ export function buildJobCopyText(input: JobCopyInput): string {
     docs,
     "",
     `Invoice: ${input.invoiceNumber}`,
+    ...(input.receiptNumber ? [`Receipt: ${input.receiptNumber}`] : []),
   ].join("\n");
 }
 
@@ -570,6 +604,7 @@ export function jobFormValuesFromRecord(job: {
   totalSatang: number;
   depositSatang: number;
   status: CaseStatus;
+  receiptNumber?: string | null;
 }) {
   const scheduled = job.scheduledAt ? new Date(job.scheduledAt) : null;
   return {
@@ -591,6 +626,7 @@ export function jobFormValuesFromRecord(job: {
     location: job.location ?? "",
     documents: job.documents,
     status: job.status,
+    createReceipt: Boolean(job.receiptNumber),
   };
 }
 

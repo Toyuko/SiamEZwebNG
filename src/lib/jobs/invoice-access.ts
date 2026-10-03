@@ -24,3 +24,9 @@ export function intakeInvoicePdfPath(invoiceId: string | null): string | null {
   if (!invoiceId || !token) return null;
   return `/api/admin/invoices/${invoiceId}/pdf?token=${encodeURIComponent(token)}`;
 }
+
+export function intakeReceiptPdfPath(invoiceId: string | null): string | null {
+  const token = signIntakeInvoice(invoiceId);
+  if (!invoiceId || !token) return null;
+  return `/api/admin/invoices/${invoiceId}/receipt?token=${encodeURIComponent(token)}`;
+}
