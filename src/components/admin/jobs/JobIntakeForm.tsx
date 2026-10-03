@@ -311,7 +311,11 @@ export function JobIntakeForm({
       outstandingSatang: result.data.outstandingSatang,
       invoiceNumber: result.data.invoiceNumber,
       invoiceId: result.data.invoiceId,
-      invoicePdfPath: "invoicePdfPath" in result.data ? result.data.invoicePdfPath : null,
+      invoicePdfPath:
+        "invoicePdfPath" in result.data &&
+        (typeof result.data.invoicePdfPath === "string" || result.data.invoicePdfPath === null)
+          ? result.data.invoicePdfPath
+          : null,
       copyText: result.data.copyText,
     });
   }
