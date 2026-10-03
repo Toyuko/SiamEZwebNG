@@ -20,13 +20,18 @@ export DATABASE_URL="$DIRECT_URL"
 export PRISMA_SCHEMA_ENGINE_LOCK_TIMEOUT="${PRISMA_SCHEMA_ENGINE_LOCK_TIMEOUT:-60000}"
 
 # Prisma will not retry a migration that failed mid-deploy. Production already
-# had some job-intake columns, so that attempt is marked rolled back and the
+# had some of these columns, so a failed attempt is marked rolled back and the
 # idempotent SQL is applied again.
 status_output="$(npx prisma migrate status 2>&1 || true)"
 printf '%s\n' "$status_output"
-if printf '%s\n' "$status_output" | grep -q "20261003140000_job_intake" && printf '%s\n' "$status_output" | grep -qi "failed"; then
-  echo "migrate-deploy: marking failed 20261003140000_job_intake as rolled back so it can be retried"
-  npx prisma migrate resolve --rolled-back 20261003140000_job_intake
-fi
+resolve_failed() {
+  local migration="$1"
+  if printf '%s\n' "$status_output" | grep -q "$migration" && printf '%s\n' "$status_output" | grep -qi "failed"; then
+    echo "migrate-deploy: marking failed ${migration} as rolled back so it can be retried"
+    npx prisma migrate resolve --rolled-back "$migration"
+  fi
+}
+resolve_failed "20261003140000_job_intake"
+resolve_failed "20261003153000_payment_receipt_number"
 
 npx prisma migrate deploy
