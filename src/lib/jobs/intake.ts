@@ -22,6 +22,22 @@ export const LEAD_SOURCE_LABELS: Record<LeadSource, string> = {
   other: "Other",
 };
 
+/** Mailboxes and seed accounts that are not people staff can assign a job to. */
+const NON_PERSON_STAFF_EMAILS = new Set([
+  "play-review-admin@siamez.com",
+  "inquiries@siam-ez.com",
+  "migration-bot@siamez.internal",
+]);
+
+export function isAssignableJobStaff(staff: { email?: string | null; name?: string | null }) {
+  const email = staff.email?.trim().toLowerCase() ?? "";
+  const name = staff.name?.trim().toLowerCase() ?? "";
+  if (email.endsWith(".internal")) return false;
+  if (NON_PERSON_STAFF_EMAILS.has(email)) return false;
+  if (name.includes("legacy migration") || name.includes("google play review")) return false;
+  return true;
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;

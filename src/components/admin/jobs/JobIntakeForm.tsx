@@ -117,9 +117,9 @@ function SearchPicker({
 }) {
   const [query, setQuery] = useState("");
   const selected = options.find((option) => option.id === value);
-  const filtered = options
-    .filter((option) => option.name.toLowerCase().includes(query.trim().toLowerCase()))
-    .slice(0, 8);
+  const filtered = options.filter((option) =>
+    option.name.toLowerCase().includes(query.trim().toLowerCase()),
+  );
   return (
     <div>
       <Label>
@@ -133,7 +133,7 @@ function SearchPicker({
         className={fieldClass}
         aria-invalid={Boolean(error)}
       />
-      <div className="mt-2 flex max-h-48 flex-col gap-1 overflow-auto">
+      <div className="mt-2 flex max-h-80 flex-col gap-1 overflow-auto">
         {allowTbd && (
           <PickerButton active={value === "tbd" || value === ""} onClick={() => onChange("tbd")}>
             TBD

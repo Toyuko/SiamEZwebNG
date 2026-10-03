@@ -29,6 +29,7 @@ import {
   planCalendarEvent,
   scheduleWindowRange,
   staffDisplayName,
+  isAssignableJobStaff,
   validateJobIntake,
   type CustomerRecord,
   type JobIntakeInput,
@@ -868,13 +869,15 @@ export async function listPublicIntakeOptions() {
     }),
     prisma.user.findMany({
       where: { role: { in: ["admin", "staff"] }, active: true },
-      select: { id: true, name: true },
+      select: { id: true, name: true, email: true },
       orderBy: { name: "asc" },
     }),
   ]);
   return {
     services,
-    staff: staff.map((person) => ({ id: person.id, name: person.name, email: "" })),
+    staff: staff
+      .filter((person) => isAssignableJobStaff(person))
+      .map((person) => ({ id: person.id, name: person.name, email: "" })),
   };
 }
 

@@ -10,6 +10,7 @@ import {
   formatSequentialInvoiceNumber,
   formatSequentialReceiptNumber,
   formatThb,
+  isAssignableJobStaff,
   invoiceSequenceFromNumber,
   invoiceStatusForDeposit,
   jobMoneyReconciliation,
@@ -313,6 +314,14 @@ describe("confirmed job intake", () => {
     expect(intakeInvoiceTokenMatches("inv_2", token, secret)).toBe(false);
     expect(intakeInvoiceTokenMatches("inv_1", token, "other-secret")).toBe(false);
     expect(intakeInvoiceTokenMatches("inv_1", "short", secret)).toBe(false);
+  });
+
+  it("keeps real staff on the job form and leaves system accounts off it", () => {
+    expect(isAssignableJobStaff({ name: "Grace", email: "grace@siamez.com" })).toBe(true);
+    expect(isAssignableJobStaff({ name: "Bay", email: "hengruaycharoen168@gmail.com" })).toBe(true);
+    expect(isAssignableJobStaff({ name: "Google Play Review Admin", email: "play-review-admin@siamez.com" })).toBe(false);
+    expect(isAssignableJobStaff({ name: "SiamEZ Inquiries", email: "inquiries@siam-ez.com" })).toBe(false);
+    expect(isAssignableJobStaff({ name: "Legacy migration", email: "migration-bot@siamez.internal" })).toBe(false);
   });
 
   it("surfaces a customer choice error instead of merging uncertain matches", () => {

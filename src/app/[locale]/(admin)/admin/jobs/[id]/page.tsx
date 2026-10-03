@@ -3,7 +3,7 @@ import { Link } from "@/i18n/navigation";
 import { getServices, getStaffUsers } from "@/actions/admin";
 import { getConfirmedJobAction, regenerateJobInvoiceAction } from "@/actions/job-intake";
 import { JobIntakeForm } from "@/components/admin/jobs/JobIntakeForm";
-import { formatThb, jobFormValuesFromRecord } from "@/lib/jobs/intake";
+import { formatThb, isAssignableJobStaff, jobFormValuesFromRecord } from "@/lib/jobs/intake";
 import { Button } from "@/components/ui/button";
 
 export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -58,7 +58,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         mode="edit"
         caseId={job.id}
         services={services.filter((service) => service.active).map((service) => ({ id: service.id, name: service.name }))}
-        staff={staff}
+        staff={staff.filter((person) => isAssignableJobStaff(person))}
         initial={jobFormValuesFromRecord(job)}
         issuedReceiptNumber={job.receiptNumber}
       />
