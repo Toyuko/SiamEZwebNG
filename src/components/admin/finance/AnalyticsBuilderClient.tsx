@@ -41,7 +41,8 @@ const GROUP_OPTIONS: { value: AnalyticsGroupBy; label: string }[] = [
   { value: "hour", label: "Hour" },
   { value: "day_of_week", label: "Day of week" },
   { value: "service", label: "Service" },
-  { value: "staff", label: "Staff" },
+  { value: "staff", label: "Service staff" },
+  { value: "salesperson", label: "Salesperson" },
   { value: "case", label: "Case" },
   { value: "client", label: "Client" },
   { value: "expense_category", label: "Expense category" },
@@ -66,6 +67,14 @@ const METRIC_LABELS: Record<AnalyticsMetric, string> = {
   staffCostPct: "Staff cost %",
   operatingCostPct: "OpEx %",
   paymentCount: "Payments",
+  dealsClosed: "Deals closed",
+  dealValue: "Deal value",
+  collectedRevenue: "Cash collected",
+  outstandingRevenue: "Outstanding",
+  averageDealValue: "Average deal value",
+  commission: "Commission",
+  commissionPaid: "Commission paid",
+  commissionOutstanding: "Commission outstanding",
 };
 
 function isMoneyMetric(m: AnalyticsMetric): boolean {
@@ -76,6 +85,7 @@ function isMoneyMetric(m: AnalyticsMetric): boolean {
     "operatingCostPct",
     "jobs",
     "paymentCount",
+    "dealsClosed",
   ].includes(m);
 }
 
@@ -112,6 +122,9 @@ export function AnalyticsBuilderClient({
   );
   const [serviceId, setServiceId] = useState(initialConfig?.filters?.serviceId ?? "");
   const [staffId, setStaffId] = useState(initialConfig?.filters?.staffId ?? "");
+  const [salesPersonId, setSalesPersonId] = useState(
+    initialConfig?.filters?.salesPersonId ?? ""
+  );
   const [paymentMethod, setPaymentMethod] = useState(
     initialConfig?.filters?.paymentMethod ?? ""
   );
@@ -142,6 +155,7 @@ export function AnalyticsBuilderClient({
       filters: {
         serviceId: serviceId || null,
         staffId: staffId || null,
+        salesPersonId: salesPersonId || null,
         paymentMethod: paymentMethod || null,
         caseStatus: caseStatus || null,
       },
@@ -156,6 +170,7 @@ export function AnalyticsBuilderClient({
       metrics,
       serviceId,
       staffId,
+      salesPersonId,
       paymentMethod,
       caseStatus,
       compare,
@@ -313,7 +328,22 @@ export function AnalyticsBuilderClient({
               </select>
             </label>
             <label className="block text-sm">
-              <span className="text-gray-500">Staff</span>
+              <span className="text-gray-500">Salesperson</span>
+              <select
+                className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 dark:border-gray-700 dark:bg-gray-900"
+                value={salesPersonId}
+                onChange={(e) => setSalesPersonId(e.target.value)}
+              >
+                <option value="">All</option>
+                {filterOptions.staff.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name ?? s.email}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-sm">
+              <span className="text-gray-500">Service staff</span>
               <select
                 className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 dark:border-gray-700 dark:bg-gray-900"
                 value={staffId}
@@ -546,6 +576,11 @@ export function AnalyticsBuilderClient({
                     "jobs",
                     "caseExpenses",
                     "refunds",
+                    "dealValue",
+                    "collectedRevenue",
+                    "outstandingRevenue",
+                    "commission",
+                    "dealsClosed",
                   ].includes(m)
                 )}
                 chartType={chartType}

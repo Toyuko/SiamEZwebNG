@@ -2,6 +2,7 @@ import { Link } from "@/i18n/navigation";
 
 const SUBNAV = [
   { href: "/admin/financials", label: "Overview" },
+  { href: "/admin/financials/sales", label: "Sales Performance" },
   { href: "/admin/financials/analytics", label: "Analytics" },
   { href: "/admin/financials/transactions", label: "Transactions" },
   { href: "/admin/financials/revenue", label: "Revenue" },

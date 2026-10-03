@@ -117,7 +117,8 @@ export async function exportAnalyticsCsvAction(input: AnalyticsConfigInput) {
         m === "staffCostPct" ||
         m === "operatingCostPct" ||
         m === "jobs" ||
-        m === "paymentCount"
+        m === "paymentCount" ||
+        m === "dealsClosed"
       ) {
         return v;
       }

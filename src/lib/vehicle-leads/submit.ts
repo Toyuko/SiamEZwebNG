@@ -253,6 +253,7 @@ export async function convertVehicleLeadToBooking(leadId: string, staffUserId: s
   const isFixedPayable =
     service.type === "fixed" && service.priceAmount != null && service.priceAmount > 0;
 
+  const closerId = lead.assignedStaffId ?? staffUserId;
   const created = await createCaseRecord({
     caseNumber: nextCaseNumber(),
     serviceId: service.id,
@@ -262,6 +263,21 @@ export async function convertVehicleLeadToBooking(leadId: string, staffUserId: s
     guestName: lead.customerName,
     guestPhone: lead.customerPhone,
     formData,
+    salesPersonId: closerId,
+    closedAt: new Date(),
+    dealValue: isFixedPayable ? service.priceAmount : null,
+  });
+
+  await prisma.salesAttributionAudit.create({
+    data: {
+      caseId: created.id,
+      previousSalesPersonId: null,
+      newSalesPersonId: closerId,
+      changedById: staffUserId,
+      reason: lead.assignedStaffId
+        ? "Preserved from vehicle lead"
+        : "Lead converted by staff",
+    },
   });
 
   if (isFixedPayable) {

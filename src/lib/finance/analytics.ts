@@ -20,6 +20,17 @@ import {
   type DateRange,
 } from "./dates";
 import { roundMargin, sumSatang, type MoneySatang } from "./money";
+import {
+  commissionEarnedAmount,
+  commissionOutstandingAmount,
+  commissionPaidAmount,
+  dealOutstanding,
+  filterSalesDeals,
+  netCollected,
+  summarizeSales,
+  type SalesDeal,
+  type SalesSettings,
+} from "./sales";
 
 export type AnalyticsGroupBy =
   | "hour"
@@ -35,7 +46,8 @@ export type AnalyticsGroupBy =
   | "client"
   | "expense_category"
   | "revenue_category"
-  | "payment_method";
+  | "payment_method"
+  | "salesperson";
 
 export type AnalyticsMetric =
   | "revenue"
@@ -54,7 +66,15 @@ export type AnalyticsMetric =
   | "avgProfit"
   | "staffCostPct"
   | "operatingCostPct"
-  | "paymentCount";
+  | "paymentCount"
+  | "dealsClosed"
+  | "dealValue"
+  | "collectedRevenue"
+  | "outstandingRevenue"
+  | "averageDealValue"
+  | "commission"
+  | "commissionPaid"
+  | "commissionOutstanding";
 
 export const ALL_ANALYTICS_METRICS: AnalyticsMetric[] = [
   "revenue",
@@ -74,6 +94,14 @@ export const ALL_ANALYTICS_METRICS: AnalyticsMetric[] = [
   "staffCostPct",
   "operatingCostPct",
   "paymentCount",
+  "dealsClosed",
+  "dealValue",
+  "collectedRevenue",
+  "outstandingRevenue",
+  "averageDealValue",
+  "commission",
+  "commissionPaid",
+  "commissionOutstanding",
 ];
 
 export const DEFAULT_ANALYTICS_METRICS: AnalyticsMetric[] = [
@@ -147,6 +175,14 @@ export type AnalyticsBucket = {
   staffCostPct: number;
   operatingCostPct: number;
   paymentCount: number;
+  dealsClosed: number;
+  dealValue: MoneySatang;
+  collectedRevenue: MoneySatang;
+  outstandingRevenue: MoneySatang;
+  averageDealValue: MoneySatang;
+  commission: MoneySatang;
+  commissionPaid: MoneySatang;
+  commissionOutstanding: MoneySatang;
 };
 
 export type AnalyticsFilters = {
@@ -155,6 +191,7 @@ export type AnalyticsFilters = {
   paymentMethod?: string | null;
   caseStatus?: string | null;
   clientId?: string | null;
+  salesPersonId?: string | null;
 };
 
 export type AnalyticsKpiSet = BusinessFinancialSummary & {
@@ -164,6 +201,14 @@ export type AnalyticsKpiSet = BusinessFinancialSummary & {
   staffCostPct: number;
   operatingCostPct: number;
   paymentCount: number;
+  dealsClosed: number;
+  dealValue: MoneySatang;
+  collectedRevenue: MoneySatang;
+  outstandingRevenue: MoneySatang;
+  averageDealValue: MoneySatang;
+  commission: MoneySatang;
+  commissionPaid: MoneySatang;
+  commissionOutstanding: MoneySatang;
 };
 
 export type PeriodComparison = {
@@ -203,6 +248,14 @@ function emptyBucket(key: string, label: string): AnalyticsBucket {
     operatingCostPct: 0,
     jobs: 0,
     paymentCount: 0,
+    dealsClosed: 0,
+    dealValue: 0,
+    collectedRevenue: 0,
+    outstandingRevenue: 0,
+    averageDealValue: 0,
+    commission: 0,
+    commissionPaid: 0,
+    commissionOutstanding: 0,
   };
 }
 
@@ -223,6 +276,8 @@ function finalizeBucket(b: AnalyticsBucket): AnalyticsBucket {
     b.netRevenue > 0
       ? roundMargin((b.operatingExpenses / b.netRevenue) * 100)
       : 0;
+  b.averageDealValue =
+    b.dealsClosed > 0 ? Math.round(b.dealValue / b.dealsClosed) : 0;
   return b;
 }
 
@@ -264,6 +319,8 @@ function groupKeyFor(
     clientName?: string | null;
     category?: string | null;
     method?: string | null;
+    salesPersonId?: string | null;
+    salesPersonName?: string | null;
   }
 ): { key: string; label: string } {
   switch (groupBy) {
@@ -326,6 +383,11 @@ function groupKeyFor(
         key: ctx.method ?? "unknown",
         label: (ctx.method ?? "unknown").replace(/_/g, " "),
       };
+    case "salesperson":
+      return {
+        key: ctx.salesPersonId ?? "unassigned",
+        label: ctx.salesPersonName ?? "Unassigned",
+      };
     default:
       return { key: "all", label: "All" };
   }
@@ -343,6 +405,8 @@ export function computeAnalyticsKpis(input: {
   cases: AnalyticsCaseRow[];
   accountsReceivable?: number;
   accountsPayable?: number;
+  deals?: SalesDeal[];
+  salesSettings?: Pick<SalesSettings, "countCancelledAsSale">;
 }): AnalyticsKpiSet {
   const paidCustomerRevenue = sumSatang(
     input.payments.filter((p) => p.status === "approved").map((p) => p.amount)
@@ -354,6 +418,12 @@ export function computeAnalyticsKpis(input: {
     accountsPayable: input.accountsPayable ?? 0,
   });
   const jobs = input.cases.length;
+  const sales = summarizeSales(
+    filterSalesDeals(input.deals ?? [], {}, {
+      countCancelledAsSale: input.salesSettings?.countCancelledAsSale === true,
+      requireCloserOnAdminCreate: true,
+    })
+  );
   return {
     ...base,
     jobs,
@@ -368,6 +438,14 @@ export function computeAnalyticsKpis(input: {
         ? roundMargin((base.operatingExpenses / base.netRevenue) * 100)
         : 0,
     paymentCount: input.payments.filter((p) => p.status === "approved").length,
+    dealsClosed: sales.dealsClosed,
+    dealValue: sales.totalSales,
+    collectedRevenue: sales.cashCollected,
+    outstandingRevenue: sales.outstanding,
+    averageDealValue: sales.averageDealValue,
+    commission: sales.commission,
+    commissionPaid: sales.commissionPaid,
+    commissionOutstanding: sales.commissionOutstanding,
   };
 }
 
@@ -384,6 +462,9 @@ export function groupAnalytics(input: {
   transactions: AnalyticsTxRow[];
   cases: AnalyticsCaseRow[];
   filters?: AnalyticsFilters;
+  /** Closed deals. Attributed by closedAt, never by service completion. */
+  deals?: SalesDeal[];
+  countCancelledAsSale?: boolean;
 }): AnalyticsBucket[] {
   const filters = input.filters ?? {};
   const staffCaseIds =
@@ -532,8 +613,9 @@ export function groupAnalytics(input: {
         b.jobs += 1;
       }
     }
-  } else {
-    // Job counts for temporal / service / case / client groups
+  } else if (input.groupBy !== "salesperson") {
+    // Job counts for temporal / service / case / client groups.
+    // Salesperson groups use closed deals below — never service-staff assignment.
     for (const c of input.cases) {
       if (filters.serviceId && c.serviceId !== filters.serviceId) continue;
       if (filters.caseStatus && c.status !== filters.caseStatus) continue;
@@ -554,6 +636,46 @@ export function groupAnalytics(input: {
       const b = ensure(key, label);
       b.jobs += 1;
     }
+  }
+
+  const salesDeals = filterSalesDeals(input.deals ?? [], {
+    serviceId: filters.serviceId,
+    caseStatus: filters.caseStatus,
+    salesPersonId: filters.salesPersonId,
+    paymentMethod: filters.paymentMethod,
+  }, {
+    countCancelledAsSale: input.countCancelledAsSale === true,
+    requireCloserOnAdminCreate: true,
+  });
+  for (const d of salesDeals) {
+    if (!d.closedAt) continue;
+    if (filters.clientId && d.clientId !== filters.clientId) continue;
+    if (
+      input.groupBy === "staff" ||
+      input.groupBy === "expense_category" ||
+      input.groupBy === "revenue_category"
+    ) {
+      continue;
+    }
+    const { key, label } = groupKeyFor(input.groupBy, d.closedAt, {
+      serviceId: d.serviceId,
+      serviceName: d.serviceName,
+      caseId: d.caseId,
+      caseNumber: d.caseNumber,
+      clientId: d.clientId,
+      clientName: d.customerName,
+      method: d.paymentMethod,
+      salesPersonId: d.salesPersonId,
+      salesPersonName: d.salesPersonName,
+    });
+    const b = ensure(key, label);
+    b.dealsClosed += 1;
+    b.dealValue += d.dealValue;
+    b.collectedRevenue += netCollected(d.paid, d.refunds);
+    b.outstandingRevenue += dealOutstanding(d.dealValue, d.paid);
+    b.commission += commissionEarnedAmount(d);
+    b.commissionPaid += commissionPaidAmount(d);
+    b.commissionOutstanding += commissionOutstandingAmount(d);
   }
 
   let rows = Array.from(buckets.values()).map(finalizeBucket);

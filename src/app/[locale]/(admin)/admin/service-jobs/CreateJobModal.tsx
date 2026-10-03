@@ -72,7 +72,11 @@ export function CreateJobModal({
     const description = (form.elements.namedItem("description") as HTMLTextAreaElement | null)?.value?.trim();
     const payoutRaw = (form.elements.namedItem("payoutAmount") as HTMLInputElement | null)?.value;
     const status = (form.elements.namedItem("status") as HTMLSelectElement | null)?.value;
-    const staffId = (form.elements.namedItem("staffId") as HTMLSelectElement | null)?.value;
+    const staffSelect = form.elements.namedItem("staffId") as HTMLSelectElement | null;
+    const staffIds = staffSelect
+      ? Array.from(staffSelect.selectedOptions).map((o) => o.value).filter(Boolean)
+      : [];
+    const salesPersonId = (form.elements.namedItem("salesPersonId") as HTMLSelectElement | null)?.value;
 
     if (!userId) {
       setError("Please select a client.");
@@ -81,6 +85,10 @@ export function CreateJobModal({
     const amount = Math.round(parseFloat(amountRaw || "0") * 100);
     if (amount <= 0) {
       setError("Amount must be greater than zero.");
+      return;
+    }
+    if (!isFreelancer && !salesPersonId) {
+      setError("Closed by is required.");
       return;
     }
 
@@ -105,7 +113,8 @@ export function CreateJobModal({
             isSpecialMemberOnly: isFreelancer ? isSpecialMemberOnly : undefined,
             enableAutoApproval: isFreelancer ? enableAutoApproval : undefined,
             status: !isFreelancer ? status : undefined,
-            staffIds: !isFreelancer && staffId ? [staffId] : undefined,
+            staffIds: !isFreelancer && staffIds.length ? staffIds : undefined,
+            salesPersonId: !isFreelancer ? salesPersonId : undefined,
           }),
         });
         const json = (await res.json()) as { success?: boolean; error?: string };
@@ -299,15 +308,27 @@ export function CreateJobModal({
               </Select>
             </div>
             <div>
-              <Label htmlFor="create-staff">Assign Staff (optional)</Label>
-              <Select id="create-staff" name="staffId" className="mt-1">
-                <option value="">None</option>
+              <Label htmlFor="create-closer">Closed by *</Label>
+              <Select id="create-closer" name="salesPersonId" required className="mt-1">
+                <option value="">Select salesperson</option>
                 {staffUsers.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name ?? s.email}
                   </option>
                 ))}
               </Select>
+              <p className="mt-1 text-xs text-gray-500">Who closed this customer. Separate from who performs the service.</p>
+            </div>
+            <div>
+              <Label htmlFor="create-staff">Service staff</Label>
+              <Select id="create-staff" name="staffId" multiple className="mt-1 h-28">
+                {staffUsers.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name ?? s.email}
+                  </option>
+                ))}
+              </Select>
+              <p className="mt-1 text-xs text-gray-500">Hold Command or Ctrl to assign more than one person.</p>
             </div>
           </>
         )}

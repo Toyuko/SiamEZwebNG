@@ -161,6 +161,8 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
   let invoiceKind: InvoiceKind = "full";
   let caseStatus: CaseStatus = status;
   let quotePaymentChoice: "initial" | "full" = input.paymentChoice === "full" ? "full" : "initial";
+  let quoteSalesPersonId: string | null = null;
+  let quoteDealValue: number | null = null;
 
   if (input.quoteId) {
     const quote = await prisma.quote.findUnique({
@@ -168,6 +170,8 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
       include: { paymentMilestones: true },
     });
     if (!quote) throw new Error("Quote not found");
+    quoteSalesPersonId = quote.salesPersonId;
+    quoteDealValue = quote.amount;
     if (quote.serviceId !== input.serviceId) throw new Error("Quote service mismatch");
     if (quote.status === "expired" || (quote.validUntil && quote.validUntil < new Date())) {
       throw new Error("Quote expired — please recalculate before booking");
@@ -238,7 +242,21 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
     guestPhone: input.guestPhone?.trim() || null,
     formData: (input.formData ?? {}) as object,
     postToMarketplace: input.postToMarketplace ?? false,
+    salesPersonId: quoteSalesPersonId,
+    closedAt: quoteSalesPersonId ? new Date() : null,
+    dealValue: quoteSalesPersonId ? quoteDealValue : null,
   });
+
+  if (quoteSalesPersonId) {
+    await prisma.salesAttributionAudit.create({
+      data: {
+        caseId: c.id,
+        previousSalesPersonId: null,
+        newSalesPersonId: quoteSalesPersonId,
+        reason: "Preserved from quote",
+      },
+    });
+  }
 
   if (input.quoteId) {
     await prisma.quote.update({

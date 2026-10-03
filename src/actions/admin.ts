@@ -1463,17 +1463,68 @@ export async function createStaffUser(data: {
   name?: string | null;
   password: string;
   role: UserRole;
-}) {
+}): Promise<{ ok: true; promoted: boolean } | { error: string }> {
   await ensureStaffAccess();
-  const passwordHash = await bcrypt.hash(data.password, 10);
-  return prisma.user.create({
-    data: {
-      email: data.email,
-      name: data.name ?? null,
-      role: data.role,
-      passwordHash,
-    },
+  const email = data.email.toLowerCase().trim();
+  const password = data.password.trim();
+  const name = data.name?.trim() || null;
+  const role = data.role === "admin" || data.role === "staff" ? data.role : null;
+  if (!email || !password) return { error: "Email and password are required." };
+  if (!role) return { error: "Role must be staff or admin." };
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  const existing = await prisma.user.findFirst({
+    where: { email: { equals: email, mode: "insensitive" } },
+    select: { id: true, role: true, name: true },
   });
+
+  if (existing) {
+    if (existing.role === "admin" || existing.role === "staff") {
+      return {
+        error:
+          "This email already belongs to a staff or admin account. Edit that person from the staff list instead.",
+      };
+    }
+
+    // Portal accounts (customer, freelancer, company) can be promoted in place.
+    // Creating a second user fails because email is unique.
+    try {
+      await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          email,
+          name: name || existing.name,
+          role,
+          passwordHash,
+          active: true,
+        },
+      });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+        return { error: "This email is already registered." };
+      }
+      throw err;
+    }
+    return { ok: true, promoted: true };
+  }
+
+  try {
+    await prisma.user.create({
+      data: {
+        email,
+        name,
+        role,
+        passwordHash,
+      },
+    });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      return { error: "This email is already registered." };
+    }
+    throw err;
+  }
+
+  return { ok: true, promoted: false };
 }
 
 export async function updateStaffUser(
@@ -1651,8 +1702,25 @@ export async function createServiceJob(data: {
   amount: number;
   status?: CaseStatus;
   staffIds?: string[];
+  salesPersonId?: string | null;
 }) {
-  await ensureStaffAccess();
+  const session = await getSession();
+  if (!session || (session.user.role !== "admin" && session.user.role !== "staff")) {
+    throw new Error("Unauthorized");
+  }
+  const { getSalesSettings, assignCaseSalesPerson } = await import("@/data-access/sales-attribution");
+  const settings = await getSalesSettings();
+  if (settings.requireCloserOnAdminCreate && !data.salesPersonId) {
+    throw new Error("Closed by is required");
+  }
+  if (data.salesPersonId) {
+    const { assertEligibleSalesperson } = await import("@/lib/finance/sales");
+    const closer = await prisma.user.findUnique({
+      where: { id: data.salesPersonId },
+      select: { id: true, role: true, active: true },
+    });
+    assertEligibleSalesperson(closer);
+  }
   const caseNumber = nextCaseNumber();
   const status = data.status ?? "new";
   const c = await prisma.case.create({
@@ -1661,8 +1729,19 @@ export async function createServiceJob(data: {
       userId: data.userId,
       serviceId: data.serviceId,
       status,
+      dealValue: data.amount,
     },
   });
+  if (data.salesPersonId) {
+    await assignCaseSalesPerson({
+      caseId: c.id,
+      salesPersonId: data.salesPersonId,
+      changedById: session.user.id,
+      isNew: true,
+      dealValue: data.amount,
+      reason: "Deal opened",
+    });
+  }
   await prisma.invoice.create({
     data: {
       caseId: c.id,

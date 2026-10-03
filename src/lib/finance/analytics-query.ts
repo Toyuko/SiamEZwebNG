@@ -26,6 +26,7 @@ import {
   type DateRange,
 } from "./dates";
 import { getAccountsPayableTotal, getAccountsReceivableTotal } from "./summaries";
+import { getSalesSettings, listClosedDealsInRange } from "@/data-access/sales-attribution";
 
 export type CompareMode =
   | "none"
@@ -51,6 +52,9 @@ async function loadAnalyticsSource(
   if (filters.staffId) {
     caseWhere.staffAssignments = { some: { userId: filters.staffId } };
   }
+  if (filters.salesPersonId) {
+    caseWhere.salesPersonId = filters.salesPersonId;
+  }
 
   const paymentWhere: Prisma.PaymentWhereInput = {
     status: "approved",
@@ -68,6 +72,9 @@ async function loadAnalyticsSource(
   if (filters.caseStatus) paymentCase.status = filters.caseStatus as CaseStatus;
   if (filters.staffId) {
     paymentCase.staffAssignments = { some: { userId: filters.staffId } };
+  }
+  if (filters.salesPersonId) {
+    paymentCase.salesPersonId = filters.salesPersonId;
   }
   if (Object.keys(paymentCase).length > 0) {
     paymentWhere.case = paymentCase;
@@ -91,6 +98,9 @@ async function loadAnalyticsSource(
   }
   if (filters.caseStatus) {
     txAnd.push({ case: { status: filters.caseStatus as CaseStatus } });
+  }
+  if (filters.salesPersonId) {
+    txAnd.push({ case: { salesPersonId: filters.salesPersonId } });
   }
   if (txAnd.length > 0) {
     txWhere.AND = txAnd;
@@ -252,16 +262,20 @@ export async function runFinancialAnalytics(input: {
   includeProjection?: boolean;
 }): Promise<AnalyticsResult> {
   const filters = input.filters ?? {};
-  const [source, ar, ap] = await Promise.all([
+  const [source, ar, ap, deals, salesSettings] = await Promise.all([
     loadAnalyticsSource(input.range, filters),
     getAccountsReceivableTotal(),
     getAccountsPayableTotal(),
+    listClosedDealsInRange(input.range, filters.salesPersonId),
+    getSalesSettings(),
   ]);
 
   const kpis = computeAnalyticsKpis({
     ...source,
     accountsReceivable: ar,
     accountsPayable: ap,
+    deals,
+    salesSettings,
   });
 
   const buckets = groupAnalytics({
@@ -270,6 +284,8 @@ export async function runFinancialAnalytics(input: {
     transactions: source.transactions,
     cases: source.cases,
     filters,
+    deals,
+    countCancelledAsSale: salesSettings.countCancelledAsSale,
   });
 
   let comparison: AnalyticsResult["comparison"] = null;
@@ -286,10 +302,13 @@ export async function runFinancialAnalytics(input: {
       cmpRange = previousPeriodRange(input.range);
     }
     const cmpSource = await loadAnalyticsSource(cmpRange, filters);
+    const cmpDeals = await listClosedDealsInRange(cmpRange, filters.salesPersonId);
     const cmpKpis = computeAnalyticsKpis({
       ...cmpSource,
       accountsReceivable: ar,
       accountsPayable: ap,
+      deals: cmpDeals,
+      salesSettings,
     });
     const keys: (keyof AnalyticsKpiSet)[] = [
       "revenue",

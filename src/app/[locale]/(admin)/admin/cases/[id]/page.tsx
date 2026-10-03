@@ -14,6 +14,7 @@ import { CaseDetailClient } from "./CaseDetailClient";
 import { AttachUnassignedDocument } from "./AttachUnassignedDocument";
 import { CaseDriverLicenseFollowUpPanel } from "@/components/admin/CaseDriverLicenseFollowUpPanel";
 import { CaseFinancialsPanelServer } from "@/components/admin/CaseFinancialsPanelServer";
+import { CaseSalesPanelServer } from "@/components/admin/CaseSalesPanelServer";
 import { isDriverLicenseServiceSlug } from "@/lib/driver-license-renewal/constants";
 import { formatCurrency } from "@/lib/utils";
 
@@ -221,6 +222,7 @@ export default async function AdminCaseDetailPage({
             }
           />
 
+          <CaseSalesPanelServer caseId={caseData.id} />
           <CaseFinancialsPanelServer caseId={caseData.id} />
 
           <CaseSchedulePanel

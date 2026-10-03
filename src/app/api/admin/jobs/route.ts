@@ -17,6 +17,7 @@ const createJobSchema = z.object({
   enableAutoApproval: z.boolean().optional(),
   status: z.string().optional(),
   staffIds: z.array(z.string()).optional(),
+  salesPersonId: z.string().min(1).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
         amount: data.amount,
         status: (data.status as "new") ?? "new",
         staffIds: data.staffIds,
+        salesPersonId: data.salesPersonId,
       });
       return ok({ type: "internal", id: caseRecord.id, caseNumber: caseRecord.caseNumber });
     }
