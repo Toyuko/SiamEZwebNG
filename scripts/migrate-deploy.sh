@@ -19,4 +19,14 @@ export DATABASE_URL="$DIRECT_URL"
 # Default Prisma lock wait is 10s; bump for cold Neon computes / brief contention.
 export PRISMA_SCHEMA_ENGINE_LOCK_TIMEOUT="${PRISMA_SCHEMA_ENGINE_LOCK_TIMEOUT:-60000}"
 
-exec npx prisma migrate deploy
+# Prisma will not retry a migration that failed mid-deploy. Production already
+# had some job-intake columns, so that attempt is marked rolled back and the
+# idempotent SQL is applied again.
+status_output="$(npx prisma migrate status 2>&1 || true)"
+printf '%s\n' "$status_output"
+if printf '%s\n' "$status_output" | grep -q "20261003140000_job_intake" && printf '%s\n' "$status_output" | grep -qi "failed"; then
+  echo "migrate-deploy: marking failed 20261003140000_job_intake as rolled back so it can be retried"
+  npx prisma migrate resolve --rolled-back 20261003140000_job_intake
+fi
+
+npx prisma migrate deploy
