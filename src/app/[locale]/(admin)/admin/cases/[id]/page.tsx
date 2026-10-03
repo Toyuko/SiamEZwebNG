@@ -51,7 +51,7 @@ export default async function AdminCaseDetailPage({
       at: caseData.createdAt,
       kind: "created",
       title: t("timelineCreated"),
-      detail: caseData.service.name,
+      detail: caseData.service?.name ?? caseData.otherServiceName ?? "Service",
     },
     ...caseData.staffAssignments.map((a) => ({
       id: `assign-${a.id}`,
@@ -131,7 +131,7 @@ export default async function AdminCaseDetailPage({
             <CaseStatusBadge status={caseData.status} />
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            {caseData.service.name} • {displayName}
+            {caseData.service?.name ?? caseData.otherServiceName ?? "Service"} • {displayName}
             {caseData.legacyJobId != null
               ? ` • Legacy job #${caseData.legacyJobId}${
                   caseData.legacyOrderNumber ? ` (${caseData.legacyOrderNumber})` : ""
@@ -159,7 +159,7 @@ export default async function AdminCaseDetailPage({
             input={{
               caseNumber: caseData.caseNumber,
               status: caseData.status,
-              serviceName: caseData.service.name,
+              serviceName: caseData.service?.name ?? caseData.otherServiceName ?? "Service",
               clientName: displayName,
               clientEmail: displayEmail !== "—" ? displayEmail : null,
               isGuest: caseData.isGuest,
@@ -246,11 +246,11 @@ export default async function AdminCaseDetailPage({
         </div>
 
         <div className="space-y-6">
-          {isDriverLicenseServiceSlug(caseData.service.slug) && (
+          {caseData.service && isDriverLicenseServiceSlug(caseData.service.slug) && (
             <CaseDriverLicenseFollowUpPanel
               caseId={caseData.id}
               clientId={caseData.userId}
-              serviceName={caseData.service.name}
+              serviceName={caseData.service?.name ?? "Service"}
             />
           )}
           <CaseDetailClient

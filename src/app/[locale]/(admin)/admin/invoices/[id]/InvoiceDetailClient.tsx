@@ -242,7 +242,8 @@ export function InvoiceDetailClient({ invoice }: { invoice: InvoiceDetail }) {
             <span className="text-gray-500">Client:</span> {clientLabel}
           </p>
           <p>
-            <span className="text-gray-500">Service:</span> {invoice.case.service.name}
+            <span className="text-gray-500">Service:</span>{" "}
+            {invoice.case.service?.name ?? invoice.case.otherServiceName ?? "—"}
           </p>
           {invoice.clientAddress && (
             <p>

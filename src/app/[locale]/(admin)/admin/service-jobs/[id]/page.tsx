@@ -34,7 +34,7 @@ export default async function AdminServiceJobDetailPage({
             {caseData.caseNumber}
           </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            {caseData.service.name} • {displayName}
+            {caseData.service?.name ?? caseData.otherServiceName ?? "Service"} • {displayName}
           </p>
         </div>
       </div>

@@ -72,7 +72,7 @@ export default async function PortalCaseDetailPage({
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {caseData.caseNumber}
           </h1>
-          <p className="mt-1 text-gray-600 dark:text-gray-400">{caseData.service.name}</p>
+          <p className="mt-1 text-gray-600 dark:text-gray-400">{caseData.service?.name ?? caseData.otherServiceName ?? "Service"}</p>
         </div>
         <span
           className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${CASE_STATUS_BADGE_CLASS[caseData.status]}`}

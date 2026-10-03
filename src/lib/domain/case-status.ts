@@ -6,21 +6,22 @@ import type { CaseStatus } from "@prisma/client";
  * may set paid / initial_payment_paid directly (bypasses this graph).
  */
 export const CASE_STATUS_TRANSITIONS: Record<CaseStatus, readonly CaseStatus[]> = {
-  new: ["under_review", "quoted", "awaiting_payment", "awaiting_initial_payment", "custom_quote_required", "cancelled"],
-  under_review: ["quoted", "awaiting_payment", "awaiting_initial_payment", "custom_quote_required", "cancelled", "pending_docs"],
-  quoted: ["awaiting_payment", "awaiting_initial_payment", "under_review", "custom_quote_required", "cancelled"],
+  new: ["confirmed", "under_review", "quoted", "awaiting_payment", "awaiting_initial_payment", "custom_quote_required", "cancelled"],
+  under_review: ["confirmed", "quoted", "awaiting_payment", "awaiting_initial_payment", "custom_quote_required", "cancelled", "pending_docs"],
+  quoted: ["confirmed", "awaiting_payment", "awaiting_initial_payment", "under_review", "custom_quote_required", "cancelled"],
   custom_quote_required: ["quoted", "under_review", "awaiting_payment", "awaiting_initial_payment", "cancelled"],
   awaiting_payment: ["paid", "initial_payment_paid", "cancelled", "under_review", "refund_pending"],
   awaiting_initial_payment: ["initial_payment_paid", "paid", "cancelled", "under_review", "refund_pending"],
   initial_payment_paid: ["in_progress", "paid", "milestone_due", "pending_docs", "cancelled", "refund_pending"],
   paid: ["in_progress", "pending_docs", "cancelled", "refund_pending"],
-  in_progress: ["pending_docs", "milestone_due", "completed", "cancelled", "refund_pending"],
+  in_progress: ["confirmed", "pending_docs", "milestone_due", "completed", "cancelled", "refund_pending"],
   milestone_due: ["in_progress", "paid", "completed", "cancelled", "refund_pending"],
   pending_docs: ["in_progress", "completed", "cancelled"],
   completed: ["refund_pending"],
   cancelled: ["refund_pending", "refunded"],
   refund_pending: ["refunded", "cancelled", "in_progress"],
   refunded: [],
+  confirmed: ["in_progress", "awaiting_payment", "pending_docs", "paid", "completed", "cancelled", "under_review"],
 };
 
 export function canTransitionCaseStatus(from: CaseStatus, to: CaseStatus): boolean {
@@ -50,6 +51,7 @@ export const CASE_STATUS_LABELS: Record<CaseStatus, { en: string; th: string }> 
   cancelled: { en: "Cancelled", th: "ยกเลิก" },
   refund_pending: { en: "Refund Pending", th: "รอคืนเงิน" },
   refunded: { en: "Refunded", th: "คืนเงินแล้ว" },
+  confirmed: { en: "Confirmed", th: "ยืนยันแล้ว" },
 };
 
 export const CASE_STATUS_BADGE_CLASS: Record<CaseStatus, string> = {
@@ -68,4 +70,5 @@ export const CASE_STATUS_BADGE_CLASS: Record<CaseStatus, string> = {
   cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
   refund_pending: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300",
   refunded: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300",
+  confirmed: "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200",
 };

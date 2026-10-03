@@ -68,7 +68,7 @@ export function mapCaseToSalesDeal(row: DealRow): SalesDeal {
     customerName: customerName(row),
     clientId: row.userId,
     serviceId: row.serviceId,
-    serviceName: row.service.name,
+    serviceName: row.otherServiceName?.trim() || row.service?.name || "Other",
     status: row.status,
     salesPersonId: row.salesPersonId,
     salesPersonName: row.salesPerson?.name ?? row.salesPerson?.email ?? null,
@@ -80,7 +80,7 @@ export function mapCaseToSalesDeal(row: DealRow): SalesDeal {
       explicit: row.dealValue,
       invoiced: sumInvoicedAmount(row.invoices),
       quoted: sumQuotedAmount(row.quotes),
-      servicePrice: row.service.priceAmount,
+      servicePrice: row.service?.priceAmount,
     }),
     paid,
     refunds,
@@ -270,7 +270,7 @@ export async function upsertCaseCommission(input: {
     explicit: existing.dealValue,
     invoiced: sumInvoicedAmount(existing.invoices),
     quoted: sumQuotedAmount(existing.quotes),
-    servicePrice: existing.service.priceAmount,
+    servicePrice: existing.service?.priceAmount,
   });
   const paid = sumApprovedCustomerPayments(existing.payments);
   const refunds = sumRefunds(existing.financialTransactions);

@@ -66,6 +66,7 @@ export async function updateCaseStatus(caseId: string, status: CaseStatus) {
       status: true,
       userId: true,
       serviceId: true,
+      otherServiceName: true,
       service: { select: { slug: true, name: true } },
       staffAssignments: {
         where: { role: "primary" },
@@ -107,11 +108,11 @@ export async function updateCaseStatus(caseId: string, status: CaseStatus) {
         clientId: existing.userId,
         caseId,
         serviceId: existing.serviceId,
-        serviceSlug: existing.service.slug,
+        serviceSlug: existing.service?.slug ?? "other",
         anchorDate: new Date(),
         assignedStaffId: existing.staffAssignments[0]?.userId ?? null,
         vars: {
-          "Service Name": existing.service.name,
+          "Service Name": existing.service?.name ?? existing.otherServiceName ?? "Service",
         },
       });
       // Also fire SERVICE_COMPLETED templates
@@ -120,11 +121,11 @@ export async function updateCaseStatus(caseId: string, status: CaseStatus) {
         clientId: existing.userId,
         caseId,
         serviceId: existing.serviceId,
-        serviceSlug: existing.service.slug,
+        serviceSlug: existing.service?.slug ?? "other",
         anchorDate: new Date(),
         assignedStaffId: existing.staffAssignments[0]?.userId ?? null,
         vars: {
-          "Service Name": existing.service.name,
+          "Service Name": existing.service?.name ?? existing.otherServiceName ?? "Service",
         },
       });
     } catch (err) {

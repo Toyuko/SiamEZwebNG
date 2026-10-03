@@ -20,6 +20,7 @@ const VALID_STATUSES: CaseStatus[] = [
   "cancelled",
   "refund_pending",
   "refunded",
+  "confirmed",
 ];
 
 /**

@@ -14,13 +14,13 @@ type CaseLike = {
   id: string;
   caseNumber: string;
   status: CaseStatus;
-  service: { name: string };
+  service: { name: string } | null;
 };
 
 type InvoiceLike = {
   id: string;
   status: InvoiceStatus;
-  case: { caseNumber: string; service: { name: string } };
+  case: { caseNumber: string; service: { name: string } | null };
 };
 
 type JobLike = {
@@ -57,7 +57,7 @@ export function buildCustomerNextSteps(input: {
         id: `invoice-${inv.id}`,
         tone: inv.status === "unpaid" ? "urgent" : "action",
         href: `/portal/invoices/${inv.id}`,
-        title: input.labels.payInvoice(inv.case.service.name),
+        title: input.labels.payInvoice(inv.case.service?.name ?? "Service"),
         description: input.labels.payInvoiceDesc(inv.case.caseNumber),
       });
     }
@@ -69,7 +69,7 @@ export function buildCustomerNextSteps(input: {
         id: `docs-${c.id}`,
         tone: "urgent",
         href: `/portal/cases/${c.id}`,
-        title: input.labels.uploadDocs(c.service.name),
+        title: input.labels.uploadDocs(c.service?.name ?? "Service"),
         description: input.labels.uploadDocsDesc(c.caseNumber),
       });
     } else if (c.status === "quoted" || c.status === "awaiting_payment" || c.status === "awaiting_initial_payment") {
@@ -84,7 +84,7 @@ export function buildCustomerNextSteps(input: {
           id: `quoted-${c.id}`,
           tone: "action",
           href: `/portal/cases/${c.id}`,
-          title: input.labels.payInvoice(c.service.name),
+          title: input.labels.payInvoice(c.service?.name ?? "Service"),
           description: input.labels.payInvoiceDesc(c.caseNumber),
         });
       }
@@ -93,7 +93,7 @@ export function buildCustomerNextSteps(input: {
         id: `review-${c.id}`,
         tone: "info",
         href: `/portal/cases/${c.id}`,
-        title: input.labels.awaitingQuote(c.service.name),
+        title: input.labels.awaitingQuote(c.service?.name ?? "Service"),
         description: input.labels.awaitingQuoteDesc(c.caseNumber),
       });
     }

@@ -255,7 +255,7 @@ export function ServiceJobsTable({
                   />
                 </td>
                 <td className="px-4 py-3 font-mono text-siam-blue">{job.caseNumber}</td>
-                <td className="px-4 py-3">{job.service.name}</td>
+                <td className="px-4 py-3">{job.service?.name ?? job.otherServiceName ?? "Other"}</td>
                 <td className="px-4 py-3">
                   <span className="font-medium">{job.user?.name ?? job.user?.email ?? job.guestName ?? job.guestEmail ?? "—"}</span>
                   {(job.user?.phone ?? job.guestPhone) && (

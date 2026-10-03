@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Plus, Store } from "lucide-react";
 import { useState } from "react";
@@ -34,6 +35,14 @@ export function ServiceJobsPageClient({
   return (
     <>
       <div className="flex flex-wrap gap-2">
+        {!marketplaceOnly && (
+          <Button asChild className="min-h-11 shrink-0">
+            <Link href="/admin/jobs/new">
+              <Plus className="h-4 w-4" />
+              + New Job
+            </Link>
+          </Button>
+        )}
         {!marketplaceOnly && (
           <Button onClick={() => openCreate("INTERNAL")} variant="outline" className="shrink-0">
             <Plus className="h-4 w-4" />

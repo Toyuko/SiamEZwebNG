@@ -146,7 +146,7 @@ export type AnalyticsTxRow = TxLike & {
 export type AnalyticsCaseRow = {
   id: string;
   caseNumber: string;
-  serviceId: string;
+  serviceId: string | null;
   serviceName: string;
   clientId: string | null;
   clientName: string;

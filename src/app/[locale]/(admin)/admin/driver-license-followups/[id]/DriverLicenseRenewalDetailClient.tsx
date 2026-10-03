@@ -40,7 +40,7 @@ type Detail = {
   case: {
     id: string;
     caseNumber: string;
-    service: { slug: string; name: string };
+    service: { slug: string; name: string } | null;
   } | null;
   assignedStaff: { id: string; name: string | null; email: string } | null;
   reminderSentBy: { id: string; name: string | null; email: string } | null;

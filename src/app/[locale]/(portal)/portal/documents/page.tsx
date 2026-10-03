@@ -78,7 +78,7 @@ export default async function PortalDocumentsPage({
                   <p className="font-semibold text-gray-900 dark:text-white">{doc.name}</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {doc.case
-                      ? `${doc.case.service.name} · ${doc.case.caseNumber}`
+                      ? `${doc.case.service?.name ?? "Service"} · ${doc.case.caseNumber}`
                       : t("documentUnlinked")}
                   </p>
                   <p className="mt-1 text-xs text-gray-500">

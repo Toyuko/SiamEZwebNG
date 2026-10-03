@@ -92,7 +92,7 @@ export default async function PortalInvoicesPage({
                 <CardContent className="flex flex-col gap-2 p-5 transition-colors hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between dark:hover:bg-gray-800/50">
                   <div>
                     <p className="font-semibold text-gray-900 dark:text-white">
-                      {inv.case.service.name}
+                      {inv.case.service?.name ?? "Service"}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {inv.case.caseNumber}

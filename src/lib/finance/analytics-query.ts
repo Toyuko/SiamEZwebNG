@@ -120,6 +120,7 @@ async function loadAnalyticsSource(
         case: {
           select: {
             serviceId: true,
+            otherServiceName: true,
             userId: true,
             status: true,
             caseNumber: true,
@@ -165,6 +166,7 @@ async function loadAnalyticsSource(
         id: true,
         caseNumber: true,
         serviceId: true,
+        otherServiceName: true,
         userId: true,
         status: true,
         createdAt: true,
@@ -188,7 +190,7 @@ async function loadAnalyticsSource(
     clientId: p.case.userId,
     caseStatus: p.case.status,
     caseNumber: p.case.caseNumber,
-    serviceName: p.case.service.name,
+    serviceName: p.case.service?.name ?? p.case.otherServiceName ?? "Other",
     clientName:
       p.case.user?.name ??
       p.case.user?.email ??
@@ -226,7 +228,7 @@ async function loadAnalyticsSource(
     id: c.id,
     caseNumber: c.caseNumber,
     serviceId: c.serviceId,
-    serviceName: c.service.name,
+    serviceName: c.service?.name ?? c.otherServiceName ?? "Other",
     clientId: c.userId,
     clientName:
       c.user?.name ?? c.user?.email ?? c.guestName ?? c.guestEmail ?? "—",

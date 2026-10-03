@@ -208,7 +208,7 @@ export async function markCasePaidManually(
   const amount =
     options?.amountSatang && options.amountSatang > 0
       ? options.amountSatang
-      : caseRow.service.priceAmount && caseRow.service.priceAmount > 0
+      : caseRow.service?.priceAmount && caseRow.service.priceAmount > 0
         ? caseRow.service.priceAmount
         : null;
 

@@ -22,7 +22,7 @@ type PaymentRow = Payment & {
       caseNumber: string;
       guestName: string | null;
       guestEmail: string | null;
-      service: { name: string };
+      service: { name: string } | null;
     };
   };
   proofDocument: { id: string; name: string; storageKey: string } | null;
@@ -184,7 +184,7 @@ export function PaymentTable({
                     ) : null}
                   </td>
                   <td className="px-4 py-4 text-gray-800 dark:text-gray-200">
-                    {p.invoice.case.service.name}
+                    {p.invoice.case.service?.name ?? "Service"}
                   </td>
                   <td className="px-4 py-4 font-semibold text-gray-900 dark:text-white">
                     {formatCurrency(p.amount, p.currency)}

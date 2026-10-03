@@ -42,7 +42,7 @@ const STATUS_OPTIONS: { value: CaseStatus; label: string }[] = [
 
 type CaseWithRelations = Case & {
   user: User | null;
-  service: { id: string; name: string; priceAmount: number | null; slug?: string };
+  service: { id: string; name: string; priceAmount: number | null; slug?: string } | null;
   quotes: Quote[];
   staffAssignments: (StaffAssignment & { user: User })[];
   caseNotes: (CaseNote & { user: { name: string | null; email: string } })[];
@@ -239,6 +239,8 @@ export function CaseDetailClient({
               </Button>
               {caseData.userId &&
               caseData.user &&
+              caseData.serviceId &&
+              caseData.service &&
               FOLLOW_UP_READY_STATUSES.has(caseData.status) ? (
                 <CaseCreateFollowUpButton
                   clientId={caseData.userId}

@@ -1279,7 +1279,7 @@ export async function getInvoicesForManualPayment(): Promise<InvoiceForManualPay
       id: inv.id,
       caseId: inv.caseId,
       caseNumber: inv.case.caseNumber,
-      serviceName: inv.case.service.name,
+      serviceName: inv.case.service?.name ?? inv.case.otherServiceName ?? "Other",
       amount: inv.amount,
       currency: inv.currency,
       status: inv.status,

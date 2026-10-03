@@ -35,7 +35,7 @@ export async function getRecentActivityForUser(
     items.push({
       id: `case-${c.id}`,
       type: "case",
-      title: `${c.caseNumber}: ${c.service.name}`,
+      title: `${c.caseNumber}: ${c.service?.name ?? "Service"}`,
       timestamp: formatRelativeTime(c.updatedAt),
       action: getCaseAction(c.status),
       status: getCaseStatus(c.status),
@@ -47,7 +47,7 @@ export async function getRecentActivityForUser(
     items.push({
       id: `invoice-${inv.id}`,
       type: "invoice",
-      title: `Invoice: ${inv.case.service.name}`,
+      title: `Invoice: ${inv.case.service?.name ?? "Service"}`,
       timestamp: formatRelativeTime(inv.createdAt),
       action: inv.status === "unpaid" ? "Pending Payment" : inv.status,
       status:

@@ -88,7 +88,7 @@ export default async function CheckoutPage({
       <div className="container mx-auto max-w-lg px-4 py-8">
         <ManualCheckout
           caseNumber={c.caseNumber}
-          serviceName={c.service.name}
+          serviceName={c.service?.name ?? "Service"}
           amountSatang={dueNowSatang}
           currency={invoice.currency}
           paymentSettings={paymentSettings}
@@ -133,14 +133,14 @@ export default async function CheckoutPage({
     <div className="container mx-auto max-w-md px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">Complete payment</h1>
       <p className="mb-6 text-gray-600 dark:text-gray-400">
-        Pay for case <strong>{c.caseNumber}</strong> · {c.service.name}
+        Pay for case <strong>{c.caseNumber}</strong> · {c.service?.name ?? "Service"}
       </p>
       <CheckoutForm
         clientSecret={result.clientSecret}
         amount={amount}
         currency={currency}
         caseNumber={c.caseNumber}
-        serviceName={c.service.name}
+        serviceName={c.service?.name ?? "Service"}
         locale={locale}
       />
       <div className="mt-6">

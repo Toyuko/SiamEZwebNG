@@ -9,6 +9,8 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { NextResponse } from "next/server";
 import { invoiceDocumentTitle, invoiceTotalLabel } from "@/lib/invoices/status";
+import { displayInvoiceNumber } from "@/lib/jobs/intake";
+import { intakeInvoiceTokenMatches } from "@/lib/jobs/invoice-access";
 
 function formatMoney(satang: number, currency: string) {
   return new Intl.NumberFormat("en-TH", {
@@ -65,28 +67,40 @@ async function readWiseQrDataUrl() {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const role = (session.user as { role?: string }).role;
-  if (role === "customer") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
   const { id } = await context.params;
+  const token = new URL(request.url).searchParams.get("token");
+  const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+  const linkAccess = Boolean(token && secret && intakeInvoiceTokenMatches(id, token, secret));
+  if (!linkAccess) {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const role = (session.user as { role?: string }).role;
+    if (role === "customer") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
   const inv = await prisma.invoice.findUnique({
     where: { id },
     include: {
-      case: { include: { service: true, user: true } },
+      case: {
+        include: {
+          service: true,
+          user: true,
+          salesPerson: { select: { id: true, name: true, email: true } },
+          staffAssignments: { include: { user: { select: { id: true, name: true, email: true } } } },
+        },
+      },
       user: true,
+      payments: true,
     },
   });
 
-  if (!inv) {
+  if (!inv || (linkAccess && !inv.case.intakeIdempotencyKey)) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -96,7 +110,7 @@ export async function GET(
   const clientAddress = inv.clientAddress?.trim() || "—";
   const issueDate = formatDate(inv.createdAt);
   const dueDate = inv.dueDate ? formatDate(inv.dueDate) : "-";
-  const invoiceRef = `INV-${inv.id.slice(0, 8).toUpperCase()}`;
+  const invoiceRef = displayInvoiceNumber(inv);
   const paymentSettings = await getPaymentSettings();
   const [thaiQrDataUrl, wiseQrDataUrl] = await Promise.all([
     readThaiQrDataUrl(paymentSettings.qrImagePath),
@@ -166,7 +180,53 @@ export async function GET(
   y += Math.max(4.5, addressLines.length * 4.2);
   doc.text(`Case: ${inv.case.caseNumber}`, margin, y);
   y += 4.5;
-  doc.text(`Service: ${inv.case.service.name}`, margin, y);
+  doc.text(`Service: ${inv.case.service?.name ?? inv.case.otherServiceName ?? "—"}`, margin, y);
+  if (inv.case.jobDescription) {
+    y += 4.5;
+    const description = doc.splitTextToSize(inv.case.jobDescription, pageW / 2 - margin - 6);
+    doc.text(description, margin, y);
+    y += Math.max(0, (description.length - 1) * 4.2);
+  }
+  if (inv.case.scheduledAt) {
+    y += 4.5;
+    const when = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Bangkok",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(inv.case.scheduledAt);
+    const time = inv.case.scheduleTimeTbd
+      ? "TBD"
+      : new Intl.DateTimeFormat("en-US", {
+          timeZone: "Asia/Bangkok",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        }).format(inv.case.scheduledAt);
+    doc.text(`Schedule: ${when} ${time}`, margin, y);
+  }
+  if (inv.case.location) {
+    y += 4.5;
+    doc.text(`Location: ${inv.case.location}`, margin, y);
+  }
+  const assigned = inv.case.staffAssignments[0]?.user;
+  if (inv.case.salesPerson || assigned) {
+    y += 4.5;
+    doc.text(
+      `Closed by: ${inv.case.salesPerson?.name ?? inv.case.salesPerson?.email ?? "—"}`,
+      margin,
+      y
+    );
+    y += 4.5;
+    doc.text(`Assigned: ${assigned?.name ?? assigned?.email ?? "TBD"}`, margin, y);
+  }
+  const docs = Array.isArray(inv.case.documentsRequired)
+    ? inv.case.documentsRequired.filter((item): item is string => typeof item === "string")
+    : [];
+  if (docs.length > 0) {
+    y += 4.5;
+    doc.text(`Documents: ${docs.join(", ")}`, margin, y);
+  }
 
   const instructions = doc.splitTextToSize(
     inv.status === "paid"
@@ -217,7 +277,23 @@ export async function GET(
   doc.text("SUBTOTAL", pageW - margin - 50, finalY + 8);
   doc.text(subtotalText, pageW - margin, finalY + 8, { align: "right" });
   let yTotals = finalY + 14;
-  if (inv.depositAmount != null && inv.depositAmount > 0 && inv.depositAmount < inv.amount) {
+  const collected = (inv.payments ?? [])
+    .filter((payment) => payment.status === "approved")
+    .reduce((sum, payment) => sum + payment.amount, 0);
+  const intakeInvoice = Boolean(
+    inv.case.leadSource || inv.case.jobDescription || inv.case.otherServiceName || inv.case.scheduledAt
+  );
+  if (intakeInvoice) {
+    const depositValue = inv.depositAmount ?? collected;
+    doc.text("DEPOSIT", pageW - margin - 50, yTotals);
+    doc.text(formatMoney(depositValue, inv.currency), pageW - margin, yTotals, { align: "right" });
+    yTotals += 6;
+    doc.text("OUTSTANDING", pageW - margin - 50, yTotals);
+    doc.text(formatMoney(Math.max(0, inv.amount - collected), inv.currency), pageW - margin, yTotals, {
+      align: "right",
+    });
+    yTotals += 6;
+  } else if (inv.depositAmount != null && inv.depositAmount > 0 && inv.depositAmount < inv.amount) {
     const depositText = formatMoney(inv.depositAmount, inv.currency);
     const balanceText = formatMoney(inv.amount - inv.depositAmount, inv.currency);
     doc.text("DEPOSIT DUE NOW", pageW - margin - 50, yTotals);

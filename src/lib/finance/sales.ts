@@ -54,7 +54,7 @@ export type SalesDeal = {
   caseNumber: string;
   customerName: string;
   clientId: string | null;
-  serviceId: string;
+  serviceId: string | null;
   serviceName: string;
   status: string;
   salesPersonId: string | null;
@@ -414,11 +414,12 @@ export function salesByService(deals: SalesDeal[], metric: SalesMetric): SalesSe
   for (const d of deals) {
     const pid = d.salesPersonId ?? "unassigned";
     const pname = d.salesPersonName ?? "Unassigned";
+    const sid = d.serviceId ?? "other";
     people.set(pid, pname);
-    services.set(d.serviceId, d.serviceName);
+    services.set(sid, d.serviceName);
     cells[pid] ??= {};
-    cells[pid][d.serviceId] ??= { deals: 0, dealValue: 0, collected: 0 };
-    const cell = cells[pid][d.serviceId];
+    cells[pid][sid] ??= { deals: 0, dealValue: 0, collected: 0 };
+    const cell = cells[pid][sid];
     cell.deals += 1;
     cell.dealValue += d.dealValue;
     cell.collected += netCollected(d.paid, d.refunds);

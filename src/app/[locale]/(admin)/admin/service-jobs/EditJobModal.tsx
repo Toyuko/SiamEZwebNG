@@ -111,7 +111,7 @@ export function EditJobModal({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="text-sm text-gray-600 dark:text-gray-400">
           Client: {job.user?.name ?? job.user?.email ?? job.guestName ?? job.guestEmail ?? "Guest"} ·
-          Service: {job.service.name}
+          Service: {job.service?.name ?? job.otherServiceName ?? "Other"}
         </div>
         <div>
           <Label htmlFor="edit-status">Status</Label>

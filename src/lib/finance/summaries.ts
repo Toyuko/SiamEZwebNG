@@ -221,9 +221,10 @@ export async function getServiceProfitability(range: DateRange): Promise<Service
       quotes: c.quotes,
       transactions: c.financialTransactions,
     });
-    const existing = byService.get(c.serviceId) ?? {
-      serviceId: c.serviceId,
-      serviceName: c.service.name,
+    const serviceId = c.serviceId ?? "other";
+    const existing = byService.get(serviceId) ?? {
+      serviceId,
+      serviceName: c.service?.name ?? c.otherServiceName ?? "Other",
       jobs: 0,
       revenue: 0,
       directCosts: 0,
@@ -234,7 +235,7 @@ export async function getServiceProfitability(range: DateRange): Promise<Service
     existing.revenue += summary.netRevenue;
     existing.directCosts += summary.totalDirectCosts;
     existing.profit += summary.grossProfit;
-    byService.set(c.serviceId, existing);
+    byService.set(serviceId, existing);
   }
 
   return Array.from(byService.values())
@@ -464,7 +465,7 @@ export async function getCaseProfitability(range: DateRange): Promise<CaseProfit
       caseId: c.id,
       caseNumber: c.caseNumber,
       customerName: c.user?.name ?? c.user?.email ?? c.guestName ?? c.guestEmail ?? "—",
-      serviceName: c.service.name,
+      serviceName: c.service?.name ?? c.otherServiceName ?? "Other",
       status: c.status,
       revenue: s.netRevenue,
       staffCosts: s.staffCosts,

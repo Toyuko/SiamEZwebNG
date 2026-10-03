@@ -113,6 +113,8 @@ model User {
   salesAttributionAsPrevious    SalesAttributionAudit[] @relation("SalesAttributionPrevious")
   salesAttributionAsNext        SalesAttributionAudit[] @relation("SalesAttributionNext")
   salesTargets                  SalesTarget[]
+  casesCreated                  Case[]                 @relation("CaseCreatedBy")
+  casesUpdated                  Case[]                 @relation("CaseUpdatedBy")
 
   accountDeletionRequests       AccountDeletionRequest[] @relation("AccountDeletionRequestUser")
   accountDeletionRequestsProcessed AccountDeletionRequest[] @relation("AccountDeletionRequestProcessor")
@@ -474,13 +476,16 @@ enum CaseStatus {
   cancelled
   refund_pending
   refunded
+  /// Staff-confirmed job from mobile intake. Operational work has not necessarily started.
+  confirmed
 }
 
 model Case {
   id                   String     @id @default(cuid())
   caseNumber           String     @unique @map("case_number") // e.g. SE-2026-00001
   userId               String?    @map("user_id") // null for guest bookings
-  serviceId            String     @map("service_id")
+  /// Null when staff record a job type that is not in the service catalog (`otherServiceName`).
+  serviceId            String?    @map("service_id")
   status               CaseStatus @default(new)
   isGuest              Boolean    @default(false) @map("is_guest")
   guestCheckoutToken   String?    @unique @map("guest_checkout_token") // for secure guest checkout
@@ -503,10 +508,28 @@ model Case {
   /// Deal value in satang at close. Null until a salesperson is assigned — never backfilled.
   dealValue           Int?       @map("deal_value")
   salesNotes          String?    @map("sales_notes") @db.Text
+  /// facebook | line | whatsapp | email | other
+  leadSource          String?    @map("lead_source")
+  leadSourceDetail    String?    @map("lead_source_detail")
+  /// Appointment instant in UTC. Interpret in Asia/Bangkok.
+  scheduledAt         DateTime?  @map("scheduled_at")
+  scheduleTimeTbd     Boolean    @default(false) @map("schedule_time_tbd")
+  location            String?
+  jobDescription      String?    @map("job_description") @db.Text
+  /// Checklist of document names to prepare. Not uploaded files (those stay on Document).
+  documentsRequired   Json?      @map("documents_required")
+  /// Set only when the job type is not a catalog service.
+  otherServiceName    String?    @map("other_service_name")
+  /// Prevents a double tap from creating a second case and invoice.
+  intakeIdempotencyKey String?   @unique @map("intake_idempotency_key")
+  createdById         String?    @map("created_by_id")
+  updatedById         String?    @map("updated_by_id")
 
   user            User?            @relation("CaseClient", fields: [userId], references: [id], onDelete: SetNull)
   salesPerson     User?            @relation("CaseSalesPerson", fields: [salesPersonId], references: [id], onDelete: SetNull)
-  service         Service          @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  createdBy       User?            @relation("CaseCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy       User?            @relation("CaseUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  service         Service?         @relation(fields: [serviceId], references: [id], onDelete: Restrict)
   quotes          Quote[]
   payments        Payment[]
   documents       Document[]
@@ -526,6 +549,9 @@ model Case {
 
   @@index([salesPersonId, closedAt])
   @@index([closedAt])
+  @@index([scheduledAt])
+  @@index([leadSource])
+  @@index([status, scheduledAt])
 }
 
 enum MarketplaceJobStatus {
@@ -808,6 +834,8 @@ model PaymentMilestone {
 
 model Invoice {
   id               String               @id @default(cuid())
+  /// Server-allocated display number, e.g. INV-2026-00001. Null on invoices created before job intake.
+  invoiceNumber    String?              @unique @map("invoice_number")
   caseId           String               @map("case_id")
   quoteId          String?              @map("quote_id")
   userId           String?              @map("user_id") // billing contact; null for guest invoices

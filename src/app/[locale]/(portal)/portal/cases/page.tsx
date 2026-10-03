@@ -121,7 +121,7 @@ export default async function PortalCasesPage({
                               {c.caseNumber}
                             </p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {c.service.name}
+                              {c.service?.name ?? "Service"}
                             </p>
                             <p className="mt-1 text-xs text-gray-500">
                               {new Date(c.createdAt).toLocaleDateString()}

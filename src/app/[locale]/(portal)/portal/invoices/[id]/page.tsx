@@ -42,7 +42,7 @@ export default async function PortalInvoiceDetailPage({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-semibold text-gray-900 dark:text-white">
-                {invoice.case.service.name}
+                {invoice.case.service?.name ?? "Service"}
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Case {invoice.case.caseNumber}

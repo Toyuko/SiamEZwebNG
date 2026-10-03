@@ -73,7 +73,7 @@ export function CaseTable({
                 <span className="font-medium">{c.user?.name ?? c.guestName ?? "—"}</span>
                 <span className="block text-xs text-gray-500">{c.user?.email ?? c.guestEmail ?? ""}</span>
               </td>
-              <td className="px-4 py-3">{c.service.name}</td>
+              <td className="px-4 py-3">{c.service?.name ?? c.otherServiceName ?? "Other"}</td>
               <td className="px-4 py-3">
                 <CaseStatusBadge status={c.status} />
               </td>

@@ -110,6 +110,7 @@ export async function loadSearchDocuments(
                 id: true,
                 caseNumber: true,
                 status: true,
+                otherServiceName: true,
                 service: { select: { name: true } },
               },
               orderBy: { updatedAt: "desc" },
@@ -147,7 +148,7 @@ export async function loadSearchDocuments(
   const bookingSources = userCases.map((c) => ({
     id: c.id,
     caseNumber: c.caseNumber,
-    serviceName: c.service.name,
+    serviceName: c.service?.name ?? c.otherServiceName ?? "Service",
     status: c.status,
   }));
 

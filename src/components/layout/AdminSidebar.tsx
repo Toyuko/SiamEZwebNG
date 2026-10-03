@@ -62,6 +62,8 @@ const allNavGroups: NavGroup[] = [
     icon: Briefcase,
     items: [
       { label: "serviceJobs", href: "/admin/service-jobs", icon: Briefcase },
+      { label: "jobList", href: "/admin/jobs", icon: ClipboardList },
+      { label: "newJob", href: "/admin/jobs/new", icon: Briefcase },
       { label: "cases", href: "/admin/cases", icon: FolderOpen },
       { label: "driverLicenseFollowups", href: "/admin/driver-license-followups", icon: ClipboardList },
       { label: "followUps", href: "/admin/followups", icon: Bell },
@@ -166,6 +168,12 @@ function isItemActive(
   if (baseHref === "/admin/service-jobs") {
     return pathname === "/admin/service-jobs" && !isMarketplaceJobs;
   }
+  if (baseHref === "/admin/jobs/new") {
+    return pathname === "/admin/jobs/new" || pathname.startsWith("/admin/jobs/new/");
+  }
+  if (baseHref === "/admin/jobs") {
+    return pathname === "/admin/jobs" || /^\/admin\/jobs\/(?!new(?:\/|$))/.test(pathname);
+  }
   return (
     pathname === item.href ||
     (item.href !== "/admin/dashboard" && pathname.startsWith(baseHref))
@@ -201,7 +209,11 @@ function NavLink({
   );
 }
 
-export function AdminSidebar() {
+export function AdminSidebar({
+  mobileOpen = false,
+}: {
+  mobileOpen?: boolean;
+}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isMarketplaceJobs = searchParams.get("source") === "freelancer";
@@ -246,7 +258,13 @@ export function AdminSidebar() {
   };
 
   return (
-    <aside className="sticky top-0 flex h-screen w-56 shrink-0 flex-col border-r border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
+    <aside
+      className={cn(
+        "z-50 w-56 shrink-0 flex-col border-r border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900",
+        "fixed inset-y-0 left-0 md:sticky md:top-0 md:flex md:h-screen",
+        mobileOpen ? "flex" : "hidden"
+      )}
+    >
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
         {topNav.map((item) => (
           <NavLink
