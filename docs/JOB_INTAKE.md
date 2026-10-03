@@ -9,6 +9,7 @@ Staff create a confirmed customer job from a phone at `/admin/jobs/new`. The job
 3. They review the summary and press **CREATE CONFIRMED JOB**.
 4. One database transaction writes the case, sales attribution, staff assignment, invoice, deposit payment, optional receipt, and calendar event.
 5. The success screen shows the saved invoice number and can view, download, print, share, or copy the job text.
+6. The customer is emailed the invoice PDF. Job details are emailed to suphatsara040526@hotmail.com so the job can be added to the office calendar. A repeated submit does not send those emails again.
 
 The copy text is built from the row that was just saved, not from the unsaved form.
 

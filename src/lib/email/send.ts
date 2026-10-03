@@ -17,6 +17,7 @@ export type SendEmailInput = {
   replyTo?: string;
   /** Extra headers / tags for Resend analytics */
   tags?: { name: string; value: string }[];
+  attachments?: { filename: string; content: Buffer }[];
 };
 
 export type SendEmailResult =
@@ -71,9 +72,10 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
   }
 
   try {
-    const attachments = htmlNeedsBrandAttachments(input.html)
+    const brandAttachments = htmlNeedsBrandAttachments(input.html)
       ? await getBrandEmailAttachments()
       : [];
+    const attachments = [...brandAttachments, ...(input.attachments ?? [])];
 
     const { data, error } = await client.emails.send({
       from: getEmailFrom(),

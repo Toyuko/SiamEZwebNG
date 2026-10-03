@@ -1,5 +1,6 @@
 import { Prisma, type CaseStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { sendJobIntakeNotices } from "@/lib/email/job-intake";
 import { nextCaseNumber } from "@/lib/utils";
 import { assertEligibleSalesperson, planAttributionChange } from "@/lib/finance/sales";
 import { assertCaseStatusTransition } from "@/lib/domain/case-status";
@@ -51,7 +52,10 @@ const jobInclude = {
 
 type JobRow = Prisma.CaseGetPayload<{ include: typeof jobInclude }>;
 
-export type JobIntakeView = ReturnType<typeof toJobView>;
+export type JobIntakeView = ReturnType<typeof toJobView> & {
+  customerEmailSent?: boolean;
+  secretaryEmailSent?: boolean;
+};
 
 function approvedPaid(row: JobRow): number {
   return row.invoices
@@ -596,7 +600,14 @@ export async function createConfirmedJob(
 
   const saved = await loadJob(caseId);
   if (!saved) throw new Error("Job was created but could not be reloaded.");
-  return toJobView(saved);
+  const view = toJobView(saved);
+  try {
+    const notices = await sendJobIntakeNotices(view);
+    return { ...view, ...notices };
+  } catch (error) {
+    console.error("[job-intake] email failed", error);
+    return { ...view, customerEmailSent: false, secretaryEmailSent: false };
+  }
 }
 
 export async function updateConfirmedJob(

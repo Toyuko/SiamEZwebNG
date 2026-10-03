@@ -36,6 +36,8 @@ type CreatedJob = {
   receiptNumber: string | null;
   receiptPdfPath: string | null;
   copyText: string;
+  customerEmailSent?: boolean;
+  secretaryEmailSent?: boolean;
 };
 
 type Option = { id: string; name: string };
@@ -331,6 +333,8 @@ export function JobIntakeForm({
           ? result.data.receiptPdfPath
           : null,
       copyText: result.data.copyText,
+      customerEmailSent: result.data.customerEmailSent,
+      secretaryEmailSent: result.data.secretaryEmailSent,
     });
     setKnownReceipt(result.data.receiptNumber);
   }
@@ -386,6 +390,24 @@ export function JobIntakeForm({
             <Row label="Invoice" value={created.invoiceNumber} />
             <Row label="Receipt" value={created.receiptNumber ?? "Not created"} />
           </dl>
+          {created.customerEmailSent ? (
+            <p className="mt-3 text-sm text-emerald-800 dark:text-emerald-200">
+              Invoice emailed to the customer.
+            </p>
+          ) : created.customerEmailSent === false ? (
+            <p className="mt-3 text-sm text-amber-800 dark:text-amber-200">
+              The job was saved, but the invoice email could not be sent.
+            </p>
+          ) : null}
+          {created.secretaryEmailSent ? (
+            <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-200">
+              Job details emailed to the secretary.
+            </p>
+          ) : created.secretaryEmailSent === false ? (
+            <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
+              The job was saved, but the secretary email could not be sent.
+            </p>
+          ) : null}
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {viewHref && (
