@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db";
 import { nextCaseNumber } from "@/lib/utils";
 import { getSession } from "@/lib/auth";
+import { isAdminAuthBypassEnabled } from "@/lib/auth/admin-bypass";
 import { getPaymentSettings, savePaymentSettings, type PaymentSettings } from "@/lib/payment-settings";
 import {
   getConciergeSettings,
@@ -28,6 +29,9 @@ import { toSlug } from "@/lib/slug";
 const ITEMS_PER_PAGE = 20;
 
 async function ensureStaffAccess() {
+  // Layout already allows /admin when local bypass is on. Data loaders must match,
+  // or the dashboard error boundary fires before any stats query runs.
+  if (isAdminAuthBypassEnabled()) return;
   const session = await getSession();
   if (!session || (session.user.role !== "admin" && session.user.role !== "staff")) {
     throw new Error("Unauthorized");

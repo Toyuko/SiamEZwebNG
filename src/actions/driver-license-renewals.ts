@@ -1,6 +1,7 @@
 "use server";
 
 import { getSession } from "@/lib/auth";
+import { isAdminAuthBypassEnabled } from "@/lib/auth/admin-bypass";
 import { prisma } from "@/lib/db";
 import {
   createDriverLicenseRenewal,
@@ -311,7 +312,9 @@ export async function sendRenewalTestReminderAction(id: string) {
 }
 
 export async function getDriverLicenseDashboardStats() {
-  await ensureStaffSession();
+  if (!isAdminAuthBypassEnabled()) {
+    await ensureStaffSession();
+  }
   return getDriverLicenseRenewalStats();
 }
 
