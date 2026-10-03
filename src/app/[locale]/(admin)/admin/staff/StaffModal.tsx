@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,13 @@ type StaffModalProps = {
 export function StaffModal({ open, onClose, mode, staff }: StaffModalProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [formKey, setFormKey] = useState(`${mode}:${staff?.id ?? "new"}`);
+  const nextFormKey = `${open ? "open" : "closed"}:${mode}:${staff?.id ?? "new"}`;
+  if (formKey !== nextFormKey) {
+    setFormKey(nextFormKey);
+    setError(null);
+  }
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -37,17 +44,32 @@ export function StaffModal({ open, onClose, mode, staff }: StaffModalProps) {
     const active = (form.elements.namedItem("active") as HTMLSelectElement)?.value === "1";
     const password = (form.elements.namedItem("password") as HTMLInputElement)?.value?.trim();
 
-    if (!email && mode === "add") return;
+    setError(null);
+    if (mode === "add" && !email) {
+      setError("Email is required.");
+      return;
+    }
+    if (mode === "add" && !password) {
+      setError("Password is required.");
+      return;
+    }
 
     startTransition(async () => {
-      if (mode === "add") {
-        if (!password) return;
-        await createStaffUser({ email, name, password, role });
-      } else if (staff) {
-        await updateStaffUser(staff.id, { name, role, active, ...(password ? { password } : {}) });
+      try {
+        if (mode === "add") {
+          const result = await createStaffUser({ email, name, password: password!, role });
+          if ("error" in result) {
+            setError(result.error);
+            return;
+          }
+        } else if (staff) {
+          await updateStaffUser(staff.id, { name, role, active, ...(password ? { password } : {}) });
+        }
+        onClose();
+        router.refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not save this account.");
       }
-      onClose();
-      router.refresh();
     });
   };
 
@@ -63,6 +85,7 @@ export function StaffModal({ open, onClose, mode, staff }: StaffModalProps) {
             name="email"
             type="email"
             required
+            autoComplete="off"
             defaultValue={staff?.email}
             disabled={mode === "edit"}
             className="mt-1"
@@ -93,6 +116,7 @@ export function StaffModal({ open, onClose, mode, staff }: StaffModalProps) {
           <Label htmlFor="modal-password">{mode === "add" ? "Password *" : "New password (leave blank to keep)"}</Label>
           <Input id="modal-password" name="password" type="password" autoComplete="new-password" required={mode === "add"} className="mt-1" />
         </div>
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <div className="flex gap-2 pt-2">
           <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save"}</Button>
           <Button type="button" variant="outline" onClick={onClose} disabled={pending}>Cancel</Button>

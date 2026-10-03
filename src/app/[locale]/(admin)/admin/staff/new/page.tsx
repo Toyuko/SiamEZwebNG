@@ -6,7 +6,13 @@ import { Button } from "@/components/ui/button";
 import { createStaffUser } from "@/actions/admin";
 import { StaffForm } from "../StaffForm";
 
-export default function AdminNewStaffPage() {
+export default async function AdminNewStaffPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+
   async function handleSubmit(formData: FormData) {
     "use server";
     const email = (formData.get("email") as string)?.trim();
@@ -14,14 +20,19 @@ export default function AdminNewStaffPage() {
     const password = (formData.get("password") as string)?.trim();
     const role = (formData.get("role") as "admin" | "staff") || "staff";
 
-    if (!email || !password) return;
+    if (!email || !password) {
+      redirect("/admin/staff/new?error=Email+and+password+are+required.");
+    }
 
-    await createStaffUser({
+    const result = await createStaffUser({
       email,
       name: name || null,
       password,
       role,
     });
+    if ("error" in result) {
+      redirect(`/admin/staff/new?error=${encodeURIComponent(result.error)}`);
+    }
     redirect("/admin/staff");
   }
 
@@ -42,6 +53,9 @@ export default function AdminNewStaffPage() {
           <CardTitle>Staff details</CardTitle>
         </CardHeader>
         <CardContent>
+          {error ? (
+            <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>
+          ) : null}
           <StaffForm action={handleSubmit} />
         </CardContent>
       </Card>
