@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import { Link } from "@/i18n/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocale } from "next-intl";
+import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,11 +15,13 @@ import {
   parseThbToSatang,
   type LeadSource,
 } from "@/lib/jobs/intake";
+import { detectProvince, provinceOptions } from "@/lib/calendar/provinces";
 import {
   createConfirmedJobAction,
   createPublicJobAction,
   lookupJobCustomerAction,
   lookupPublicJobCustomerAction,
+  saveJobIntakeMemoryAction,
   updateConfirmedJobAction,
 } from "@/actions/job-intake";
 import { CopyJobDetailsButton } from "@/components/admin/jobs/CopyJobDetailsButton";
@@ -62,6 +65,7 @@ export type JobFormValues = {
   totalPrice: string;
   depositAmount: string;
   location: string;
+  province: string;
   documents: string[];
   status: CaseStatus;
   createReceipt: boolean;
@@ -84,6 +88,7 @@ const EMPTY: JobFormValues = {
   totalPrice: "",
   depositAmount: "0",
   location: "",
+  province: "",
   documents: [],
   status: "confirmed",
   createReceipt: true,
@@ -190,6 +195,12 @@ export function JobIntakeForm({
   access = "admin",
   issuedReceiptNumber = null,
   savedCopyText = null,
+  memoryToken: memoryTokenProp = null,
+  initialMemory = "",
+  initialCustomerChoice = null,
+  initialExistingCustomerId = null,
+  linkedCaseId = null,
+  snapshotOnly = false,
 }: {
   mode: "create" | "edit";
   caseId?: string;
@@ -201,6 +212,14 @@ export function JobIntakeForm({
   issuedReceiptNumber?: string | null;
   /** Copy text built from the saved job, so admin can copy before editing again. */
   savedCopyText?: string | null;
+  /** Token for /jobs/saved/[token]. Opening that URL restores details and memory. */
+  memoryToken?: string | null;
+  initialMemory?: string;
+  initialCustomerChoice?: "use_existing" | "create_new" | null;
+  initialExistingCustomerId?: string | null;
+  linkedCaseId?: string | null;
+  /** The confirmed job already exists, so this page only updates the saved link. */
+  snapshotOnly?: boolean;
 }) {
   const idempotencyKey = useRef(
     typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : ""
@@ -213,10 +232,20 @@ export function JobIntakeForm({
   const [docDraft, setDocDraft] = useState("");
   const [emailMatch, setEmailMatch] = useState<Candidate | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [customerChoice, setCustomerChoice] = useState<"use_existing" | "create_new" | null>(null);
-  const [existingCustomerId, setExistingCustomerId] = useState<string | null>(null);
+  const [customerChoice, setCustomerChoice] = useState<"use_existing" | "create_new" | null>(
+    initialCustomerChoice
+  );
+  const [existingCustomerId, setExistingCustomerId] = useState<string | null>(initialExistingCustomerId);
+  const [memoryToken, setMemoryToken] = useState<string | null>(memoryTokenProp);
+  const [memory, setMemory] = useState(initialMemory);
+  const [savingLink, setSavingLink] = useState(false);
+  const [pageUrl, setPageUrl] = useState<string | null>(null);
+  const [urlCopied, setUrlCopied] = useState(false);
+  const locale = useLocale();
+  const router = useRouter();
   const [created, setCreated] = useState<CreatedJob | null>(null);
   const [knownReceipt, setKnownReceipt] = useState<string | null>(issuedReceiptNumber);
+  const provinceTouched = useRef(false);
   const [copied, setCopied] = useState(false);
   const [shareNote, setShareNote] = useState<string | null>(null);
 
@@ -235,6 +264,48 @@ export function JobIntakeForm({
 
   function set<K extends keyof JobFormValues>(key: K, value: JobFormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
+  }
+
+  function memoryDetails() {
+    return {
+      ...values,
+      customerChoice,
+      existingCustomerId,
+    };
+  }
+
+  useEffect(() => {
+    if (!memoryToken) {
+      setPageUrl(null);
+      return;
+    }
+    setPageUrl(`${window.location.origin}/${locale}/jobs/saved/${memoryToken}`);
+  }, [locale, memoryToken]);
+
+  async function saveLink(caseIdToAttach?: string) {
+    if (savingLink) return null;
+    setSavingLink(true);
+    setError(null);
+    const attach =
+      typeof caseIdToAttach === "string" ? caseIdToAttach : linkedCaseId ?? (mode === "edit" ? caseId ?? null : null);
+    const result = await saveJobIntakeMemoryAction({
+      token: memoryToken,
+      details: memoryDetails(),
+      memory,
+      caseId: attach,
+    });
+    setSavingLink(false);
+    if (!result.ok) {
+      setError(result.error);
+      return null;
+    }
+    setMemoryToken(result.data.token);
+    if (result.data.token !== memoryToken) {
+      router.replace(`/jobs/saved/${result.data.token}`);
+    } else {
+      router.refresh();
+    }
+    return result.data.token;
   }
 
   async function onEmailBlur() {
@@ -291,6 +362,7 @@ export function JobIntakeForm({
       totalPrice: values.totalPrice,
       depositAmount: values.depositAmount,
       location: values.location,
+      province: values.province,
       documentsRequired: values.documents,
       idempotencyKey: idempotencyKey.current,
       customerChoice,
@@ -341,6 +413,16 @@ export function JobIntakeForm({
       secretaryEmailSent: result.data.secretaryEmailSent,
     });
     setKnownReceipt(result.data.receiptNumber);
+    if (mode === "create") {
+      const saved = await saveJobIntakeMemoryAction({
+        token: memoryToken,
+        details: memoryDetails(),
+        memory,
+        caseId: result.data.id,
+      });
+      if (saved.ok) setMemoryToken(saved.data.token);
+      else setShareNote("The job was created, but the reference link could not be saved.");
+    }
   }
 
   async function copyDetails(text: string) {
@@ -350,6 +432,16 @@ export function JobIntakeForm({
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
       setShareNote("Copy is not available in this browser.");
+    }
+  }
+
+  async function copyUrl(url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      setUrlCopied(true);
+      window.setTimeout(() => setUrlCopied(false), 2000);
+    } catch {
+      setShareNote(url);
     }
   }
 
@@ -497,12 +589,26 @@ export function JobIntakeForm({
           <Button type="button" variant="outline" className="min-h-11" onClick={() => copyDetails(created.copyText)}>
             {copied ? "Copied!" : "Copy Job Details"}
           </Button>
+          {pageUrl ? (
+            <Button type="button" variant="outline" className="min-h-11" onClick={() => copyUrl(pageUrl)}>
+              {urlCopied ? "Link copied!" : "Copy saved link"}
+            </Button>
+          ) : (
+            <Button type="button" variant="outline" className="min-h-11" disabled={savingLink} onClick={() => saveLink(created.id)}>
+              {savingLink ? "Saving link..." : "Save reference link"}
+            </Button>
+          )}
           {access === "admin" && (
             <Button asChild variant="secondary" className="min-h-11">
               <Link href={`/admin/jobs/${created.id}`}>View Job</Link>
             </Button>
           )}
         </div>
+        {pageUrl && (
+          <p className="break-all rounded-xl bg-gray-50 p-3 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+            Saved link: {pageUrl}
+          </p>
+        )}
         {shareNote && <p className="text-sm text-gray-600 dark:text-gray-300">{shareNote}</p>}
         <pre className="overflow-x-auto whitespace-pre-wrap rounded-xl bg-gray-50 p-3 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-100">
           {created.copyText}
@@ -523,11 +629,38 @@ export function JobIntakeForm({
       : "TBD";
 
   return (
-    <form onSubmit={review} className="mx-auto w-full max-w-lg pb-28 md:pb-8">
+    <form
+      onSubmit={(event) => {
+        if (snapshotOnly) {
+          event.preventDefault();
+          void saveLink();
+          return;
+        }
+        review(event);
+      }}
+      className="mx-auto w-full max-w-lg pb-40 md:pb-8"
+    >
       <p className="text-sm font-medium text-siam-blue">Confirmed job</p>
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-        {mode === "create" ? "New job" : "Edit job"}
+        {memoryToken ? "Saved job" : mode === "create" ? "New job" : "Edit job"}
       </h1>
+      {pageUrl && (
+        <div className="mt-4 space-y-2 rounded-2xl border border-siam-blue/30 bg-siam-blue/5 p-4">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">Saved link</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            This URL restores the job details and memory note. Anyone with the link can open it, so share it only with staff.
+          </p>
+          <p className="break-all font-mono text-sm text-gray-900 dark:text-gray-100">{pageUrl}</p>
+          <Button type="button" variant="outline" className="min-h-11" onClick={() => copyUrl(pageUrl)}>
+            {urlCopied ? "Link copied!" : "Copy URL"}
+          </Button>
+        </div>
+      )}
+      {snapshotOnly && linkedCaseId && (
+        <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
+          This job was already created. Updating the link keeps the saved details and memory. Job id: {linkedCaseId}
+        </p>
+      )}
       {mode === "edit" && (created?.copyText || savedCopyText) ? (
         <section className="mt-4 space-y-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -553,6 +686,23 @@ export function JobIntakeForm({
         </p>
       )}
 
+      {phase === "edit" && (
+        <section className="mt-4 space-y-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+          <h2 className="text-lg font-semibold">Memory</h2>
+          <p className="text-sm text-gray-500">
+            Notes to remember with this job. Saving the link stores these notes and the form details together.
+          </p>
+          <textarea
+            value={memory}
+            onChange={(event) => setMemory(event.target.value)}
+            rows={4}
+            maxLength={8000}
+            className="min-h-28 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-base dark:border-gray-700 dark:bg-gray-900"
+            placeholder="Customer asked to keep the appointment in the morning. Passport copy is already on LINE."
+          />
+        </section>
+      )}
+
       {phase === "review" ? (
         <section className="mt-4 space-y-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
           <h2 className="text-lg font-semibold">Review</h2>
@@ -567,6 +717,11 @@ export function JobIntakeForm({
           <Row label="Outstanding" value={formatThb(outstanding)} />
           <Row label="Receipt" value={receiptSummary} />
           <Row label="Location" value={values.location || "—"} />
+          <Row label="Province" value={values.province || "Province needed"} />
+          <div>
+            <p className="text-sm text-gray-500">Memory</p>
+            <p className="mt-1 whitespace-pre-wrap text-base">{memory.trim() || "—"}</p>
+          </div>
           <div>
             <p className="text-sm text-gray-500">Documents</p>
             <ul className="mt-1 list-disc pl-5 text-base">
@@ -761,11 +916,41 @@ export function JobIntakeForm({
             <Field label="Location">
               <Input
                 value={values.location}
-                onChange={(event) => set("location", event.target.value)}
+                onChange={(event) => {
+                  const location = event.target.value;
+                  setValues((current) => ({
+                    ...current,
+                    location,
+                    province: provinceTouched.current ? current.province : detectProvince(location) ?? current.province,
+                  }));
+                }}
                 placeholder="Bangkok, DLT, customer home…"
                 className={fieldClass}
               />
             </Field>
+            <SearchPicker
+              label="Province"
+              value={values.province}
+              onChange={(id) => {
+                provinceTouched.current = true;
+                set("province", id);
+              }}
+              options={provinceOptions().map((name) => ({ id: name, name }))}
+              placeholder="Search provinces"
+              error={fieldErrors.province}
+            />
+            {values.province && (
+              <button
+                type="button"
+                className="min-h-11 text-left text-sm text-gray-600"
+                onClick={() => {
+                  provinceTouched.current = true;
+                  set("province", "");
+                }}
+              >
+                Clear province
+              </button>
+            )}
           </section>
 
           <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
@@ -884,14 +1069,28 @@ export function JobIntakeForm({
       )}
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-gray-800 dark:bg-gray-950 md:static md:mt-4 md:border-0 md:bg-transparent md:p-0">
-        {phase === "review" ? (
-          <Button type="button" className="min-h-12 w-full text-base" disabled={pending} onClick={submit}>
-            {pending ? "Creating job..." : mode === "create" ? "CREATE CONFIRMED JOB" : "Save job"}
+        {snapshotOnly ? (
+          <Button type="button" className="min-h-12 w-full text-base" disabled={savingLink} onClick={() => saveLink()}>
+            {savingLink ? "Saving link..." : "Update saved link"}
           </Button>
+        ) : phase === "review" ? (
+          <div className="flex flex-col gap-2">
+            <Button type="button" variant="outline" className="min-h-11 w-full text-base" disabled={savingLink || pending} onClick={() => saveLink()}>
+              {savingLink ? "Saving link..." : memoryToken ? "Update saved link" : "Save link"}
+            </Button>
+            <Button type="button" className="min-h-12 w-full text-base" disabled={pending} onClick={submit}>
+              {pending ? "Creating job..." : mode === "create" ? "CREATE CONFIRMED JOB" : "Save job"}
+            </Button>
+          </div>
         ) : (
-          <Button type="submit" className="min-h-12 w-full text-base">
-            Review job
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button type="button" variant="outline" className="min-h-11 w-full text-base" disabled={savingLink} onClick={() => saveLink()}>
+              {savingLink ? "Saving link..." : memoryToken ? "Update saved link" : "Save link"}
+            </Button>
+            <Button type="submit" className="min-h-12 w-full text-base">
+              Review job
+            </Button>
+          </div>
         )}
       </div>
     </form>
