@@ -65,10 +65,16 @@ The invoice from that page opens with a signed link on the existing PDF route. T
 
 The form is a single column with large controls, a sticky submit button, `type="date"` / `type="time"`, and email, telephone, and decimal keyboards. Share uses `navigator.share` when the phone provides it, and copies the invoice link otherwise. The invoice URL is an authenticated admin route.
 
+## Saved link
+
+**Save link** on the new-job form stores the current details and the memory note, then opens `/en/jobs/saved/<token>`. That URL is the reference. Opening it restores the form. The page also includes a plain-text brief and a JSON block (`id="siamez-job-intake-memory"`) so an agent can read the same details and memory later. A machine-readable copy is `/api/jobs/saved/<token>` (`?format=text` for the brief).
+
+The token is the access key. Anyone with the link can read and update that draft, so share it only with staff. Creating the job keeps the same URL and records the case id on it. After that, the link updates the saved details and memory. It does not create a second job.
+
 ## Editing
 
 `/admin/jobs/[id]` updates the same case. It does not create another job. Schedule changes update the existing intake calendar event. Price and deposit changes update the invoice and the intake deposit payment, and a case note records the change.
 
 ## Migration
 
-`prisma/migrations/20261003140000_job_intake` adds nullable columns and the `confirmed` case status. Existing cases are unchanged.
+`prisma/migrations/20261003140000_job_intake` adds nullable columns and the `confirmed` case status. Existing cases are unchanged. `prisma/migrations/20261008140000_job_intake_memory` adds the saved-link table.

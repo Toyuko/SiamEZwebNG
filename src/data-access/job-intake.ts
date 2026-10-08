@@ -103,6 +103,7 @@ function toJobView(row: JobRow) {
     depositSatang,
     outstandingSatang: outstanding,
     location: row.location,
+    province: row.province,
     documents,
     invoiceNumber,
     receiptNumber,
@@ -134,6 +135,7 @@ function toJobView(row: JobRow) {
     jobType,
     jobDescription: row.jobDescription,
     location: row.location,
+    province: row.province,
     documents,
     totalSatang,
     depositSatang,
@@ -271,6 +273,7 @@ function caseData(input: ValidatedJobIntake, actorId: string | null, userId: str
     scheduledAt: input.scheduledAt,
     scheduleTimeTbd: input.timeTbd,
     location: input.location,
+    province: input.province,
     jobDescription: input.jobDescription,
     documentsRequired: input.documentsRequired,
     dealValue: input.totalSatang,
@@ -283,23 +286,35 @@ async function syncSchedule(
   tx: Prisma.TransactionClient,
   input: {
     caseId: string;
-    userId: string;
+    userId: string | null;
     staffId: string | null;
     customerName: string;
     jobType: string;
     staffName: string;
     location: string | null;
+    province?: string | null;
     status: string;
     scheduledAt: Date | null;
     timeTbd: boolean;
   }
 ) {
   const plan = planCalendarEvent(input);
-  const events = await tx.event.findMany({ where: { caseId: input.caseId } });
-  const existing = events.find((event) => event.description?.includes(JOB_INTAKE_EVENT_MARKER)) ?? null;
+  const events = await tx.event.findMany({
+    where: { caseId: input.caseId },
+    orderBy: { createdAt: "asc" },
+  });
+  const matches = events.filter(
+    (event) => event.primaryForCaseId === input.caseId || event.description?.includes(JOB_INTAKE_EVENT_MARKER)
+  );
   if (plan.action === "none") {
-    if (existing) await tx.event.delete({ where: { id: existing.id } });
+    if (matches.length > 0) {
+      await tx.event.deleteMany({ where: { id: { in: matches.map((event) => event.id) } } });
+    }
     return;
+  }
+  const [keep, ...extra] = matches;
+  if (extra.length > 0) {
+    await tx.event.deleteMany({ where: { id: { in: extra.map((event) => event.id) } } });
   }
   const data = {
     title: plan.title,
@@ -309,15 +324,35 @@ async function syncSchedule(
     allDay: plan.allDay,
     type: "appointment" as const,
     caseId: input.caseId,
+    primaryForCaseId: input.caseId,
     userId: input.userId,
     staffId: input.staffId,
-    color: "blue",
+    color: null as string | null,
   };
-  if (existing) {
-    await tx.event.update({ where: { id: existing.id }, data });
-  } else {
-    await tx.event.create({ data });
+  if (keep) {
+    await tx.event.update({ where: { id: keep.id }, data });
+    return;
   }
+  await tx.event.create({ data });
+}
+
+export async function syncScheduleFromCase(tx: Prisma.TransactionClient, caseId: string) {
+  const row = await tx.case.findUnique({ where: { id: caseId }, include: jobInclude });
+  if (!row) return;
+  const assigned = row.staffAssignments[0]?.user ?? null;
+  await syncSchedule(tx, {
+    caseId,
+    userId: row.userId,
+    staffId: assigned?.id ?? null,
+    customerName: row.user?.name ?? row.guestName ?? "Customer",
+    jobType: caseServiceName(row),
+    staffName: assigned ? staffDisplayName(assigned) : "TBD",
+    location: row.location,
+    province: row.province,
+    status: row.status,
+    scheduledAt: row.scheduledAt,
+    timeTbd: row.scheduleTimeTbd,
+  });
 }
 
 async function syncDepositPayment(
@@ -404,7 +439,7 @@ function isIdempotencyConflict(error: unknown): boolean {
 }
 
 /** Session ids must exist on User. A stale local session falls back to the same email. */
-async function resolveStaffActor(actor: { id: string; email: string }): Promise<string> {
+export async function resolveStaffActor(actor: { id: string; email: string }): Promise<string> {
   const byId = await prisma.user.findUnique({
     where: { id: actor.id },
     select: { id: true, role: true, active: true },
@@ -567,11 +602,12 @@ export async function createConfirmedJob(
       await syncSchedule(tx, {
         caseId: created.id,
         userId,
-        staffId: input.assignedStaffId ?? input.closedByStaffId,
+        staffId: input.assignedStaffId,
         customerName: input.customerName,
         jobType,
-        staffName: staffDisplayName(input.assignedStaffId ? refs.assignee : refs.closer),
+        staffName: input.assignedStaffId ? staffDisplayName(refs.assignee) : "TBD",
         location: input.location,
+        province: input.province,
         status: "confirmed",
         scheduledAt: input.scheduledAt,
         timeTbd: input.timeTbd,
@@ -765,11 +801,12 @@ export async function updateConfirmedJob(
     await syncSchedule(tx, {
       caseId,
       userId: userId!,
-      staffId: input.assignedStaffId ?? input.closedByStaffId,
+      staffId: input.assignedStaffId,
       customerName: input.customerName,
       jobType,
-      staffName: staffDisplayName(input.assignedStaffId ? refs.assignee : refs.closer),
+      staffName: input.assignedStaffId ? staffDisplayName(refs.assignee) : "TBD",
       location: input.location,
+      province: input.province,
       status: nextStatus,
       scheduledAt: input.scheduledAt,
       timeTbd: input.timeTbd,
@@ -786,6 +823,13 @@ export async function updateConfirmedJob(
     const previousAssignee = existing.staffAssignments[0]?.userId ?? null;
     if (previousAssignee !== input.assignedStaffId) notes.push("Assigned staff changed.");
     if (raw.status && raw.status !== existing.status) notes.push(`Status changed to ${nextStatus}.`);
+    if ((existing.province ?? null) !== input.province) notes.push("Province changed.");
+    if (
+      existing.scheduledAt?.toISOString() !== input.scheduledAt?.toISOString() ||
+      existing.scheduleTimeTbd !== input.timeTbd
+    ) {
+      notes.push("Schedule changed.");
+    }
     if (notes.length > 0) {
       await tx.caseNote.create({
         data: {

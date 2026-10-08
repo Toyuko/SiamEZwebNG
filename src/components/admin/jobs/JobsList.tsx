@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { CASE_STATUS_LABELS } from "@/lib/domain/case-status";
 import { LEAD_SOURCES, LEAD_SOURCE_LABELS, formatThb, formatBangkokDate, formatBangkokTime } from "@/lib/jobs/intake";
+import { CopyJobDetailsButton } from "@/components/admin/jobs/CopyJobDetailsButton";
 import type { CaseStatus } from "@prisma/client";
 
 export type JobCard = {
@@ -21,6 +22,7 @@ export type JobCard = {
   outstandingSatang: number;
   status: CaseStatus;
   paymentStatus: string;
+  copyText: string;
 };
 
 export function JobsList({
@@ -143,11 +145,11 @@ export function JobsList({
         {jobs.map((job) => {
           const when = job.scheduledAt ? new Date(job.scheduledAt) : null;
           return (
-            <li key={job.id}>
-              <Link
-                href={`/admin/jobs/${job.id}`}
-                className="block rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950"
-              >
+            <li
+              key={job.id}
+              className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950"
+            >
+              <Link href={`/admin/jobs/${job.id}`} className="block p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-lg font-semibold">{job.customerName || "Customer"}</p>
@@ -175,6 +177,9 @@ export function JobsList({
                 </dl>
                 <p className="mt-2 text-xs text-gray-400">{job.caseNumber}</p>
               </Link>
+              <div className="px-4 pb-4">
+                <CopyJobDetailsButton copyText={job.copyText} className="min-h-11 w-full" />
+              </div>
             </li>
           );
         })}

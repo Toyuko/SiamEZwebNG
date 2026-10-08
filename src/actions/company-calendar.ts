@@ -1,0 +1,91 @@
+"use server";
+
+import type { CaseStatus } from "@prisma/client";
+import { getSession } from "@/lib/auth";
+import {
+  assignCalendarProvince,
+  assignCalendarStaff,
+  rescheduleJob,
+  setCalendarJobStatus,
+  syncExistingJobsToCalendar,
+} from "@/data-access/company-calendar";
+import { assertJobIntakeAccess, JobIntakeValidationError } from "@/lib/jobs/intake";
+import type { ScheduleWarning } from "@/lib/calendar/schedule";
+
+export type CalendarActionResult =
+  | { ok: true; warnings?: ScheduleWarning[]; report?: { scanned: number; already: number; added: number; unscheduled: number; errors: number } }
+  | { ok: false; error: string; confirm?: ScheduleWarning[] };
+
+async function actor() {
+  const session = await getSession();
+  assertJobIntakeAccess(session?.user.role);
+  return session!.user;
+}
+
+function fail(error: unknown, fallback: string): CalendarActionResult {
+  if (error instanceof JobIntakeValidationError) return { ok: false, error: error.message };
+  if (error instanceof Error && error.message === "Unauthorized") return { ok: false, error: "Unauthorized" };
+  if (error instanceof Error && error.message === "Job not found") return { ok: false, error: "Job not found" };
+  if (error instanceof Error && error.message.startsWith("Invalid status transition")) {
+    return { ok: false, error: "That status change is not allowed." };
+  }
+  console.error(fallback, error);
+  return { ok: false, error: fallback };
+}
+
+export async function rescheduleJobAction(
+  caseId: string,
+  input: { date: string; time: string | null; timeTbd: boolean; acknowledge?: boolean }
+): Promise<CalendarActionResult> {
+  try {
+    const user = await actor();
+    const result = await rescheduleJob(user, caseId, { ...input, acknowledge: input.acknowledge === true });
+    if (result.warnings.length > 0) {
+      return { ok: false, error: "Scheduling conflict", confirm: result.warnings };
+    }
+    return { ok: true };
+  } catch (error) {
+    return fail(error, "Unable to reschedule job.");
+  }
+}
+
+export async function assignCalendarStaffAction(caseId: string, staffId: string | null): Promise<CalendarActionResult> {
+  try {
+    const user = await actor();
+    await assignCalendarStaff(user, caseId, staffId);
+    return { ok: true };
+  } catch (error) {
+    return fail(error, "Unable to change staff.");
+  }
+}
+
+export async function assignCalendarProvinceAction(caseId: string, province: string | null): Promise<CalendarActionResult> {
+  try {
+    const user = await actor();
+    await assignCalendarProvince(user, caseId, province);
+    return { ok: true };
+  } catch (error) {
+    return fail(error, "Unable to update the province.");
+  }
+}
+
+export async function setCalendarJobStatusAction(caseId: string, status: CaseStatus): Promise<CalendarActionResult> {
+  try {
+    const user = await actor();
+    await setCalendarJobStatus(user, caseId, status);
+    return { ok: true };
+  } catch (error) {
+    return fail(error, "Unable to update the job.");
+  }
+}
+
+export async function syncCalendarAction(): Promise<CalendarActionResult> {
+  try {
+    const user = await actor();
+    if (user.role !== "admin") return { ok: false, error: "Unauthorized" };
+    const report = await syncExistingJobsToCalendar(user);
+    return { ok: true, report };
+  } catch (error) {
+    return fail(error, "Unable to sync the calendar.");
+  }
+}

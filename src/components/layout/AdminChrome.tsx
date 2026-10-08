@@ -47,6 +47,12 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
           </Link>
           <div className="ml-auto flex items-center gap-2">
             <Link
+              href="/admin/calendar"
+              className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-siam-blue"
+            >
+              Calendar
+            </Link>
+            <Link
               href="/admin/jobs/new"
               className="inline-flex min-h-11 items-center rounded-lg bg-siam-yellow px-3 text-sm font-semibold text-siam-blue-dark"
             >

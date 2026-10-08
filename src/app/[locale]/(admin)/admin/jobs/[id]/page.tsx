@@ -61,6 +61,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         staff={staff.filter((person) => isAssignableJobStaff(person))}
         initial={jobFormValuesFromRecord(job)}
         issuedReceiptNumber={job.receiptNumber}
+        savedCopyText={job.copyText}
       />
     </div>
   );

@@ -1,80 +1,52 @@
-import dynamic from "next/dynamic";
-import { Card, CardContent } from "@/components/ui/card";
-import { getEvents, getCases, getStaffUsers } from "@/actions/admin";
-
-const CalendarView = dynamic(
-  () => import("./CalendarView").then((m) => m.CalendarView),
-  {
-    loading: () => (
-      <div
-        className="min-h-[28rem] animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800/60"
-        aria-busy="true"
-        aria-label="Loading calendar"
-      />
-    ),
-  }
-);
+import { getServices, getStaffUsers } from "@/actions/admin";
+import { getSession } from "@/lib/auth";
+import { isAssignableJobStaff } from "@/lib/jobs/intake";
+import { loadCompanyCalendar } from "@/data-access/company-calendar";
+import { calendarAnchor, calendarRange, parseCalendarView, type CalendarFilters } from "@/lib/calendar/schedule";
+import { CompanyCalendar } from "./CompanyCalendar";
 
 export default async function AdminCalendarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; month?: string; year?: string; date?: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const params = await searchParams;
-  const view = (params.view ?? "month") as "month" | "week" | "day";
-  const now = new Date();
-  const month = params.month ? parseInt(params.month, 10) : now.getMonth() + 1;
-  const year = params.year ? parseInt(params.year, 10) : now.getFullYear();
-  const dateParam = params.date;
-  const centerDate = dateParam
-    ? new Date(dateParam + "T12:00:00")
-    : new Date(year, month - 1, 1);
-
-  let start: Date;
-  let end: Date;
-  if (view === "week") {
-    const day = centerDate.getDay();
-    const diff = centerDate.getDate() - day;
-    start = new Date(centerDate.getFullYear(), centerDate.getMonth(), diff, 0, 0, 0);
-    end = new Date(start);
-    end.setDate(start.getDate() + 6);
-    end.setHours(23, 59, 59, 999);
-  } else if (view === "day") {
-    start = new Date(centerDate.getFullYear(), centerDate.getMonth(), centerDate.getDate(), 0, 0, 0);
-    end = new Date(start);
-    end.setHours(23, 59, 59, 999);
-  } else {
-    start = new Date(year, month - 1, 1);
-    end = new Date(year, month, 0, 23, 59, 59);
-  }
-
-  const [events, casesData, staff] = await Promise.all([
-    getEvents({ start, end }),
-    getCases({ status: "all", page: 1 }),
+  const view = parseCalendarView(params.view);
+  const anchor = calendarAnchor(params.date);
+  const range = calendarRange(view, anchor);
+  const filters: CalendarFilters = {
+    provinces: (params.provinces ?? "").split(",").map((item) => item.trim()).filter(Boolean),
+    staffId: params.staff ?? "",
+    serviceId: params.service ?? "",
+    status: params.status ?? "all",
+    q: params.q ?? "",
+  };
+  const session = await getSession();
+  const [calendar, staff, services] = await Promise.all([
+    loadCompanyCalendar({
+      start: range.start,
+      end: range.end,
+      filters,
+      includeHealth: session?.user.role === "admin",
+    }),
     getStaffUsers(),
+    getServices(),
   ]);
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-        Calendar
-      </h1>
-      <p className="mt-1 text-gray-600 dark:text-gray-400">
-        Appointments, deadlines, and case milestones.
-      </p>
-      <Card className="mt-6">
-        <CardContent className="p-4">
-          <CalendarView
-            events={events}
-            cases={casesData.cases}
-            staff={staff}
-            view={view}
-            month={month}
-            year={year}
-            date={centerDate}
-          />
-        </CardContent>
-      </Card>
-    </div>
+    <CompanyCalendar
+      jobs={calendar.jobs}
+      unscheduled={calendar.unscheduled}
+      otherEvents={calendar.otherEvents}
+      summary={calendar.summary}
+      health={calendar.health}
+      staff={staff.filter((person) => isAssignableJobStaff(person))}
+      services={services.filter((service) => service.active).map((service) => ({ id: service.id, name: service.name }))}
+      view={view}
+      anchor={anchor}
+      filters={filters}
+      canRepair={session?.user.role === "admin"}
+      truncated={calendar.truncated}
+    />
   );
 }

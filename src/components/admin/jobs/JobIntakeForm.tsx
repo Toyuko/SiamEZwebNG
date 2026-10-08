@@ -21,6 +21,7 @@ import {
   lookupPublicJobCustomerAction,
   updateConfirmedJobAction,
 } from "@/actions/job-intake";
+import { CopyJobDetailsButton } from "@/components/admin/jobs/CopyJobDetailsButton";
 import type { CaseStatus } from "@prisma/client";
 
 type CreatedJob = {
@@ -188,6 +189,7 @@ export function JobIntakeForm({
   initial,
   access = "admin",
   issuedReceiptNumber = null,
+  savedCopyText = null,
 }: {
   mode: "create" | "edit";
   caseId?: string;
@@ -197,6 +199,8 @@ export function JobIntakeForm({
   /** "link" is the no-login page staff can open from a shared URL. */
   access?: "admin" | "link";
   issuedReceiptNumber?: string | null;
+  /** Copy text built from the saved job, so admin can copy before editing again. */
+  savedCopyText?: string | null;
 }) {
   const idempotencyKey = useRef(
     typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : ""
@@ -524,6 +528,17 @@ export function JobIntakeForm({
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
         {mode === "create" ? "New job" : "Edit job"}
       </h1>
+      {mode === "edit" && (created?.copyText || savedCopyText) ? (
+        <section className="mt-4 space-y-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">Job details</h2>
+            <CopyJobDetailsButton copyText={created?.copyText ?? savedCopyText ?? ""} className="min-h-11" />
+          </div>
+          <pre className="overflow-x-auto whitespace-pre-wrap rounded-xl bg-gray-50 p-3 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+            {created?.copyText ?? savedCopyText}
+          </pre>
+        </section>
+      ) : null}
       <ol className="mt-3 flex gap-2 overflow-x-auto text-xs text-gray-500">
         {["Customer", "Schedule", "Service", "Payment", "Documents", "Review"].map((step, index) => (
           <li key={step} className="shrink-0 rounded-full bg-gray-100 px-2 py-1 dark:bg-gray-800">
@@ -864,10 +879,7 @@ export function JobIntakeForm({
       {created && mode === "edit" && (
         <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
           Job saved. Invoice {created.invoiceNumber}
-          {created.receiptNumber ? `. Receipt ${created.receiptNumber}` : ""}.{" "}
-          <button type="button" className="underline" onClick={() => copyDetails(created.copyText)}>
-            {copied ? "Copied!" : "Copy Job Details"}
-          </button>
+          {created.receiptNumber ? `. Receipt ${created.receiptNumber}` : ""}. The job details above are ready to copy.
         </p>
       )}
 

@@ -11,6 +11,7 @@ import {
   regenerateJobInvoice,
   updateConfirmedJob,
 } from "@/data-access/job-intake";
+import { saveJobIntakeMemory } from "@/data-access/job-intake-memory";
 import {
   assertJobIntakeAccess,
   CustomerChoiceRequiredError,
@@ -102,6 +103,29 @@ export async function createPublicJobAction(
     };
   } catch (error) {
     return fail(error, "Unable to create job. Please try again.");
+  }
+}
+
+export async function saveJobIntakeMemoryAction(input: {
+  token?: string | null;
+  details: unknown;
+  memory: unknown;
+  caseId?: string | null;
+}) {
+  const session = await getSession();
+  const role = session?.user.role;
+  if (role !== "admin" && role !== "staff") {
+    const limit = await publicIntakeAllowed("memory", 30);
+    if (!limit.allowed) {
+      return { ok: false as const, error: "Too many saves. Wait a minute and try again." };
+    }
+  }
+  try {
+    const saved = await saveJobIntakeMemory(input);
+    if (!saved.ok) return { ok: false as const, error: "That saved link was not found." };
+    return { ok: true as const, data: { token: saved.token } };
+  } catch (error) {
+    return fail(error, "Unable to save the job link.");
   }
 }
 

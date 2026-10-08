@@ -6,6 +6,7 @@
 
 import type { CaseStatus } from "@prisma/client";
 import { isStaffRole } from "@/lib/auth/roles";
+import { normalizeProvince } from "@/lib/calendar/provinces";
 
 export const JOB_INTAKE_TIMEZONE = "Asia/Bangkok";
 export const JOB_INTAKE_DEPOSIT_SOURCE = "job_intake_deposit";
@@ -62,6 +63,7 @@ export type JobIntakeInput = {
   totalPrice: string | number;
   depositAmount?: string | number | null;
   location?: string | null;
+  province?: string | null;
   documentsRequired?: string[] | null;
   idempotencyKey?: string | null;
   customerChoice?: CustomerChoice | null;
@@ -89,6 +91,7 @@ export type ValidatedJobIntake = {
   depositSatang: number;
   outstandingSatang: number;
   location: string | null;
+  province: string | null;
   documentsRequired: string[];
   idempotencyKey: string | null;
   customerChoice: CustomerChoice | null;
@@ -275,6 +278,8 @@ export function validateJobIntake(raw: JobIntakeInput, options?: { requireIdempo
   const otherServiceName = raw.otherServiceName?.trim() || null;
   const jobDescription = raw.jobDescription?.trim() || null;
   const location = raw.location?.trim() || null;
+  const province = normalizeProvince(raw.province);
+  if (raw.province?.trim() && !province) fieldErrors.province = "Choose a province from the list.";
   const documentsRequired = parseDocumentsRequired(raw.documentsRequired ?? []);
   const idempotencyKey = raw.idempotencyKey?.trim() ?? "";
 
@@ -345,6 +350,7 @@ export function validateJobIntake(raw: JobIntakeInput, options?: { requireIdempo
     depositSatang,
     outstandingSatang: outstandingSatang(totalSatang, depositSatang),
     location,
+    province,
     documentsRequired,
     idempotencyKey: requireKey ? idempotencyKey : null,
     customerChoice: raw.customerChoice ?? null,
@@ -452,6 +458,7 @@ export type JobCopyInput = {
   depositSatang: number;
   outstandingSatang: number;
   location: string | null;
+  province?: string | null;
   documents: string[];
   invoiceNumber: string;
   receiptNumber?: string | null;
@@ -483,6 +490,7 @@ export function buildJobCopyText(input: JobCopyInput): string {
     `Deposit amount: ${formatThb(input.depositSatang)}`,
     `Outstanding Balance: ${formatThb(input.outstandingSatang)}`,
     `Location: ${input.location || "—"}`,
+    ...(input.province ? [`Province: ${input.province}`] : []),
     "",
     "Documents to be prepared:",
     "",
@@ -526,6 +534,7 @@ export function planCalendarEvent(input: {
   jobType: string;
   staffName: string;
   location: string | null;
+  province?: string | null;
   status: string;
   scheduledAt: Date | null;
   timeTbd: boolean;
@@ -540,6 +549,7 @@ export function planCalendarEvent(input: {
     `Service: ${input.jobType}`,
     `Staff: ${input.staffName}`,
     `Location: ${input.location || "—"}`,
+    `Province: ${input.province || "Needed"}`,
     `Status: ${input.status}`,
   ].join("\n");
   return {
@@ -616,6 +626,7 @@ export function jobFormValuesFromRecord(job: {
   otherServiceName: string | null;
   jobDescription: string | null;
   location: string | null;
+  province?: string | null;
   documents: string[];
   totalSatang: number;
   depositSatang: number;
@@ -640,6 +651,7 @@ export function jobFormValuesFromRecord(job: {
     totalPrice: String(job.totalSatang / 100),
     depositAmount: String(job.depositSatang / 100),
     location: job.location ?? "",
+    province: job.province ?? "",
     documents: job.documents,
     status: job.status,
     createReceipt: Boolean(job.receiptNumber),
