@@ -524,6 +524,11 @@ export function CompanyCalendar({
     });
   }
 
+  function openAppointment(date: string, time: string) {
+    setSelectedId(null);
+    setEventEditor({ mode: "create", date, time });
+  }
+
   function openSearchResult(job: CalendarJobRecord) {
     const date = jobDate(job) || anchor;
     setSelectedId(job.caseId);
@@ -611,7 +616,7 @@ export function CompanyCalendar({
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2 lg:ml-auto">
+          <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
             <div className="hidden rounded-lg bg-gray-100 p-0.5 lg:flex dark:bg-gray-900" role="tablist" aria-label="Calendar view">
               {DESKTOP_VIEWS.map((item) => (
                 <button
@@ -663,14 +668,15 @@ export function CompanyCalendar({
             </button>
             <button
               type="button"
-              className="inline-flex h-10 items-center rounded-full border border-gray-300 px-3 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-900"
-              onClick={() => {
-                setSelectedId(null);
-                setEventEditor({ mode: "create", date: anchor, time: "09:00" });
-              }}
+              className="inline-flex h-10 items-center gap-1 rounded-full bg-siam-blue px-3 text-sm font-semibold text-white"
+              onClick={() => openAppointment(anchor, "09:00")}
             >
-              Event
+              <Plus className="h-4 w-4" />
+              Appointment
             </button>
+            <Link href={createHref(anchor, "09:00")} className="inline-flex h-10 items-center rounded-full border border-gray-300 px-3 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-900">
+              Job
+            </Link>
             <button
               type="button"
               className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-900"
@@ -679,10 +685,6 @@ export function CompanyCalendar({
             >
               <Printer className="h-4 w-4" />
             </button>
-            <Link href={createHref(anchor, "09:00")} className="hidden h-10 items-center gap-1 rounded-full bg-siam-blue px-4 text-sm font-semibold text-white lg:inline-flex">
-              <Plus className="h-4 w-4" />
-              Create
-            </Link>
           </div>
         </header>
 
@@ -847,6 +849,7 @@ export function CompanyCalendar({
                   setEventEditor({ mode: "edit", id });
                 }}
                 onDrop={handleDrop}
+                onAddAppointment={openAppointment}
                 dragged={dragged}
               />
             )}
@@ -865,6 +868,7 @@ export function CompanyCalendar({
                       setEventEditor({ mode: "edit", id });
                     }}
                     onDrop={handleDrop}
+                    onAddAppointment={openAppointment}
                     dragged={dragged}
                   />
                 </div>
@@ -883,6 +887,7 @@ export function CompanyCalendar({
                         setEventEditor({ mode: "edit", id });
                       }}
                       onDrop={handleDrop}
+                      onAddAppointment={openAppointment}
                       dragged={dragged}
                     />
                   </div>
@@ -902,6 +907,7 @@ export function CompanyCalendar({
                   setEventEditor({ mode: "edit", id });
                 }}
                 onDrop={handleDrop}
+                onAddAppointment={openAppointment}
                 dragged={dragged}
                 detailed
               />
@@ -923,13 +929,14 @@ export function CompanyCalendar({
           </div>
         </div>
 
-        <Link
-          href={createHref(anchor, "09:00")}
+        <button
+          type="button"
           className="fixed bottom-5 right-5 z-30 inline-flex h-14 w-14 items-center justify-center rounded-full bg-siam-blue text-white shadow-lg lg:hidden"
-          aria-label="Create job"
+          aria-label="Add appointment"
+          onClick={() => openAppointment(anchor, "09:00")}
         >
           <Plus className="h-7 w-7" />
-        </Link>
+        </button>
       </div>
 
       <PrintableView
@@ -1477,8 +1484,8 @@ function EventDialog({
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 id="manual-event-title" className="text-lg font-semibold">{creating ? "Add event" : "Edit event"}</h2>
-            <p className="text-sm text-gray-500">A calendar event, separate from a job.</p>
+            <h2 id="manual-event-title" className="text-lg font-semibold">{creating ? "Add appointment" : "Edit appointment"}</h2>
+            <p className="text-sm text-gray-500">This stays on the calendar. It does not create a job.</p>
           </div>
           <button type="button" className="inline-flex h-11 w-11 items-center justify-center" onClick={onClose} aria-label="Close">
             <X className="h-5 w-5" />
@@ -1547,7 +1554,7 @@ function EventDialog({
         </label>
         <div className="mt-4 flex flex-wrap gap-2">
           <button type="submit" disabled={pending} className="h-11 rounded-lg bg-siam-blue px-4 text-sm font-semibold text-white disabled:opacity-60">
-            {pending ? "Saving…" : creating ? "Add event" : "Save"}
+            {pending ? "Saving…" : creating ? "Add appointment" : "Save"}
           </button>
           {!creating && event && !confirmDelete && (
             <button type="button" className="h-11 rounded-lg border border-red-300 px-4 text-sm font-medium text-red-700" onClick={() => setConfirmDelete(true)}>
@@ -1556,8 +1563,13 @@ function EventDialog({
           )}
           {!creating && event && confirmDelete && (
             <button type="button" disabled={pending} className="h-11 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white disabled:opacity-60" onClick={() => onDelete(event.id)}>
-              {pending ? "Deleting…" : "Delete this event"}
+              {pending ? "Deleting…" : "Delete this appointment"}
             </button>
+          )}
+          {creating && (
+            <Link href={createHref(date, allDay ? "09:00" : time)} className="inline-flex h-11 items-center px-2 text-sm font-medium text-siam-blue">
+              Create a job instead
+            </Link>
           )}
         </div>
       </form>
@@ -1610,6 +1622,7 @@ function MonthGrid({
   onOpenJob,
   onOpenEvent,
   onDrop,
+  onAddAppointment,
   dragged,
 }: {
   dates: string[];
@@ -1622,9 +1635,9 @@ function MonthGrid({
   onOpenJob: (id: string) => void;
   onOpenEvent: (id: string) => void;
   onDrop: (payload: DragPayload, date: string, time: DropTime) => void;
+  onAddAppointment: (date: string, time: string) => void;
   dragged: { current: boolean };
 }) {
-  const router = useRouter();
   return (
     <div className="min-w-[20rem]">
       <div className="grid grid-cols-7 border-b border-gray-200 text-center text-xs font-medium text-gray-500 dark:border-gray-800">
@@ -1649,7 +1662,7 @@ function MonthGrid({
               onClick={(event) => {
                 const target = event.target as HTMLElement;
                 if (target.closest("[data-event], [data-daynum], [data-more]")) return;
-                router.push(createHref(date, "09:00"));
+                onAddAppointment(date, "09:00");
               }}
             >
               <button
@@ -1764,6 +1777,7 @@ function TimeGrid({
   onOpen,
   onOpenEvent,
   onDrop,
+  onAddAppointment,
   dragged,
 }: {
   days: string[];
@@ -1774,6 +1788,7 @@ function TimeGrid({
   onOpen: (id: string) => void;
   onOpenEvent: (id: string) => void;
   onDrop: (payload: DragPayload, date: string, time: DropTime) => void;
+  onAddAppointment: (date: string, time: string) => void;
   dragged: { current: boolean };
 }) {
   const showNow = days.includes(today) && nowMinutes >= CALENDAR_START_HOUR * 60 && nowMinutes <= (CALENDAR_END_HOUR + 1) * 60;
@@ -1853,12 +1868,13 @@ function TimeGrid({
           <div key={hour} className="grid border-b border-gray-100 dark:border-gray-800" style={{ gridTemplateColumns: `3.5rem repeat(${days.length}, minmax(0,1fr))`, height: HOUR_PX }}>
             <div className="-mt-2 pr-2 text-right text-[11px] text-gray-500">{hourLabel(hour)}</div>
             {days.map((date) => (
-              <Link
+              <button
                 key={`${date}-${hour}`}
-                href={createHref(date, timeValue(hour))}
-                aria-label={`Create job on ${dayHeading(date)} at ${hourLabel(hour)}`}
+                type="button"
+                aria-label={`Add appointment on ${dayHeading(date)} at ${hourLabel(hour)}`}
                 className={`border-l border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900 ${date === today ? "bg-sky-50/40 dark:bg-sky-950/20" : ""}`}
                 {...dropHandlers(date, timeValue(hour), onDrop)}
+                onClick={() => onAddAppointment(date, timeValue(hour))}
               />
             ))}
           </div>
@@ -1927,6 +1943,7 @@ function DaySchedule({
   onOpen,
   onOpenEvent,
   onDrop,
+  onAddAppointment,
   dragged,
   detailed = false,
 }: {
@@ -1938,6 +1955,7 @@ function DaySchedule({
   onOpen: (id: string) => void;
   onOpenEvent: (id: string) => void;
   onDrop: (payload: DragPayload, date: string, time: DropTime) => void;
+  onAddAppointment: (date: string, time: string) => void;
   dragged: { current: boolean };
   detailed?: boolean;
 }) {
@@ -2048,9 +2066,9 @@ function DaySchedule({
                 </button>
               ))}
               {slotJobs.length === 0 && slotEvents.length === 0 && (
-                <Link href={createHref(date, timeValue(hour))} className="block min-h-14 rounded-lg text-xs text-gray-400 hover:bg-white/80 dark:hover:bg-gray-900" aria-label={`Create job on ${dayHeading(date)} at ${hourLabel(hour)}`}>
-                  <span className="sr-only">Create job at {hourLabel(hour)}</span>
-                </Link>
+                <button type="button" className="block min-h-14 w-full rounded-lg text-xs text-gray-400 hover:bg-white/80 dark:hover:bg-gray-900" aria-label={`Add appointment on ${dayHeading(date)} at ${hourLabel(hour)}`} onClick={() => onAddAppointment(date, timeValue(hour))}>
+                  <span className="sr-only">Add appointment at {hourLabel(hour)}</span>
+                </button>
               )}
             </div>
           </div>
