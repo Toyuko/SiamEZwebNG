@@ -112,6 +112,7 @@ export async function loadCompanyCalendar(input: {
       { guestName: { contains: q, mode: "insensitive" } },
       { guestEmail: { contains: q, mode: "insensitive" } },
       { guestPhone: { contains: q, mode: "insensitive" } },
+      { id: { contains: q, mode: "insensitive" } },
       { caseNumber: { contains: q, mode: "insensitive" } },
       { location: { contains: q, mode: "insensitive" } },
       { otherServiceName: { contains: q, mode: "insensitive" } },

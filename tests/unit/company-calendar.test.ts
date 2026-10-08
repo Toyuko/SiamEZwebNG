@@ -5,10 +5,14 @@ import {
   calendarRange,
   filterCalendarJobs,
   isUnscheduledJob,
+  monthGridDates,
+  parseCalendarView,
   planBackfill,
   preferredCalendarView,
+  resolveCalendarView,
   reschedulePlan,
   schedulingWarnings,
+  threeDayDates,
   toPublicSlot,
   type CalendarJobRecord,
 } from "@/lib/calendar/schedule";
@@ -56,9 +60,15 @@ describe("company calendar", () => {
   });
 
   it("loads only the visible Thailand date range", () => {
+    const dates = monthGridDates("2026-10-10");
+    expect(dates[0]).toBe("2026-09-28");
+    expect(dates.at(-1)).toBe("2026-11-01");
     const october = calendarRange("month", "2026-10-10");
-    expect(october.start.toISOString()).toBe("2026-09-30T17:00:00.000Z");
-    expect(october.end.toISOString()).toBe("2026-10-31T17:00:00.000Z");
+    expect(october.start.toISOString()).toBe("2026-09-27T17:00:00.000Z");
+    expect(october.end.toISOString()).toBe("2026-11-01T17:00:00.000Z");
+    expect(threeDayDates("2026-10-10")).toEqual(["2026-10-10", "2026-10-11", "2026-10-12"]);
+    expect(parseCalendarView("threeday")).toBe("threeday");
+    expect(parseCalendarView(undefined, "week")).toBe("week");
     const day = calendarRange("day", "2026-10-10");
     expect(day.start.toISOString()).toBe("2026-10-09T17:00:00.000Z");
     expect(day.end.toISOString()).toBe("2026-10-10T17:00:00.000Z");
@@ -66,7 +76,14 @@ describe("company calendar", () => {
 
   it("keeps 10:00 Thailand as 03:00 UTC and prefers agenda on a phone", () => {
     expect(preferredCalendarView(390)).toBe("agenda");
+    expect(preferredCalendarView(900)).toBe("week");
     expect(preferredCalendarView(1200)).toBe("week");
+    expect(resolveCalendarView({ context: "wide" })).toBe("week");
+    expect(resolveCalendarView({ context: "narrow" })).toBe("agenda");
+    expect(resolveCalendarView({ context: "wide", widePreference: "day" })).toBe("day");
+    expect(resolveCalendarView({ context: "narrow", widePreference: "day" })).toBe("agenda");
+    expect(resolveCalendarView({ context: "narrow", narrowPreference: "week", widePreference: "month" })).toBe("week");
+    expect(resolveCalendarView({ context: "wide", requested: "month", widePreference: "day" })).toBe("month");
     const slot = toPublicSlot({
       start: new Date("2026-10-10T03:00:00.000Z"),
       allDay: false,

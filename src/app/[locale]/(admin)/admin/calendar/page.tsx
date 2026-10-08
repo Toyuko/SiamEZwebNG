@@ -1,8 +1,9 @@
+import { cookies } from "next/headers";
 import { getServices, getStaffUsers } from "@/actions/admin";
 import { getSession } from "@/lib/auth";
 import { isAssignableJobStaff } from "@/lib/jobs/intake";
 import { loadCompanyCalendar } from "@/data-access/company-calendar";
-import { calendarAnchor, calendarRange, parseCalendarView, type CalendarFilters } from "@/lib/calendar/schedule";
+import { calendarAnchor, calendarRange, resolveCalendarView, type CalendarContextName, type CalendarFilters } from "@/lib/calendar/schedule";
 import { CompanyCalendar } from "./CompanyCalendar";
 
 export default async function AdminCalendarPage({
@@ -11,7 +12,14 @@ export default async function AdminCalendarPage({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const params = await searchParams;
-  const view = parseCalendarView(params.view);
+  const jar = await cookies();
+  const context: CalendarContextName = jar.get("siamez-cal-context")?.value === "narrow" ? "narrow" : "wide";
+  const view = resolveCalendarView({
+    requested: params.view,
+    widePreference: jar.get("siamez-cal-wide")?.value ?? jar.get("siamez-calendar-view")?.value,
+    narrowPreference: jar.get("siamez-cal-narrow")?.value,
+    context,
+  });
   const anchor = calendarAnchor(params.date);
   const range = calendarRange(view, anchor);
   const filters: CalendarFilters = {
@@ -47,6 +55,8 @@ export default async function AdminCalendarPage({
       filters={filters}
       canRepair={session?.user.role === "admin"}
       truncated={calendar.truncated}
+      currentUserId={session?.user.id ?? null}
+      explicitView={Boolean(params.view)}
     />
   );
 }

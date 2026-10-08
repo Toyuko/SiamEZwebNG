@@ -96,7 +96,18 @@ const HIGHLIGHTS: Record<string, { color: string; textColor: string }> = {
   Rayong: { color: "#fef3c7", textColor: "#78350f" },
 };
 
-export type ProvinceStyle = { name: string; color: string; textColor: string };
+export type ProvinceStyle = { name: string; color: string; textColor: string; accent: string };
+
+const ACCENTS: Record<string, string> = {
+  Bangkok: "#2563eb",
+  Chonburi: "#059669",
+  "Chiang Mai": "#7c3aed",
+  Phuket: "#ea580c",
+  Nonthaburi: "#db2777",
+  "Samut Prakan": "#4f46e5",
+  "Chiang Rai": "#0d9488",
+  Rayong: "#d97706",
+};
 
 export function normalizeProvince(value: string | null | undefined): ThaiProvinceName | null {
   const raw = value?.trim();
@@ -128,11 +139,12 @@ export function suggestedProvince(
 
 export function provinceStyle(name: string | null | undefined): ProvinceStyle {
   const canonical = normalizeProvince(name);
-  if (!canonical) return { name: "Province needed", color: "#f3f4f6", textColor: "#1f2937" };
+  if (!canonical) return { name: "Province needed", color: "#f3f4f6", textColor: "#1f2937", accent: "#9ca3af" };
   const highlight = HIGHLIGHTS[canonical];
-  if (highlight) return { name: canonical, ...highlight };
   const hue = (THAI_PROVINCE_NAMES.indexOf(canonical) * 47) % 360;
-  return { name: canonical, color: `hsl(${hue} 42% 90%)`, textColor: `hsl(${hue} 45% 20%)` };
+  const accent = ACCENTS[canonical] ?? `hsl(${hue} 62% 42%)`;
+  if (highlight) return { name: canonical, ...highlight, accent };
+  return { name: canonical, color: `hsl(${hue} 42% 90%)`, textColor: `hsl(${hue} 45% 20%)`, accent };
 }
 
 export function provinceOptions(): ThaiProvinceName[] {

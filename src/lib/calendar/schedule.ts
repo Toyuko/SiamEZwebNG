@@ -11,13 +11,13 @@ import {
 } from "@/lib/jobs/intake";
 import { provinceStyle } from "@/lib/calendar/provinces";
 
-export type CalendarViewName = "month" | "week" | "day" | "agenda";
+export type CalendarViewName = "month" | "week" | "day" | "agenda" | "threeday";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
 export const CALENDAR_START_HOUR = 7;
-export const CALENDAR_END_HOUR = 19;
+export const CALENDAR_END_HOUR = 21;
 
 export type CalendarJobRecord = {
   caseId: string;
@@ -76,13 +76,38 @@ export type ScheduleWarning =
       otherTime: string;
     };
 
-export function preferredCalendarView(width: number): CalendarViewName {
-  return width < 768 ? "agenda" : "week";
+export const CALENDAR_WIDE_BREAKPOINT = 768;
+
+export type CalendarContextName = "wide" | "narrow";
+
+/** Tablet and desktop share the week default. Phones use the agenda. */
+export function calendarContext(width: number): CalendarContextName {
+  return width < CALENDAR_WIDE_BREAKPOINT ? "narrow" : "wide";
 }
 
-export function parseCalendarView(value: string | undefined): CalendarViewName {
-  if (value === "month" || value === "week" || value === "day" || value === "agenda") return value;
-  return "agenda";
+export function preferredCalendarView(width: number): CalendarViewName {
+  return calendarContext(width) === "narrow" ? "agenda" : "week";
+}
+
+/**
+ * A shared or bookmarked view wins. Otherwise each screen size keeps its own
+ * saved view, then the responsive default (week on a wide screen, agenda on a phone).
+ */
+export function resolveCalendarView(input: {
+  requested?: string;
+  widePreference?: string;
+  narrowPreference?: string;
+  context: CalendarContextName;
+}): CalendarViewName {
+  const fallback = input.context === "narrow" ? "agenda" : "week";
+  if (input.requested) return parseCalendarView(input.requested, fallback);
+  const saved = input.context === "narrow" ? input.narrowPreference : input.widePreference;
+  return parseCalendarView(saved, fallback);
+}
+
+export function parseCalendarView(value: string | undefined, fallback: CalendarViewName = "agenda"): CalendarViewName {
+  if (value === "month" || value === "week" || value === "day" || value === "agenda" || value === "threeday") return value;
+  return fallback;
 }
 
 export function calendarAnchor(value: string | undefined, now = new Date()): string {
@@ -110,6 +135,32 @@ export function weekDates(anchor: string): string[] {
   return Array.from({ length: 7 }, (_, day) => bangkokDateInputValue(new Date(monday.getTime() + day * 24 * 60 * 60 * 1000)));
 }
 
+export function monthGridDates(anchor: string): string[] {
+  const safe = calendarAnchor(anchor);
+  const [year, month] = safe.split("-").map(Number);
+  const first = `${year}-${String(month).padStart(2, "0")}-01`;
+  const index = weekdayIndex(first);
+  const leading = index === 0 ? 6 : index - 1;
+  const days = new Date(year, month, 0).getDate();
+  const total = Math.ceil((leading + days) / 7) * 7;
+  const noon = bangkokDateTime(first, "12:00");
+  if (!noon) return [first];
+  const start = new Date(noon.getTime() - leading * 24 * 60 * 60 * 1000);
+  return Array.from({ length: total }, (_, day) => bangkokDateInputValue(new Date(start.getTime() + day * 24 * 60 * 60 * 1000)));
+}
+
+export function threeDayDates(anchor: string): string[] {
+  const noon = bangkokDateTime(calendarAnchor(anchor), "12:00");
+  if (!noon) return [calendarAnchor(anchor)];
+  return [0, 1, 2].map((day) => bangkokDateInputValue(new Date(noon.getTime() + day * 24 * 60 * 60 * 1000)));
+}
+
+export function agendaDates(anchor: string): string[] {
+  const noon = bangkokDateTime(calendarAnchor(anchor), "12:00");
+  if (!noon) return [calendarAnchor(anchor)];
+  return Array.from({ length: 14 }, (_, day) => bangkokDateInputValue(new Date(noon.getTime() + day * 24 * 60 * 60 * 1000)));
+}
+
 export function monthCells(anchor: string): Array<string | null> {
   const [year, month] = anchor.split("-").map(Number);
   const first = `${year}-${String(month).padStart(2, "0")}-01`;
@@ -127,21 +178,20 @@ export function monthCells(anchor: string): Array<string | null> {
 export function calendarRange(view: CalendarViewName, anchor: string): { start: Date; end: Date } {
   const safe = calendarAnchor(anchor);
   if (view === "month") {
-    const [year, month] = safe.split("-").map(Number);
-    const start = new Date(`${year}-${String(month).padStart(2, "0")}-01T00:00:00+07:00`);
-    const nextMonth = month === 12 ? 1 : month + 1;
-    const nextYear = month === 12 ? year + 1 : year;
-    const end = new Date(`${nextYear}-${String(nextMonth).padStart(2, "0")}-01T00:00:00+07:00`);
-    return { start, end };
-  }
-  if (view === "week") {
-    const dates = weekDates(safe);
+    const dates = monthGridDates(safe);
     const start = bangkokDateTime(dates[0], "00:00")!;
-    const last = bangkokDateTime(dates[6], "00:00")!;
+    const last = bangkokDateTime(dates[dates.length - 1], "00:00")!;
+    return { start, end: new Date(last.getTime() + 24 * 60 * 60 * 1000) };
+  }
+  if (view === "week" || view === "threeday") {
+    const dates = view === "week" ? weekDates(safe) : threeDayDates(safe);
+    const start = bangkokDateTime(dates[0], "00:00")!;
+    const last = bangkokDateTime(dates[dates.length - 1], "00:00")!;
     return { start, end: new Date(last.getTime() + 24 * 60 * 60 * 1000) };
   }
   const start = bangkokDateTime(safe, "00:00")!;
-  return { start, end: new Date(start.getTime() + 24 * 60 * 60 * 1000) };
+  const days = view === "agenda" ? 14 : 1;
+  return { start, end: new Date(start.getTime() + days * 24 * 60 * 60 * 1000) };
 }
 
 export function shiftAnchor(anchor: string, view: CalendarViewName, direction: -1 | 1): string {
@@ -151,7 +201,7 @@ export function shiftAnchor(anchor: string, view: CalendarViewName, direction: -
     const next = new Date(Date.UTC(year, month - 1 + direction, 1));
     return `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}-01`;
   }
-  const days = view === "week" ? direction * 7 : direction;
+  const days = view === "week" || view === "agenda" ? direction * 7 : view === "threeday" ? direction * 3 : direction;
   const noon = bangkokDateTime(safe, "12:00")!;
   return bangkokDateInputValue(new Date(noon.getTime() + days * 24 * 60 * 60 * 1000));
 }
