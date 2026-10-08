@@ -32,7 +32,7 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
         <AdminSidebar mobileOpen={menuOpen} />
       </Suspense>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-gray-200 bg-white px-3 dark:border-gray-800 dark:bg-gray-900">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-gray-200 bg-white px-3 print:hidden dark:border-gray-800 dark:bg-gray-900">
           <button
             type="button"
             className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-700 md:hidden dark:text-gray-200"
@@ -67,7 +67,7 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
         </header>
-        <main className="min-w-0 flex-1 p-4 md:p-6">{children}</main>
+        <main className="min-w-0 flex-1 p-4 md:p-6 print:p-0">{children}</main>
       </div>
     </div>
   );

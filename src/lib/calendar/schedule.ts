@@ -7,6 +7,7 @@ import {
   JOB_INTAKE_TIMEZONE,
   bangkokDateInputValue,
   bangkokDateTime,
+  bangkokTimeInputValue,
   formatBangkokTime,
 } from "@/lib/jobs/intake";
 import { provinceStyle } from "@/lib/calendar/provinces";
@@ -393,5 +394,119 @@ export function reschedulePlan(
 
 export function isUnscheduledJob(job: { scheduledAt: Date | string | null; status: string }): boolean {
   if (job.scheduledAt) return false;
-  return ["confirmed", "in_progress", "pending_docs"].includes(job.status);
+  return ["awaiting_payment", "confirmed", "in_progress", "pending_docs"].includes(job.status);
+}
+
+export type ManualCalendarEvent = {
+  id: string;
+  title: string;
+  description: string | null;
+  start: string;
+  end: string;
+  allDay: boolean;
+  type: "appointment" | "deadline" | "milestone";
+  color: string | null;
+  staffId: string | null;
+  staffName: string | null;
+};
+
+export const MANUAL_EVENT_TYPES = ["appointment", "deadline", "milestone"] as const;
+export const MANUAL_EVENT_COLORS = ["blue", "red", "emerald", "amber", "purple", "cyan", "pink", "orange"] as const;
+
+/** The calendar date after `date`, using the date itself rather than a timezone. */
+export function nextCalendarDate(date: string): string {
+  if (!DATE_RE.test(date)) return "";
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10);
+}
+
+/** Bangkok start/end for a manual event. All-day end dates are inclusive. */
+export function manualEventWindow(input: {
+  date: string;
+  time: string;
+  endDate: string;
+  endTime: string;
+  allDay: boolean;
+}): { start: Date; end: Date } | null {
+  if (input.allDay) {
+    const start = bangkokDateTime(input.date, "00:00");
+    const end = bangkokDateTime(nextCalendarDate(input.endDate), "00:00");
+    if (!start || !end || end.getTime() <= start.getTime()) return null;
+    return { start, end };
+  }
+  const start = bangkokDateTime(input.date, input.time);
+  const end = bangkokDateTime(input.endDate, input.endTime);
+  if (!start || !end || end.getTime() <= start.getTime()) return null;
+  return { start, end };
+}
+
+export function shiftCalendarDate(date: string, days: number): string {
+  if (!DATE_RE.test(date) || !Number.isInteger(days)) return "";
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
+}
+
+function inclusiveEventDays(startIso: string, endIso: string): number {
+  const start = bangkokDateInputValue(new Date(startIso));
+  const end = bangkokDateInputValue(new Date(new Date(endIso).getTime() - 60_000));
+  let count = 1;
+  let cursor = start;
+  while (cursor && end && cursor < end && count < 62) {
+    cursor = nextCalendarDate(cursor);
+    count += 1;
+  }
+  return count;
+}
+
+/** New start for a dragged event. A timed drop keeps the duration. An all-day drop keeps the day span. */
+export function movedManualEvent(event: ManualCalendarEvent, date: string, time: string | null) {
+  if (!DATE_RE.test(date)) return null;
+  const description = event.description ?? "";
+  const color = event.color ?? "";
+  if (time === null) {
+    const span = event.allDay ? inclusiveEventDays(event.start, event.end) : 1;
+    const endDate = shiftCalendarDate(date, span - 1);
+    if (!endDate) return null;
+    return {
+      id: event.id,
+      title: event.title,
+      description,
+      date,
+      time: "00:00",
+      endDate,
+      endTime: "00:00",
+      allDay: true,
+      type: event.type,
+      color,
+      staffId: event.staffId,
+    };
+  }
+  const start = bangkokDateTime(date, time);
+  if (!start) return null;
+  const duration = event.allDay
+    ? 60 * 60 * 1000
+    : Math.max(new Date(event.end).getTime() - new Date(event.start).getTime(), 30 * 60 * 1000);
+  const end = new Date(start.getTime() + duration);
+  return {
+    id: event.id,
+    title: event.title,
+    description,
+    date,
+    time,
+    endDate: bangkokDateInputValue(end),
+    endTime: bangkokTimeInputValue(end),
+    allDay: false,
+    type: event.type,
+    color,
+    staffId: event.staffId,
+  };
+}
+
+export function eventCoversDate(event: { start: string; end: string }, date: string): boolean {
+  if (!DATE_RE.test(date)) return false;
+  const start = new Date(event.start).getTime();
+  const end = new Date(event.end).getTime();
+  if (Number.isNaN(start) || Number.isNaN(end)) return false;
+  const dayStart = new Date(`${date}T00:00:00+07:00`).getTime();
+  return start < dayStart + 24 * 60 * 60 * 1000 && end > dayStart;
 }

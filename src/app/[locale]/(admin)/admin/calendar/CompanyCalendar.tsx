@@ -1,18 +1,24 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, Filter, Menu, Plus, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, Menu, Plus, Printer, Search, X } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { formatThb } from "@/lib/jobs/intake";
 import { provinceOptions, provinceStyle } from "@/lib/calendar/provinces";
+import { bangkokDateInputValue, bangkokTimeInputValue } from "@/lib/jobs/intake";
 import {
   CALENDAR_END_HOUR,
   CALENDAR_START_HOUR,
+  MANUAL_EVENT_COLORS,
+  MANUAL_EVENT_TYPES,
   agendaDates,
   bangkokClockMinutes,
   calendarContext,
+  eventCoversDate,
+  nextCalendarDate,
   jobsOnDate,
   monthGridDates,
+  movedManualEvent,
   parseCalendarView,
   preferredCalendarView,
   shiftAnchor,
@@ -21,17 +27,22 @@ import {
   type CalendarFilters,
   type CalendarJobRecord,
   type CalendarViewName,
+  type ManualCalendarEvent,
   type ScheduleWarning,
 } from "@/lib/calendar/schedule";
 import {
   assignCalendarProvinceAction,
   assignCalendarStaffAction,
+  deleteManualEventAction,
   rescheduleJobAction,
+  saveManualEventAction,
   setCalendarJobStatusAction,
   syncCalendarAction,
 } from "@/actions/company-calendar";
 
-type OtherEvent = { id: string; title: string; start: string; end: string; allDay: boolean };
+type EventEditor =
+  | { mode: "create"; date: string; time: string }
+  | { mode: "edit"; id: string };
 type StaffOption = { id: string; name: string | null; email: string };
 type ServiceOption = { id: string; name: string };
 type Health = { scheduled: number; linked: number; missing: number; duplicates: number; unscheduled: number } | null;
@@ -136,6 +147,43 @@ function createHref(date: string, time: string) {
   return `/admin/jobs/new?date=${date}&time=${time}`;
 }
 
+type DragPayload = { kind: "job" | "event"; id: string };
+type DropTime = string | null | "keep";
+
+function writeDrag(transfer: DataTransfer, payload: DragPayload) {
+  const raw = JSON.stringify(payload);
+  transfer.setData("application/x-siamez-move", raw);
+  transfer.setData("text/plain", raw);
+  transfer.effectAllowed = "move";
+}
+
+function readDrag(transfer: DataTransfer): DragPayload | null {
+  const raw = transfer.getData("application/x-siamez-move") || transfer.getData("text/plain");
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as DragPayload;
+    if ((parsed.kind === "job" || parsed.kind === "event") && typeof parsed.id === "string") return parsed;
+  } catch {
+    if (!raw.startsWith("{")) return { kind: "job", id: raw };
+  }
+  return null;
+}
+
+function dropHandlers(date: string, time: DropTime, onDrop: (payload: DragPayload, date: string, time: DropTime) => void) {
+  return {
+    onDragOver: (event: { preventDefault: () => void; dataTransfer: DataTransfer }) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+    },
+    onDrop: (event: { preventDefault: () => void; stopPropagation: () => void; dataTransfer: DataTransfer }) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const payload = readDrag(event.dataTransfer);
+      if (payload) onDrop(payload, date, time);
+    },
+  };
+}
+
 function rememberCalendarView(nextView: CalendarViewName) {
   const context = calendarContext(window.innerWidth);
   const key = context === "narrow" ? "siamez-cal-narrow" : "siamez-cal-wide";
@@ -169,25 +217,74 @@ function eventLabel(job: CalendarJobRecord) {
   return `${when}, ${job.customerName}, ${job.serviceName}, ${job.province ?? "Province needed"}, ${job.staffName}${job.status === "cancelled" ? ", Cancelled" : ""}`;
 }
 
-function placeEvents(jobs: CalendarJobRecord[]) {
-  const timed = jobs.filter((job) => {
-    if (!job.start || job.allDay) return false;
-    const hour = bangkokHour(job.start);
-    return hour >= CALENDAR_START_HOUR && hour <= CALENDAR_END_HOUR;
-  });
-  const sorted = [...timed].sort((a, b) => (a.start ?? "").localeCompare(b.start ?? ""));
+const EVENT_ACCENTS: Record<string, string> = {
+  blue: "#2563eb",
+  red: "#dc2626",
+  emerald: "#059669",
+  amber: "#d97706",
+  purple: "#7c3aed",
+  cyan: "#0891b2",
+  pink: "#db2777",
+  orange: "#ea580c",
+  appointment: "#4b5563",
+  deadline: "#dc2626",
+  milestone: "#059669",
+};
+
+function eventAccent(event: { color: string | null; type: string }) {
+  return EVENT_ACCENTS[event.color ?? ""] ?? EVENT_ACCENTS[event.type] ?? EVENT_ACCENTS.appointment;
+}
+
+function eventsOnDate(events: ManualCalendarEvent[], date: string) {
+  return events.filter((event) => eventCoversDate(event, date));
+}
+
+function minutesOnDate(iso: string, date: string) {
+  const key = jobDate({ start: iso } as CalendarJobRecord);
+  if (key < date) return 0;
+  if (key > date) return 24 * 60;
+  return bangkokMinutes(iso);
+}
+
+type DraftBlock =
+  | { kind: "job"; id: string; start: number; end: number; job: CalendarJobRecord }
+  | { kind: "event"; id: string; start: number; end: number; event: ManualCalendarEvent };
+type PlacedBlock = DraftBlock & { lane: number; lanes: number };
+
+function placeColumn(jobs: CalendarJobRecord[], events: ManualCalendarEvent[], date: string): PlacedBlock[] {
+  const gridStart = CALENDAR_START_HOUR * 60;
+  const gridEnd = (CALENDAR_END_HOUR + 1) * 60;
+  const blocks: DraftBlock[] = [];
+  for (const job of jobs) {
+    if (!job.start || job.allDay) continue;
+    const start = bangkokMinutes(job.start);
+    if (start < gridStart || start > gridEnd) continue;
+    blocks.push({ kind: "job", id: job.caseId, start, end: start + 60, job });
+  }
+  for (const event of eventsOnDate(events, date)) {
+    if (event.allDay) continue;
+    const start = minutesOnDate(event.start, date);
+    const end = Math.max(minutesOnDate(event.end, date), start + 30);
+    if (end <= gridStart || start >= gridEnd) continue;
+    blocks.push({
+      kind: "event",
+      id: event.id,
+      start: Math.max(start, gridStart),
+      end: Math.min(end, gridEnd),
+      event,
+    });
+  }
+  const sorted = [...blocks].sort((a, b) => a.start - b.start || a.end - b.end);
   const laneEnds: number[] = [];
-  const placed = sorted.map((job) => {
-    const start = bangkokMinutes(job.start!);
-    const end = start + 60;
-    let lane = laneEnds.findIndex((until) => until <= start);
+  const placed = sorted.map((block) => {
+    let lane = laneEnds.findIndex((until) => until <= block.start);
     if (lane < 0) {
       lane = laneEnds.length;
-      laneEnds.push(end);
+      laneEnds.push(block.end);
     } else {
-      laneEnds[lane] = end;
+      laneEnds[lane] = block.end;
     }
-    return { job, start, lane };
+    return { ...block, lane };
   });
   const lanes = Math.max(laneEnds.length, 1);
   return placed.map((item) => ({ ...item, lanes }));
@@ -196,7 +293,7 @@ function placeEvents(jobs: CalendarJobRecord[]) {
 export function CompanyCalendar({
   jobs,
   unscheduled,
-  otherEvents,
+  events,
   summary,
   health,
   staff,
@@ -211,7 +308,7 @@ export function CompanyCalendar({
 }: {
   jobs: CalendarJobRecord[];
   unscheduled: CalendarJobRecord[];
-  otherEvents: OtherEvent[];
+  events: ManualCalendarEvent[];
   summary: Summary;
   health: Health;
   staff: StaffOption[];
@@ -234,7 +331,8 @@ export function CompanyCalendar({
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [move, setMove] = useState<{ caseId: string; date: string; time: string; label: string } | null>(null);
+  const [move, setMove] = useState<{ caseId: string; date: string; time: string; timeTbd: boolean; label: string } | null>(null);
+  const dragged = useRef(false);
   const [warnings, setWarnings] = useState<ScheduleWarning[] | null>(null);
   const [warningMove, setWarningMove] = useState<{ caseId: string; date: string; time: string; timeTbd: boolean } | null>(null);
   const [nowMinutes, setNowMinutes] = useState(() => bangkokClockMinutes());
@@ -243,6 +341,7 @@ export function CompanyCalendar({
   const [searchOpen, setSearchOpen] = useState(Boolean(filters.q));
   const [draftQ, setDraftQ] = useState(filters.q);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [eventEditor, setEventEditor] = useState<EventEditor | null>(null);
   const [pickerMonth, setPickerMonth] = useState(`${anchor.slice(0, 7)}-01`);
   const [miniMonth, setMiniMonth] = useState(`${anchor.slice(0, 7)}-01`);
 
@@ -298,6 +397,7 @@ export function CompanyCalendar({
         setPickerOpen(false);
         setSearchOpen(false);
         setPanel(null);
+        setEventEditor(null);
         return;
       }
       if (typing || event.metaKey || event.ctrlKey || event.altKey || selectedId || move || warnings) return;
@@ -388,6 +488,40 @@ export function CompanyCalendar({
   function requestReschedule(caseId: string, date: string, time: string, timeTbd: boolean) {
     setWarningMove({ caseId, date, time, timeTbd });
     run(() => rescheduleJobAction(caseId, { date, time: timeTbd ? null : time, timeTbd }));
+  }
+
+  function clockOf(iso: string | null, allDay: boolean) {
+    if (!iso || allDay) return null;
+    return bangkokTimeInputValue(new Date(iso));
+  }
+
+  function handleDrop(payload: DragPayload, date: string, requested: DropTime) {
+    if (payload.kind === "job") {
+      const job = [...jobs, ...unscheduled].find((item) => item.caseId === payload.id);
+      const time = requested === "keep" ? (job?.start ? clockOf(job.start, job.allDay) : "09:00") : requested;
+      const timeTbd = time === null;
+      if (job?.start && jobDate(job) === date && clockOf(job.start, job.allDay) === time) return;
+      const label = timeTbd ? `${dayHeading(date)}, time TBD` : `${dayHeading(date)} at ${clockLabel(`${date}T${time}:00+07:00`, false)}`;
+      setSelectedId(null);
+      setMove({ caseId: payload.id, date, time: time ?? "09:00", timeTbd, label });
+      return;
+    }
+    const manual = events.find((item) => item.id === payload.id);
+    if (!manual) return;
+    const time = requested === "keep" ? clockOf(manual.start, manual.allDay) : requested;
+    if (bangkokDateInputValue(new Date(manual.start)) === date && clockOf(manual.start, manual.allDay) === time) return;
+    const input = movedManualEvent(manual, date, time);
+    if (!input) return;
+    setError(null);
+    setEventEditor(null);
+    startTransition(async () => {
+      const result = await saveManualEventAction(input);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      router.refresh();
+    });
   }
 
   function openSearchResult(job: CalendarJobRecord) {
@@ -527,6 +661,24 @@ export function CompanyCalendar({
             >
               <Search className="h-5 w-5" />
             </button>
+            <button
+              type="button"
+              className="inline-flex h-10 items-center rounded-full border border-gray-300 px-3 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-900"
+              onClick={() => {
+                setSelectedId(null);
+                setEventEditor({ mode: "create", date: anchor, time: "09:00" });
+              }}
+            >
+              Event
+            </button>
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-900"
+              aria-label="Print this view"
+              onClick={() => window.print()}
+            >
+              <Printer className="h-4 w-4" />
+            </button>
             <Link href={createHref(anchor, "09:00")} className="hidden h-10 items-center gap-1 rounded-full bg-siam-blue px-4 text-sm font-semibold text-white lg:inline-flex">
               <Plus className="h-4 w-4" />
               Create
@@ -585,7 +737,28 @@ export function CompanyCalendar({
             />
             {draftQ.trim().length >= 2 && (
               <ul className="mt-2 max-h-64 overflow-auto" aria-label="Search results">
-                {jobs.length === 0 && <li className="py-2 text-sm text-gray-500">No matching jobs.</li>}
+                {jobs.length === 0 && events.length === 0 && <li className="py-2 text-sm text-gray-500">No matching jobs or events.</li>}
+                {events.slice(0, 8).map((item) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      className="flex w-full flex-col rounded-lg px-2 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-900"
+                      onClick={() => {
+                        const date = jobDate({ start: item.start } as CalendarJobRecord) || anchor;
+                        setSelectedId(null);
+                        setEventEditor({ mode: "edit", id: item.id });
+                        setSearchOpen(false);
+                        setDraftQ("");
+                        go({ date, q: "", view: view === "month" ? "day" : view });
+                      }}
+                    >
+                      <span className="font-medium">{item.title}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">
+                        Event · {dayHeading(jobDate({ start: item.start } as CalendarJobRecord))} · {clockLabel(item.start, item.allDay)}
+                      </span>
+                    </button>
+                  </li>
+                ))}
                 {jobs.slice(0, 8).map((job) => (
                   <li key={job.caseId}>
                     <button type="button" className="flex w-full flex-col rounded-lg px-2 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-900" onClick={() => openSearchResult(job)}>
@@ -664,10 +837,17 @@ export function CompanyCalendar({
                 dates={monthDates}
                 monthKey={anchor.slice(0, 7)}
                 jobs={jobs}
+                events={events}
                 today={today}
                 selected={anchor}
                 onOpenDay={(date) => go({ view: "day", date })}
                 onOpenJob={setSelectedId}
+                onOpenEvent={(id) => {
+                  setSelectedId(null);
+                  setEventEditor({ mode: "edit", id });
+                }}
+                onDrop={handleDrop}
+                dragged={dragged}
               />
             )}
             {(view === "week" || view === "threeday") && (
@@ -676,41 +856,69 @@ export function CompanyCalendar({
                   <TimeGrid
                     days={gridDays}
                     jobs={jobs}
+                    events={events}
                     today={today}
                     nowMinutes={nowMinutes}
                     onOpen={setSelectedId}
-                    onDropRequest={(caseId, date, time) => {
-                      setMove({ caseId, date, time, label: `${dayHeading(date)} at ${clockLabel(`${date}T${time}:00+07:00`, false)}` });
+                    onOpenEvent={(id) => {
+                      setSelectedId(null);
+                      setEventEditor({ mode: "edit", id });
                     }}
+                    onDrop={handleDrop}
+                    dragged={dragged}
                   />
                 </div>
                 {view === "week" && (
                   <div className="md:hidden">
                     <DayStrip days={week} anchor={anchor} today={today} onPick={(date) => go({ date })} />
-                    <DaySchedule date={anchor} jobs={jobsOnDate(jobs, anchor)} today={anchor === today} nowMinutes={nowMinutes} onOpen={setSelectedId} />
+                    <DaySchedule
+                      date={anchor}
+                      jobs={jobsOnDate(jobs, anchor)}
+                      events={eventsOnDate(events, anchor)}
+                      today={anchor === today}
+                      nowMinutes={nowMinutes}
+                      onOpen={setSelectedId}
+                      onOpenEvent={(id) => {
+                        setSelectedId(null);
+                        setEventEditor({ mode: "edit", id });
+                      }}
+                      onDrop={handleDrop}
+                      dragged={dragged}
+                    />
                   </div>
                 )}
               </>
             )}
             {view === "day" && (
-              <DaySchedule date={anchor} jobs={jobsOnDate(jobs, anchor)} today={anchor === today} nowMinutes={nowMinutes} onOpen={setSelectedId} detailed />
+              <DaySchedule
+                date={anchor}
+                jobs={jobsOnDate(jobs, anchor)}
+                events={eventsOnDate(events, anchor)}
+                today={anchor === today}
+                nowMinutes={nowMinutes}
+                onOpen={setSelectedId}
+                onOpenEvent={(id) => {
+                  setSelectedId(null);
+                  setEventEditor({ mode: "edit", id });
+                }}
+                onDrop={handleDrop}
+                dragged={dragged}
+                detailed
+              />
             )}
             {view === "agenda" && (
-              <AgendaList dates={agenda} jobs={jobs} today={today} nowMinutes={nowMinutes} onOpen={setSelectedId} />
-            )}
-            {otherEvents.length > 0 && (
-              <section className="border-t border-gray-200 px-3 py-3 dark:border-gray-800">
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Other appointments</h2>
-                <ul className="mt-2 space-y-1">
-                  {otherEvents.map((event) => (
-                    <li key={event.id}>
-                      <Link href={`/admin/calendar/${event.id}`} className="block rounded-lg px-2 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-900">
-                        {clockLabel(event.start, event.allDay)} · {event.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              <AgendaList
+                dates={agenda}
+                jobs={jobs}
+                events={events}
+                today={today}
+                nowMinutes={nowMinutes}
+                onOpen={setSelectedId}
+                onOpenEvent={(id) => {
+                  setSelectedId(null);
+                  setEventEditor({ mode: "edit", id });
+                }}
+              />
             )}
           </div>
         </div>
@@ -724,37 +932,17 @@ export function CompanyCalendar({
         </Link>
       </div>
 
-      <div className="mt-6 hidden print:block" id="calendar-print">
-        <h1 className="text-xl font-bold">SiamEZ schedule · {anchor}</h1>
-        <table className="mt-3 w-full text-left text-sm">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Customer</th>
-              <th>Service</th>
-              <th>Staff</th>
-              <th>Province</th>
-              <th>Location</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {jobs.map((job) => (
-              <tr key={job.caseId}>
-                <td>{job.start ? jobDate(job) : "TBD"}</td>
-                <td>{job.start ? clockLabel(job.start, job.allDay) : "TBD"}</td>
-                <td>{job.customerName}</td>
-                <td>{job.serviceName}</td>
-                <td>{job.staffName}</td>
-                <td>{job.province ?? "Province needed"}</td>
-                <td>{job.location ?? "—"}</td>
-                <td>{job.status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <PrintableView
+        view={view}
+        title={title}
+        jobs={jobs}
+        events={events}
+        days={view === "week" ? week : view === "threeday" ? threeDays : view === "day" ? [anchor] : []}
+        monthDates={monthDates}
+        monthKey={anchor.slice(0, 7)}
+        agenda={agenda}
+        today={today}
+      />
 
       {panel && (
         <div className="fixed inset-0 z-40 flex items-end bg-black/40 lg:hidden" role="presentation" onClick={() => setPanel(null)}>
@@ -828,6 +1016,42 @@ export function CompanyCalendar({
         </div>
       )}
 
+      {eventEditor && (
+        <EventDialog
+          key={eventEditor.mode === "create" ? `create-${eventEditor.date}-${eventEditor.time}` : eventEditor.id}
+          editor={eventEditor}
+          event={eventEditor.mode === "edit" ? events.find((item) => item.id === eventEditor.id) ?? null : null}
+          staff={staff}
+          pending={pending}
+          error={error}
+          onClose={() => setEventEditor(null)}
+          onSave={(input) => {
+            setError(null);
+            startTransition(async () => {
+              const result = await saveManualEventAction(input);
+              if (!result.ok) {
+                setError(result.error);
+                return;
+              }
+              setEventEditor(null);
+              router.refresh();
+            });
+          }}
+          onDelete={(id) => {
+            setError(null);
+            startTransition(async () => {
+              const result = await deleteManualEventAction(id);
+              if (!result.ok) {
+                setError(result.error);
+                return;
+              }
+              setEventEditor(null);
+              router.refresh();
+            });
+          }}
+        />
+      )}
+
       {selected && (
         <JobPopover
           job={selected}
@@ -848,7 +1072,7 @@ export function CompanyCalendar({
           body={move.label}
           pending={pending}
           onCancel={() => setMove(null)}
-          onConfirm={() => requestReschedule(move.caseId, move.date, move.time, false)}
+          onConfirm={() => requestReschedule(move.caseId, move.date, move.time, move.timeTbd)}
         />
       )}
 
@@ -1086,7 +1310,12 @@ function SidebarBody(props: {
         ) : (
           <ul className="mt-1 space-y-1">
             {props.unscheduled.slice(0, 8).map((job) => (
-              <li key={job.caseId} className="rounded-lg px-2 py-1 hover:bg-gray-50 dark:hover:bg-gray-900">
+              <li
+                key={job.caseId}
+                draggable
+                onDragStart={(event) => writeDrag(event.dataTransfer, { kind: "job", id: job.caseId })}
+                className="cursor-grab rounded-lg px-2 py-1 hover:bg-gray-50 active:cursor-grabbing dark:hover:bg-gray-900"
+              >
                 <p className="text-sm font-medium">{job.customerName}</p>
                 <p className="text-xs text-gray-600 dark:text-gray-300">{job.serviceName} · {job.province ?? "Province needed"}</p>
                 <button type="button" className="mt-1 text-sm font-medium text-siam-blue" onClick={() => props.onOpenJob(job.caseId)}>
@@ -1097,7 +1326,7 @@ function SidebarBody(props: {
           </ul>
         )}
       </section>
-      <button type="button" className="h-10 w-full rounded-lg border text-sm" onClick={props.onPrint}>Print schedule</button>
+      <button type="button" className="h-10 w-full rounded-lg border text-sm" onClick={props.onPrint}>Print this view</button>
       {props.canRepair && (
         <details>
           <summary className="cursor-pointer text-sm font-medium">Calendar health</summary>
@@ -1134,6 +1363,220 @@ function AllDayChip({ job }: { job: CalendarJobRecord }) {
   );
 }
 
+function ManualEventChip({ event }: { event: ManualCalendarEvent }) {
+  return (
+    <span
+      className="block truncate rounded bg-white px-1 py-0.5 text-left text-[11px] text-gray-900 dark:bg-gray-900 dark:text-gray-100"
+      style={{ boxShadow: `inset 3px 0 0 ${eventAccent(event)}` }}
+    >
+      {clockLabel(event.start, event.allDay)} {event.title}
+    </span>
+  );
+}
+
+function ManualEventCard({ event, dense = false }: { event: ManualCalendarEvent; dense?: boolean }) {
+  return (
+    <span
+      className={`block overflow-hidden rounded-md border border-dashed border-gray-300 bg-white text-left text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 ${dense ? "px-1.5 py-0.5 text-[11px] leading-tight" : "px-2 py-1.5 text-sm leading-snug"}`}
+      style={{ boxShadow: `inset 3px 0 0 ${eventAccent(event)}` }}
+    >
+      <span className="block truncate font-semibold">
+        {clockLabel(event.start, event.allDay)} {event.title}
+      </span>
+      <span className="block truncate text-gray-600 dark:text-gray-300">{event.staffName ?? "Event"}</span>
+    </span>
+  );
+}
+
+function EventDialog({
+  editor,
+  event,
+  staff,
+  pending,
+  error,
+  onClose,
+  onSave,
+  onDelete,
+}: {
+  editor: EventEditor;
+  event: ManualCalendarEvent | null;
+  staff: StaffOption[];
+  pending: boolean;
+  error: string | null;
+  onClose: () => void;
+  onSave: (input: {
+    id?: string | null;
+    title: string;
+    description: string;
+    date: string;
+    time: string;
+    endDate: string;
+    endTime: string;
+    allDay: boolean;
+    type: string;
+    color: string;
+    staffId: string | null;
+  }) => void;
+  onDelete: (id: string) => void;
+}) {
+  const creating = editor.mode === "create";
+  const startDate = creating ? editor.date : event ? bangkokDateInputValue(new Date(event.start)) : "";
+  const startTime = creating ? editor.time : event && !event.allDay ? bangkokTimeInputValue(new Date(event.start)) : "09:00";
+  const createdEnd = creating ? hourAfter(editor.time) : null;
+  const [title, setTitle] = useState(event?.title ?? "");
+  const [description, setDescription] = useState(event?.description ?? "");
+  const [allDay, setAllDay] = useState(event?.allDay ?? false);
+  const [date, setDate] = useState(startDate);
+  const [time, setTime] = useState(startTime);
+  const [finishDate, setFinishDate] = useState(
+    creating ? (createdEnd?.dateShift ? nextCalendarDate(editor.date) : editor.date) : event ? inclusiveEventEnd(event) : startDate
+  );
+  const [finishTime, setFinishTime] = useState(createdEnd?.time ?? (event && !event.allDay ? bangkokTimeInputValue(new Date(event.end)) : "10:00"));
+  const [type, setType] = useState(event?.type ?? "appointment");
+  const [color, setColor] = useState(event?.color ?? "");
+  const [staffId, setStaffId] = useState(event?.staffId ?? "");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const fieldClass = "mt-1 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-base dark:border-gray-600 dark:bg-gray-900";
+
+  if (!creating && !event) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 md:items-start md:justify-center md:p-8" role="presentation" onClick={onClose}>
+        <div role="dialog" aria-modal="true" aria-labelledby="manual-event-missing" className="w-full rounded-t-2xl bg-white p-4 dark:bg-gray-950 md:max-w-md md:rounded-2xl" onClick={(click) => click.stopPropagation()}>
+          <h2 id="manual-event-missing" className="text-lg font-semibold">Event not on this page</h2>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Open the date of the event, then edit it from the calendar.</p>
+          <button type="button" className="mt-4 h-11 rounded-lg border px-4 text-sm font-medium" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 md:items-start md:justify-center md:p-8" role="presentation" onClick={onClose}>
+      <form
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="manual-event-title"
+        className="max-h-[90vh] w-full overflow-auto rounded-t-2xl bg-white p-4 shadow-2xl dark:bg-gray-950 md:max-w-md md:rounded-2xl md:border md:border-gray-200 dark:md:border-gray-700"
+        onClick={(click) => click.stopPropagation()}
+        onSubmit={(submit) => {
+          submit.preventDefault();
+          onSave({
+            id: creating ? null : event?.id,
+            title,
+            description,
+            date,
+            time: allDay ? "00:00" : time,
+            endDate: finishDate,
+            endTime: allDay ? "00:00" : finishTime,
+            allDay,
+            type,
+            color,
+            staffId: staffId || null,
+          });
+        }}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 id="manual-event-title" className="text-lg font-semibold">{creating ? "Add event" : "Edit event"}</h2>
+            <p className="text-sm text-gray-500">A calendar event, separate from a job.</p>
+          </div>
+          <button type="button" className="inline-flex h-11 w-11 items-center justify-center" onClick={onClose} aria-label="Close">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        {error && <p className="mt-3 text-sm text-red-700" role="alert">{error}</p>}
+        <label className="mt-3 block text-sm font-medium">
+          Title
+          <input className={fieldClass} value={title} onChange={(change) => setTitle(change.target.value)} required maxLength={200} />
+        </label>
+        <label className="mt-3 flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={allDay} onChange={(change) => setAllDay(change.target.checked)} />
+          All day
+        </label>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <label className="text-sm font-medium">
+            Start date
+            <input className={fieldClass} type="date" value={date} onChange={(change) => setDate(change.target.value)} required />
+          </label>
+          {!allDay && (
+            <label className="text-sm font-medium">
+              Start time
+              <input className={fieldClass} type="time" value={time} onChange={(change) => setTime(change.target.value)} required />
+            </label>
+          )}
+          <label className="text-sm font-medium">
+            End date
+            <input className={fieldClass} type="date" value={finishDate} onChange={(change) => setFinishDate(change.target.value)} required />
+          </label>
+          {!allDay && (
+            <label className="text-sm font-medium">
+              End time
+              <input className={fieldClass} type="time" value={finishTime} onChange={(change) => setFinishTime(change.target.value)} required />
+            </label>
+          )}
+        </div>
+        <label className="mt-3 block text-sm font-medium">
+          Type
+          <select className={fieldClass} value={type} onChange={(change) => setType(change.target.value as ManualCalendarEvent["type"])}>
+            {MANUAL_EVENT_TYPES.map((item) => (
+              <option key={item} value={item}>{item.charAt(0).toUpperCase() + item.slice(1)}</option>
+            ))}
+          </select>
+        </label>
+        <label className="mt-3 block text-sm font-medium">
+          Colour
+          <select className={fieldClass} value={color} onChange={(change) => setColor(change.target.value)}>
+            <option value="">From type</option>
+            {MANUAL_EVENT_COLORS.map((item) => (
+              <option key={item} value={item}>{item.charAt(0).toUpperCase() + item.slice(1)}</option>
+            ))}
+          </select>
+        </label>
+        <label className="mt-3 block text-sm font-medium">
+          Staff
+          <select className={fieldClass} value={staffId} onChange={(change) => setStaffId(change.target.value)}>
+            <option value="">None</option>
+            {staff.map((person) => (
+              <option key={person.id} value={person.id}>{staffLabel(person)}</option>
+            ))}
+          </select>
+        </label>
+        <label className="mt-3 block text-sm font-medium">
+          Notes
+          <textarea className={`${fieldClass} h-24 py-2`} value={description} onChange={(change) => setDescription(change.target.value)} maxLength={2000} />
+        </label>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button type="submit" disabled={pending} className="h-11 rounded-lg bg-siam-blue px-4 text-sm font-semibold text-white disabled:opacity-60">
+            {pending ? "Saving…" : creating ? "Add event" : "Save"}
+          </button>
+          {!creating && event && !confirmDelete && (
+            <button type="button" className="h-11 rounded-lg border border-red-300 px-4 text-sm font-medium text-red-700" onClick={() => setConfirmDelete(true)}>
+              Delete
+            </button>
+          )}
+          {!creating && event && confirmDelete && (
+            <button type="button" disabled={pending} className="h-11 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white disabled:opacity-60" onClick={() => onDelete(event.id)}>
+              {pending ? "Deleting…" : "Delete this event"}
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function inclusiveEventEnd(event: ManualCalendarEvent) {
+  if (event.allDay) return bangkokDateInputValue(new Date(new Date(event.end).getTime() - 60_000));
+  return bangkokDateInputValue(new Date(event.end));
+}
+
+function hourAfter(time: string) {
+  const [hour, minute] = time.split(":").map(Number);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return { dateShift: false, time: "10:00" };
+  if (hour >= 23) return { dateShift: true, time: `00:${String(minute).padStart(2, "0")}` };
+  return { dateShift: false, time: `${String(hour + 1).padStart(2, "0")}:${String(minute).padStart(2, "0")}` };
+}
+
 function EventCard({ job, dense = false }: { job: CalendarJobRecord; dense?: boolean }) {
   const style = provinceStyle(job.province);
   const cancelled = job.status === "cancelled";
@@ -1160,18 +1603,26 @@ function MonthGrid({
   dates,
   monthKey,
   jobs,
+  events,
   today,
   selected,
   onOpenDay,
   onOpenJob,
+  onOpenEvent,
+  onDrop,
+  dragged,
 }: {
   dates: string[];
   monthKey: string;
   jobs: CalendarJobRecord[];
+  events: ManualCalendarEvent[];
   today: string;
   selected: string;
   onOpenDay: (date: string) => void;
   onOpenJob: (id: string) => void;
+  onOpenEvent: (id: string) => void;
+  onDrop: (payload: DragPayload, date: string, time: DropTime) => void;
+  dragged: { current: boolean };
 }) {
   const router = useRouter();
   return (
@@ -1184,13 +1635,17 @@ function MonthGrid({
       <div className="grid grid-cols-7">
         {dates.map((date) => {
           const dayJobs = jobsOnDate(jobs, date);
+          const dayEvents = eventsOnDate(events, date);
           const outside = !date.startsWith(monthKey);
           const shown = dayJobs.slice(0, 2);
+          const shownEvents = dayEvents.slice(0, Math.max(0, 2 - shown.length));
+          const hidden = dayJobs.length + dayEvents.length - shown.length - shownEvents.length;
           const provinces = [...new Map(dayJobs.map((job) => [job.province ?? "Province needed", provinceStyle(job.province).accent])).entries()];
           return (
             <div
               key={date}
               className={`min-h-24 border-b border-r border-gray-200 p-1 dark:border-gray-800 md:min-h-32 ${date === today ? "bg-sky-50/70 dark:bg-sky-950/30" : ""} ${outside ? "bg-gray-50/80 dark:bg-gray-900/40" : ""}`}
+              {...dropHandlers(date, "keep", onDrop)}
               onClick={(event) => {
                 const target = event.target as HTMLElement;
                 if (target.closest("[data-event], [data-daynum], [data-more]")) return;
@@ -1221,13 +1676,56 @@ function MonthGrid({
               )}
               <div className="mt-0.5 hidden space-y-0.5 md:block">
                 {shown.map((job) => (
-                  <button key={job.caseId} type="button" data-event className="block w-full" aria-label={eventLabel(job)} onClick={() => onOpenJob(job.caseId)}>
+                  <button
+                    key={job.caseId}
+                    type="button"
+                    draggable
+                    data-event
+                    className="block w-full cursor-grab active:cursor-grabbing"
+                    aria-label={eventLabel(job)}
+                    {...dropHandlers(date, "keep", onDrop)}
+                    onDragStart={(event) => {
+                      dragged.current = true;
+                      writeDrag(event.dataTransfer, { kind: "job", id: job.caseId });
+                    }}
+                    onClick={() => {
+                      if (dragged.current) {
+                        dragged.current = false;
+                        return;
+                      }
+                      onOpenJob(job.caseId);
+                    }}
+                  >
                     <EventCard job={job} dense />
                   </button>
                 ))}
-                {dayJobs.length > 2 && (
+                {shownEvents.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    draggable
+                    data-event
+                    className="block w-full cursor-grab active:cursor-grabbing"
+                    aria-label={`Event, ${item.title}`}
+                    {...dropHandlers(date, "keep", onDrop)}
+                    onDragStart={(event) => {
+                      dragged.current = true;
+                      writeDrag(event.dataTransfer, { kind: "event", id: item.id });
+                    }}
+                    onClick={() => {
+                      if (dragged.current) {
+                        dragged.current = false;
+                        return;
+                      }
+                      onOpenEvent(item.id);
+                    }}
+                  >
+                    <ManualEventCard event={item} dense />
+                  </button>
+                ))}
+                {hidden > 0 && (
                   <button type="button" data-more className="px-1 text-left text-[11px] font-medium text-gray-600 dark:text-gray-300" onClick={() => onOpenDay(date)}>
-                    + {dayJobs.length - 2} more
+                    + {hidden} more
                   </button>
                 )}
               </div>
@@ -1260,17 +1758,23 @@ function DayStrip({ days, anchor, today, onPick }: { days: string[]; anchor: str
 function TimeGrid({
   days,
   jobs,
+  events,
   today,
   nowMinutes,
   onOpen,
-  onDropRequest,
+  onOpenEvent,
+  onDrop,
+  dragged,
 }: {
   days: string[];
   jobs: CalendarJobRecord[];
+  events: ManualCalendarEvent[];
   today: string;
   nowMinutes: number;
   onOpen: (id: string) => void;
-  onDropRequest: (caseId: string, date: string, time: string) => void;
+  onOpenEvent: (id: string) => void;
+  onDrop: (payload: DragPayload, date: string, time: DropTime) => void;
+  dragged: { current: boolean };
 }) {
   const showNow = days.includes(today) && nowMinutes >= CALENDAR_START_HOUR * 60 && nowMinutes <= (CALENDAR_END_HOUR + 1) * 60;
   return (
@@ -1292,12 +1796,53 @@ function TimeGrid({
       <div className="grid border-b border-gray-200 dark:border-gray-800" style={{ gridTemplateColumns: `3.5rem repeat(${days.length}, minmax(0,1fr))` }}>
         <div className="px-1 py-1 text-[10px] uppercase text-gray-400">All day</div>
         {days.map((date) => (
-          <div key={date} className="max-h-24 space-y-0.5 overflow-y-auto border-l border-gray-200 p-0.5 dark:border-gray-800">
+          <div key={date} className="max-h-24 space-y-0.5 overflow-y-auto border-l border-gray-200 p-0.5 dark:border-gray-800" {...dropHandlers(date, null, onDrop)}>
             {jobsOnDate(jobs, date)
               .filter((job) => job.allDay || (job.start != null && (bangkokHour(job.start) < CALENDAR_START_HOUR || bangkokHour(job.start) > CALENDAR_END_HOUR)))
               .map((job) => (
-                <button key={job.caseId} type="button" className="block w-full" aria-label={eventLabel(job)} onClick={() => onOpen(job.caseId)}>
+                <button
+                  key={job.caseId}
+                  type="button"
+                  draggable
+                  className="block w-full cursor-grab active:cursor-grabbing"
+                  aria-label={eventLabel(job)}
+                  onDragStart={(event) => {
+                    dragged.current = true;
+                    writeDrag(event.dataTransfer, { kind: "job", id: job.caseId });
+                  }}
+                  onClick={() => {
+                    if (dragged.current) {
+                      dragged.current = false;
+                      return;
+                    }
+                    onOpen(job.caseId);
+                  }}
+                >
                   <AllDayChip job={job} />
+                </button>
+              ))}
+            {eventsOnDate(events, date)
+              .filter((item) => item.allDay || minutesOnDate(item.end, date) <= CALENDAR_START_HOUR * 60 || minutesOnDate(item.start, date) >= (CALENDAR_END_HOUR + 1) * 60)
+              .map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  draggable
+                  className="block w-full cursor-grab active:cursor-grabbing"
+                  aria-label={`Event, ${item.title}`}
+                  onDragStart={(event) => {
+                    dragged.current = true;
+                    writeDrag(event.dataTransfer, { kind: "event", id: item.id });
+                  }}
+                  onClick={() => {
+                    if (dragged.current) {
+                      dragged.current = false;
+                      return;
+                    }
+                    onOpenEvent(item.id);
+                  }}
+                >
+                  <ManualEventChip event={item} />
                 </button>
               ))}
           </div>
@@ -1313,12 +1858,7 @@ function TimeGrid({
                 href={createHref(date, timeValue(hour))}
                 aria-label={`Create job on ${dayHeading(date)} at ${hourLabel(hour)}`}
                 className={`border-l border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900 ${date === today ? "bg-sky-50/40 dark:bg-sky-950/20" : ""}`}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  const caseId = event.dataTransfer.getData("text/plain");
-                  if (caseId) onDropRequest(caseId, date, timeValue(hour));
-                }}
+                {...dropHandlers(date, timeValue(hour), onDrop)}
               />
             ))}
           </div>
@@ -1327,22 +1867,23 @@ function TimeGrid({
           <div />
           {days.map((date) => (
             <div key={date} className="relative">
-              {placeEvents(jobsOnDate(jobs, date)).map((item) => (
+              {placeColumn(jobsOnDate(jobs, date), events, date).map((item) => (
                 <button
-                  key={item.job.caseId}
+                  key={`${item.kind}-${item.id}`}
                   type="button"
                   draggable
                   data-event
-                  aria-label={eventLabel(item.job)}
-                  className="pointer-events-auto absolute overflow-hidden"
+                  aria-label={item.kind === "job" ? eventLabel(item.job) : `Event, ${item.event.title}`}
+                  className="pointer-events-auto absolute cursor-grab overflow-hidden active:cursor-grabbing"
                   style={{
                     top: ((item.start - CALENDAR_START_HOUR * 60) / 60) * HOUR_PX + 2,
-                    height: HOUR_PX - 6,
+                    height: Math.max(((item.end - item.start) / 60) * HOUR_PX - 6, 28),
                     left: `calc(${(item.lane / item.lanes) * 100}% + 2px)`,
                     width: `calc(${100 / item.lanes}% - 4px)`,
                   }}
                   onDragStart={(event) => {
-                    event.dataTransfer.setData("text/plain", item.job.caseId);
+                    dragged.current = true;
+                    writeDrag(event.dataTransfer, item.kind === "job" ? { kind: "job", id: item.job.caseId } : { kind: "event", id: item.event.id });
                     event.currentTarget.closest("[data-time-grid]")?.querySelectorAll<HTMLElement>("[data-event]").forEach((el) => {
                       if (el !== event.currentTarget) el.classList.add("pointer-events-none");
                     });
@@ -1352,9 +1893,16 @@ function TimeGrid({
                       el.classList.remove("pointer-events-none");
                     });
                   }}
-                  onClick={() => onOpen(item.job.caseId)}
+                  onClick={() => {
+                    if (dragged.current) {
+                      dragged.current = false;
+                      return;
+                    }
+                    if (item.kind === "job") onOpen(item.job.caseId);
+                    else onOpenEvent(item.event.id);
+                  }}
                 >
-                  <EventCard job={item.job} dense />
+                  {item.kind === "job" ? <EventCard job={item.job} dense /> : <ManualEventCard event={item.event} dense />}
                 </button>
               ))}
             </div>
@@ -1373,45 +1921,133 @@ function TimeGrid({
 function DaySchedule({
   date,
   jobs,
+  events,
   today,
   nowMinutes,
   onOpen,
+  onOpenEvent,
+  onDrop,
+  dragged,
   detailed = false,
 }: {
   date: string;
   jobs: CalendarJobRecord[];
+  events: ManualCalendarEvent[];
   today: boolean;
   nowMinutes: number;
   onOpen: (id: string) => void;
+  onOpenEvent: (id: string) => void;
+  onDrop: (payload: DragPayload, date: string, time: DropTime) => void;
+  dragged: { current: boolean };
   detailed?: boolean;
 }) {
   const allDay = jobs.filter((job) => job.allDay || (job.start != null && (bangkokHour(job.start) < CALENDAR_START_HOUR || bangkokHour(job.start) > CALENDAR_END_HOUR)));
+  const allDayEvents = events.filter((item) => item.allDay || minutesOnDate(item.end, date) <= CALENDAR_START_HOUR * 60 || minutesOnDate(item.start, date) >= (CALENDAR_END_HOUR + 1) * 60);
   return (
     <div>
       <h2 className="px-4 py-3 text-lg font-medium">{dayHeading(date)}</h2>
-      {allDay.length > 0 && (
-        <div className="space-y-1 border-b border-gray-200 px-3 pb-2 dark:border-gray-800">
+      {(allDay.length > 0 || allDayEvents.length > 0) && (
+        <div className="space-y-1 border-b border-gray-200 px-3 pb-2 dark:border-gray-800" {...dropHandlers(date, null, onDrop)}>
           {allDay.map((job) => (
-            <button key={job.caseId} type="button" className="block w-full" aria-label={eventLabel(job)} onClick={() => onOpen(job.caseId)}>
+            <button
+              key={job.caseId}
+              type="button"
+              draggable
+              className="block w-full cursor-grab active:cursor-grabbing"
+              aria-label={eventLabel(job)}
+              onDragStart={(event) => {
+                dragged.current = true;
+                writeDrag(event.dataTransfer, { kind: "job", id: job.caseId });
+              }}
+              onClick={() => {
+                if (dragged.current) {
+                  dragged.current = false;
+                  return;
+                }
+                onOpen(job.caseId);
+              }}
+            >
               <EventCard job={job} />
+            </button>
+          ))}
+          {allDayEvents.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              draggable
+              className="block w-full cursor-grab active:cursor-grabbing"
+              aria-label={`Event, ${item.title}`}
+              onDragStart={(event) => {
+                dragged.current = true;
+                writeDrag(event.dataTransfer, { kind: "event", id: item.id });
+              }}
+              onClick={() => {
+                if (dragged.current) {
+                  dragged.current = false;
+                  return;
+                }
+                onOpenEvent(item.id);
+              }}
+            >
+              <ManualEventCard event={item} />
             </button>
           ))}
         </div>
       )}
       {HOURS.map((hour) => {
         const slotJobs = jobs.filter((job) => !job.allDay && job.start && bangkokHour(job.start) === hour);
+        const slotEvents = events.filter((item) => !item.allDay && minutesOnDate(item.start, date) >= hour * 60 && minutesOnDate(item.start, date) < (hour + 1) * 60);
         const showNow = today && nowMinutes >= hour * 60 && nowMinutes < (hour + 1) * 60;
         return (
           <div key={hour} className="grid grid-cols-[4.5rem_1fr] border-b border-gray-100 dark:border-gray-800">
             <div className="px-2 py-2 text-xs text-gray-500">{hourLabel(hour)}</div>
-            <div className={`relative min-h-16 border-l border-gray-100 px-2 py-1 dark:border-gray-800 ${today ? "bg-sky-50/40 dark:bg-sky-950/20" : ""}`}>
+            <div className={`relative min-h-16 border-l border-gray-100 px-2 py-1 dark:border-gray-800 ${today ? "bg-sky-50/40 dark:bg-sky-950/20" : ""}`} {...dropHandlers(date, timeValue(hour), onDrop)}>
               {showNow && <p className="mb-1 text-xs font-semibold text-red-600">Now</p>}
               {slotJobs.map((job) => (
-                <button key={job.caseId} type="button" className="mb-1 block w-full" aria-label={eventLabel(job)} onClick={() => onOpen(job.caseId)}>
+                <button
+                  key={job.caseId}
+                  type="button"
+                  draggable
+                  className="mb-1 block w-full cursor-grab active:cursor-grabbing"
+                  aria-label={eventLabel(job)}
+                  onDragStart={(event) => {
+                    dragged.current = true;
+                    writeDrag(event.dataTransfer, { kind: "job", id: job.caseId });
+                  }}
+                  onClick={() => {
+                    if (dragged.current) {
+                      dragged.current = false;
+                      return;
+                    }
+                    onOpen(job.caseId);
+                  }}
+                >
                   {detailed ? <DayDetail job={job} /> : <EventCard job={job} />}
                 </button>
               ))}
-              {slotJobs.length === 0 && (
+              {slotEvents.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  draggable
+                  className="mb-1 block w-full cursor-grab active:cursor-grabbing"
+                  aria-label={`Event, ${item.title}`}
+                  onDragStart={(event) => {
+                    dragged.current = true;
+                    writeDrag(event.dataTransfer, { kind: "event", id: item.id });
+                  }}
+                  onClick={() => {
+                    if (dragged.current) {
+                      dragged.current = false;
+                      return;
+                    }
+                    onOpenEvent(item.id);
+                  }}
+                >
+                  <ManualEventCard event={item} />
+                </button>
+              ))}
+              {slotJobs.length === 0 && slotEvents.length === 0 && (
                 <Link href={createHref(date, timeValue(hour))} className="block min-h-14 rounded-lg text-xs text-gray-400 hover:bg-white/80 dark:hover:bg-gray-900" aria-label={`Create job on ${dayHeading(date)} at ${hourLabel(hour)}`}>
                   <span className="sr-only">Create job at {hourLabel(hour)}</span>
                 </Link>
@@ -1420,7 +2056,7 @@ function DaySchedule({
           </div>
         );
       })}
-      {jobs.length === 0 && <p className="px-4 py-6 text-sm text-gray-500">Nothing scheduled.</p>}
+      {jobs.length === 0 && events.length === 0 && <p className="px-4 py-6 text-sm text-gray-500">Nothing scheduled.</p>}
     </div>
   );
 }
@@ -1442,19 +2078,23 @@ function DayDetail({ job }: { job: CalendarJobRecord }) {
 function AgendaList({
   dates,
   jobs,
+  events,
   today,
   nowMinutes,
   onOpen,
+  onOpenEvent,
 }: {
   dates: string[];
   jobs: CalendarJobRecord[];
+  events: ManualCalendarEvent[];
   today: string;
   nowMinutes: number;
   onOpen: (id: string) => void;
+  onOpenEvent: (id: string) => void;
 }) {
   const groups = dates
-    .map((date) => ({ date, jobs: jobsOnDate(jobs, date) }))
-    .filter((group) => group.jobs.length > 0 || group.date === today);
+    .map((date) => ({ date, jobs: jobsOnDate(jobs, date), events: eventsOnDate(events, date) }))
+    .filter((group) => group.jobs.length > 0 || group.events.length > 0 || group.date === today);
   return (
     <div className="divide-y divide-gray-200 dark:divide-gray-800">
       {groups.map((group) => (
@@ -1463,8 +2103,15 @@ function AgendaList({
             {group.date === today ? "Today · " : ""}
             {dayHeading(group.date)}
           </h2>
-          {group.jobs.length === 0 && <p className="mt-2 text-sm text-gray-500">Nothing scheduled.</p>}
+          {group.jobs.length === 0 && group.events.length === 0 && <p className="mt-2 text-sm text-gray-500">Nothing scheduled.</p>}
           <ul className="mt-2 space-y-2">
+            {group.events.map((item) => (
+              <li key={item.id}>
+                <button type="button" className="block w-full" aria-label={`Event, ${item.title}`} onClick={() => onOpenEvent(item.id)}>
+                  <ManualEventCard event={item} />
+                </button>
+              </li>
+            ))}
             {group.jobs.map((job) => {
               const minutes = job.start && !job.allDay ? bangkokMinutes(job.start) : null;
               const upcoming = group.date === today && minutes != null && minutes >= nowMinutes;
@@ -1640,6 +2287,90 @@ function ConfirmDialog({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function printRows(date: string, jobs: CalendarJobRecord[], events: ManualCalendarEvent[]) {
+  const rows = [
+    ...jobsOnDate(jobs, date).map((job) => ({
+      sort: job.start && !job.allDay ? bangkokMinutes(job.start) : -1,
+      text: `${job.start ? clockLabel(job.start, job.allDay) : "TBD"} · ${job.customerName} · ${job.serviceName} · ${job.province ?? "Province needed"} · ${job.staffName}${job.status === "cancelled" ? " · Cancelled" : ""}`,
+    })),
+    ...eventsOnDate(events, date).map((event) => ({
+      sort: event.allDay ? -1 : bangkokMinutes(event.start),
+      text: `${clockLabel(event.start, event.allDay)} · ${event.title}${event.staffName ? ` · ${event.staffName}` : ""} · Event`,
+    })),
+  ];
+  return rows.sort((a, b) => a.sort - b.sort);
+}
+
+function PrintableView({
+  view,
+  title,
+  jobs,
+  events,
+  days,
+  monthDates,
+  monthKey,
+  agenda,
+  today,
+}: {
+  view: CalendarViewName;
+  title: string;
+  jobs: CalendarJobRecord[];
+  events: ManualCalendarEvent[];
+  days: string[];
+  monthDates: string[];
+  monthKey: string;
+  agenda: string[];
+  today: string;
+}) {
+  return (
+    <div className="hidden bg-white text-black print:block">
+      <h1 className="text-xl font-bold">SiamEZ · {title}</h1>
+      <p className="mb-4 text-sm">{viewLabel(view)} view</p>
+      {view === "month" && (
+        <div>
+          <div className="grid grid-cols-7 border-b text-center text-xs font-semibold">
+            {WEEKDAYS.map((day) => (
+              <div key={day} className="py-1">{day}</div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7">
+            {monthDates.map((date) => {
+              const rows = printRows(date, jobs, events);
+              return (
+                <div key={date} className="min-h-24 break-inside-avoid border-b border-r p-1 text-[10px] leading-tight">
+                  <p className={`font-semibold ${date.startsWith(monthKey) ? "" : "text-gray-500"}`}>{Number(date.slice(-2))}</p>
+                  {rows.map((row) => (
+                    <p key={row.text} className="mt-0.5">{row.text}</p>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {view === "agenda" && agenda.map((date) => {
+        const rows = printRows(date, jobs, events);
+        if (rows.length === 0 && date !== today) return null;
+        return (
+          <section key={date} className="mb-4 break-inside-avoid">
+            <h2 className="text-base font-semibold">{date === today ? "Today · " : ""}{dayHeading(date)}</h2>
+            {rows.length === 0 ? <p className="text-sm">Nothing scheduled.</p> : rows.map((row) => <p key={row.text} className="text-sm">{row.text}</p>)}
+          </section>
+        );
+      })}
+      {view !== "month" && view !== "agenda" && days.map((date) => {
+        const rows = printRows(date, jobs, events);
+        return (
+          <section key={date} className="mb-4 break-inside-avoid">
+            <h2 className="text-base font-semibold">{date === today ? "Today · " : ""}{dayHeading(date)}</h2>
+            {rows.length === 0 ? <p className="text-sm">Nothing scheduled.</p> : rows.map((row) => <p key={row.text} className="text-sm">{row.text}</p>)}
+          </section>
+        );
+      })}
     </div>
   );
 }

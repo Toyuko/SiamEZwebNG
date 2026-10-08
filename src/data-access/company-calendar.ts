@@ -1,4 +1,4 @@
-import { Prisma, type CaseStatus } from "@prisma/client";
+import { Prisma, type CaseStatus, type EventType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { assertCaseStatusTransition } from "@/lib/domain/case-status";
 import { normalizeProvince } from "@/lib/calendar/provinces";
@@ -7,11 +7,15 @@ import {
   eventWindow,
   filterCalendarJobs,
   isUnscheduledJob,
+  MANUAL_EVENT_COLORS,
+  MANUAL_EVENT_TYPES,
+  manualEventWindow,
   planBackfill,
   schedulingWarnings,
   toPublicSlot,
   type CalendarFilters,
   type CalendarJobRecord,
+  type ManualCalendarEvent,
   type ScheduleWarning,
 } from "@/lib/calendar/schedule";
 import {
@@ -79,7 +83,51 @@ function toRecord(row: CalendarRow): CalendarJobRecord {
   };
 }
 
-const ACTIVE_UNSCHEDULED: CaseStatus[] = ["confirmed", "in_progress", "pending_docs"];
+const ACTIVE_UNSCHEDULED: CaseStatus[] = ["awaiting_payment", "confirmed", "in_progress", "pending_docs"];
+
+function manualEventWhere(start: Date, end: Date, filters: CalendarFilters, searching: boolean, q: string): Prisma.EventWhereInput {
+  const jobScoped = filters.provinces.length > 0 || Boolean(filters.serviceId) || (filters.status !== "" && filters.status !== "all");
+  if (jobScoped) return { id: { in: [] } };
+  const where: Prisma.EventWhereInput = { primaryForCaseId: null };
+  if (searching) {
+    where.OR = [
+      { title: { contains: q, mode: "insensitive" } },
+      { description: { contains: q, mode: "insensitive" } },
+    ];
+  } else {
+    where.start = { lt: end };
+    where.end = { gt: start };
+  }
+  if (filters.staffId === "tbd") where.staffId = null;
+  else if (filters.staffId) where.staffId = filters.staffId;
+  return where;
+}
+
+function toManualEvent(event: {
+  id: string;
+  title: string;
+  description: string | null;
+  start: Date;
+  end: Date;
+  allDay: boolean;
+  type: EventType;
+  color: string | null;
+  staffId: string | null;
+  staff: { name: string | null; email: string } | null;
+}): ManualCalendarEvent {
+  return {
+    id: event.id,
+    title: event.title,
+    description: event.description,
+    start: event.start.toISOString(),
+    end: event.end.toISOString(),
+    allDay: event.allDay,
+    type: event.type,
+    color: event.color,
+    staffId: event.staffId,
+    staffName: event.staff ? staffDisplayName(event.staff) : null,
+  };
+}
 
 function rangeWhere(start: Date, end: Date, filters: CalendarFilters, searching: boolean): Prisma.CaseWhereInput {
   const where: Prisma.CaseWhereInput = searching ? { scheduledAt: { not: null } } : { scheduledAt: { gte: start, lt: end } };
@@ -139,10 +187,21 @@ export async function loadCompanyCalendar(input: {
       take: 40,
     }),
     prisma.event.findMany({
-      where: { caseId: null, start: { lt: input.end }, end: { gt: input.start } },
-      select: { id: true, title: true, start: true, end: true, allDay: true },
+      where: manualEventWhere(input.start, input.end, input.filters, searching, q),
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        start: true,
+        end: true,
+        allDay: true,
+        type: true,
+        color: true,
+        staffId: true,
+        staff: { select: { name: true, email: true } },
+      },
       orderBy: { start: "asc" },
-      take: 50,
+      take: searching ? 40 : 200,
     }),
     input.includeHealth ? calendarHealth() : Promise.resolve(null),
   ]);
@@ -152,13 +211,7 @@ export async function loadCompanyCalendar(input: {
   return {
     jobs,
     unscheduled,
-    otherEvents: otherEvents.map((event) => ({
-      id: event.id,
-      title: event.title,
-      start: event.start.toISOString(),
-      end: event.end.toISOString(),
-      allDay: event.allDay,
-    })),
+    events: otherEvents.map(toManualEvent),
     summary: calendarSummary(jobs),
     health,
     truncated: rows.length >= (searching ? 80 : 400),
@@ -401,6 +454,88 @@ export async function assignCalendarProvince(
     });
     await syncScheduleFromCase(tx, caseId);
   });
+}
+
+export async function saveManualCalendarEvent(input: {
+  id?: string | null;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  endDate: string;
+  endTime: string;
+  allDay: boolean;
+  type: string;
+  color: string;
+  staffId: string | null;
+}) {
+  const title = input.title.trim();
+  if (!title) throw new JobIntakeValidationError("Enter a title.", { title: "Enter a title." });
+  if (title.length > 200) throw new JobIntakeValidationError("Title is too long.", { title: "Use 200 characters or fewer." });
+  if (!MANUAL_EVENT_TYPES.includes(input.type as (typeof MANUAL_EVENT_TYPES)[number])) {
+    throw new JobIntakeValidationError("Choose an event type.", { type: "Choose an event type." });
+  }
+  const color = input.color.trim();
+  if (color && !MANUAL_EVENT_COLORS.includes(color as (typeof MANUAL_EVENT_COLORS)[number])) {
+    throw new JobIntakeValidationError("Choose a colour from the list.", { color: "Choose a colour from the list." });
+  }
+  const window = manualEventWindow({
+    date: input.date,
+    time: input.time,
+    endDate: input.endDate,
+    endTime: input.endTime,
+    allDay: input.allDay,
+  });
+  if (!window) throw new JobIntakeValidationError("End must be after the start.", { end: "End must be after the start." });
+  const description = input.description.trim();
+  if (description.length > 2000) {
+    throw new JobIntakeValidationError("Notes are too long.", { description: "Use 2000 characters or fewer." });
+  }
+  let staffId: string | null = null;
+  if (input.staffId) {
+    const person = await prisma.user.findFirst({
+      where: { id: input.staffId, role: { in: ["admin", "staff"] }, active: true },
+      select: { id: true },
+    });
+    if (!person) throw new JobIntakeValidationError("Choose a staff member.", { staffId: "Choose a staff member." });
+    staffId = person.id;
+  }
+  const data = {
+    title,
+    description: description || null,
+    start: window.start,
+    end: window.end,
+    allDay: input.allDay,
+    type: input.type as EventType,
+    color: color || null,
+    staffId,
+    caseId: null,
+    userId: null,
+  };
+  if (input.id) {
+    const existing = await prisma.event.findUnique({
+      where: { id: input.id },
+      select: { id: true, primaryForCaseId: true },
+    });
+    if (!existing) throw new Error("Event not found");
+    if (existing.primaryForCaseId) {
+      throw new JobIntakeValidationError("This time belongs to a job. Edit the job instead.", {});
+    }
+    return prisma.event.update({ where: { id: existing.id }, data });
+  }
+  return prisma.event.create({ data });
+}
+
+export async function deleteManualCalendarEvent(id: string) {
+  const existing = await prisma.event.findUnique({
+    where: { id },
+    select: { id: true, primaryForCaseId: true },
+  });
+  if (!existing) throw new Error("Event not found");
+  if (existing.primaryForCaseId) {
+    throw new JobIntakeValidationError("This time belongs to a job. Edit the job instead.", {});
+  }
+  await prisma.event.delete({ where: { id: existing.id } });
 }
 
 export async function setCalendarJobStatus(

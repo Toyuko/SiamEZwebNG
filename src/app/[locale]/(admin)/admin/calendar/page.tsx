@@ -45,7 +45,7 @@ export default async function AdminCalendarPage({
     <CompanyCalendar
       jobs={calendar.jobs}
       unscheduled={calendar.unscheduled}
-      otherEvents={calendar.otherEvents}
+      events={calendar.events}
       summary={calendar.summary}
       health={calendar.health}
       staff={staff.filter((person) => isAssignableJobStaff(person))}

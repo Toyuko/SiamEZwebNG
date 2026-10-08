@@ -260,7 +260,7 @@ export function AdminSidebar({
   return (
     <aside
       className={cn(
-        "z-50 w-56 shrink-0 flex-col border-r border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900",
+        "z-50 w-56 shrink-0 flex-col border-r border-gray-200 bg-gray-50 print:hidden dark:border-gray-800 dark:bg-gray-900",
         "fixed inset-y-0 left-0 md:sticky md:top-0 md:flex md:h-screen",
         mobileOpen ? "flex" : "hidden"
       )}

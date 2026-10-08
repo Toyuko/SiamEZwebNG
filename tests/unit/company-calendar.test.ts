@@ -3,7 +3,10 @@ import { assertJobIntakeAccess } from "@/lib/jobs/intake";
 import { detectProvince, provinceStyle, suggestedProvince, THAI_PROVINCE_NAMES } from "@/lib/calendar/provinces";
 import {
   calendarRange,
+  eventCoversDate,
   filterCalendarJobs,
+  manualEventWindow,
+  movedManualEvent,
   isUnscheduledJob,
   monthGridDates,
   parseCalendarView,
@@ -72,6 +75,53 @@ describe("company calendar", () => {
     const day = calendarRange("day", "2026-10-10");
     expect(day.start.toISOString()).toBe("2026-10-09T17:00:00.000Z");
     expect(day.end.toISOString()).toBe("2026-10-10T17:00:00.000Z");
+  });
+
+  it("stores a manual event in Thailand time and keeps an all-day event on that date", () => {
+    const timed = manualEventWindow({
+      date: "2026-10-08",
+      time: "10:00",
+      endDate: "2026-10-08",
+      endTime: "11:30",
+      allDay: false,
+    });
+    expect(timed?.start.toISOString()).toBe("2026-10-08T03:00:00.000Z");
+    expect(timed?.end.toISOString()).toBe("2026-10-08T04:30:00.000Z");
+    expect(manualEventWindow({ date: "2026-10-08", time: "11:00", endDate: "2026-10-08", endTime: "10:00", allDay: false })).toBeNull();
+    const allDay = manualEventWindow({ date: "2026-10-08", time: "00:00", endDate: "2026-10-08", endTime: "00:00", allDay: true });
+    expect(allDay?.start.toISOString()).toBe("2026-10-07T17:00:00.000Z");
+    expect(allDay?.end.toISOString()).toBe("2026-10-08T17:00:00.000Z");
+    expect(eventCoversDate({ start: allDay!.start.toISOString(), end: allDay!.end.toISOString() }, "2026-10-08")).toBe(true);
+    expect(eventCoversDate({ start: allDay!.start.toISOString(), end: allDay!.end.toISOString() }, "2026-10-09")).toBe(false);
+  });
+
+  it("keeps an event's length when it is dragged to another time", () => {
+    const timed = {
+      id: "event-1",
+      title: "Office block",
+      description: null,
+      start: "2026-10-08T03:00:00.000Z",
+      end: "2026-10-08T04:30:00.000Z",
+      allDay: false,
+      type: "appointment" as const,
+      color: null,
+      staffId: null,
+      staffName: null,
+    };
+    const moved = movedManualEvent(timed, "2026-10-09", "14:00");
+    expect(moved?.date).toBe("2026-10-09");
+    expect(moved?.time).toBe("14:00");
+    expect(moved?.endDate).toBe("2026-10-09");
+    expect(moved?.endTime).toBe("15:30");
+    expect(moved?.allDay).toBe(false);
+    const day = movedManualEvent(
+      { ...timed, allDay: true, start: "2026-10-07T17:00:00.000Z", end: "2026-10-09T17:00:00.000Z" },
+      "2026-10-12",
+      null,
+    );
+    expect(day?.allDay).toBe(true);
+    expect(day?.date).toBe("2026-10-12");
+    expect(day?.endDate).toBe("2026-10-13");
   });
 
   it("keeps 10:00 Thailand as 03:00 UTC and prefers agenda on a phone", () => {
@@ -201,6 +251,7 @@ describe("company calendar", () => {
     ]);
     expect(second.added).toBe(0);
     expect(second.already).toBe(1);
+    expect(isUnscheduledJob({ scheduledAt: null, status: "awaiting_payment" })).toBe(true);
     expect(isUnscheduledJob({ scheduledAt: null, status: "confirmed" })).toBe(true);
     expect(isUnscheduledJob({ scheduledAt: new Date(), status: "confirmed" })).toBe(false);
   });
