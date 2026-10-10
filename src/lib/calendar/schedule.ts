@@ -237,6 +237,21 @@ export function jobsOnDate(jobs: CalendarJobRecord[], date: string): CalendarJob
     });
 }
 
+/** URL token for jobs that have no province yet. Province names never use this value. */
+export const PROVINCE_NEEDED_TOKEN = "__needed";
+
+export function parseProvinceParam(raw: string | undefined): string[] {
+  return (raw ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => (item === PROVINCE_NEEDED_TOKEN ? "" : item));
+}
+
+export function serializeProvinces(provinces: string[]): string {
+  return provinces.map((item) => item || PROVINCE_NEEDED_TOKEN).join(",");
+}
+
 export function jobMatchesFilters(job: CalendarJobRecord, filters: CalendarFilters): boolean {
   if (filters.provinces.length > 0 && !filters.provinces.includes(job.province ?? "")) return false;
   if (filters.staffId === "tbd" && job.staffId) return false;
@@ -276,7 +291,7 @@ export function calendarSummary(jobs: CalendarJobRecord[]) {
   const active = jobs.filter((job) => job.status !== "cancelled" && job.status !== "refunded");
   const provinces = new Map<string, number>();
   for (const job of active) {
-    const label = job.province ?? "Other";
+    const label = job.province || "Province needed";
     provinces.set(label, (provinces.get(label) ?? 0) + 1);
   }
   return {
@@ -285,7 +300,7 @@ export function calendarSummary(jobs: CalendarJobRecord[]) {
     depositSatang: active.reduce((sum, job) => sum + job.depositSatang, 0),
     outstandingSatang: active.reduce((sum, job) => sum + job.outstandingSatang, 0),
     provinces: [...provinces.entries()]
-      .map(([name, count]) => ({ ...provinceStyle(name === "Other" ? null : name), name, count }))
+      .map(([name, count]) => ({ ...provinceStyle(name === "Province needed" ? null : name), name, count }))
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)),
   };
 }

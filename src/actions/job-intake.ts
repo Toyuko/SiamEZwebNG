@@ -4,6 +4,7 @@ import type { CaseStatus } from "@prisma/client";
 import { headers } from "next/headers";
 import { getSession } from "@/lib/auth";
 import {
+  actingStaffUser,
   createConfirmedJob,
   getConfirmedJob,
   listJobs,
@@ -13,7 +14,6 @@ import {
 } from "@/data-access/job-intake";
 import { saveJobIntakeMemory } from "@/data-access/job-intake-memory";
 import {
-  assertJobIntakeAccess,
   CustomerChoiceRequiredError,
   JobIntakeValidationError,
   type JobIntakeInput,
@@ -33,8 +33,7 @@ export type JobIntakeActionResult<T> =
 
 async function staffActor() {
   const session = await getSession();
-  assertJobIntakeAccess(session?.user.role);
-  return session!.user;
+  return actingStaffUser(session?.user);
 }
 
 function fail(error: unknown, fallback: string): JobIntakeActionResult<never> {

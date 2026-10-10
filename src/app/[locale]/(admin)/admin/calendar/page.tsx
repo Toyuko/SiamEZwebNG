@@ -3,7 +3,7 @@ import { getServices, getStaffUsers } from "@/actions/admin";
 import { getSession } from "@/lib/auth";
 import { isAssignableJobStaff } from "@/lib/jobs/intake";
 import { loadCompanyCalendar } from "@/data-access/company-calendar";
-import { calendarAnchor, calendarRange, resolveCalendarView, type CalendarContextName, type CalendarFilters } from "@/lib/calendar/schedule";
+import { calendarAnchor, calendarRange, parseProvinceParam, resolveCalendarView, type CalendarContextName, type CalendarFilters } from "@/lib/calendar/schedule";
 import { CompanyCalendar } from "./CompanyCalendar";
 
 export default async function AdminCalendarPage({
@@ -23,7 +23,7 @@ export default async function AdminCalendarPage({
   const anchor = calendarAnchor(params.date);
   const range = calendarRange(view, anchor);
   const filters: CalendarFilters = {
-    provinces: (params.provinces ?? "").split(",").map((item) => item.trim()).filter(Boolean),
+    provinces: parseProvinceParam(params.provinces),
     staffId: params.staff ?? "",
     serviceId: params.service ?? "",
     status: params.status ?? "all",

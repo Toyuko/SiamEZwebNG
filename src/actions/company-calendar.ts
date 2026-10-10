@@ -11,6 +11,7 @@ import {
   setCalendarJobStatus,
   syncExistingJobsToCalendar,
 } from "@/data-access/company-calendar";
+import { actingStaffUser } from "@/data-access/job-intake";
 import { isAdminAuthBypassEnabled } from "@/lib/auth/admin-bypass";
 import { assertJobIntakeAccess, JobIntakeValidationError } from "@/lib/jobs/intake";
 import type { ScheduleWarning } from "@/lib/calendar/schedule";
@@ -21,8 +22,7 @@ export type CalendarActionResult =
 
 async function actor() {
   const session = await getSession();
-  assertJobIntakeAccess(session?.user.role);
-  return session!.user;
+  return actingStaffUser(session?.user);
 }
 
 async function allowStaff() {

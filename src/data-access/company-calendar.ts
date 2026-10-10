@@ -7,6 +7,7 @@ import {
   eventWindow,
   filterCalendarJobs,
   isUnscheduledJob,
+  jobMatchesFilters,
   MANUAL_EVENT_COLORS,
   MANUAL_EVENT_TYPES,
   manualEventWindow,
@@ -88,7 +89,8 @@ const ACTIVE_UNSCHEDULED: CaseStatus[] = ["awaiting_payment", "confirmed", "in_p
 function manualEventWhere(start: Date, end: Date, filters: CalendarFilters, searching: boolean, q: string): Prisma.EventWhereInput {
   const jobScoped = filters.provinces.length > 0 || Boolean(filters.serviceId) || (filters.status !== "" && filters.status !== "all");
   if (jobScoped) return { id: { in: [] } };
-  const where: Prisma.EventWhereInput = { primaryForCaseId: null };
+  // Job appointments are drawn from Case. Events that still point at a case must not appear twice.
+  const where: Prisma.EventWhereInput = { primaryForCaseId: null, caseId: null };
   if (searching) {
     where.OR = [
       { title: { contains: q, mode: "insensitive" } },
@@ -129,9 +131,23 @@ function toManualEvent(event: {
   };
 }
 
+function applyProvinceFilter(where: Prisma.CaseWhereInput, provinces: string[]) {
+  if (provinces.length === 0) return;
+  const names = provinces.filter(Boolean);
+  const missing = provinces.includes("");
+  const clause: Prisma.CaseWhereInput =
+    missing && names.length > 0
+      ? { OR: [{ province: { in: names } }, { province: null }] }
+      : missing
+        ? { province: null }
+        : { province: { in: names } };
+  const current = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
+  where.AND = [...current, clause];
+}
+
 function rangeWhere(start: Date, end: Date, filters: CalendarFilters, searching: boolean): Prisma.CaseWhereInput {
   const where: Prisma.CaseWhereInput = searching ? { scheduledAt: { not: null } } : { scheduledAt: { gte: start, lt: end } };
-  if (filters.provinces.length > 0) where.province = { in: filters.provinces };
+  applyProvinceFilter(where, filters.provinces);
   if (filters.staffId === "tbd") where.staffAssignments = { none: {} };
   else if (filters.staffId) where.staffAssignments = { some: { userId: filters.staffId } };
   if (filters.serviceId) where.serviceId = filters.serviceId;
@@ -207,7 +223,9 @@ export async function loadCompanyCalendar(input: {
   ]);
 
   const jobs = filterCalendarJobs(rows.map(toRecord), input.filters);
-  const unscheduled = unscheduledRows.map(toRecord).filter((job) => isUnscheduledJob({ scheduledAt: null, status: job.status }));
+  const unscheduled = unscheduledRows
+    .map(toRecord)
+    .filter((job) => isUnscheduledJob({ scheduledAt: null, status: job.status }) && jobMatchesFilters(job, input.filters));
   return {
     jobs,
     unscheduled,

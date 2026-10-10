@@ -6,11 +6,13 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { formatThb } from "@/lib/jobs/intake";
 import { provinceOptions, provinceStyle } from "@/lib/calendar/provinces";
 import { bangkokDateInputValue, bangkokTimeInputValue } from "@/lib/jobs/intake";
+import { canTransitionCaseStatus, CASE_STATUS_LABELS } from "@/lib/domain/case-status";
 import {
   CALENDAR_END_HOUR,
   CALENDAR_START_HOUR,
   MANUAL_EVENT_COLORS,
   MANUAL_EVENT_TYPES,
+  PROVINCE_NEEDED_TOKEN,
   agendaDates,
   bangkokClockMinutes,
   calendarContext,
@@ -21,6 +23,7 @@ import {
   movedManualEvent,
   parseCalendarView,
   preferredCalendarView,
+  serializeProvinces,
   shiftAnchor,
   threeDayDates,
   weekDates,
@@ -424,7 +427,7 @@ export function CompanyCalendar({
     params.set("date", next.date ?? anchor);
     params.set("view", next.view ?? view);
     const provinces = next.provinces ?? filters.provinces;
-    if (provinces.length) params.set("provinces", provinces.join(","));
+    if (provinces.length) params.set("provinces", serializeProvinces(provinces));
     const staffId = next.staffId ?? filters.staffId;
     const serviceId = next.serviceId ?? filters.serviceId;
     const status = next.status ?? filters.status;
@@ -451,7 +454,7 @@ export function CompanyCalendar({
   goRef.current = go;
 
   function toggleProvince(name: string) {
-    if (name === "__needed") {
+    if (name === PROVINCE_NEEDED_TOKEN) {
       go({ provinces: filters.provinces.length === 1 && filters.provinces[0] === "" ? [] : [""] });
       return;
     }
@@ -698,10 +701,13 @@ export function CompanyCalendar({
           </FilterSelect>
           <FilterSelect
             label="Province"
-            value={filters.provinces.length === 1 ? filters.provinces[0] : ""}
-            onChange={(province) => go({ provinces: province ? [province] : [] })}
+            value={filters.provinces.length === 1 ? filters.provinces[0] || PROVINCE_NEEDED_TOKEN : ""}
+            onChange={(province) =>
+              go({ provinces: province === PROVINCE_NEEDED_TOKEN ? [""] : province ? [province] : [] })
+            }
           >
             <option value="">{filters.provinces.length > 1 ? `${filters.provinces.length} provinces` : "All provinces"}</option>
+            <option value={PROVINCE_NEEDED_TOKEN}>Province needed</option>
             {provinceOptions().map((name) => (
               <option key={name} value={name}>{name}</option>
             ))}
@@ -969,8 +975,15 @@ export function CompanyCalendar({
                     <option key={person.id} value={person.id}>{staffLabel(person)}</option>
                   ))}
                 </FilterSelect>
-                <FilterSelect label="Province" value={filters.provinces[0] ?? ""} onChange={(province) => go({ provinces: province ? [province] : [] })}>
+                <FilterSelect
+                  label="Province"
+                  value={filters.provinces.length === 1 ? filters.provinces[0] || PROVINCE_NEEDED_TOKEN : ""}
+                  onChange={(province) =>
+                    go({ provinces: province === PROVINCE_NEEDED_TOKEN ? [""] : province ? [province] : [] })
+                  }
+                >
                   <option value="">All provinces</option>
+                  <option value={PROVINCE_NEEDED_TOKEN}>Province needed</option>
                   {provinceOptions().map((name) => (
                     <option key={name} value={name}>{name}</option>
                   ))}
@@ -1277,14 +1290,18 @@ function SidebarBody(props: {
       <div>
         <h2 className="px-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Provinces</h2>
         <ul className="mt-1 max-h-40 overflow-auto">
-          {props.summary.provinces.map((item) => (
+          {props.summary.provinces.map((item) => {
+            const needed = item.name === "Province needed";
+            const active = needed ? props.filters.provinces.includes("") : props.filters.provinces.includes(item.name);
+            return (
             <li key={item.name}>
-              <button type="button" className="flex h-9 w-full items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-900" onClick={() => props.onProvince(item.name === "Other" || item.name === "Province needed" ? "__needed" : item.name)}>
+              <button type="button" aria-pressed={active} className="flex h-9 w-full items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-900" onClick={() => props.onProvince(needed ? PROVINCE_NEEDED_TOKEN : item.name)}>
                 <span className="h-2.5 w-2.5 rounded-sm" style={{ background: item.accent }} />
                 {item.name} ({item.count})
               </button>
             </li>
-          ))}
+            );
+          })}
         </ul>
         <details className="mt-1">
           <summary className="cursor-pointer px-2 text-sm text-siam-blue">All provinces</summary>
@@ -2179,10 +2196,23 @@ function JobPopover({
   const [nextTime, setNextTime] = useState(time);
   const [timeTbd, setTimeTbd] = useState(job.allDay || !job.start);
   const [editing, setEditing] = useState(!job.start);
-  const style = provinceStyle(job.province);
+  const [province, setProvince] = useState(job.province ?? "");
+  const [staffId, setStaffId] = useState(job.staffId ?? "");
+  const style = provinceStyle(province || null);
+
+  useEffect(() => {
+    setProvince(job.province ?? "");
+    setStaffId(job.staffId ?? "");
+  }, [job.caseId, job.province, job.staffId]);
+
+  useEffect(() => {
+    if (!error) return;
+    setProvince(job.province ?? "");
+    setStaffId(job.staffId ?? "");
+  }, [error, job.province, job.staffId]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 md:items-start md:justify-end md:bg-transparent md:p-4" role="presentation" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 md:items-start md:justify-end md:bg-transparent md:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <div
         role="dialog"
         aria-modal="true"
@@ -2202,7 +2232,8 @@ function JobPopover({
         <dl className="mt-3 space-y-1 text-sm">
           <div>{job.start ? clockLabel(job.start, job.allDay) : "Unscheduled"}</div>
           <div>{date ? dayHeading(date) : "No date yet"}</div>
-          <div>{job.province ?? "Province needed"}</div>
+          <div>{province || "Province needed"}</div>
+          <div>{CASE_STATUS_LABELS[job.status].en}</div>
           <div>{job.staffName}</div>
           {job.location && <div className="text-gray-600 dark:text-gray-300">{job.location}</div>}
           <div className="pt-1 text-gray-600 dark:text-gray-300">
@@ -2222,10 +2253,10 @@ function JobPopover({
           )}
           {job.customerPhone && <a href={`tel:${job.customerPhone}`} className="inline-flex h-11 items-center justify-center rounded-lg border text-sm">Call</a>}
           {job.customerPhone && <a href={waHref(job.customerPhone)} className="inline-flex h-11 items-center justify-center rounded-lg border text-sm">WhatsApp</a>}
-          {job.status !== "completed" && job.status !== "cancelled" && (
+          {job.status !== "completed" && canTransitionCaseStatus(job.status, "completed") && (
             <button type="button" disabled={pending} className="h-11 rounded-lg border text-sm" onClick={() => onStatus("completed")}>Mark complete</button>
           )}
-          {job.status !== "cancelled" && (
+          {job.status !== "cancelled" && canTransitionCaseStatus(job.status, "cancelled") && (
             <button type="button" disabled={pending} className="h-11 rounded-lg border text-sm" onClick={() => onStatus("cancelled")}>Cancel job</button>
           )}
         </div>
@@ -2257,7 +2288,16 @@ function JobPopover({
         )}
         <label className="mt-3 block text-sm">
           Staff
-          <select className="mt-1 h-11 w-full rounded-lg border px-2 dark:border-gray-600 dark:bg-gray-900" value={job.staffId ?? ""} disabled={pending} onChange={(event) => onStaff(event.target.value || null)}>
+          <select
+            className="mt-1 h-11 w-full rounded-lg border px-2 dark:border-gray-600 dark:bg-gray-900"
+            value={staffId}
+            disabled={pending}
+            onChange={(event) => {
+              const next = event.target.value;
+              setStaffId(next);
+              onStaff(next || null);
+            }}
+          >
             <option value="">TBD</option>
             {staff.map((person) => (
               <option key={person.id} value={person.id}>{staffLabel(person)}</option>
@@ -2266,7 +2306,16 @@ function JobPopover({
         </label>
         <label className="mt-3 block text-sm">
           Province
-          <select className="mt-1 h-11 w-full rounded-lg border px-2 dark:border-gray-600 dark:bg-gray-900" value={job.province ?? ""} disabled={pending} onChange={(event) => onProvince(event.target.value || null)}>
+          <select
+            className="mt-1 h-11 w-full rounded-lg border px-2 dark:border-gray-600 dark:bg-gray-900"
+            value={province}
+            disabled={pending}
+            onChange={(event) => {
+              const next = event.target.value;
+              setProvince(next);
+              onProvince(next || null);
+            }}
+          >
             <option value="">Province needed</option>
             {provinceOptions().map((name) => (
               <option key={name} value={name}>{name}</option>

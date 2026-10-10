@@ -3,6 +3,7 @@ import { assertJobIntakeAccess } from "@/lib/jobs/intake";
 import { detectProvince, provinceStyle, suggestedProvince, THAI_PROVINCE_NAMES } from "@/lib/calendar/provinces";
 import {
   calendarRange,
+  calendarSummary,
   eventCoversDate,
   filterCalendarJobs,
   manualEventWindow,
@@ -10,11 +11,13 @@ import {
   isUnscheduledJob,
   monthGridDates,
   parseCalendarView,
+  parseProvinceParam,
   planBackfill,
   preferredCalendarView,
   resolveCalendarView,
   reschedulePlan,
   schedulingWarnings,
+  serializeProvinces,
   threeDayDates,
   toPublicSlot,
   type CalendarJobRecord,
@@ -60,6 +63,14 @@ describe("company calendar", () => {
     expect(suggestedProvince("Bangkok", "Chonburi Land Transport Office")).toBe("Bangkok");
     expect(suggestedProvince("", "Chonburi Land Transport Office")).toBe("Chonburi");
     expect(suggestedProvince(null, "a side street")).toBeNull();
+  });
+
+  it("keeps a missing province in the filter and labels it Province needed", () => {
+    expect(parseProvinceParam("Bangkok,__needed")).toEqual(["Bangkok", ""]);
+    expect(serializeProvinces(["Bangkok", ""])).toBe("Bangkok,__needed");
+    expect(parseProvinceParam(undefined)).toEqual([]);
+    const summary = calendarSummary([baseJob({ province: null }), baseJob({ caseId: "case-2", province: "Phuket" })]);
+    expect(summary.provinces.map((item) => item.name)).toEqual(["Phuket", "Province needed"]);
   });
 
   it("loads only the visible Thailand date range", () => {
@@ -187,6 +198,9 @@ describe("company calendar", () => {
     expect(filterCalendarJobs(jobs, { provinces: [], staffId: "", serviceId: "", status: "tbd", q: "" }).map((job) => job.caseId)).toEqual(["case-3"]);
     expect(filterCalendarJobs(jobs, { provinces: [], staffId: "", serviceId: "", status: "all", q: "INV-2026-00002" })).toHaveLength(1);
     expect(filterCalendarJobs(jobs, { provinces: [], staffId: "", serviceId: "", status: "all", q: "john smith" })).toHaveLength(1);
+    expect(filterCalendarJobs(jobs, { provinces: [""], staffId: "", serviceId: "", status: "all", q: "" }).map((job) => job.caseId)).toEqual([]);
+    const missing = baseJob({ caseId: "case-4", province: null, customerName: "No Province" });
+    expect(filterCalendarJobs([missing, ...jobs], { provinces: [""], staffId: "", serviceId: "", status: "all", q: "" }).map((job) => job.caseId)).toEqual(["case-4"]);
   });
 
   it("warns on a staff time clash and a short province change", () => {

@@ -1,5 +1,7 @@
 import { Prisma, type CaseStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { isAdminAuthBypassEnabled } from "@/lib/auth/admin-bypass";
+import { isStaffRole } from "@/lib/auth/roles";
 import { sendJobIntakeNotices } from "@/lib/email/job-intake";
 import { nextCaseNumber } from "@/lib/utils";
 import { assertEligibleSalesperson, planAttributionChange } from "@/lib/finance/sales";
@@ -9,6 +11,7 @@ import {
   JOB_INTAKE_EVENT_MARKER,
   CustomerChoiceRequiredError,
   JobIntakeValidationError,
+  assertJobIntakeAccess,
   bangkokDateInputValue,
   buildJobCopyText,
   caseServiceName,
@@ -457,6 +460,28 @@ export async function resolveStaffActor(actor: { id: string; email: string }): P
       return byEmail.id;
     }
   }
+  throw new Error("Unauthorized");
+}
+
+/**
+ * Staff session when one exists. Local admin bypass has no session, so calendar
+ * and job edits attribute the change to the first active admin.
+ */
+export async function actingStaffUser(
+  sessionUser: { id: string; email: string; role?: string | null } | null | undefined
+): Promise<{ id: string; email: string }> {
+  if (sessionUser?.id && sessionUser.email && isStaffRole(sessionUser.role)) {
+    return { id: sessionUser.id, email: sessionUser.email };
+  }
+  if (isAdminAuthBypassEnabled()) {
+    const admin = await prisma.user.findFirst({
+      where: { active: true, role: "admin" },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, email: true },
+    });
+    if (admin) return admin;
+  }
+  assertJobIntakeAccess(sessionUser?.role);
   throw new Error("Unauthorized");
 }
 
