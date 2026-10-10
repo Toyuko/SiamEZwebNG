@@ -3,6 +3,7 @@
  * All wall-clock dates are Asia/Bangkok.
  */
 
+import type { CaseStatus } from "@prisma/client";
 import {
   JOB_INTAKE_TIMEZONE,
   bangkokDateInputValue,
@@ -35,7 +36,7 @@ export type CalendarJobRecord = {
   allDay: boolean;
   province: string | null;
   location: string | null;
-  status: string;
+  status: CaseStatus;
   invoiceId: string | null;
   invoiceNumber: string | null;
   totalSatang: number;

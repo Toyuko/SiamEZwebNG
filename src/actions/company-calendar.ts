@@ -31,6 +31,12 @@ async function allowStaff() {
   assertJobIntakeAccess(session?.user.role);
 }
 
+async function allowAdmin() {
+  if (isAdminAuthBypassEnabled()) return;
+  const session = await getSession();
+  if (session?.user.role !== "admin") throw new Error("Unauthorized");
+}
+
 function fail(error: unknown, fallback: string): CalendarActionResult {
   if (error instanceof JobIntakeValidationError) return { ok: false, error: error.message };
   if (error instanceof Error && error.message === "Unauthorized") return { ok: false, error: "Unauthorized" };
@@ -124,8 +130,8 @@ export async function deleteManualEventAction(id: string): Promise<CalendarActio
 
 export async function syncCalendarAction(): Promise<CalendarActionResult> {
   try {
+    await allowAdmin();
     const user = await actor();
-    if (user.role !== "admin") return { ok: false, error: "Unauthorized" };
     const report = await syncExistingJobsToCalendar(user);
     return { ok: true, report };
   } catch (error) {
