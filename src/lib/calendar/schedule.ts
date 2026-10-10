@@ -302,6 +302,22 @@ export function filterCalendarJobs(jobs: CalendarJobRecord[], filters: CalendarF
   return jobs.filter((job) => jobMatchesFilters(job, filters));
 }
 
+/** Appointments follow staff, service, and province in the browser. A job status hides them. */
+export function eventMatchesFilters(
+  event: { province: string | null; staffId: string | null; serviceId?: string | null },
+  filters: CalendarFilters
+): boolean {
+  if (!matchesProvince(event.province, filters.provinces)) return false;
+  if (filters.staffId === "tbd") {
+    if (event.staffId) return false;
+  } else if (filters.staffId && event.staffId !== filters.staffId) {
+    return false;
+  }
+  if (filters.serviceId && event.serviceId !== filters.serviceId) return false;
+  const status = filters.status === "cancelled" ? "all" : filters.status;
+  return !status || status === "all";
+}
+
 export function calendarSummary(jobs: CalendarJobRecord[]) {
   const active = jobs.filter((job) => job.status !== "cancelled" && job.status !== "refunded");
   const provinces = new Map<string, number>();

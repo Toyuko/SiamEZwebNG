@@ -18,7 +18,12 @@ import { assertJobIntakeAccess, JobIntakeValidationError } from "@/lib/jobs/inta
 import type { ManualEventDraft, ScheduleWarning } from "@/lib/calendar/schedule";
 
 export type CalendarActionResult =
-  | { ok: true; warnings?: ScheduleWarning[]; report?: { scanned: number; already: number; added: number; unscheduled: number; errors: number } }
+  | {
+      ok: true;
+      warnings?: ScheduleWarning[];
+      report?: { scanned: number; already: number; added: number; unscheduled: number; errors: number };
+      eventId?: string;
+    }
   | { ok: false; error: string; confirm?: ScheduleWarning[] };
 
 async function actor() {
@@ -99,8 +104,8 @@ export async function setCalendarJobStatusAction(caseId: string, status: CaseSta
 export async function saveManualEventAction(input: ManualEventDraft): Promise<CalendarActionResult> {
   try {
     await allowStaff();
-    await saveManualCalendarEvent(input);
-    return { ok: true };
+    const saved = await saveManualCalendarEvent(input);
+    return { ok: true, eventId: saved.id };
   } catch (error) {
     return fail(error, "Unable to save the event.");
   }

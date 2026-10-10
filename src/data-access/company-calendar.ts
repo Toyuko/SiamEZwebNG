@@ -59,12 +59,16 @@ const calendarSelect = {
   },
   invoices: {
     orderBy: { createdAt: "desc" as const },
+    take: 1,
     select: {
       id: true,
       invoiceNumber: true,
       amount: true,
       depositAmount: true,
-      payments: { select: { amount: true, status: true, metadata: true, receiptNumber: true } },
+      payments: {
+        where: { status: "approved" as const },
+        select: { amount: true, metadata: true },
+      },
     },
   },
 } satisfies Prisma.CaseSelect;
@@ -73,7 +77,7 @@ type CalendarRow = Prisma.CaseGetPayload<{ select: typeof calendarSelect }>;
 
 function toRecord(row: CalendarRow): CalendarJobRecord {
   const invoice = row.invoices[0] ?? null;
-  const approved = row.invoices.flatMap((item) => item.payments).filter((payment) => payment.status === "approved");
+  const approved = invoice?.payments ?? [];
   const paid = approved.reduce((sum, payment) => sum + payment.amount, 0);
   const depositFromIntake = approved
     .filter((payment) => (payment.metadata as { source?: string } | null)?.source === JOB_INTAKE_DEPOSIT_SOURCE)

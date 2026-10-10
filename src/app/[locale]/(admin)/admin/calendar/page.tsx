@@ -28,16 +28,16 @@ export default async function AdminCalendarPage({
     status: !params.status || params.status === "cancelled" ? "all" : params.status,
     q: params.q ?? "",
   };
-  // Province is applied in the browser from this date range, so switching province
-  // does not run another query. Search still asks the database, because it looks
-  // outside the visible dates.
+  // Province, staff, service, and status are applied in the browser from this date
+  // range, so those filters do not run another query. Search still asks the
+  // database, because it looks outside the visible dates.
   const searching = filters.q.trim().length >= 2;
   const session = await getSession();
   const [calendar, lookups] = await Promise.all([
     loadCompanyCalendar({
       start: range.start,
       end: range.end,
-      filters: searching ? filters : { ...filters, provinces: [] },
+      filters: searching ? filters : { ...filters, provinces: [], staffId: "", serviceId: "", status: "all" },
       includeHealth: false,
     }),
     loadCalendarLookups(),

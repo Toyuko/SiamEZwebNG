@@ -5,6 +5,7 @@ import {
   calendarRange,
   calendarSummary,
   eventCoversDate,
+  eventMatchesFilters,
   filterCalendarJobs,
   manualEventWindow,
   matchesProvince,
@@ -73,6 +74,18 @@ describe("company calendar", () => {
     expect(matchesProvince(null, [""])).toBe(true);
     expect(matchesProvince("Phuket", ["Bangkok"])).toBe(false);
     expect(matchesProvince(undefined, ["Bangkok"])).toBe(false);
+  });
+
+  it("filters appointments in the browser the same way as jobs", () => {
+    const appointment = { province: "Phuket", staffId: "staff-grace", serviceId: "svc-license" };
+    const open = { provinces: [], staffId: "", serviceId: "", status: "all", q: "" };
+    expect(eventMatchesFilters(appointment, open)).toBe(true);
+    expect(eventMatchesFilters(appointment, { ...open, provinces: ["Phuket"] })).toBe(true);
+    expect(eventMatchesFilters(appointment, { ...open, staffId: "staff-cee" })).toBe(false);
+    expect(eventMatchesFilters(appointment, { ...open, staffId: "tbd" })).toBe(false);
+    expect(eventMatchesFilters({ ...appointment, staffId: null }, { ...open, staffId: "tbd" })).toBe(true);
+    expect(eventMatchesFilters(appointment, { ...open, serviceId: "svc-marriage" })).toBe(false);
+    expect(eventMatchesFilters(appointment, { ...open, status: "confirmed" })).toBe(false);
   });
 
   it("keeps a missing province in the filter and labels it Province needed", () => {

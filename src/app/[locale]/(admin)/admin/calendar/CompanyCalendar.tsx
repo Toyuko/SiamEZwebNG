@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { ChevronLeft, ChevronRight, Filter, Menu, Plus, Printer, Search, X } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { formatThb } from "@/lib/jobs/intake";
 import { detectProvince, provinceOptions, provinceStyle } from "@/lib/calendar/provinces";
-import { bangkokDateInputValue, bangkokTimeInputValue } from "@/lib/jobs/intake";
+import { bangkokDateInputValue, bangkokDateTime, bangkokTimeInputValue } from "@/lib/jobs/intake";
 import { canTransitionCaseStatus, CASE_STATUS_LABELS } from "@/lib/domain/case-status";
 import {
   CALENDAR_END_HOUR,
@@ -18,11 +19,14 @@ import {
   calendarContext,
   calendarSummary,
   eventCoversDate,
+  eventMatchesFilters,
+  jobMatchesFilters,
   jobsOnDate,
-  matchesProvince,
+  manualEventWindow,
   monthGridDates,
   movedManualEvent,
   nextCalendarDate,
+  normalizeManualPlace,
   parseCalendarView,
   parseProvinceParam,
   preferredCalendarView,
@@ -34,6 +38,7 @@ import {
   type CalendarJobRecord,
   type CalendarViewName,
   type ManualCalendarEvent,
+  type ManualEventDraft,
   type ScheduleWarning,
 } from "@/lib/calendar/schedule";
 import {
@@ -66,6 +71,62 @@ const MOBILE_VIEWS: CalendarViewName[] = ["day", "threeday", "week", "month", "a
 const HOURS = Array.from({ length: CALENDAR_END_HOUR - CALENDAR_START_HOUR + 1 }, (_, index) => CALENDAR_START_HOUR + index);
 const HOUR_PX = 64;
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+type BrowseFilters = {
+  provinces: string[];
+  staffId: string;
+  serviceId: string;
+  status: string;
+};
+
+type JobPatch = {
+  province?: string | null;
+  start?: string | null;
+  allDay?: boolean;
+  staffId?: string | null;
+  staffName?: string;
+  status?: CalendarJobRecord["status"];
+};
+
+function browseFrom(filters: CalendarFilters): BrowseFilters {
+  return {
+    provinces: filters.provinces,
+    staffId: filters.staffId,
+    serviceId: filters.serviceId,
+    status: filters.status || "all",
+  };
+}
+
+function browseKey(filters: BrowseFilters) {
+  return `${serializeProvinces(filters.provinces)}\n${filters.staffId}\n${filters.serviceId}\n${filters.status}`;
+}
+
+function applyJobPatch(job: CalendarJobRecord, patch: JobPatch | undefined): CalendarJobRecord {
+  if (!patch) return job;
+  return {
+    ...job,
+    ...(patch.province !== undefined ? { province: patch.province } : {}),
+    ...(patch.start !== undefined ? { start: patch.start } : {}),
+    ...(patch.allDay !== undefined ? { allDay: patch.allDay } : {}),
+    ...(patch.staffId !== undefined ? { staffId: patch.staffId, staffName: patch.staffName ?? "TBD" } : {}),
+    ...(patch.status !== undefined ? { status: patch.status } : {}),
+  };
+}
+
+function patchStillNeeded(job: CalendarJobRecord, patch: JobPatch): JobPatch | null {
+  const next: JobPatch = {};
+  if (patch.province !== undefined && job.province !== patch.province) next.province = patch.province;
+  if (patch.start !== undefined && (job.start !== patch.start || job.allDay !== patch.allDay)) {
+    next.start = patch.start;
+    next.allDay = patch.allDay;
+  }
+  if (patch.staffId !== undefined && (job.staffId !== patch.staffId || job.staffName !== patch.staffName)) {
+    next.staffId = patch.staffId;
+    next.staffName = patch.staffName;
+  }
+  if (patch.status !== undefined && job.status !== patch.status) next.status = patch.status;
+  return Object.keys(next).length ? next : null;
+}
 
 function clockLabel(iso: string, allDay: boolean) {
   if (allDay) return "Time TBD";
@@ -351,47 +412,73 @@ export function CompanyCalendar({
   const [panel, setPanel] = useState<"sidebar" | "filters" | null>(null);
   const [searchOpen, setSearchOpen] = useState(Boolean(loadedFilters.q));
   const [draftQ, setDraftQ] = useState(loadedFilters.q);
-  const [provinces, setProvinces] = useState(loadedFilters.provinces);
-  const serverProvinceKey = serializeProvinces(loadedFilters.provinces);
-  const [provinceSource, setProvinceSource] = useState(serverProvinceKey);
-  if (provinceSource !== serverProvinceKey) {
-    setProvinceSource(serverProvinceKey);
-    setProvinces(loadedFilters.provinces);
+  const [printing, setPrinting] = useState(false);
+  const serverBrowse = browseFrom(loadedFilters);
+  const serverBrowseKey = browseKey(serverBrowse);
+  const [browse, setBrowse] = useState(serverBrowse);
+  const [browseSource, setBrowseSource] = useState(serverBrowseKey);
+  if (browseSource !== serverBrowseKey) {
+    setBrowseSource(serverBrowseKey);
+    setBrowse(serverBrowse);
   }
   const [healthState, setHealthState] = useState(health);
-  const [patches, setPatches] = useState<Record<string, { province: string | null }>>({});
+  const [patches, setPatches] = useState<Record<string, JobPatch>>({});
+  const patchesRef = useRef(patches);
+  patchesRef.current = patches;
+  const [eventEdits, setEventEdits] = useState<Record<string, ManualCalendarEvent | null>>({});
+  const eventEditsRef = useRef(eventEdits);
+  eventEditsRef.current = eventEdits;
   const healthRequested = useRef(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [eventEditor, setEventEditor] = useState<EventEditor | null>(null);
   const [pickerMonth, setPickerMonth] = useState(`${anchor.slice(0, 7)}-01`);
   const [miniMonth, setMiniMonth] = useState(`${anchor.slice(0, 7)}-01`);
 
-  const filters = useMemo(() => ({ ...loadedFilters, provinces }), [loadedFilters, provinces]);
-  const patchedJobs = useMemo(
-    () => loadedJobs.map((job) => (patches[job.caseId] ? { ...job, province: patches[job.caseId].province } : job)),
-    [loadedJobs, patches]
+  const filters = useMemo(
+    () => ({
+      ...loadedFilters,
+      provinces: browse.provinces,
+      staffId: browse.staffId,
+      serviceId: browse.serviceId,
+      status: browse.status || "all",
+    }),
+    [loadedFilters, browse]
   );
-  const patchedUnscheduled = useMemo(
-    () => loadedUnscheduled.map((job) => (patches[job.caseId] ? { ...job, province: patches[job.caseId].province } : job)),
-    [loadedUnscheduled, patches]
-  );
+  const patchedAll = useMemo(() => {
+    const byId = new Map<string, CalendarJobRecord>();
+    for (const job of loadedUnscheduled) byId.set(job.caseId, job);
+    for (const job of loadedJobs) byId.set(job.caseId, job);
+    return [...byId.values()].map((job) => applyJobPatch(job, patches[job.caseId]));
+  }, [loadedJobs, loadedUnscheduled, patches]);
   const jobs = useMemo(
-    () => patchedJobs.filter((job) => matchesProvince(job.province, provinces)),
-    [patchedJobs, provinces]
+    () => patchedAll.filter((job) => job.start && jobMatchesFilters(job, filters)),
+    [patchedAll, filters]
   );
   const unscheduled = useMemo(
-    () => patchedUnscheduled.filter((job) => matchesProvince(job.province, provinces)),
-    [patchedUnscheduled, provinces]
+    () => patchedAll.filter((job) => !job.start && jobMatchesFilters(job, filters)),
+    [patchedAll, filters]
   );
+  const mergedEvents = useMemo(() => {
+    const byId = new Map<string, ManualCalendarEvent>();
+    for (const event of loadedEvents) byId.set(event.id, event);
+    for (const [id, edit] of Object.entries(eventEdits)) {
+      if (edit) byId.set(id, edit);
+      else byId.delete(id);
+    }
+    return [...byId.values()];
+  }, [loadedEvents, eventEdits]);
   const events = useMemo(
-    () => loadedEvents.filter((event) => matchesProvince(event.province, provinces)),
-    [loadedEvents, provinces]
+    () => mergedEvents.filter((event) => eventMatchesFilters(event, filters)),
+    [mergedEvents, filters]
   );
-  const summary = useMemo(() => calendarSummary(patchedJobs), [patchedJobs]);
+  const summary = useMemo(
+    () => calendarSummary(patchedAll.filter((job) => job.start)),
+    [patchedAll]
+  );
 
   const selected = useMemo(
-    () => [...patchedJobs, ...patchedUnscheduled].find((job) => job.caseId === selectedId) ?? null,
-    [patchedJobs, patchedUnscheduled, selectedId]
+    () => patchedAll.find((job) => job.caseId === selectedId) ?? null,
+    [patchedAll, selectedId]
   );
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   const week = weekDates(anchor);
@@ -417,23 +504,46 @@ export function CompanyCalendar({
 
   useEffect(() => {
     function onPop() {
-      setProvinces(parseProvinceParam(new URLSearchParams(window.location.search).get("provinces") ?? undefined));
+      const params = new URLSearchParams(window.location.search);
+      setBrowse({
+        provinces: parseProvinceParam(params.get("provinces") ?? undefined),
+        staffId: params.get("staff") ?? "",
+        serviceId: params.get("service") ?? "",
+        status: params.get("status") || "all",
+      });
     }
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
   useEffect(() => {
+    function beforePrint() {
+      flushSync(() => setPrinting(true));
+    }
+    function afterPrint() {
+      setPrinting(false);
+    }
+    window.addEventListener("beforeprint", beforePrint);
+    window.addEventListener("afterprint", afterPrint);
+    return () => {
+      window.removeEventListener("beforeprint", beforePrint);
+      window.removeEventListener("afterprint", afterPrint);
+    };
+  }, []);
+
+  useEffect(() => {
     setPatches((current) => {
       const ids = Object.keys(current);
       if (ids.length === 0) return current;
+      let changed = false;
       const next: typeof current = {};
       for (const caseId of ids) {
-        const patch = current[caseId];
         const job = loadedJobs.find((item) => item.caseId === caseId) ?? loadedUnscheduled.find((item) => item.caseId === caseId);
-        if (job && job.province !== patch.province) next[caseId] = patch;
+        const kept = job ? patchStillNeeded(job, current[caseId]) : null;
+        if (kept) next[caseId] = kept;
+        if (!kept || kept !== current[caseId]) changed = true;
       }
-      return Object.keys(next).length === ids.length ? current : next;
+      return changed ? next : current;
     });
   }, [loadedJobs, loadedUnscheduled]);
 
@@ -516,21 +626,42 @@ export function CompanyCalendar({
   }
   goRef.current = go;
 
-  function writeProvinceUrl(next: string[]) {
+  useEffect(() => {
+    router.prefetch(buildHref({ date: shiftAnchor(anchor, view, -1) }));
+    router.prefetch(buildHref({ date: shiftAnchor(anchor, view, 1) }));
+  }, [anchor, view, filters.staffId, filters.serviceId, filters.status, filters.q, filters.provinces, router]);
+
+  function writeBrowseUrl(next: BrowseFilters) {
     const params = new URLSearchParams(window.location.search);
-    if (next.length) params.set("provinces", serializeProvinces(next));
+    if (next.provinces.length) params.set("provinces", serializeProvinces(next.provinces));
     else params.delete("provinces");
+    if (next.staffId) params.set("staff", next.staffId);
+    else params.delete("staff");
+    if (next.serviceId) params.set("service", next.serviceId);
+    else params.delete("service");
+    if (next.status && next.status !== "all") params.set("status", next.status);
+    else params.delete("status");
     const search = params.toString();
     window.history.replaceState(window.history.state, "", `${window.location.pathname}${search ? `?${search}` : ""}${window.location.hash}`);
   }
 
-  function applyProvinces(next: string[]) {
+  function applyBrowse(next: Partial<BrowseFilters>) {
+    const merged: BrowseFilters = {
+      provinces: next.provinces ?? filters.provinces,
+      staffId: next.staffId ?? filters.staffId,
+      serviceId: next.serviceId ?? filters.serviceId,
+      status: next.status ?? (filters.status || "all"),
+    };
     if (loadedFilters.q.trim().length >= 2) {
-      go({ provinces: next });
+      go(merged);
       return;
     }
-    setProvinces(next);
-    writeProvinceUrl(next);
+    setBrowse(merged);
+    writeBrowseUrl(merged);
+  }
+
+  function applyProvinces(next: string[]) {
+    applyBrowse({ provinces: next });
   }
 
   function toggleProvince(name: string) {
@@ -542,6 +673,14 @@ export function CompanyCalendar({
       ? filters.provinces.filter((item) => item !== name)
       : [...filters.provinces, name];
     applyProvinces(next);
+  }
+
+  function clearBrowseFilters() {
+    if (loadedFilters.q.trim()) {
+      go({ provinces: [], staffId: "", serviceId: "", status: "all", q: "" });
+      return;
+    }
+    applyBrowse({ provinces: [], staffId: "", serviceId: "", status: "all" });
   }
 
   function openHealth() {
@@ -577,9 +716,78 @@ export function CompanyCalendar({
     });
   }
 
-  function requestReschedule(caseId: string, date: string, time: string, timeTbd: boolean) {
-    setWarningMove({ caseId, date, time, timeTbd });
-    run(() => rescheduleJobAction(caseId, { date, time: timeTbd ? null : time, timeTbd }));
+  function rememberPatch(caseId: string, patch: JobPatch) {
+    setPatches((current) => ({ ...current, [caseId]: { ...current[caseId], ...patch } }));
+  }
+
+  function restorePatch(caseId: string, previous: JobPatch | undefined) {
+    setPatches((current) => {
+      const next = { ...current };
+      if (previous) next[caseId] = previous;
+      else delete next[caseId];
+      return next;
+    });
+  }
+
+  function eventFromDraft(input: ManualEventDraft, id: string): ManualCalendarEvent | null {
+    const span = manualEventWindow({
+      date: input.date,
+      time: input.time,
+      endDate: input.endDate,
+      endTime: input.endTime,
+      allDay: input.allDay,
+    });
+    if (!span) return null;
+    const place = normalizeManualPlace(input);
+    const person = input.staffId ? staff.find((item) => item.id === input.staffId) : null;
+    const type = input.type === "deadline" || input.type === "milestone" ? input.type : "appointment";
+    return {
+      id,
+      title: input.title.trim(),
+      description: input.description.trim() || null,
+      start: span.start.toISOString(),
+      end: span.end.toISOString(),
+      allDay: input.allDay,
+      type,
+      color: input.color.trim() || null,
+      staffId: input.staffId,
+      staffName: person ? staffLabel(person) : null,
+      location: place.location,
+      province: place.province,
+    };
+  }
+
+  function requestReschedule(caseId: string, date: string, time: string, timeTbd: boolean, acknowledge = false) {
+    const clock = timeTbd ? "00:00" : time;
+    const scheduled = bangkokDateTime(date, clock);
+    if (!scheduled) {
+      setError("Enter a valid date and time.");
+      return;
+    }
+    const previous = patchesRef.current[caseId];
+    rememberPatch(caseId, { start: scheduled.toISOString(), allDay: timeTbd });
+    setError(null);
+    setMove(null);
+    setWarnings(null);
+    setWarningMove(null);
+    startTransition(async () => {
+      const result = await rescheduleJobAction(caseId, {
+        date,
+        time: timeTbd ? null : time,
+        timeTbd,
+        acknowledge,
+      });
+      if (!result.ok && result.confirm?.length) {
+        restorePatch(caseId, previous);
+        setWarningMove({ caseId, date, time, timeTbd });
+        setWarnings(result.confirm);
+        return;
+      }
+      if (!result.ok) {
+        restorePatch(caseId, previous);
+        setError(result.error ?? "Unable to reschedule job.");
+      }
+    });
   }
 
   function clockOf(iso: string | null, allDay: boolean) {
@@ -604,15 +812,22 @@ export function CompanyCalendar({
     if (bangkokDateInputValue(new Date(manual.start)) === date && clockOf(manual.start, manual.allDay) === time) return;
     const input = movedManualEvent(manual, date, time);
     if (!input) return;
+    const optimistic = eventFromDraft(input, manual.id);
+    const previous = eventEditsRef.current[manual.id];
+    if (optimistic) setEventEdits((current) => ({ ...current, [manual.id]: optimistic }));
     setError(null);
     setEventEditor(null);
     startTransition(async () => {
       const result = await saveManualEventAction(input);
       if (!result.ok) {
+        setEventEdits((current) => {
+          const next = { ...current };
+          if (previous === undefined) delete next[manual.id];
+          else next[manual.id] = previous;
+          return next;
+        });
         setError(result.error);
-        return;
       }
-      router.refresh();
     });
   }
 
@@ -781,7 +996,7 @@ export function CompanyCalendar({
         </header>
 
         <div className="hidden shrink-0 flex-wrap items-center gap-2 border-b border-gray-200 px-3 py-2 lg:flex dark:border-gray-800">
-          <FilterSelect label="Staff" value={filters.staffId} onChange={(staffId) => go({ staffId })}>
+          <FilterSelect label="Staff" value={filters.staffId} onChange={(staffId) => applyBrowse({ staffId })}>
             <option value="">All staff</option>
             <option value="tbd">TBD</option>
             {staff.map((person) => (
@@ -801,13 +1016,13 @@ export function CompanyCalendar({
               <option key={name} value={name}>{name}</option>
             ))}
           </FilterSelect>
-          <FilterSelect label="Service" value={filters.serviceId} onChange={(serviceId) => go({ serviceId })}>
+          <FilterSelect label="Service" value={filters.serviceId} onChange={(serviceId) => applyBrowse({ serviceId })}>
             <option value="">All services</option>
             {services.map((service) => (
               <option key={service.id} value={service.id}>{service.name}</option>
             ))}
           </FilterSelect>
-          <FilterSelect label="Status" value={filters.status || "all"} onChange={(status) => go({ status })}>
+          <FilterSelect label="Status" value={filters.status || "all"} onChange={(status) => applyBrowse({ status })}>
             <option value="all">All statuses</option>
             <option value="confirmed">Confirmed</option>
             <option value="scheduled">Scheduled</option>
@@ -815,13 +1030,7 @@ export function CompanyCalendar({
             <option value="tbd">TBD</option>
           </FilterSelect>
           {filtersActive && (
-            <button type="button" className="h-10 rounded-full px-3 text-sm font-medium text-siam-blue" onClick={() => {
-              if (!loadedFilters.staffId && !loadedFilters.serviceId && (loadedFilters.status === "all" || !loadedFilters.status) && !loadedFilters.q) {
-                applyProvinces([]);
-                return;
-              }
-              go({ provinces: [], staffId: "", serviceId: "", status: "all", q: "" });
-            }}>
+            <button type="button" className="h-10 rounded-full px-3 text-sm font-medium text-siam-blue" onClick={clearBrowseFilters}>
               Clear filters
             </button>
           )}
@@ -905,9 +1114,9 @@ export function CompanyCalendar({
                 pending={pending}
                 onMiniMonth={setMiniMonth}
                 onPickDate={(date) => go({ date })}
-                onStaff={(staffId) => go({ staffId })}
+                onStaff={(staffId) => applyBrowse({ staffId })}
                 onProvince={toggleProvince}
-                onStatus={(status) => go({ status })}
+                onStatus={(status) => applyBrowse({ status })}
                 onOpenJob={setSelectedId}
                 onSync={() => run(() => syncCalendarAction())}
                 onOpenHealth={openHealth}
@@ -1040,17 +1249,19 @@ export function CompanyCalendar({
         </button>
       </div>
 
-      <PrintableView
-        view={view}
-        title={title}
-        jobs={jobs}
-        events={events}
-        days={view === "week" ? week : view === "threeday" ? threeDays : view === "day" ? [anchor] : []}
-        monthDates={monthDates}
-        monthKey={anchor.slice(0, 7)}
-        agenda={agenda}
-        today={today}
-      />
+      {printing && (
+        <PrintableView
+          view={view}
+          title={title}
+          jobs={jobs}
+          events={events}
+          days={view === "week" ? week : view === "threeday" ? threeDays : view === "day" ? [anchor] : []}
+          monthDates={monthDates}
+          monthKey={anchor.slice(0, 7)}
+          agenda={agenda}
+          today={today}
+        />
+      )}
 
       {panel && (
         <div className="fixed inset-0 z-40 flex items-end bg-black/40 lg:hidden" role="presentation" onClick={() => setPanel(null)}>
@@ -1063,7 +1274,7 @@ export function CompanyCalendar({
             </div>
             {panel === "filters" ? (
               <div className="space-y-3">
-                <FilterSelect label="Staff" value={filters.staffId} onChange={(staffId) => go({ staffId })}>
+                <FilterSelect label="Staff" value={filters.staffId} onChange={(staffId) => applyBrowse({ staffId })}>
                   <option value="">All staff</option>
                   <option value="tbd">TBD</option>
                   {staff.map((person) => (
@@ -1083,13 +1294,13 @@ export function CompanyCalendar({
                     <option key={name} value={name}>{name}</option>
                   ))}
                 </FilterSelect>
-                <FilterSelect label="Service" value={filters.serviceId} onChange={(serviceId) => go({ serviceId })}>
+                <FilterSelect label="Service" value={filters.serviceId} onChange={(serviceId) => applyBrowse({ serviceId })}>
                   <option value="">All services</option>
                   {services.map((service) => (
                     <option key={service.id} value={service.id}>{service.name}</option>
                   ))}
                 </FilterSelect>
-                <FilterSelect label="Status" value={filters.status || "all"} onChange={(status) => go({ status })}>
+                <FilterSelect label="Status" value={filters.status || "all"} onChange={(status) => applyBrowse({ status })}>
                   <option value="all">All statuses</option>
                   <option value="confirmed">Confirmed</option>
                   <option value="scheduled">Scheduled</option>
@@ -1097,12 +1308,7 @@ export function CompanyCalendar({
                   <option value="tbd">TBD</option>
                 </FilterSelect>
                 <button type="button" className="h-11 w-full rounded-lg border text-sm font-medium" onClick={() => {
-                  if (!loadedFilters.staffId && !loadedFilters.serviceId && (loadedFilters.status === "all" || !loadedFilters.status) && !loadedFilters.q) {
-                    applyProvinces([]);
-                    setPanel(null);
-                    return;
-                  }
-                  go({ provinces: [], staffId: "", serviceId: "", status: "all", q: "" });
+                  clearBrowseFilters();
                   setPanel(null);
                 }}>
                   Clear filters
@@ -1126,9 +1332,9 @@ export function CompanyCalendar({
                 pending={pending}
                 onMiniMonth={setMiniMonth}
                 onPickDate={(date) => { setPanel(null); go({ date }); }}
-                onStaff={(staffId) => go({ staffId })}
+                onStaff={(staffId) => applyBrowse({ staffId })}
                 onProvince={toggleProvince}
-                onStatus={(status) => go({ status })}
+                onStatus={(status) => applyBrowse({ status })}
                 onOpenJob={(id) => { setPanel(null); setSelectedId(id); }}
                 onSync={() => run(() => syncCalendarAction())}
                 onOpenHealth={openHealth}
@@ -1143,7 +1349,7 @@ export function CompanyCalendar({
         <EventDialog
           key={eventEditor.mode === "create" ? `create-${eventEditor.date}-${eventEditor.time}` : eventEditor.id}
           editor={eventEditor}
-          event={eventEditor.mode === "edit" ? events.find((item) => item.id === eventEditor.id) ?? null : null}
+          event={eventEditor.mode === "edit" ? mergedEvents.find((item) => item.id === eventEditor.id) ?? null : null}
           staff={staff}
           pending={pending}
           error={error}
@@ -1152,24 +1358,32 @@ export function CompanyCalendar({
             setError(null);
             startTransition(async () => {
               const result = await saveManualEventAction(input);
-              if (!result.ok) {
-                setError(result.error);
+              if (!result.ok || !result.eventId) {
+                setError(result.ok ? "Unable to save the event." : result.error);
                 return;
               }
+              const saved = eventFromDraft(input, result.eventId);
+              if (saved) setEventEdits((current) => ({ ...current, [saved.id]: saved }));
               setEventEditor(null);
-              router.refresh();
             });
           }}
           onDelete={(id) => {
             setError(null);
+            const previous = eventEditsRef.current[id];
+            setEventEdits((current) => ({ ...current, [id]: null }));
             startTransition(async () => {
               const result = await deleteManualEventAction(id);
               if (!result.ok) {
+                setEventEdits((current) => {
+                  const next = { ...current };
+                  if (previous === undefined) delete next[id];
+                  else next[id] = previous;
+                  return next;
+                });
                 setError(result.error);
                 return;
               }
               setEventEditor(null);
-              router.refresh();
             });
           }}
         />
@@ -1183,24 +1397,46 @@ export function CompanyCalendar({
           error={error}
           onClose={() => setSelectedId(null)}
           onReschedule={(date, time, timeTbd) => requestReschedule(selected.caseId, date, time, timeTbd)}
-          onStaff={(staffId) => run(() => assignCalendarStaffAction(selected.caseId, staffId))}
+          onStaff={(staffId) => {
+            const caseId = selected.caseId;
+            const previous = patchesRef.current[caseId];
+            const person = staff.find((item) => item.id === staffId);
+            rememberPatch(caseId, { staffId, staffName: person ? staffLabel(person) : "TBD" });
+            setError(null);
+            startTransition(async () => {
+              const result = await assignCalendarStaffAction(caseId, staffId);
+              if (!result.ok) {
+                restorePatch(caseId, previous);
+                setError(result.error ?? "Unable to change staff.");
+              }
+            });
+          }}
           onProvince={(province) => {
             const caseId = selected.caseId;
+            const previous = patchesRef.current[caseId];
             setError(null);
-            setPatches((current) => ({ ...current, [caseId]: { province } }));
+            rememberPatch(caseId, { province });
             startTransition(async () => {
               const result = await assignCalendarProvinceAction(caseId, province);
               if (!result.ok) {
-                setPatches((current) => {
-                  const next = { ...current };
-                  delete next[caseId];
-                  return next;
-                });
+                restorePatch(caseId, previous);
                 setError(result.error ?? "Unable to update the province.");
               }
             });
           }}
-          onStatus={(status) => run(() => setCalendarJobStatusAction(selected.caseId, status))}
+          onStatus={(status) => {
+            const caseId = selected.caseId;
+            const previous = patchesRef.current[caseId];
+            rememberPatch(caseId, { status });
+            setError(null);
+            startTransition(async () => {
+              const result = await setCalendarJobStatusAction(caseId, status);
+              if (!result.ok) {
+                restorePatch(caseId, previous);
+                setError(result.error ?? "Unable to update the job.");
+              }
+            });
+          }}
         />
       )}
 
@@ -1231,14 +1467,7 @@ export function CompanyCalendar({
             setWarningMove(null);
           }}
           onConfirm={() =>
-            run(() =>
-              rescheduleJobAction(warningMove.caseId, {
-                date: warningMove.date,
-                time: warningMove.timeTbd ? null : warningMove.time,
-                timeTbd: warningMove.timeTbd,
-                acknowledge: true,
-              })
-            )
+            requestReschedule(warningMove.caseId, warningMove.date, warningMove.time, warningMove.timeTbd, true)
           }
         />
       )}
@@ -1549,21 +1778,7 @@ function EventDialog({
   pending: boolean;
   error: string | null;
   onClose: () => void;
-  onSave: (input: {
-    id?: string | null;
-    title: string;
-    description: string;
-    date: string;
-    time: string;
-    endDate: string;
-    endTime: string;
-    allDay: boolean;
-    type: string;
-    color: string;
-    staffId: string | null;
-    location: string;
-    province: string;
-  }) => void;
+  onSave: (input: ManualEventDraft) => void;
   onDelete: (id: string) => void;
 }) {
   const creating = editor.mode === "create";
@@ -2534,10 +2749,12 @@ function ConfirmDialog({
 function printRows(date: string, jobs: CalendarJobRecord[], events: ManualCalendarEvent[]) {
   const rows = [
     ...jobsOnDate(jobs, date).map((job) => ({
+      key: `job-${job.caseId}`,
       sort: job.start && !job.allDay ? bangkokMinutes(job.start) : -1,
       text: `${job.start ? clockLabel(job.start, job.allDay) : "TBD"} · ${job.customerName} · ${job.serviceName} · ${job.province ?? "Province needed"} · ${job.staffName}${job.status === "cancelled" ? " · Cancelled" : ""}`,
     })),
     ...eventsOnDate(events, date).map((event) => ({
+      key: `event-${event.id}`,
       sort: event.allDay ? -1 : bangkokMinutes(event.start),
       text: `${clockLabel(event.start, event.allDay)} · ${event.title}${event.province ? ` · ${event.province}` : ""}${event.location ? ` · ${event.location}` : ""}${event.staffName ? ` · ${event.staffName}` : ""} · Event`,
     })),
@@ -2584,7 +2801,7 @@ function PrintableView({
                 <div key={date} className="min-h-24 break-inside-avoid border-b border-r p-1 text-[10px] leading-tight">
                   <p className={`font-semibold ${date.startsWith(monthKey) ? "" : "text-gray-500"}`}>{Number(date.slice(-2))}</p>
                   {rows.map((row) => (
-                    <p key={row.text} className="mt-0.5">{row.text}</p>
+                    <p key={row.key} className="mt-0.5">{row.text}</p>
                   ))}
                 </div>
               );
@@ -2598,7 +2815,7 @@ function PrintableView({
         return (
           <section key={date} className="mb-4 break-inside-avoid">
             <h2 className="text-base font-semibold">{date === today ? "Today · " : ""}{dayHeading(date)}</h2>
-            {rows.length === 0 ? <p className="text-sm">Nothing scheduled.</p> : rows.map((row) => <p key={row.text} className="text-sm">{row.text}</p>)}
+            {rows.length === 0 ? <p className="text-sm">Nothing scheduled.</p> : rows.map((row) => <p key={row.key} className="text-sm">{row.text}</p>)}
           </section>
         );
       })}
@@ -2607,7 +2824,7 @@ function PrintableView({
         return (
           <section key={date} className="mb-4 break-inside-avoid">
             <h2 className="text-base font-semibold">{date === today ? "Today · " : ""}{dayHeading(date)}</h2>
-            {rows.length === 0 ? <p className="text-sm">Nothing scheduled.</p> : rows.map((row) => <p key={row.text} className="text-sm">{row.text}</p>)}
+            {rows.length === 0 ? <p className="text-sm">Nothing scheduled.</p> : rows.map((row) => <p key={row.key} className="text-sm">{row.text}</p>)}
           </section>
         );
       })}
