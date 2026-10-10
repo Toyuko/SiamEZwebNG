@@ -85,28 +85,29 @@ export const THAI_PROVINCE_NAMES = [
 
 export type ThaiProvinceName = (typeof THAI_PROVINCE_NAMES)[number];
 
+/** Saturated fills so neighbouring provinces stay easy to tell apart on a busy day. */
 const HIGHLIGHTS: Record<string, { color: string; textColor: string }> = {
-  Bangkok: { color: "#dbeafe", textColor: "#1e3a8a" },
-  Chonburi: { color: "#d1fae5", textColor: "#064e3b" },
-  "Chiang Mai": { color: "#ede9fe", textColor: "#4c1d95" },
-  Phuket: { color: "#ffedd5", textColor: "#9a3412" },
-  Nonthaburi: { color: "#fce7f3", textColor: "#9d174d" },
-  "Samut Prakan": { color: "#e0e7ff", textColor: "#312e81" },
-  "Chiang Rai": { color: "#ccfbf1", textColor: "#134e4a" },
-  Rayong: { color: "#fef3c7", textColor: "#78350f" },
+  Bangkok: { color: "#93c5fd", textColor: "#1e3a8a" },
+  Chonburi: { color: "#6ee7b7", textColor: "#064e3b" },
+  "Chiang Mai": { color: "#c4b5fd", textColor: "#4c1d95" },
+  Phuket: { color: "#fdba74", textColor: "#7c2d12" },
+  Nonthaburi: { color: "#f9a8d4", textColor: "#831843" },
+  "Samut Prakan": { color: "#67e8f9", textColor: "#164e63" },
+  "Chiang Rai": { color: "#bef264", textColor: "#365314" },
+  Rayong: { color: "#fde047", textColor: "#713f12" },
 };
 
 export type ProvinceStyle = { name: string; color: string; textColor: string; accent: string };
 
 const ACCENTS: Record<string, string> = {
-  Bangkok: "#2563eb",
-  Chonburi: "#059669",
-  "Chiang Mai": "#7c3aed",
-  Phuket: "#ea580c",
-  Nonthaburi: "#db2777",
-  "Samut Prakan": "#4f46e5",
-  "Chiang Rai": "#0d9488",
-  Rayong: "#d97706",
+  Bangkok: "#1d4ed8",
+  Chonburi: "#047857",
+  "Chiang Mai": "#6d28d9",
+  Phuket: "#c2410c",
+  Nonthaburi: "#be185d",
+  "Samut Prakan": "#0e7490",
+  "Chiang Rai": "#4d7c0f",
+  Rayong: "#a16207",
 };
 
 export function normalizeProvince(value: string | null | undefined): ThaiProvinceName | null {
@@ -139,12 +140,35 @@ export function suggestedProvince(
 
 export function provinceStyle(name: string | null | undefined): ProvinceStyle {
   const canonical = normalizeProvince(name);
-  if (!canonical) return { name: "Province needed", color: "#f3f4f6", textColor: "#1f2937", accent: "#9ca3af" };
+  if (!canonical) return { name: "Province needed", color: "#d1d5db", textColor: "#111827", accent: "#374151" };
   const highlight = HIGHLIGHTS[canonical];
-  const hue = (THAI_PROVINCE_NAMES.indexOf(canonical) * 47) % 360;
-  const accent = ACCENTS[canonical] ?? `hsl(${hue} 62% 42%)`;
+  const index = THAI_PROVINCE_NAMES.indexOf(canonical);
+  const hue = Math.round((index * 137.508) % 360);
+  const fillLight = [74, 80, 68][index % 3];
+  const accent = ACCENTS[canonical] ?? `hsl(${hue} 78% 30%)`;
   if (highlight) return { name: canonical, ...highlight, accent };
-  return { name: canonical, color: `hsl(${hue} 42% 90%)`, textColor: `hsl(${hue} 45% 20%)`, accent };
+  return {
+    name: canonical,
+    color: `hsl(${hue} 78% ${fillLight}%)`,
+    textColor: `hsl(${hue} 70% 14%)`,
+    accent,
+  };
+}
+
+/** Filled chip colours for a job or appointment, keyed by where it happens. */
+export function provinceChipStyle(name: string | null | undefined): {
+  backgroundColor: string;
+  color: string;
+  borderColor: string;
+  boxShadow: string;
+} {
+  const style = provinceStyle(name);
+  return {
+    backgroundColor: style.color,
+    color: style.textColor,
+    borderColor: style.accent,
+    boxShadow: `inset 5px 0 0 ${style.accent}`,
+  };
 }
 
 export function provinceOptions(): ThaiProvinceName[] {

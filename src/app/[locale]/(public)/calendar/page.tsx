@@ -1,7 +1,7 @@
 import { Link } from "@/i18n/navigation";
 import { listPublicAvailability } from "@/data-access/company-calendar";
 import { calendarAnchor, calendarRange, monthGridDates, shiftAnchor } from "@/lib/calendar/schedule";
-import { provinceStyle } from "@/lib/calendar/provinces";
+import { provinceChipStyle, provinceStyle } from "@/lib/calendar/provinces";
 
 export const metadata = {
   title: "Availability | SiamEZ",
@@ -59,17 +59,18 @@ export default async function PublicAvailabilityPage({
                 <p className="text-xs">{Number(date.slice(-2))}</p>
                 <ul className="mt-1 space-y-1">
                   {daySlots.slice(0, 3).map((slot, index) => {
-                    const style = provinceStyle(slot.province === "Province needed" ? null : slot.province);
+                    const named = slot.province === "Province needed" ? null : slot.province;
+                    const style = provinceStyle(named);
                     return (
                       <li
                         key={`${slot.date}-${slot.time}-${index}`}
-                        className="rounded-md bg-white px-1.5 py-1 text-[11px] leading-tight text-gray-900"
-                        style={{ boxShadow: `inset 3px 0 0 ${style.accent}` }}
+                        className="rounded-md border px-1.5 py-1 text-[11px] leading-tight"
+                        style={provinceChipStyle(named)}
                       >
-                        <span className="block font-semibold">{slot.time}</span>
-                        <span className="block">{slot.province}</span>
-                        <span className="block">{slot.service}</span>
-                        <span className="block">Booked</span>
+                        <span className="inline-flex rounded px-1 text-[10px] font-bold text-white" style={{ backgroundColor: style.accent }}>{slot.province}</span>
+                        <span className="mt-0.5 block font-semibold">{slot.time}</span>
+                        <span className="block opacity-80">{slot.service}</span>
+                        <span className="block opacity-80">Booked</span>
                       </li>
                     );
                   })}

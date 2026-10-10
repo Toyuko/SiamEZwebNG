@@ -1729,15 +1729,15 @@ function SidebarBody(props: {
 }
 
 function AllDayChip({ job }: { job: CalendarJobRecord }) {
-  const style = provinceStyle(job.province);
   const cancelled = job.status === "cancelled";
   return (
     <span
-      className={`block truncate rounded bg-white px-1 py-0.5 text-left text-[11px] text-gray-900 dark:bg-gray-900 dark:text-gray-100 ${cancelled ? "line-through opacity-60" : ""}`}
-      style={{ boxShadow: `inset 3px 0 0 ${style.accent}` }}
+      className={`block truncate rounded border px-1 py-0.5 text-left text-[11px] ${cancelled ? "line-through opacity-60" : ""}`}
+      style={provinceChipStyle(job.province)}
     >
+      <span className="font-bold">{job.province ?? "Province needed"}</span>
+      {" · "}
       {job.start ? clockLabel(job.start, job.allDay) : "TBD"} {job.customerName}
-      <span className="text-gray-500"> · {job.province ?? "Province needed"}</span>
     </span>
   );
 }
@@ -1745,27 +1745,27 @@ function AllDayChip({ job }: { job: CalendarJobRecord }) {
 function ManualEventChip({ event }: { event: ManualCalendarEvent }) {
   return (
     <span
-      className="block truncate rounded bg-white px-1 py-0.5 text-left text-[11px] text-gray-900 dark:bg-gray-900 dark:text-gray-100"
-      style={{ boxShadow: `inset 3px 0 0 ${eventAccent(event)}` }}
+      className="block truncate rounded border px-1 py-0.5 text-left text-[11px]"
+      style={eventChipStyle(event)}
     >
+      {event.province ? <span className="font-bold">{event.province} · </span> : null}
       {clockLabel(event.start, event.allDay)} {event.title}
-      {event.province ? <span className="text-gray-500"> · {event.province}</span> : null}
     </span>
   );
 }
 
 function ManualEventCard({ event, dense = false }: { event: ManualCalendarEvent; dense?: boolean }) {
-  const place = [event.province, event.location].filter(Boolean).join(" · ");
   return (
     <span
-      className={`block overflow-hidden rounded-md border border-dashed border-gray-300 bg-white text-left text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 ${dense ? "px-1.5 py-0.5 text-[11px] leading-tight" : "px-2 py-1.5 text-sm leading-snug"}`}
-      style={{ boxShadow: `inset 3px 0 0 ${eventAccent(event)}` }}
+      className={`block h-full overflow-hidden rounded-md border border-dashed text-left ${dense ? "px-1.5 py-0.5 text-[11px] leading-tight" : "px-2 py-1.5 text-sm leading-snug"}`}
+      style={eventChipStyle(event)}
     >
+      {event.province ? <span className="block truncate font-bold">{event.province}</span> : null}
       <span className="block truncate font-semibold">
         {clockLabel(event.start, event.allDay)} {event.title}
       </span>
-      {place ? <span className="block truncate text-gray-600 dark:text-gray-300">{place}</span> : null}
-      <span className="block truncate text-gray-600 dark:text-gray-300">{event.staffName ?? "Event"}</span>
+      {event.location ? <span className="block truncate opacity-80">{event.location}</span> : null}
+      <span className="block truncate opacity-80">{event.staffName ?? "Event"}</span>
     </span>
   );
 }
@@ -2004,19 +2004,20 @@ function hourAfter(time: string) {
 
 function EventCard({ job, dense = false }: { job: CalendarJobRecord; dense?: boolean }) {
   const style = provinceStyle(job.province);
+  const place = job.province ?? "Province needed";
   const cancelled = job.status === "cancelled";
   return (
     <span
-      className={`block overflow-hidden rounded-md border border-gray-200 bg-white text-left text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 ${cancelled ? "line-through opacity-60" : ""} ${job.status === "completed" ? "opacity-80" : ""} ${dense ? "px-1.5 py-0.5 text-[11px] leading-tight" : "px-2 py-1.5 text-sm leading-snug"}`}
-      style={{ boxShadow: `inset 3px 0 0 ${style.accent}` }}
+      className={`block h-full overflow-hidden rounded-md border text-left ${cancelled ? "line-through opacity-60" : ""} ${job.status === "completed" ? "opacity-80" : ""} ${dense ? "px-1.5 py-0.5 text-[11px] leading-tight" : "px-2 py-1.5 text-sm leading-snug"}`}
+      style={provinceChipStyle(job.province)}
     >
+      <span className="block truncate font-bold">{place}</span>
       <span className="block truncate font-semibold">
         {job.start ? clockLabel(job.start, job.allDay) : "TBD"} {job.customerName}
       </span>
-      <span className="block truncate">{job.serviceName}</span>
-      <span className="flex items-center gap-1 truncate text-gray-600 dark:text-gray-300">
-        <span className="truncate">{job.province ?? "Province needed"}</span>
-        <span className="ml-auto inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-gray-100 px-1 text-[10px] font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200" title={job.staffName}>
+      <span className="flex items-center gap-1 truncate">
+        <span className="truncate opacity-80">{job.serviceName}</span>
+        <span className="ml-auto inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white" style={{ backgroundColor: style.accent }} title={job.staffName}>
           {job.staffName === "TBD" ? "?" : job.staffName.slice(0, 1)}
         </span>
       </span>
@@ -2094,13 +2095,13 @@ function MonthGrid({
                 </button>
               )}
               {provinces.length > 0 && (
-                <div className="mt-0.5 flex gap-1 px-0.5" aria-label={provinces.map(([name]) => name).join(", ")}>
+                <div className="mt-0.5 flex gap-0.5 px-0.5" aria-label={provinces.map(([name]) => name).join(", ")}>
                   {provinces.slice(0, 4).map(([name, accent]) => (
-                    <span key={name} className="h-2 w-2 rounded-full" style={{ background: accent }} title={name} />
+                    <span key={name} className="h-2 flex-1 rounded-sm" style={{ background: accent }} title={name} />
                   ))}
                 </div>
               )}
-              <div className="mt-0.5 hidden space-y-0.5 md:block">
+              <div className="mt-0.5 space-y-0.5">
                 {shown.map((job) => (
                   <button
                     key={job.caseId}
@@ -2494,13 +2495,14 @@ function DaySchedule({
 
 function DayDetail({ job }: { job: CalendarJobRecord }) {
   const style = provinceStyle(job.province);
+  const place = job.province ?? "Province needed";
   return (
-    <span className="block rounded-xl border border-gray-200 bg-white px-3 py-2 text-left dark:border-gray-700 dark:bg-gray-900" style={{ boxShadow: `inset 4px 0 0 ${style.accent}` }}>
-      <span className="block text-sm font-semibold">{job.start ? clockLabel(job.start, job.allDay) : "Time TBD"}</span>
+    <span className="block rounded-xl border px-3 py-2 text-left" style={provinceChipStyle(job.province)}>
+      <span className="inline-flex rounded px-1.5 py-0.5 text-xs font-bold text-white" style={{ backgroundColor: style.accent }}>{place}</span>
+      <span className="mt-1 block text-sm font-semibold">{job.start ? clockLabel(job.start, job.allDay) : "Time TBD"}</span>
       <span className="block text-base font-semibold">{job.customerName}</span>
       <span className="block text-sm">{job.serviceName}</span>
-      <span className="mt-1 block text-sm text-gray-600 dark:text-gray-300">{job.province ?? "Province needed"}</span>
-      <span className="block text-sm text-gray-600 dark:text-gray-300">{job.staffName}</span>
+      <span className="mt-1 block text-sm opacity-80">{job.staffName}</span>
       {job.status === "cancelled" && <span className="block text-sm line-through">Cancelled</span>}
     </span>
   );
@@ -2594,7 +2596,6 @@ function JobPopover({
   const [editing, setEditing] = useState(!job.start);
   const [province, setProvince] = useState(job.province ?? "");
   const [staffId, setStaffId] = useState(job.staffId ?? "");
-  const style = provinceStyle(province || null);
 
   useEffect(() => {
     setProvince(job.province ?? "");
@@ -2617,7 +2618,8 @@ function JobPopover({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0" style={{ boxShadow: `inset 3px 0 0 ${style.accent}`, paddingLeft: 10 }}>
+          <div className="min-w-0 rounded-lg border px-2 py-1" style={provinceChipStyle(province || null)}>
+            <p className="text-xs font-bold">{province || "Province needed"}</p>
             <h2 id="calendar-job-title" className="truncate text-lg font-semibold">{job.customerName}</h2>
             <p className="truncate text-sm">{job.serviceName}</p>
           </div>
@@ -2756,18 +2758,32 @@ function ConfirmDialog({
 
 function printRows(date: string, jobs: CalendarJobRecord[], events: ManualCalendarEvent[]) {
   const rows = [
-    ...jobsOnDate(jobs, date).map((job) => ({
-      key: `job-${job.caseId}`,
-      sort: job.start && !job.allDay ? bangkokMinutes(job.start) : -1,
-      text: `${job.start ? clockLabel(job.start, job.allDay) : "TBD"} · ${job.customerName} · ${job.serviceName} · ${job.province ?? "Province needed"} · ${job.staffName}${job.status === "cancelled" ? " · Cancelled" : ""}`,
-    })),
-    ...eventsOnDate(events, date).map((event) => ({
-      key: `event-${event.id}`,
-      sort: event.allDay ? -1 : bangkokMinutes(event.start),
-      text: `${clockLabel(event.start, event.allDay)} · ${event.title}${event.province ? ` · ${event.province}` : ""}${event.location ? ` · ${event.location}` : ""}${event.staffName ? ` · ${event.staffName}` : ""} · Event`,
-    })),
+    ...jobsOnDate(jobs, date).map((job) => {
+      const place = provinceChipStyle(job.province);
+      return {
+        key: `job-${job.caseId}`,
+        sort: job.start && !job.allDay ? bangkokMinutes(job.start) : -1,
+        text: `${job.province ?? "Province needed"} · ${job.start ? clockLabel(job.start, job.allDay) : "TBD"} · ${job.customerName} · ${job.serviceName} · ${job.staffName}${job.status === "cancelled" ? " · Cancelled" : ""}`,
+        ...place,
+      };
+    }),
+    ...eventsOnDate(events, date).map((event) => {
+      const place = eventChipStyle(event);
+      return {
+        key: `event-${event.id}`,
+        sort: event.allDay ? -1 : bangkokMinutes(event.start),
+        text: `${event.province ? `${event.province} · ` : ""}${clockLabel(event.start, event.allDay)} · ${event.title}${event.location ? ` · ${event.location}` : ""}${event.staffName ? ` · ${event.staffName}` : ""} · Event`,
+        ...place,
+      };
+    }),
   ];
   return rows.sort((a, b) => a.sort - b.sort);
+}
+
+function PrintLine({ text, backgroundColor, color, boxShadow, className = "" }: { text: string; backgroundColor: string; color: string; boxShadow: string; className?: string }) {
+  return (
+    <p className={`mt-0.5 rounded-sm px-1 ${className}`} style={{ backgroundColor, color, boxShadow }}>{text}</p>
+  );
 }
 
 function PrintableView({
@@ -2792,7 +2808,7 @@ function PrintableView({
   today: string;
 }) {
   return (
-    <div className="hidden bg-white text-black print:block">
+    <div className="hidden bg-white text-black print:block" style={{ printColorAdjust: "exact" }}>
       <h1 className="text-xl font-bold">SiamEZ · {title}</h1>
       <p className="mb-4 text-sm">{viewLabel(view)} view</p>
       {view === "month" && (
@@ -2809,7 +2825,7 @@ function PrintableView({
                 <div key={date} className="min-h-24 break-inside-avoid border-b border-r p-1 text-[10px] leading-tight">
                   <p className={`font-semibold ${date.startsWith(monthKey) ? "" : "text-gray-500"}`}>{Number(date.slice(-2))}</p>
                   {rows.map((row) => (
-                    <p key={row.key} className="mt-0.5">{row.text}</p>
+                    <PrintLine key={row.key} text={row.text} backgroundColor={row.backgroundColor} color={row.color} boxShadow={row.boxShadow} />
                   ))}
                 </div>
               );
@@ -2823,7 +2839,7 @@ function PrintableView({
         return (
           <section key={date} className="mb-4 break-inside-avoid">
             <h2 className="text-base font-semibold">{date === today ? "Today · " : ""}{dayHeading(date)}</h2>
-            {rows.length === 0 ? <p className="text-sm">Nothing scheduled.</p> : rows.map((row) => <p key={row.key} className="text-sm">{row.text}</p>)}
+            {rows.length === 0 ? <p className="text-sm">Nothing scheduled.</p> : rows.map((row) => <PrintLine key={row.key} className="text-sm" text={row.text} backgroundColor={row.backgroundColor} color={row.color} boxShadow={row.boxShadow} />)}
           </section>
         );
       })}
@@ -2832,7 +2848,7 @@ function PrintableView({
         return (
           <section key={date} className="mb-4 break-inside-avoid">
             <h2 className="text-base font-semibold">{date === today ? "Today · " : ""}{dayHeading(date)}</h2>
-            {rows.length === 0 ? <p className="text-sm">Nothing scheduled.</p> : rows.map((row) => <p key={row.key} className="text-sm">{row.text}</p>)}
+            {rows.length === 0 ? <p className="text-sm">Nothing scheduled.</p> : rows.map((row) => <PrintLine key={row.key} className="text-sm" text={row.text} backgroundColor={row.backgroundColor} color={row.color} boxShadow={row.boxShadow} />)}
           </section>
         );
       })}

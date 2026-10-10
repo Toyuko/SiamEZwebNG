@@ -55,7 +55,10 @@ const baseJob = (overrides: Partial<CalendarJobRecord> = {}): CalendarJobRecord 
 describe("company calendar", () => {
   it("lists every Thai province once and gives Bangkok and Chonburi different colours", () => {
     expect(new Set(THAI_PROVINCE_NAMES).size).toBe(77);
+    expect(provinceStyle("Bangkok").color).toBe("#93c5fd");
     expect(provinceStyle("Bangkok").color).not.toBe(provinceStyle("Chonburi").color);
+    expect(provinceStyle("Phuket").color).not.toBe(provinceStyle("Rayong").color);
+    expect(provinceStyle("Krabi").color).not.toMatch(/90%\)/);
     expect(provinceStyle("Bangkok").textColor).not.toBe(provinceStyle("Bangkok").color);
     expect(provinceStyle(null).name).toBe("Province needed");
   });
