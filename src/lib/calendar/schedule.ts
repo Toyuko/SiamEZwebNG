@@ -260,10 +260,16 @@ export function serializeProvinces(provinces: string[]): string {
   return provinces.map((item) => item || PROVINCE_NEEDED_TOKEN).join(",");
 }
 
+/** Empty means every province. A blank entry matches jobs that still need a province. */
+export function matchesProvince(province: string | null | undefined, provinces: string[]): boolean {
+  if (provinces.length === 0) return true;
+  return provinces.includes(province ?? "");
+}
+
 export function jobMatchesFilters(job: CalendarJobRecord, filters: CalendarFilters): boolean {
   if (isHiddenCalendarStatus(job.status)) return false;
   const status = filters.status === "cancelled" ? "all" : filters.status;
-  if (filters.provinces.length > 0 && !filters.provinces.includes(job.province ?? "")) return false;
+  if (!matchesProvince(job.province, filters.provinces)) return false;
   if (filters.staffId === "tbd" && job.staffId) return false;
   if (filters.staffId && filters.staffId !== "tbd" && job.staffId !== filters.staffId) return false;
   if (filters.serviceId && job.serviceId !== filters.serviceId) return false;

@@ -340,7 +340,24 @@ async function syncSchedule(
 }
 
 export async function syncScheduleFromCase(tx: Prisma.TransactionClient, caseId: string) {
-  const row = await tx.case.findUnique({ where: { id: caseId }, include: jobInclude });
+  const row = await tx.case.findUnique({
+    where: { id: caseId },
+    select: {
+      userId: true,
+      location: true,
+      province: true,
+      status: true,
+      scheduledAt: true,
+      scheduleTimeTbd: true,
+      guestName: true,
+      otherServiceName: true,
+      user: { select: { name: true } },
+      service: { select: { name: true } },
+      staffAssignments: {
+        select: { user: { select: { id: true, name: true, email: true } } },
+      },
+    },
+  });
   if (!row) return;
   const assigned = row.staffAssignments[0]?.user ?? null;
   await syncSchedule(tx, {

@@ -1,8 +1,7 @@
 import { cookies } from "next/headers";
-import { getServices, getStaffUsers } from "@/actions/admin";
 import { getSession } from "@/lib/auth";
 import { isAssignableJobStaff } from "@/lib/jobs/intake";
-import { loadCompanyCalendar } from "@/data-access/company-calendar";
+import { loadCalendarLookups, loadCompanyCalendar } from "@/data-access/company-calendar";
 import { calendarAnchor, calendarRange, parseProvinceParam, resolveCalendarView, type CalendarContextName, type CalendarFilters } from "@/lib/calendar/schedule";
 import { CompanyCalendar } from "./CompanyCalendar";
 
@@ -29,16 +28,19 @@ export default async function AdminCalendarPage({
     status: !params.status || params.status === "cancelled" ? "all" : params.status,
     q: params.q ?? "",
   };
+  // Province is applied in the browser from this date range, so switching province
+  // does not run another query. Search still asks the database, because it looks
+  // outside the visible dates.
+  const searching = filters.q.trim().length >= 2;
   const session = await getSession();
-  const [calendar, staff, services] = await Promise.all([
+  const [calendar, lookups] = await Promise.all([
     loadCompanyCalendar({
       start: range.start,
       end: range.end,
-      filters,
-      includeHealth: session?.user.role === "admin",
+      filters: searching ? filters : { ...filters, provinces: [] },
+      includeHealth: false,
     }),
-    getStaffUsers(),
-    getServices(),
+    loadCalendarLookups(),
   ]);
 
   return (
@@ -46,10 +48,9 @@ export default async function AdminCalendarPage({
       jobs={calendar.jobs}
       unscheduled={calendar.unscheduled}
       events={calendar.events}
-      summary={calendar.summary}
-      health={calendar.health}
-      staff={staff.filter((person) => isAssignableJobStaff(person))}
-      services={services.filter((service) => service.active).map((service) => ({ id: service.id, name: service.name }))}
+      health={null}
+      staff={lookups.staff.filter((person) => isAssignableJobStaff(person))}
+      services={lookups.services}
       view={view}
       anchor={anchor}
       filters={filters}

@@ -7,6 +7,7 @@ import {
   eventCoversDate,
   filterCalendarJobs,
   manualEventWindow,
+  matchesProvince,
   movedManualEvent,
   normalizeManualPlace,
   isUnscheduledJob,
@@ -64,6 +65,14 @@ describe("company calendar", () => {
     expect(suggestedProvince("Bangkok", "Chonburi Land Transport Office")).toBe("Bangkok");
     expect(suggestedProvince("", "Chonburi Land Transport Office")).toBe("Chonburi");
     expect(suggestedProvince(null, "a side street")).toBeNull();
+  });
+
+  it("matches a province without a new query", () => {
+    expect(matchesProvince("Bangkok", [])).toBe(true);
+    expect(matchesProvince("Bangkok", ["Bangkok", "Chonburi"])).toBe(true);
+    expect(matchesProvince(null, [""])).toBe(true);
+    expect(matchesProvince("Phuket", ["Bangkok"])).toBe(false);
+    expect(matchesProvince(undefined, ["Bangkok"])).toBe(false);
   });
 
   it("keeps a missing province in the filter and labels it Province needed", () => {

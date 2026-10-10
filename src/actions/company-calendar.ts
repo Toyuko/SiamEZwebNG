@@ -6,6 +6,7 @@ import {
   assignCalendarProvince,
   assignCalendarStaff,
   deleteManualCalendarEvent,
+  loadCalendarHealth,
   rescheduleJob,
   saveManualCalendarEvent,
   setCalendarJobStatus,
@@ -113,6 +114,19 @@ export async function deleteManualEventAction(id: string): Promise<CalendarActio
   } catch (error) {
     if (error instanceof Error && error.message === "Event not found") return { ok: false, error: "Event not found" };
     return fail(error, "Unable to delete the event.");
+  }
+}
+
+export async function calendarHealthAction(): Promise<
+  | { ok: true; health: Awaited<ReturnType<typeof loadCalendarHealth>> }
+  | { ok: false; error: string }
+> {
+  try {
+    await allowAdmin();
+    return { ok: true, health: await loadCalendarHealth() };
+  } catch (error) {
+    const result = fail(error, "Unable to load calendar health.");
+    return { ok: false, error: result.ok ? "Unable to load calendar health." : result.error };
   }
 }
 

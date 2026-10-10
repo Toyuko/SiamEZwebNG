@@ -35,21 +35,41 @@ import {
 } from "@/lib/jobs/intake";
 import { resolveStaffActor, syncScheduleFromCase } from "@/data-access/job-intake";
 
-const calendarInclude = {
+const calendarSelect = {
+  id: true,
+  caseNumber: true,
+  guestName: true,
+  guestPhone: true,
+  guestEmail: true,
+  serviceId: true,
+  otherServiceName: true,
+  scheduledAt: true,
+  scheduleTimeTbd: true,
+  province: true,
+  location: true,
+  status: true,
+  dealValue: true,
+  documentsRequired: true,
+  jobDescription: true,
   user: { select: { id: true, name: true, email: true, phone: true } },
   service: { select: { id: true, name: true } },
   salesPerson: { select: { id: true, name: true, email: true } },
   staffAssignments: {
-    include: { user: { select: { id: true, name: true, email: true } } },
+    select: { user: { select: { id: true, name: true, email: true } } },
   },
   invoices: {
     orderBy: { createdAt: "desc" as const },
-    include: { payments: { select: { amount: true, status: true, metadata: true, receiptNumber: true } } },
+    select: {
+      id: true,
+      invoiceNumber: true,
+      amount: true,
+      depositAmount: true,
+      payments: { select: { amount: true, status: true, metadata: true, receiptNumber: true } },
+    },
   },
-  events: { select: { id: true, primaryForCaseId: true, description: true } },
-} satisfies Prisma.CaseInclude;
+} satisfies Prisma.CaseSelect;
 
-type CalendarRow = Prisma.CaseGetPayload<{ include: typeof calendarInclude }>;
+type CalendarRow = Prisma.CaseGetPayload<{ select: typeof calendarSelect }>;
 
 function toRecord(row: CalendarRow): CalendarJobRecord {
   const invoice = row.invoices[0] ?? null;
@@ -221,13 +241,13 @@ export async function loadCompanyCalendar(input: {
   const [rows, unscheduledRows, otherEvents, health] = await Promise.all([
     prisma.case.findMany({
       where,
-      include: calendarInclude,
+      select: calendarSelect,
       orderBy: { scheduledAt: "asc" },
       take: searching ? 80 : 400,
     }),
     prisma.case.findMany({
       where: { scheduledAt: null, status: { in: ACTIVE_UNSCHEDULED } },
-      include: calendarInclude,
+      select: calendarSelect,
       orderBy: { updatedAt: "desc" },
       take: 40,
     }),
@@ -250,7 +270,7 @@ export async function loadCompanyCalendar(input: {
       orderBy: { start: "asc" },
       take: searching ? 40 : 200,
     }),
-    input.includeHealth ? calendarHealth() : Promise.resolve(null),
+    input.includeHealth ? loadCalendarHealth() : Promise.resolve(null),
   ]);
 
   const jobs = filterCalendarJobs(rows.map(toRecord), input.filters);
@@ -297,7 +317,23 @@ export async function listPublicAvailability(start: Date, end: Date) {
   });
 }
 
-async function calendarHealth() {
+export async function loadCalendarLookups() {
+  const [staff, services] = await Promise.all([
+    prisma.user.findMany({
+      where: { role: { in: ["admin", "staff"] }, active: true },
+      select: { id: true, name: true, email: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.service.findMany({
+      where: { active: true },
+      select: { id: true, name: true },
+      orderBy: { sortOrder: "asc" },
+    }),
+  ]);
+  return { staff, services };
+}
+
+export async function loadCalendarHealth() {
   const [scheduled, linked, missing, unscheduled, duplicateGroups] = await Promise.all([
     prisma.case.count({ where: { scheduledAt: { not: null } } }),
     prisma.event.count({ where: { primaryForCaseId: { not: null } } }),

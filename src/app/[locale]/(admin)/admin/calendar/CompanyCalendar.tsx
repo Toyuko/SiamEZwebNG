@@ -16,12 +16,15 @@ import {
   agendaDates,
   bangkokClockMinutes,
   calendarContext,
+  calendarSummary,
   eventCoversDate,
-  nextCalendarDate,
   jobsOnDate,
+  matchesProvince,
   monthGridDates,
   movedManualEvent,
+  nextCalendarDate,
   parseCalendarView,
+  parseProvinceParam,
   preferredCalendarView,
   serializeProvinces,
   shiftAnchor,
@@ -36,6 +39,7 @@ import {
 import {
   assignCalendarProvinceAction,
   assignCalendarStaffAction,
+  calendarHealthAction,
   deleteManualEventAction,
   rescheduleJobAction,
   saveManualEventAction,
@@ -300,16 +304,15 @@ function placeColumn(jobs: CalendarJobRecord[], events: ManualCalendarEvent[], d
 }
 
 export function CompanyCalendar({
-  jobs,
-  unscheduled,
-  events,
-  summary,
+  jobs: loadedJobs,
+  unscheduled: loadedUnscheduled,
+  events: loadedEvents,
   health,
   staff,
   services,
   view,
   anchor,
-  filters,
+  filters: loadedFilters,
   canRepair,
   truncated,
   currentUserId,
@@ -318,7 +321,6 @@ export function CompanyCalendar({
   jobs: CalendarJobRecord[];
   unscheduled: CalendarJobRecord[];
   events: ManualCalendarEvent[];
-  summary: Summary;
   health: Health;
   staff: StaffOption[];
   services: ServiceOption[];
@@ -347,16 +349,49 @@ export function CompanyCalendar({
   const [nowMinutes, setNowMinutes] = useState(() => bangkokClockMinutes());
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [panel, setPanel] = useState<"sidebar" | "filters" | null>(null);
-  const [searchOpen, setSearchOpen] = useState(Boolean(filters.q));
-  const [draftQ, setDraftQ] = useState(filters.q);
+  const [searchOpen, setSearchOpen] = useState(Boolean(loadedFilters.q));
+  const [draftQ, setDraftQ] = useState(loadedFilters.q);
+  const [provinces, setProvinces] = useState(loadedFilters.provinces);
+  const serverProvinceKey = serializeProvinces(loadedFilters.provinces);
+  const [provinceSource, setProvinceSource] = useState(serverProvinceKey);
+  if (provinceSource !== serverProvinceKey) {
+    setProvinceSource(serverProvinceKey);
+    setProvinces(loadedFilters.provinces);
+  }
+  const [healthState, setHealthState] = useState(health);
+  const [patches, setPatches] = useState<Record<string, { province: string | null }>>({});
+  const healthRequested = useRef(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [eventEditor, setEventEditor] = useState<EventEditor | null>(null);
   const [pickerMonth, setPickerMonth] = useState(`${anchor.slice(0, 7)}-01`);
   const [miniMonth, setMiniMonth] = useState(`${anchor.slice(0, 7)}-01`);
 
+  const filters = useMemo(() => ({ ...loadedFilters, provinces }), [loadedFilters, provinces]);
+  const patchedJobs = useMemo(
+    () => loadedJobs.map((job) => (patches[job.caseId] ? { ...job, province: patches[job.caseId].province } : job)),
+    [loadedJobs, patches]
+  );
+  const patchedUnscheduled = useMemo(
+    () => loadedUnscheduled.map((job) => (patches[job.caseId] ? { ...job, province: patches[job.caseId].province } : job)),
+    [loadedUnscheduled, patches]
+  );
+  const jobs = useMemo(
+    () => patchedJobs.filter((job) => matchesProvince(job.province, provinces)),
+    [patchedJobs, provinces]
+  );
+  const unscheduled = useMemo(
+    () => patchedUnscheduled.filter((job) => matchesProvince(job.province, provinces)),
+    [patchedUnscheduled, provinces]
+  );
+  const events = useMemo(
+    () => loadedEvents.filter((event) => matchesProvince(event.province, provinces)),
+    [loadedEvents, provinces]
+  );
+  const summary = useMemo(() => calendarSummary(patchedJobs), [patchedJobs]);
+
   const selected = useMemo(
-    () => [...jobs, ...unscheduled].find((job) => job.caseId === selectedId) ?? null,
-    [jobs, unscheduled, selectedId]
+    () => [...patchedJobs, ...patchedUnscheduled].find((job) => job.caseId === selectedId) ?? null,
+    [patchedJobs, patchedUnscheduled, selectedId]
   );
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   const week = weekDates(anchor);
@@ -379,6 +414,28 @@ export function CompanyCalendar({
   useEffect(() => {
     setDraftQ(filters.q);
   }, [filters.q]);
+
+  useEffect(() => {
+    function onPop() {
+      setProvinces(parseProvinceParam(new URLSearchParams(window.location.search).get("provinces") ?? undefined));
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  useEffect(() => {
+    setPatches((current) => {
+      const ids = Object.keys(current);
+      if (ids.length === 0) return current;
+      const next: typeof current = {};
+      for (const caseId of ids) {
+        const patch = current[caseId];
+        const job = loadedJobs.find((item) => item.caseId === caseId) ?? loadedUnscheduled.find((item) => item.caseId === caseId);
+        if (job && job.province !== patch.province) next[caseId] = patch;
+      }
+      return Object.keys(next).length === ids.length ? current : next;
+    });
+  }, [loadedJobs, loadedUnscheduled]);
 
   useEffect(() => {
     const context = calendarContext(window.innerWidth);
@@ -459,15 +516,41 @@ export function CompanyCalendar({
   }
   goRef.current = go;
 
-  function toggleProvince(name: string) {
-    if (name === PROVINCE_NEEDED_TOKEN) {
-      go({ provinces: filters.provinces.length === 1 && filters.provinces[0] === "" ? [] : [""] });
+  function writeProvinceUrl(next: string[]) {
+    const params = new URLSearchParams(window.location.search);
+    if (next.length) params.set("provinces", serializeProvinces(next));
+    else params.delete("provinces");
+    const search = params.toString();
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${search ? `?${search}` : ""}${window.location.hash}`);
+  }
+
+  function applyProvinces(next: string[]) {
+    if (loadedFilters.q.trim().length >= 2) {
+      go({ provinces: next });
       return;
     }
-    const provinces = filters.provinces.includes(name)
+    setProvinces(next);
+    writeProvinceUrl(next);
+  }
+
+  function toggleProvince(name: string) {
+    if (name === PROVINCE_NEEDED_TOKEN) {
+      applyProvinces(filters.provinces.length === 1 && filters.provinces[0] === "" ? [] : [""]);
+      return;
+    }
+    const next = filters.provinces.includes(name)
       ? filters.provinces.filter((item) => item !== name)
       : [...filters.provinces, name];
-    go({ provinces });
+    applyProvinces(next);
+  }
+
+  function openHealth() {
+    if (healthRequested.current || healthState) return;
+    healthRequested.current = true;
+    void calendarHealthAction().then((result) => {
+      if (result.ok) setHealthState(result.health);
+      else healthRequested.current = false;
+    });
   }
 
   function run(action: () => Promise<{ ok: boolean; error?: string; confirm?: ScheduleWarning[]; report?: { scanned: number; already: number; added: number; unscheduled: number; errors: number } }>) {
@@ -709,7 +792,7 @@ export function CompanyCalendar({
             label="Province"
             value={filters.provinces.length === 1 ? filters.provinces[0] || PROVINCE_NEEDED_TOKEN : ""}
             onChange={(province) =>
-              go({ provinces: province === PROVINCE_NEEDED_TOKEN ? [""] : province ? [province] : [] })
+              applyProvinces(province === PROVINCE_NEEDED_TOKEN ? [""] : province ? [province] : [])
             }
           >
             <option value="">{filters.provinces.length > 1 ? `${filters.provinces.length} provinces` : "All provinces"}</option>
@@ -732,7 +815,13 @@ export function CompanyCalendar({
             <option value="tbd">TBD</option>
           </FilterSelect>
           {filtersActive && (
-            <button type="button" className="h-10 rounded-full px-3 text-sm font-medium text-siam-blue" onClick={() => go({ provinces: [], staffId: "", serviceId: "", status: "all", q: "" })}>
+            <button type="button" className="h-10 rounded-full px-3 text-sm font-medium text-siam-blue" onClick={() => {
+              if (!loadedFilters.staffId && !loadedFilters.serviceId && (loadedFilters.status === "all" || !loadedFilters.status) && !loadedFilters.q) {
+                applyProvinces([]);
+                return;
+              }
+              go({ provinces: [], staffId: "", serviceId: "", status: "all", q: "" });
+            }}>
               Clear filters
             </button>
           )}
@@ -811,7 +900,7 @@ export function CompanyCalendar({
                 mine={mine}
                 currentUserId={currentUserId}
                 canRepair={canRepair}
-                health={health}
+                health={healthState}
                 report={report}
                 pending={pending}
                 onMiniMonth={setMiniMonth}
@@ -821,6 +910,7 @@ export function CompanyCalendar({
                 onStatus={(status) => go({ status })}
                 onOpenJob={setSelectedId}
                 onSync={() => run(() => syncCalendarAction())}
+                onOpenHealth={openHealth}
                 onPrint={() => window.print()}
               />
             </aside>
@@ -984,7 +1074,7 @@ export function CompanyCalendar({
                   label="Province"
                   value={filters.provinces.length === 1 ? filters.provinces[0] || PROVINCE_NEEDED_TOKEN : ""}
                   onChange={(province) =>
-                    go({ provinces: province === PROVINCE_NEEDED_TOKEN ? [""] : province ? [province] : [] })
+                    applyProvinces(province === PROVINCE_NEEDED_TOKEN ? [""] : province ? [province] : [])
                   }
                 >
                   <option value="">All provinces</option>
@@ -1006,7 +1096,15 @@ export function CompanyCalendar({
                   <option value="completed">Completed</option>
                   <option value="tbd">TBD</option>
                 </FilterSelect>
-                <button type="button" className="h-11 w-full rounded-lg border text-sm font-medium" onClick={() => { go({ provinces: [], staffId: "", serviceId: "", status: "all", q: "" }); setPanel(null); }}>
+                <button type="button" className="h-11 w-full rounded-lg border text-sm font-medium" onClick={() => {
+                  if (!loadedFilters.staffId && !loadedFilters.serviceId && (loadedFilters.status === "all" || !loadedFilters.status) && !loadedFilters.q) {
+                    applyProvinces([]);
+                    setPanel(null);
+                    return;
+                  }
+                  go({ provinces: [], staffId: "", serviceId: "", status: "all", q: "" });
+                  setPanel(null);
+                }}>
                   Clear filters
                 </button>
               </div>
@@ -1023,7 +1121,7 @@ export function CompanyCalendar({
                 mine={mine}
                 currentUserId={currentUserId}
                 canRepair={canRepair}
-                health={health}
+                health={healthState}
                 report={report}
                 pending={pending}
                 onMiniMonth={setMiniMonth}
@@ -1033,6 +1131,7 @@ export function CompanyCalendar({
                 onStatus={(status) => go({ status })}
                 onOpenJob={(id) => { setPanel(null); setSelectedId(id); }}
                 onSync={() => run(() => syncCalendarAction())}
+                onOpenHealth={openHealth}
                 onPrint={() => window.print()}
               />
             )}
@@ -1085,7 +1184,22 @@ export function CompanyCalendar({
           onClose={() => setSelectedId(null)}
           onReschedule={(date, time, timeTbd) => requestReschedule(selected.caseId, date, time, timeTbd)}
           onStaff={(staffId) => run(() => assignCalendarStaffAction(selected.caseId, staffId))}
-          onProvince={(province) => run(() => assignCalendarProvinceAction(selected.caseId, province))}
+          onProvince={(province) => {
+            const caseId = selected.caseId;
+            setError(null);
+            setPatches((current) => ({ ...current, [caseId]: { province } }));
+            startTransition(async () => {
+              const result = await assignCalendarProvinceAction(caseId, province);
+              if (!result.ok) {
+                setPatches((current) => {
+                  const next = { ...current };
+                  delete next[caseId];
+                  return next;
+                });
+                setError(result.error ?? "Unable to update the province.");
+              }
+            });
+          }}
           onStatus={(status) => run(() => setCalendarJobStatusAction(selected.caseId, status))}
         />
       )}
@@ -1239,6 +1353,7 @@ function SidebarBody(props: {
   onStatus: (status: string) => void;
   onOpenJob: (id: string) => void;
   onSync: () => void;
+  onOpenHealth: () => void;
   onPrint: () => void;
 }) {
   return (
@@ -1353,9 +1468,9 @@ function SidebarBody(props: {
       </section>
       <button type="button" className="h-10 w-full rounded-lg border text-sm" onClick={props.onPrint}>Print this view</button>
       {props.canRepair && (
-        <details>
+        <details onToggle={(event) => { if (event.currentTarget.open) props.onOpenHealth(); }}>
           <summary className="cursor-pointer text-sm font-medium">Calendar health</summary>
-          {props.health && (
+          {props.health ? (
             <dl className="mt-2 space-y-1 text-xs text-gray-600 dark:text-gray-300">
               <div>Scheduled jobs: {props.health.scheduled}</div>
               <div>Calendar events: {props.health.linked}</div>
@@ -1363,6 +1478,8 @@ function SidebarBody(props: {
               <div>Duplicate calendar events: {props.health.duplicates}</div>
               <div>Unscheduled confirmed jobs: {props.health.unscheduled}</div>
             </dl>
+          ) : (
+            <p className="mt-2 text-xs text-gray-500">Loading calendar health…</p>
           )}
           {props.report && <p className="mt-2 text-xs">{props.report}</p>}
           <button type="button" disabled={props.pending} className="mt-2 h-10 w-full rounded-lg bg-siam-blue text-sm font-semibold text-white disabled:opacity-60" onClick={props.onSync}>
