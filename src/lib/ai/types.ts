@@ -24,7 +24,7 @@ export type ConciergeServiceRecommendation = {
 export type ConciergeDeepLink = {
   href: string;
   label: string;
-  kind: "listing" | "service" | "life_event" | "search" | "live_chat";
+  kind: "listing" | "service" | "life_event" | "search";
   /** Why this link was suggested. */
   reason?: string;
 };

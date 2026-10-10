@@ -11,7 +11,6 @@ type Props = {
   bookLabel: string;
   emptyLabel: string;
   openLinkLabel?: string;
-  onLiveChat?: () => void;
 };
 
 export function ConciergeMessageList({
@@ -19,7 +18,6 @@ export function ConciergeMessageList({
   bookLabel,
   emptyLabel,
   openLinkLabel = "Open",
-  onLiveChat,
 }: Props) {
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -68,7 +66,6 @@ export function ConciergeMessageList({
                 <ConciergeDeepLinkChips
                   links={message.deepLinks}
                   openLabel={openLinkLabel}
-                  onLiveChat={onLiveChat}
                 />
               ) : null}
             </div>

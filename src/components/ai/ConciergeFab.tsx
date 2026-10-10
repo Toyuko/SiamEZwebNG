@@ -9,8 +9,8 @@ type Props = {
   label: string;
   closeLabel: string;
   /**
-   * Match WhatsApp / tawk.to float placement (`bottom-6 right-6`).
-   * Use `stacked` to sit above the live-chat FAB on public pages.
+   * `default` matches the bottom-right float (`bottom-6 right-6`).
+   * Use `stacked` to sit above another button that shares that corner.
    */
   placement?: "default" | "stacked";
 };

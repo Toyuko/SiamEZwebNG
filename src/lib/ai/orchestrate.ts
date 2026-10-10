@@ -49,8 +49,7 @@ function loginRedirectPath(path: string): string {
 
 /**
  * Execute authenticated Concierge mutations (life event / workflow start) or
- * return guest login deep links. Escalation returns tawk.to (when configured)
- * plus WhatsApp / LINE fallbacks.
+ * return guest login deep links. Escalation returns WhatsApp and LINE links.
  */
 export async function applyConciergeOrchestration(input: {
   intent: ConciergeIntent;

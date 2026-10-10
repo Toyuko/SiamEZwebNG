@@ -7,6 +7,7 @@ import { ConciergeMessageList } from "@/components/ai/ConciergeMessageList";
 import { ConciergeQuickActions } from "@/components/ai/ConciergeQuickActions";
 import { fadeInUp, motionTransition, scaleIn } from "@/components/ui/motion";
 import type { ConciergeLocale, ConciergeMessage } from "@/lib/ai/types";
+import { cn } from "@/lib/utils";
 import { RotateCcw, Sparkles, X } from "lucide-react";
 
 type Labels = {
@@ -30,7 +31,6 @@ type Labels = {
   help: string;
   findVehicles: string;
   openLink: string;
-  talkToPerson: string;
 };
 
 type Props = {
@@ -40,11 +40,11 @@ type Props = {
   isStreaming: boolean;
   llmEnabled: boolean;
   labels: Labels;
-  liveChatEnabled?: boolean;
+  /** Match the FAB so the panel stays above a stacked button. */
+  placement?: "default" | "stacked";
   onClose: () => void;
   onSend: (message: string) => void;
   onClear: () => void;
-  onLiveChat?: () => void;
 };
 
 export function ConciergePanel({
@@ -54,11 +54,10 @@ export function ConciergePanel({
   isStreaming,
   llmEnabled,
   labels,
-  liveChatEnabled = false,
+  placement = "default",
   onClose,
   onSend,
   onClear,
-  onLiveChat,
 }: Props) {
   return (
     <AnimatePresence>
@@ -71,7 +70,10 @@ export function ConciergePanel({
           exit="exit"
           transition={motionTransition}
           id={CONCIERGE_PANEL_ID}
-          className="fixed bottom-40 right-4 z-[60] flex h-[min(34rem,calc(100vh-11rem))] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-siam-blue/15 bg-white shadow-2xl dark:border-white/10 dark:bg-gray-950 sm:right-6"
+          className={cn(
+            "fixed right-4 z-[60] flex h-[min(34rem,calc(100vh-11rem))] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-siam-blue/15 bg-white shadow-2xl dark:border-white/10 dark:bg-gray-950 sm:right-6",
+            placement === "stacked" ? "bottom-56" : "bottom-40"
+          )}
           role="dialog"
           aria-modal="true"
           aria-label={labels.title}
@@ -117,7 +119,6 @@ export function ConciergePanel({
             bookLabel={labels.book}
             emptyLabel={labels.empty}
             openLinkLabel={labels.openLink}
-            onLiveChat={onLiveChat}
           />
 
           <ConciergeQuickActions
@@ -132,18 +133,6 @@ export function ConciergePanel({
               book: labels.book,
             }}
           />
-
-          {liveChatEnabled && onLiveChat ? (
-            <div className="border-t border-gray-100 px-3 py-2 dark:border-gray-800">
-              <button
-                type="button"
-                onClick={onLiveChat}
-                className="w-full rounded-xl border border-siam-blue/20 bg-siam-blue/5 px-3 py-2 text-xs font-medium text-siam-blue hover:bg-siam-blue/10"
-              >
-                {labels.talkToPerson}
-              </button>
-            </div>
-          ) : null}
 
           <ConciergeComposer
             locale={locale}

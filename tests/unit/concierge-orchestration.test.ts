@@ -11,6 +11,8 @@ describe("concierge intent detection", () => {
     expect(detectConciergeIntent("ขอคุยกับเจ้าหน้าที่")).toEqual({
       kind: "escalate",
     });
+    expect(detectConciergeIntent("open live chat")).toEqual({ kind: "escalate" });
+    expect(detectConciergeIntent("แชทสด")).toEqual({ kind: "escalate" });
   });
 
   it("detects moving-to-thailand life event", () => {
@@ -42,12 +44,11 @@ describe("escalate-human tool", () => {
     const result = escalateHumanTool({
       context: "Need visa help",
       locale: "en",
-      tawkEnabled: false,
     });
     expect(result.whatsappUrl).toContain("whatsapp.com");
     expect(result.whatsappUrl).toContain(encodeURIComponent("Need visa help"));
     expect(result.whatsappLabel).toBe("Chat on WhatsApp");
-    expect(result.liveChatEnabled).toBe(false);
+    expect(result.message.toLowerCase()).toContain("whatsapp");
   });
 });
 

@@ -6,22 +6,16 @@ import { ConciergeFab } from "@/components/ai/ConciergeFab";
 import { ConciergePanel } from "@/components/ai/ConciergePanel";
 import { useConciergeChat } from "@/hooks/ai/useConciergeChat";
 import { useConciergeSession } from "@/hooks/ai/useConciergeSession";
+import { usePathname } from "@/i18n/navigation";
 import { getConciergeCapability } from "@/lib/ai/actions";
 import { CONCIERGE_OPEN_EVENT, type ConciergeOpenDetail } from "@/lib/ai/concierge-events";
 import type { ConciergeLocale } from "@/lib/ai/types";
 import { trackEvent } from "@/lib/analytics";
-import {
-  dispatchOpenTawk,
-  isTawkConfigured,
-  summarizeConciergeForTawk,
-  TAWK_MAXIMIZED_EVENT,
-} from "@/lib/tawk";
 
 export type AiConciergeShellProps = {
   /**
-   * FAB placement. Public pages use `default` (bottom-right) because the
-   * tawk.to launcher stays hidden until staff handoff. Use `stacked` only
-   * when another float (WhatsApp / visible live-chat) shares the corner.
+   * FAB placement. `default` sits in the bottom-right corner. `stacked` sits
+   * above another float that shares that corner (the services WhatsApp button).
    */
   placement?: "default" | "stacked";
   /** Optional server-provided flag; client still re-checks capability. */
@@ -38,11 +32,13 @@ export function AiConciergeShell({
 }: AiConciergeShellProps) {
   const localeRaw = useLocale();
   const locale = toConciergeLocale(localeRaw);
+  const pathname = usePathname();
   const t = useTranslations("concierge");
   const [open, setOpen] = useState(false);
   const [llmEnabled, setLlmEnabled] = useState(llmEnabledProp);
   const startedRef = useRef(false);
-  const liveChatEnabled = isTawkConfigured();
+  const fabPlacement =
+    placement === "default" && pathname === "/services" ? "stacked" : placement;
 
   const {
     messages,
@@ -64,12 +60,6 @@ export function AiConciergeShell({
     onJourneyUpdate: setJourney,
   });
 
-  const openLiveChat = () => {
-    if (!liveChatEnabled) return;
-    dispatchOpenTawk({ summary: summarizeConciergeForTawk(messages) });
-    setOpen(false);
-  };
-
   useEffect(() => {
     function onOpenConcierge(event: Event) {
       const detail = (event as CustomEvent<ConciergeOpenDetail>).detail;
@@ -81,15 +71,6 @@ export function AiConciergeShell({
     window.addEventListener(CONCIERGE_OPEN_EVENT, onOpenConcierge);
     return () => window.removeEventListener(CONCIERGE_OPEN_EVENT, onOpenConcierge);
   }, [sendMessage]);
-
-  useEffect(() => {
-    if (!liveChatEnabled) return;
-    function onTawkMaximized() {
-      setOpen(false);
-    }
-    window.addEventListener(TAWK_MAXIMIZED_EVENT, onTawkMaximized);
-    return () => window.removeEventListener(TAWK_MAXIMIZED_EVENT, onTawkMaximized);
-  }, [liveChatEnabled]);
 
   useEffect(() => {
     if (!open || startedRef.current) return;
@@ -134,7 +115,6 @@ export function AiConciergeShell({
       findVehicles: t("quickActions.findVehicles"),
       openLink: t("openLink"),
       openLabel: t("openLabel"),
-      talkToPerson: t("talkToPerson"),
     }),
     [t]
   );
@@ -146,7 +126,7 @@ export function AiConciergeShell({
         onToggle={() => setOpen(true)}
         label={labels.openLabel}
         closeLabel={labels.closeLabel}
-        placement={placement}
+        placement={fabPlacement}
       />
     );
   }
@@ -158,7 +138,7 @@ export function AiConciergeShell({
         onToggle={() => setOpen((v) => !v)}
         label={labels.openLabel}
         closeLabel={labels.closeLabel}
-        placement={placement}
+        placement={fabPlacement}
       />
       <ConciergePanel
         open={open}
@@ -166,6 +146,7 @@ export function AiConciergeShell({
         messages={messages}
         isStreaming={isStreaming}
         llmEnabled={llmEnabled}
+        placement={fabPlacement}
         labels={{
           title: labels.title,
           subtitle: labels.subtitle,
@@ -187,13 +168,10 @@ export function AiConciergeShell({
           help: labels.help,
           findVehicles: labels.findVehicles,
           openLink: labels.openLink,
-          talkToPerson: labels.talkToPerson,
         }}
-        liveChatEnabled={liveChatEnabled}
         onClose={() => setOpen(false)}
         onSend={sendMessage}
         onClear={clearHistory}
-        onLiveChat={liveChatEnabled ? openLiveChat : undefined}
       />
     </>
   );

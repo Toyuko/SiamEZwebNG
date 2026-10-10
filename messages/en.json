@@ -2277,8 +2277,7 @@
       "startBooking": "Start booking",
       "help": "Help",
       "findVehicles": "Find vehicles"
-    },
-    "talkToPerson": "Chat with a person"
+    }
   },
   "adminCase": {
     "clientInfo": "Client info",

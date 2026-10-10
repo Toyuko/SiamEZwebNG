@@ -25,7 +25,6 @@ export type AnalyticsEventName =
   | "whatsapp_clicked"
   | "ai_concierge_started"
   | "ai_concierge_lead"
-  | "ai_concierge_tawk_handoff"
   | "payment_completed"
   | "listing_enquiry_submitted"
   | "vehicle_form_opened"
