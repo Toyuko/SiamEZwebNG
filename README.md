@@ -88,6 +88,10 @@ Pushes to `main` deploy to **production**; other branches get **preview** URLs.
 
 If you see **two deployments per push**, disable automatic Git deployments in Vercel → Project → **Settings → Git** (use either native Git hooks or the GitHub Action, not both).
 
+## Office directory
+
+Anyone can open `/en/directory` (Thai: `/th/directory`). Administrators manage it at `/admin/directory`. Staff notes and suggestions stay limited to staff. Setup, access, CSV import, and verification are documented in [docs/GOVERNMENT_OFFICE_DIRECTORY.md](docs/GOVERNMENT_OFFICE_DIRECTORY.md). The feature uses the existing Postgres database and Auth.js login. Apply migration `20261010190000_government_office_directory` before using it. No new environment variables are required.
+
 ## Content
 
 Services and copy are based on [siam-ez.com](https://siam-ez.com). Seed data in `prisma/seed.ts` populates the service catalog (marriage registration, translation, driver's license, police clearance, visa, construction, vehicle registration, transportation, private driver).

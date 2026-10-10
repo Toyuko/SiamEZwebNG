@@ -20,6 +20,7 @@ import {
   Flag,
   Workflow,
   Inbox,
+  Landmark,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
@@ -66,6 +67,7 @@ const clientNav =
 
 const freelancerNav = [
   { labelKey: "freelancerDashboard", href: "/portal/freelancer", icon: Briefcase },
+  { labelKey: "officeDirectory", href: "/directory", icon: Landmark },
   { labelKey: "publicProfile", href: "/portal/freelancer-profile", icon: UserRound },
   { labelKey: "settings", href: "/portal/profile", icon: Settings },
 ];
@@ -80,14 +82,19 @@ const companyNav = [
 export function PortalSidebar({
   isFreelancer = false,
   isCompany = false,
+  showDirectory = false,
 }: {
   isFreelancer?: boolean;
   isCompany?: boolean;
+  showDirectory?: boolean;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const t = useTranslations("portal");
-  const nav = isCompany ? companyNav : isFreelancer ? freelancerNav : clientNav;
+  const baseNav = isCompany ? companyNav : isFreelancer ? freelancerNav : clientNav;
+  const nav = showDirectory
+    ? baseNav
+    : baseNav.filter((item) => item.href !== "/directory");
   const currentTab = searchParams.get("tab");
 
   return (

@@ -8,11 +8,13 @@ import {
   buildRealEstateListingPath,
   buildSalesListingPath,
 } from "@/lib/migration/urls";
+import { prisma } from "@/lib/db";
 import { getSiteOrigin, languageAlternates, localizedPath } from "@/lib/seo/urls";
 
 const STATIC_PATHS = [
   "",
   "/services",
+  "/directory",
   "/about",
   "/contact",
   "/gallery",
@@ -52,8 +54,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       entries.push(
         sitemapEntry(locale, path, {
           lastModified,
-          changeFrequency: path === "" || path === "/services" ? "weekly" : "monthly",
-          priority: path === "" ? 1 : path === "/services" ? 0.9 : 0.6,
+          changeFrequency: path === "" || path === "/services" || path === "/directory" ? "weekly" : "monthly",
+          priority: path === "" ? 1 : path === "/services" ? 0.9 : path === "/directory" ? 0.8 : 0.6,
         })
       );
     }
@@ -95,6 +97,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   } catch (error) {
     console.warn("sitemap: published listing URLs skipped:", error);
+  }
+
+  try {
+    const offices = await prisma.govOffice.findMany({
+      where: { archivedAt: null },
+      select: { slug: true, updatedAt: true },
+    });
+    for (const locale of routing.locales) {
+      for (const office of offices) {
+        entries.push(
+          sitemapEntry(locale, `/directory/${office.slug}`, {
+            lastModified: office.updatedAt,
+            changeFrequency: "monthly",
+            priority: 0.5,
+          })
+        );
+      }
+    }
+  } catch (error) {
+    console.warn("sitemap: office directory URLs skipped:", error);
   }
 
   return entries;

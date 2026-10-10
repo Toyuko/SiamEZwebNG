@@ -22,7 +22,6 @@ function isPortalRoute(pathname: string): boolean {
   return parts.length >= 2 && LOCALES.includes(parts[0] as "en" | "th") && parts[1] === "portal";
 }
 
-/** Matches /:locale/admin/* (admin area) */
 function isAdminRoute(pathname: string): boolean {
   const parts = pathname.split("/").filter(Boolean);
   return parts.length >= 2 && LOCALES.includes(parts[0] as "en" | "th") && parts[1] === "admin";

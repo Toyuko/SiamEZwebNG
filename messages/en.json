@@ -197,7 +197,8 @@
     "staffActivity": "Staff activity",
     "analytics": "Analytics",
     "featureFlags": "Feature flags",
-    "accountDeletionRequests": "Account Deletion"
+    "accountDeletionRequests": "Account Deletion",
+    "officeDirectory": "Office directory"
   },
   "sales": {
     "inventoryTitle": "Sales Inventory",
@@ -1553,6 +1554,7 @@
     "termsOfService": "Terms of Service",
     "contactSupport": "Contact Support",
     "freelancerDashboard": "Freelancer Hub",
+    "officeDirectory": "Office directory",
     "companyDashboard": "Company Hub",
     "companyJobs": "Jobs & Talent",
     "companyAds": "Ad Campaigns",

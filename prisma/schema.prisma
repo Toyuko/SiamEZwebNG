@@ -38,6 +38,8 @@ model User {
   lastLoginAt    DateTime? @map("last_login_at")
   role           UserRole  @default(customer)
   active         Boolean   @default(true)
+  /// Explicit directory grant for freelancers. Staff and admin access is by role.
+  directoryAccess Boolean  @default(false) @map("directory_access")
   address        String?
   notes          String?   @db.Text
   /// Integer PK from siam-ez.com/admin clients.php
@@ -119,6 +121,17 @@ model User {
   accountDeletionRequests       AccountDeletionRequest[] @relation("AccountDeletionRequestUser")
   accountDeletionRequestsProcessed AccountDeletionRequest[] @relation("AccountDeletionRequestProcessor")
   accountDeletionAuditLogs      AccountDeletionAuditLog[] @relation("AccountDeletionAuditActor")
+
+  govOfficeFavorites            GovOfficeFavorite[]
+  govOfficeViews                GovOfficeView[]
+  govOfficeReports              GovOfficeReport[]        @relation("GovOfficeReportReporter")
+  govOfficeReportsReviewed      GovOfficeReport[]        @relation("GovOfficeReportReviewer")
+  govOfficeSubmissions          GovOfficeSubmission[]    @relation("GovOfficeSubmissionAuthor")
+  govOfficeSubmissionsReviewed  GovOfficeSubmission[]    @relation("GovOfficeSubmissionReviewer")
+  govOfficesVerified            GovOffice[]              @relation("GovOfficeVerifier")
+  govOfficesCreated             GovOffice[]              @relation("GovOfficeCreator")
+  govOfficesUpdated             GovOffice[]              @relation("GovOfficeUpdater")
+  govOfficeAudits               GovOfficeAuditLog[]
 }
 
 enum FreelancerVerificationStatus {
@@ -2459,4 +2472,250 @@ model AccountDeletionAuditLog {
   @@index([requestId, createdAt])
   @@index([actorId, createdAt])
   @@map("account_deletion_audit_logs")
+}
+
+// ----- Government office directory -----
+
+enum GovOfficeVerificationStatus {
+  verified
+  needs_verification
+  unverified
+  temporarily_closed
+  permanently_closed
+}
+
+enum GovOfficeReportField {
+  phone
+  address
+  hours
+  services
+  closed
+  other
+}
+
+enum GovOfficeReviewStatus {
+  open
+  in_review
+  resolved
+  dismissed
+}
+
+enum GovOfficeSubmissionKind {
+  new_office
+  correction
+}
+
+enum GovOfficeSubmissionStatus {
+  pending
+  approved
+  rejected
+}
+
+model GovOfficeCategory {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  nameEn        String   @map("name_en")
+  nameTh        String   @map("name_th")
+  descriptionEn String?  @db.Text @map("description_en")
+  descriptionTh String?  @db.Text @map("description_th")
+  sortOrder     Int      @default(0) @map("sort_order")
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  offices GovOffice[]
+
+  @@map("gov_office_categories")
+}
+
+model GovOfficeService {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  nameEn    String   @map("name_en")
+  nameTh    String   @map("name_th")
+  sortOrder Int      @default(0) @map("sort_order")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  offices GovOfficeServiceLink[]
+
+  @@map("gov_office_services")
+}
+
+model GovOffice {
+  id                     String                       @id @default(cuid())
+  slug                   String                       @unique
+  nameEn                 String?                      @map("name_en")
+  nameTh                 String?                      @map("name_th")
+  categoryId             String                       @map("category_id")
+  parentOrganizationEn   String?                      @map("parent_organization_en")
+  parentOrganizationTh   String?                      @map("parent_organization_th")
+  branchNameEn           String?                      @map("branch_name_en")
+  branchNameTh           String?                      @map("branch_name_th")
+  keywords               String[]                     @default([])
+  provinceCode           String                       @map("province_code")
+  district               String?
+  subdistrict            String?
+  addressEn              String?                      @db.Text @map("address_en")
+  addressTh              String?                      @db.Text @map("address_th")
+  postalCode             String?                      @map("postal_code")
+  latitude               Float?
+  longitude              Float?
+  googleMapsUrl          String?                      @map("google_maps_url")
+  extraMapUrls           String[]                     @default([]) @map("extra_map_urls")
+  phonePrimary           String?                      @map("phone_primary")
+  phones                 String[]                     @default([])
+  email                  String?
+  website                String?
+  facebookUrl            String?                      @map("facebook_url")
+  contactNotes           String?                      @db.Text @map("contact_notes")
+  openingHoursText       String?                      @db.Text @map("opening_hours_text")
+  hoursJson              Json?                        @map("hours_json")
+  operatingDays          String?                      @map("operating_days")
+  lunchBreak             String?                      @map("lunch_break")
+  holidayNotes           String?                      @db.Text @map("holiday_notes")
+  appointmentRequired    Boolean?                     @map("appointment_required")
+  walkInsAccepted        Boolean?                     @map("walk_ins_accepted")
+  appointmentNotes       String?                      @db.Text @map("appointment_notes")
+  serviceNotes           String?                      @db.Text @map("service_notes")
+  documentsRequired      String?                      @db.Text @map("documents_required")
+  bookingInfo            String?                      @db.Text @map("booking_info")
+  governmentLinks        String?                      @db.Text @map("government_links")
+  internalNotes          String?                      @db.Text @map("internal_notes")
+  proceduralNotes        String?                      @db.Text @map("procedural_notes")
+  staffTips              String?                      @db.Text @map("staff_tips")
+  parkingNotes           String?                      @db.Text @map("parking_notes")
+  counterNotes           String?                      @db.Text @map("counter_notes")
+  verificationStatus     GovOfficeVerificationStatus  @default(unverified) @map("verification_status")
+  sourceUrl              String?                      @map("source_url")
+  sourceNotes            String?                      @db.Text @map("source_notes")
+  lastVerifiedAt         DateTime?                    @map("last_verified_at")
+  lastVerificationMethod String?                      @map("last_verification_method")
+  lastVerifiedById       String?                      @map("last_verified_by_id")
+  reliabilityNotes       String?                      @db.Text @map("reliability_notes")
+  searchText             String                       @db.Text @map("search_text")
+  archivedAt             DateTime?                    @map("archived_at")
+  createdById            String?                      @map("created_by_id")
+  updatedById            String?                      @map("updated_by_id")
+  createdAt              DateTime                     @default(now()) @map("created_at")
+  updatedAt              DateTime                     @updatedAt @map("updated_at")
+
+  category       GovOfficeCategory      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  services       GovOfficeServiceLink[]
+  favorites      GovOfficeFavorite[]
+  views          GovOfficeView[]
+  reports        GovOfficeReport[]
+  submissions    GovOfficeSubmission[]
+  audits         GovOfficeAuditLog[]
+  lastVerifiedBy User?                  @relation("GovOfficeVerifier", fields: [lastVerifiedById], references: [id], onDelete: SetNull)
+  createdBy      User?                  @relation("GovOfficeCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy      User?                  @relation("GovOfficeUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([provinceCode, archivedAt])
+  @@index([categoryId, archivedAt])
+  @@index([verificationStatus, archivedAt])
+  @@index([updatedAt])
+  @@index([lastVerifiedAt])
+  @@map("gov_offices")
+}
+
+model GovOfficeServiceLink {
+  officeId  String  @map("office_id")
+  serviceId String  @map("service_id")
+  notes     String? @db.Text
+
+  office  GovOffice        @relation(fields: [officeId], references: [id], onDelete: Cascade)
+  service GovOfficeService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([officeId, serviceId])
+  @@index([serviceId])
+  @@map("gov_office_service_links")
+}
+
+model GovOfficeFavorite {
+  userId    String   @map("user_id")
+  officeId  String   @map("office_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  office GovOffice @relation(fields: [officeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, officeId])
+  @@index([userId, createdAt])
+  @@map("gov_office_favorites")
+}
+
+model GovOfficeView {
+  userId   String   @map("user_id")
+  officeId String   @map("office_id")
+  viewedAt DateTime @default(now()) @map("viewed_at")
+
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  office GovOffice @relation(fields: [officeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, officeId])
+  @@index([userId, viewedAt])
+  @@map("gov_office_views")
+}
+
+model GovOfficeReport {
+  id              String                @id @default(cuid())
+  officeId        String                @map("office_id")
+  reporterId      String?               @map("reporter_id")
+  field           GovOfficeReportField
+  explanation     String                @db.Text
+  status          GovOfficeReviewStatus @default(open)
+  reviewedById    String?               @map("reviewed_by_id")
+  reviewedAt      DateTime?             @map("reviewed_at")
+  resolutionNotes String?               @db.Text @map("resolution_notes")
+  createdAt       DateTime              @default(now()) @map("created_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
+
+  office     GovOffice @relation(fields: [officeId], references: [id], onDelete: Cascade)
+  reporter   User?     @relation("GovOfficeReportReporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  reviewedBy User?     @relation("GovOfficeReportReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([officeId])
+  @@map("gov_office_reports")
+}
+
+model GovOfficeSubmission {
+  id           String                     @id @default(cuid())
+  kind         GovOfficeSubmissionKind
+  status       GovOfficeSubmissionStatus  @default(pending)
+  officeId     String?                    @map("office_id")
+  payload      Json
+  submitterId  String?                    @map("submitter_id")
+  reviewerId   String?                    @map("reviewer_id")
+  reviewNotes  String?                    @db.Text @map("review_notes")
+  createdAt    DateTime                   @default(now()) @map("created_at")
+  reviewedAt   DateTime?                  @map("reviewed_at")
+  updatedAt    DateTime                   @updatedAt @map("updated_at")
+
+  office    GovOffice? @relation(fields: [officeId], references: [id], onDelete: SetNull)
+  submitter User?      @relation("GovOfficeSubmissionAuthor", fields: [submitterId], references: [id], onDelete: SetNull)
+  reviewer  User?      @relation("GovOfficeSubmissionReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([officeId])
+  @@map("gov_office_submissions")
+}
+
+model GovOfficeAuditLog {
+  id        String   @id @default(cuid())
+  officeId  String?  @map("office_id")
+  actorId   String?  @map("actor_id")
+  action    String
+  summary   String
+  changes   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  office GovOffice? @relation(fields: [officeId], references: [id], onDelete: Cascade)
+  actor  User?      @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([officeId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("gov_office_audit_logs")
 }

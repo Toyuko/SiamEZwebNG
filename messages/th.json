@@ -197,7 +197,8 @@
     "staffActivity": "กิจกรรมพนักงาน",
     "analytics": "การวิเคราะห์",
     "featureFlags": "ฟีเจอร์แฟล็ก",
-    "accountDeletionRequests": "คำขอลบบัญชี"
+    "accountDeletionRequests": "คำขอลบบัญชี",
+    "officeDirectory": "สมุดรายชื่อหน่วยงาน"
   },
   "sales": {
     "inventoryTitle": "คลังรถสำหรับขาย",
@@ -1553,6 +1554,7 @@
     "termsOfService": "ข้อกำหนดการให้บริการ",
     "contactSupport": "ติดต่อฝ่ายสนับสนุน",
     "freelancerDashboard": "พอร์ทัลฟรีแลนซ์",
+    "officeDirectory": "สมุดรายชื่อหน่วยงาน",
     "companyDashboard": "พอร์ทัลบริษัท",
     "companyJobs": "งานและบุคลากร",
     "companyAds": "แคมเปญโฆษณา",

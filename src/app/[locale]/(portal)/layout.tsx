@@ -9,6 +9,7 @@ import { FirstRunOnboarding } from "@/components/auth/FirstRunOnboarding";
 import { getConciergeSettings } from "@/lib/concierge-settings";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { noindexRobots } from "@/lib/seo/metadata";
+import { resolveDirectoryAccess } from "@/data-access/directory";
 
 export const metadata: Metadata = {
   title: "Client portal",
@@ -52,14 +53,15 @@ export default async function PortalLayout({
     }
   }
 
-  const [settings, flagEnabled] = await Promise.all([
+  const [settings, flagEnabled, directoryAccess] = await Promise.all([
     getConciergeSettings(),
     isFeatureEnabled("concierge_enabled"),
+    resolveDirectoryAccess(),
   ]);
   const showConcierge = settings.enabled && flagEnabled;
 
   return (
-    <PortalLayoutClient user={session.user} showConcierge={showConcierge}>
+    <PortalLayoutClient user={session.user} showConcierge={showConcierge} showDirectory={directoryAccess.allowed}>
       {firstRunUser ? (
         <Suspense fallback={null}>
           <FirstRunOnboarding user={firstRunUser} />

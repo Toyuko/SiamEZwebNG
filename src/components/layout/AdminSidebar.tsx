@@ -32,6 +32,7 @@ import {
   Bell,
   Wallet,
   Banknote,
+  Landmark,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -67,6 +68,7 @@ const allNavGroups: NavGroup[] = [
       { label: "cases", href: "/admin/cases", icon: FolderOpen },
       { label: "driverLicenseFollowups", href: "/admin/driver-license-followups", icon: ClipboardList },
       { label: "followUps", href: "/admin/followups", icon: Bell },
+      { label: "officeDirectory", href: "/directory", icon: Landmark },
       { label: "vehicleLeads", href: "/admin/vehicle-leads", icon: Car },
       { label: "calendar", href: "/admin/calendar", icon: Calendar },
       { label: "workQueue", href: "/admin/work-queue", icon: ListChecks },

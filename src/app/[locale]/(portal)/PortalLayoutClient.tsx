@@ -15,10 +15,12 @@ export function PortalLayoutClient({
   children,
   user,
   showConcierge = true,
+  showDirectory = false,
 }: {
   children: React.ReactNode;
   user: SessionUser;
   showConcierge?: boolean;
+  showDirectory?: boolean;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
@@ -51,6 +53,7 @@ export function PortalLayoutClient({
           <PortalSidebar
             isFreelancer={user.role === "freelancer"}
             isCompany={user.role === "company"}
+            showDirectory={showDirectory}
           />
         </Suspense>
       </aside>

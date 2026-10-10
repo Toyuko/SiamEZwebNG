@@ -2044,6 +2044,14 @@ async function seedFinancialDemoData() {
   }
 
   console.log("Financial demo data seeded:", demos.length, "cases + operating expenses");
+
+  const { ensureDirectoryStarterData } = await import("../src/data-access/directory");
+  await ensureDirectoryStarterData();
+  await prisma.user.updateMany({
+    where: { email: freelancerEmail, role: "freelancer" },
+    data: { directoryAccess: true },
+  });
+  console.log("Government office directory starter data ensured.");
 }
 
 
