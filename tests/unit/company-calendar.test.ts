@@ -8,6 +8,7 @@ import {
   filterCalendarJobs,
   manualEventWindow,
   movedManualEvent,
+  normalizeManualPlace,
   isUnscheduledJob,
   monthGridDates,
   parseCalendarView,
@@ -118,6 +119,8 @@ describe("company calendar", () => {
       color: null,
       staffId: null,
       staffName: null,
+      location: "DLT Chonburi",
+      province: "Chonburi",
     };
     const moved = movedManualEvent(timed, "2026-10-09", "14:00");
     expect(moved?.date).toBe("2026-10-09");
@@ -125,6 +128,8 @@ describe("company calendar", () => {
     expect(moved?.endDate).toBe("2026-10-09");
     expect(moved?.endTime).toBe("15:30");
     expect(moved?.allDay).toBe(false);
+    expect(moved?.location).toBe("DLT Chonburi");
+    expect(moved?.province).toBe("Chonburi");
     const day = movedManualEvent(
       { ...timed, allDay: true, start: "2026-10-07T17:00:00.000Z", end: "2026-10-09T17:00:00.000Z" },
       "2026-10-12",
@@ -133,6 +138,23 @@ describe("company calendar", () => {
     expect(day?.allDay).toBe(true);
     expect(day?.date).toBe("2026-10-12");
     expect(day?.endDate).toBe("2026-10-13");
+    expect(day?.province).toBe("Chonburi");
+  });
+
+  it("keeps an appointment location and only accepts a real province", () => {
+    expect(normalizeManualPlace({ location: "  DLT Bangkok  ", province: "bangkok" })).toEqual({
+      location: "DLT Bangkok",
+      province: "Bangkok",
+      errors: {},
+    });
+    expect(normalizeManualPlace({ location: "", province: "" })).toEqual({
+      location: null,
+      province: null,
+      errors: {},
+    });
+    expect(normalizeManualPlace({ location: "home", province: "Not a province" }).errors.province).toBe(
+      "Choose a province from the list.",
+    );
   });
 
   it("keeps 10:00 Thailand as 03:00 UTC and prefers agenda on a phone", () => {

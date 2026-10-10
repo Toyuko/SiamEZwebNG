@@ -11,7 +11,7 @@ import {
   bangkokTimeInputValue,
   formatBangkokTime,
 } from "@/lib/jobs/intake";
-import { provinceStyle } from "@/lib/calendar/provinces";
+import { normalizeProvince, provinceStyle } from "@/lib/calendar/provinces";
 
 export type CalendarViewName = "month" | "week" | "day" | "agenda" | "threeday";
 
@@ -432,7 +432,42 @@ export type ManualCalendarEvent = {
   color: string | null;
   staffId: string | null;
   staffName: string | null;
+  location: string | null;
+  province: string | null;
 };
+
+/** Fields saved for an appointment that is not a job. */
+export type ManualEventDraft = {
+  id?: string | null;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  endDate: string;
+  endTime: string;
+  allDay: boolean;
+  type: string;
+  color: string;
+  staffId: string | null;
+  location: string;
+  province: string;
+};
+
+const MANUAL_LOCATION_MAX = 500;
+
+/** Location is free text. Province must be one of the same names used on a job. */
+export function normalizeManualPlace(input: { location?: string | null; province?: string | null }): {
+  location: string | null;
+  province: string | null;
+  errors: { location?: string; province?: string };
+} {
+  const location = input.location?.trim() ?? "";
+  const errors: { location?: string; province?: string } = {};
+  if (location.length > MANUAL_LOCATION_MAX) errors.location = "Use 500 characters or fewer.";
+  const province = normalizeProvince(input.province);
+  if (input.province?.trim() && !province) errors.province = "Choose a province from the list.";
+  return { location: location || null, province, errors };
+}
 
 export const MANUAL_EVENT_TYPES = ["appointment", "deadline", "milestone"] as const;
 export const MANUAL_EVENT_COLORS = ["blue", "red", "emerald", "amber", "purple", "cyan", "pink", "orange"] as const;
@@ -483,10 +518,11 @@ function inclusiveEventDays(startIso: string, endIso: string): number {
 }
 
 /** New start for a dragged event. A timed drop keeps the duration. An all-day drop keeps the day span. */
-export function movedManualEvent(event: ManualCalendarEvent, date: string, time: string | null) {
+export function movedManualEvent(event: ManualCalendarEvent, date: string, time: string | null): ManualEventDraft | null {
   if (!DATE_RE.test(date)) return null;
   const description = event.description ?? "";
   const color = event.color ?? "";
+  const place = { location: event.location ?? "", province: event.province ?? "" };
   if (time === null) {
     const span = event.allDay ? inclusiveEventDays(event.start, event.end) : 1;
     const endDate = shiftCalendarDate(date, span - 1);
@@ -503,6 +539,7 @@ export function movedManualEvent(event: ManualCalendarEvent, date: string, time:
       type: event.type,
       color,
       staffId: event.staffId,
+      ...place,
     };
   }
   const start = bangkokDateTime(date, time);
@@ -523,6 +560,7 @@ export function movedManualEvent(event: ManualCalendarEvent, date: string, time:
     type: event.type,
     color,
     staffId: event.staffId,
+    ...place,
   };
 }
 

@@ -14,7 +14,7 @@ import {
 import { actingStaffUser } from "@/data-access/job-intake";
 import { isAdminAuthBypassEnabled } from "@/lib/auth/admin-bypass";
 import { assertJobIntakeAccess, JobIntakeValidationError } from "@/lib/jobs/intake";
-import type { ScheduleWarning } from "@/lib/calendar/schedule";
+import type { ManualEventDraft, ScheduleWarning } from "@/lib/calendar/schedule";
 
 export type CalendarActionResult =
   | { ok: true; warnings?: ScheduleWarning[]; report?: { scanned: number; already: number; added: number; unscheduled: number; errors: number } }
@@ -95,19 +95,7 @@ export async function setCalendarJobStatusAction(caseId: string, status: CaseSta
   }
 }
 
-export async function saveManualEventAction(input: {
-  id?: string | null;
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  endDate: string;
-  endTime: string;
-  allDay: boolean;
-  type: string;
-  color: string;
-  staffId: string | null;
-}): Promise<CalendarActionResult> {
+export async function saveManualEventAction(input: ManualEventDraft): Promise<CalendarActionResult> {
   try {
     await allowStaff();
     await saveManualCalendarEvent(input);

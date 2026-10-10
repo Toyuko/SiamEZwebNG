@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } f
 import { ChevronLeft, ChevronRight, Filter, Menu, Plus, Printer, Search, X } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { formatThb } from "@/lib/jobs/intake";
-import { provinceOptions, provinceStyle } from "@/lib/calendar/provinces";
+import { detectProvince, provinceOptions, provinceStyle } from "@/lib/calendar/provinces";
 import { bangkokDateInputValue, bangkokTimeInputValue } from "@/lib/jobs/intake";
 import { canTransitionCaseStatus, CASE_STATUS_LABELS } from "@/lib/domain/case-status";
 import {
@@ -234,7 +234,13 @@ const EVENT_ACCENTS: Record<string, string> = {
   milestone: "#059669",
 };
 
-function eventAccent(event: { color: string | null; type: string }) {
+function eventAria(event: ManualCalendarEvent) {
+  const place = [event.province, event.location].filter(Boolean).join(", ");
+  return place ? `Event, ${event.title}, ${place}` : `Event, ${event.title}`;
+}
+
+function eventAccent(event: { color: string | null; type: string; province?: string | null }) {
+  if (event.province) return provinceStyle(event.province).accent;
   return EVENT_ACCENTS[event.color ?? ""] ?? EVENT_ACCENTS[event.type] ?? EVENT_ACCENTS.appointment;
 }
 
@@ -1389,11 +1395,13 @@ function ManualEventChip({ event }: { event: ManualCalendarEvent }) {
       style={{ boxShadow: `inset 3px 0 0 ${eventAccent(event)}` }}
     >
       {clockLabel(event.start, event.allDay)} {event.title}
+      {event.province ? <span className="text-gray-500"> · {event.province}</span> : null}
     </span>
   );
 }
 
 function ManualEventCard({ event, dense = false }: { event: ManualCalendarEvent; dense?: boolean }) {
+  const place = [event.province, event.location].filter(Boolean).join(" · ");
   return (
     <span
       className={`block overflow-hidden rounded-md border border-dashed border-gray-300 bg-white text-left text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 ${dense ? "px-1.5 py-0.5 text-[11px] leading-tight" : "px-2 py-1.5 text-sm leading-snug"}`}
@@ -1402,6 +1410,7 @@ function ManualEventCard({ event, dense = false }: { event: ManualCalendarEvent;
       <span className="block truncate font-semibold">
         {clockLabel(event.start, event.allDay)} {event.title}
       </span>
+      {place ? <span className="block truncate text-gray-600 dark:text-gray-300">{place}</span> : null}
       <span className="block truncate text-gray-600 dark:text-gray-300">{event.staffName ?? "Event"}</span>
     </span>
   );
@@ -1435,6 +1444,8 @@ function EventDialog({
     type: string;
     color: string;
     staffId: string | null;
+    location: string;
+    province: string;
   }) => void;
   onDelete: (id: string) => void;
 }) {
@@ -1454,6 +1465,9 @@ function EventDialog({
   const [type, setType] = useState(event?.type ?? "appointment");
   const [color, setColor] = useState(event?.color ?? "");
   const [staffId, setStaffId] = useState(event?.staffId ?? "");
+  const [location, setLocation] = useState(event?.location ?? "");
+  const [province, setProvince] = useState(event?.province ?? "");
+  const provinceTouched = useRef(Boolean(event?.province));
   const [confirmDelete, setConfirmDelete] = useState(false);
   const fieldClass = "mt-1 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-base dark:border-gray-600 dark:bg-gray-900";
 
@@ -1491,13 +1505,15 @@ function EventDialog({
             type,
             color,
             staffId: staffId || null,
+            location,
+            province,
           });
         }}
       >
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 id="manual-event-title" className="text-lg font-semibold">{creating ? "Add appointment" : "Edit appointment"}</h2>
-            <p className="text-sm text-gray-500">This stays on the calendar. It does not create a job.</p>
+            <p className="text-sm text-gray-500">Location and province are the same as on a job.</p>
           </div>
           <button type="button" className="inline-flex h-11 w-11 items-center justify-center" onClick={onClose} aria-label="Close">
             <X className="h-5 w-5" />
@@ -1508,6 +1524,51 @@ function EventDialog({
           Title
           <input className={fieldClass} value={title} onChange={(change) => setTitle(change.target.value)} required maxLength={200} />
         </label>
+        <label className="mt-3 block text-sm font-medium">
+          Location
+          <input
+            className={fieldClass}
+            value={location}
+            maxLength={500}
+            placeholder="Bangkok, DLT, customer home…"
+            onChange={(change) => {
+              const next = change.target.value;
+              setLocation(next);
+              if (!provinceTouched.current) {
+                const detected = detectProvince(next);
+                if (detected) setProvince(detected);
+              }
+            }}
+          />
+        </label>
+        <label className="mt-3 block text-sm font-medium">
+          Province
+          <select
+            className={fieldClass}
+            value={province}
+            onChange={(change) => {
+              provinceTouched.current = true;
+              setProvince(change.target.value);
+            }}
+          >
+            <option value="">Select province</option>
+            {provinceOptions().map((name) => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+        </label>
+        {province && (
+          <button
+            type="button"
+            className="mt-1 text-sm text-gray-600"
+            onClick={() => {
+              provinceTouched.current = true;
+              setProvince("");
+            }}
+          >
+            Clear province
+          </button>
+        )}
         <label className="mt-3 flex items-center gap-2 text-sm">
           <input type="checkbox" checked={allDay} onChange={(change) => setAllDay(change.target.checked)} />
           All day
@@ -1731,7 +1792,7 @@ function MonthGrid({
                     draggable
                     data-event
                     className="block w-full cursor-grab active:cursor-grabbing"
-                    aria-label={`Event, ${item.title}`}
+                    aria-label={eventAria(item)}
                     {...dropHandlers(date, "keep", onDrop)}
                     onDragStart={(event) => {
                       dragged.current = true;
@@ -1856,7 +1917,7 @@ function TimeGrid({
                   type="button"
                   draggable
                   className="block w-full cursor-grab active:cursor-grabbing"
-                  aria-label={`Event, ${item.title}`}
+                  aria-label={eventAria(item)}
                   onDragStart={(event) => {
                     dragged.current = true;
                     writeDrag(event.dataTransfer, { kind: "event", id: item.id });
@@ -1901,7 +1962,7 @@ function TimeGrid({
                   type="button"
                   draggable
                   data-event
-                  aria-label={item.kind === "job" ? eventLabel(item.job) : `Event, ${item.event.title}`}
+                  aria-label={item.kind === "job" ? eventLabel(item.job) : eventAria(item.event)}
                   className="pointer-events-auto absolute cursor-grab overflow-hidden active:cursor-grabbing"
                   style={{
                     top: ((item.start - CALENDAR_START_HOUR * 60) / 60) * HOUR_PX + 2,
@@ -2006,7 +2067,7 @@ function DaySchedule({
               type="button"
               draggable
               className="block w-full cursor-grab active:cursor-grabbing"
-              aria-label={`Event, ${item.title}`}
+              aria-label={eventAria(item)}
               onDragStart={(event) => {
                 dragged.current = true;
                 writeDrag(event.dataTransfer, { kind: "event", id: item.id });
@@ -2061,7 +2122,7 @@ function DaySchedule({
                   type="button"
                   draggable
                   className="mb-1 block w-full cursor-grab active:cursor-grabbing"
-                  aria-label={`Event, ${item.title}`}
+                  aria-label={eventAria(item)}
                   onDragStart={(event) => {
                     dragged.current = true;
                     writeDrag(event.dataTransfer, { kind: "event", id: item.id });
@@ -2137,7 +2198,7 @@ function AgendaList({
           <ul className="mt-2 space-y-2">
             {group.events.map((item) => (
               <li key={item.id}>
-                <button type="button" className="block w-full" aria-label={`Event, ${item.title}`} onClick={() => onOpenEvent(item.id)}>
+                <button type="button" className="block w-full" aria-label={eventAria(item)} onClick={() => onOpenEvent(item.id)}>
                   <ManualEventCard event={item} />
                 </button>
               </li>
@@ -2361,7 +2422,7 @@ function printRows(date: string, jobs: CalendarJobRecord[], events: ManualCalend
     })),
     ...eventsOnDate(events, date).map((event) => ({
       sort: event.allDay ? -1 : bangkokMinutes(event.start),
-      text: `${clockLabel(event.start, event.allDay)} · ${event.title}${event.staffName ? ` · ${event.staffName}` : ""} · Event`,
+      text: `${clockLabel(event.start, event.allDay)} · ${event.title}${event.province ? ` · ${event.province}` : ""}${event.location ? ` · ${event.location}` : ""}${event.staffName ? ` · ${event.staffName}` : ""} · Event`,
     })),
   ];
   return rows.sort((a, b) => a.sort - b.sort);

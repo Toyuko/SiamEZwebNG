@@ -921,6 +921,10 @@ model Event {
   type        EventType @default(appointment)
   allDay      Boolean   @default(false) @map("all_day")
   color       String?   // optional: blue, red, emerald, amber, purple, cyan, pink, orange
+  /// Free-text place, same meaning as Case.location.
+  location    String?
+  /// Official English province name from the Thailand province list. Null until staff choose one.
+  province    String?
   caseId      String?   @map("case_id")
   /// Set only on the single calendar event that mirrors a job. Unique so backfill cannot duplicate it.
   primaryForCaseId String? @unique @map("primary_for_case_id")
@@ -936,6 +940,7 @@ model Event {
   @@index([start])
   @@index([staffId, start])
   @@index([caseId])
+  @@index([province, start])
   @@map("events")
 }
 

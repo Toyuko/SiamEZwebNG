@@ -12,12 +12,14 @@ import {
   MANUAL_EVENT_COLORS,
   MANUAL_EVENT_TYPES,
   manualEventWindow,
+  normalizeManualPlace,
   planBackfill,
   schedulingWarnings,
   toPublicSlot,
   type CalendarFilters,
   type CalendarJobRecord,
   type ManualCalendarEvent,
+  type ManualEventDraft,
   type ScheduleWarning,
 } from "@/lib/calendar/schedule";
 import {
@@ -87,15 +89,32 @@ function toRecord(row: CalendarRow): CalendarJobRecord {
 
 const ACTIVE_UNSCHEDULED: CaseStatus[] = ["awaiting_payment", "confirmed", "in_progress", "pending_docs"];
 
+function applyEventProvinceFilter(where: Prisma.EventWhereInput, provinces: string[]) {
+  if (provinces.length === 0) return;
+  const names = provinces.filter(Boolean);
+  const missing = provinces.includes("");
+  const clause: Prisma.EventWhereInput =
+    missing && names.length > 0
+      ? { OR: [{ province: { in: names } }, { province: null }] }
+      : missing
+        ? { province: null }
+        : { province: { in: names } };
+  const current = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
+  where.AND = [...current, clause];
+}
+
 function manualEventWhere(start: Date, end: Date, filters: CalendarFilters, searching: boolean, q: string): Prisma.EventWhereInput {
-  const jobScoped = filters.provinces.length > 0 || Boolean(filters.serviceId) || (filters.status !== "" && filters.status !== "all");
-  if (jobScoped) return { id: { in: [] } };
+  // Service and status belong to jobs. Province, staff, and search also apply to appointments.
+  const jobOnly = Boolean(filters.serviceId) || (filters.status !== "" && filters.status !== "all");
+  if (jobOnly) return { id: { in: [] } };
   // Job appointments are drawn from Case. Events that still point at a case must not appear twice.
   const where: Prisma.EventWhereInput = { primaryForCaseId: null, caseId: null };
   if (searching) {
     where.OR = [
       { title: { contains: q, mode: "insensitive" } },
       { description: { contains: q, mode: "insensitive" } },
+      { location: { contains: q, mode: "insensitive" } },
+      { province: { contains: q, mode: "insensitive" } },
     ];
   } else {
     where.start = { lt: end };
@@ -103,6 +122,7 @@ function manualEventWhere(start: Date, end: Date, filters: CalendarFilters, sear
   }
   if (filters.staffId === "tbd") where.staffId = null;
   else if (filters.staffId) where.staffId = filters.staffId;
+  applyEventProvinceFilter(where, filters.provinces);
   return where;
 }
 
@@ -116,6 +136,8 @@ function toManualEvent(event: {
   type: EventType;
   color: string | null;
   staffId: string | null;
+  location: string | null;
+  province: string | null;
   staff: { name: string | null; email: string } | null;
 }): ManualCalendarEvent {
   return {
@@ -129,6 +151,8 @@ function toManualEvent(event: {
     color: event.color,
     staffId: event.staffId,
     staffName: event.staff ? staffDisplayName(event.staff) : null,
+    location: event.location,
+    province: event.province,
   };
 }
 
@@ -219,6 +243,8 @@ export async function loadCompanyCalendar(input: {
         type: true,
         color: true,
         staffId: true,
+        location: true,
+        province: true,
         staff: { select: { name: true, email: true } },
       },
       orderBy: { start: "asc" },
@@ -480,19 +506,7 @@ export async function assignCalendarProvince(
   });
 }
 
-export async function saveManualCalendarEvent(input: {
-  id?: string | null;
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  endDate: string;
-  endTime: string;
-  allDay: boolean;
-  type: string;
-  color: string;
-  staffId: string | null;
-}) {
+export async function saveManualCalendarEvent(input: ManualEventDraft) {
   const title = input.title.trim();
   if (!title) throw new JobIntakeValidationError("Enter a title.", { title: "Enter a title." });
   if (title.length > 200) throw new JobIntakeValidationError("Title is too long.", { title: "Use 200 characters or fewer." });
@@ -515,6 +529,10 @@ export async function saveManualCalendarEvent(input: {
   if (description.length > 2000) {
     throw new JobIntakeValidationError("Notes are too long.", { description: "Use 2000 characters or fewer." });
   }
+  const place = normalizeManualPlace(input);
+  if (place.errors.location || place.errors.province) {
+    throw new JobIntakeValidationError("Check the highlighted fields.", place.errors);
+  }
   let staffId: string | null = null;
   if (input.staffId) {
     const person = await prisma.user.findFirst({
@@ -533,6 +551,8 @@ export async function saveManualCalendarEvent(input: {
     type: input.type as EventType,
     color: color || null,
     staffId,
+    location: place.location,
+    province: place.province,
     caseId: null,
     userId: null,
   };
