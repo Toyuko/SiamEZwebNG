@@ -189,13 +189,21 @@ describe("company calendar", () => {
         invoiceNumber: "INV-2026-00002",
       }),
       baseJob({ caseId: "case-3", status: "cancelled", customerName: "Michael Brown", allDay: true }),
+      baseJob({ caseId: "case-tbd", allDay: true, status: "confirmed", customerName: "Awaiting time", staffId: "staff-cee" }),
+      baseJob({ caseId: "case-refunded", status: "refunded", customerName: "Refunded Client" }),
+      baseJob({ caseId: "case-refund-pending", status: "refund_pending", customerName: "Pending Refund" }),
     ];
+    const visible = (status: string, q = "") =>
+      filterCalendarJobs(jobs, { provinces: [], staffId: "", serviceId: "", status, q }).map((job) => job.caseId);
     expect(filterCalendarJobs(jobs, { provinces: ["Chonburi"], staffId: "", serviceId: "", status: "all", q: "" })).toHaveLength(1);
-    expect(filterCalendarJobs(jobs, { provinces: [], staffId: "staff-grace", serviceId: "", status: "all", q: "" })).toHaveLength(2);
+    expect(filterCalendarJobs(jobs, { provinces: [], staffId: "staff-grace", serviceId: "", status: "all", q: "" }).map((job) => job.caseId)).toEqual(["case-1"]);
     expect(filterCalendarJobs(jobs, { provinces: [], staffId: "", serviceId: "svc-marriage", status: "all", q: "" })).toHaveLength(1);
-    expect(filterCalendarJobs(jobs, { provinces: [], staffId: "", serviceId: "", status: "completed", q: "" })).toHaveLength(1);
-    expect(filterCalendarJobs(jobs, { provinces: [], staffId: "", serviceId: "", status: "cancelled", q: "" })).toHaveLength(1);
-    expect(filterCalendarJobs(jobs, { provinces: [], staffId: "", serviceId: "", status: "tbd", q: "" }).map((job) => job.caseId)).toEqual(["case-3"]);
+    expect(visible("completed")).toEqual(["case-2"]);
+    expect(visible("cancelled")).toEqual(["case-1", "case-2", "case-tbd"]);
+    expect(visible("tbd")).toEqual(["case-tbd"]);
+    expect(visible("all")).toEqual(["case-1", "case-2", "case-tbd"]);
+    expect(visible("all", "michael")).toEqual([]);
+    expect(visible("all", "refund")).toEqual([]);
     expect(filterCalendarJobs(jobs, { provinces: [], staffId: "", serviceId: "", status: "all", q: "INV-2026-00002" })).toHaveLength(1);
     expect(filterCalendarJobs(jobs, { provinces: [], staffId: "", serviceId: "", status: "all", q: "john smith" })).toHaveLength(1);
     expect(filterCalendarJobs(jobs, { provinces: [""], staffId: "", serviceId: "", status: "all", q: "" }).map((job) => job.caseId)).toEqual([]);

@@ -6,6 +6,7 @@ import {
   calendarSummary,
   eventWindow,
   filterCalendarJobs,
+  HIDDEN_CALENDAR_STATUSES,
   isUnscheduledJob,
   jobMatchesFilters,
   MANUAL_EVENT_COLORS,
@@ -151,13 +152,17 @@ function rangeWhere(start: Date, end: Date, filters: CalendarFilters, searching:
   if (filters.staffId === "tbd") where.staffAssignments = { none: {} };
   else if (filters.staffId) where.staffAssignments = { some: { userId: filters.staffId } };
   if (filters.serviceId) where.serviceId = filters.serviceId;
-  if (filters.status === "confirmed" || filters.status === "completed" || filters.status === "cancelled") {
-    where.status = filters.status;
-  }
-  if (filters.status === "tbd") where.scheduleTimeTbd = true;
-  if (filters.status === "scheduled") {
+  const status = filters.status === "cancelled" ? "all" : filters.status;
+  if (status === "confirmed" || status === "completed") {
+    where.status = status;
+  } else if (status === "tbd") {
+    where.scheduleTimeTbd = true;
+    where.status = { notIn: [...HIDDEN_CALENDAR_STATUSES] };
+  } else if (status === "scheduled") {
     where.scheduleTimeTbd = false;
-    where.status = { notIn: ["cancelled", "completed"] };
+    where.status = { notIn: [...HIDDEN_CALENDAR_STATUSES, "completed"] };
+  } else {
+    where.status = { notIn: [...HIDDEN_CALENDAR_STATUSES] };
   }
   return where;
 }
@@ -240,7 +245,7 @@ export async function listPublicAvailability(start: Date, end: Date) {
   const rows = await prisma.case.findMany({
     where: {
       scheduledAt: { gte: start, lt: end },
-      status: { notIn: ["cancelled", "refunded", "refund_pending"] },
+      status: { notIn: [...HIDDEN_CALENDAR_STATUSES] },
     },
     select: {
       scheduledAt: true,
@@ -341,6 +346,7 @@ async function warningsFor(
     where: {
       id: { not: caseId },
       scheduledAt: { gte: windowStart, lt: windowEnd },
+      status: { notIn: [...HIDDEN_CALENDAR_STATUSES] },
       staffAssignments: { some: { userId: staffId } },
     },
     select: {

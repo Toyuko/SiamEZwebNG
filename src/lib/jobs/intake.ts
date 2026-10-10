@@ -539,7 +539,9 @@ export function planCalendarEvent(input: {
   scheduledAt: Date | null;
   timeTbd: boolean;
 }): CalendarPlan {
-  if (!input.scheduledAt) return { action: "none" };
+  if (!input.scheduledAt || input.status === "cancelled" || input.status === "refunded" || input.status === "refund_pending") {
+    return { action: "none" };
+  }
   const allDay = input.timeTbd;
   const start = input.scheduledAt;
   const end = allDay ? new Date(start.getTime() + 24 * 60 * 60 * 1000) : new Date(start.getTime() + 60 * 60 * 1000);

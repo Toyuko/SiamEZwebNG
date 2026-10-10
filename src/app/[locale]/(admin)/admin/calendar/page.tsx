@@ -26,7 +26,7 @@ export default async function AdminCalendarPage({
     provinces: parseProvinceParam(params.provinces),
     staffId: params.staff ?? "",
     serviceId: params.service ?? "",
-    status: params.status ?? "all",
+    status: !params.status || params.status === "cancelled" ? "all" : params.status,
     q: params.q ?? "",
   };
   const session = await getSession();

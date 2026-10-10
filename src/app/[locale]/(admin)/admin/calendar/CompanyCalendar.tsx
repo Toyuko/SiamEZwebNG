@@ -723,7 +723,6 @@ export function CompanyCalendar({
             <option value="confirmed">Confirmed</option>
             <option value="scheduled">Scheduled</option>
             <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
             <option value="tbd">TBD</option>
           </FilterSelect>
           {filtersActive && (
@@ -999,7 +998,6 @@ export function CompanyCalendar({
                   <option value="confirmed">Confirmed</option>
                   <option value="scheduled">Scheduled</option>
                   <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
                   <option value="tbd">TBD</option>
                 </FilterSelect>
                 <button type="button" className="h-11 w-full rounded-lg border text-sm font-medium" onClick={() => { go({ provinces: [], staffId: "", serviceId: "", status: "all", q: "" }); setPanel(null); }}>
@@ -1321,10 +1319,7 @@ function SidebarBody(props: {
           </ul>
         </details>
       </div>
-      <div className="flex gap-2">
-        <button type="button" className="h-10 flex-1 rounded-lg border text-sm" onClick={() => props.onStatus(props.filters.status === "completed" ? "all" : "completed")}>Completed</button>
-        <button type="button" className="h-10 flex-1 rounded-lg border text-sm" onClick={() => props.onStatus(props.filters.status === "cancelled" ? "all" : "cancelled")}>Cancelled</button>
-      </div>
+      <button type="button" className="h-10 w-full rounded-lg border text-sm" onClick={() => props.onStatus(props.filters.status === "completed" ? "all" : "completed")}>Completed</button>
       <section>
         <h2 className="px-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
           Unscheduled — {props.unscheduled.length === 40 ? "40+" : props.unscheduled.length}

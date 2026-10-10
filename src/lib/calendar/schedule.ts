@@ -54,6 +54,13 @@ export type CalendarFilters = {
   q: string;
 };
 
+/** Jobs in these states are not appointments anymore, so the calendar never draws them. */
+export const HIDDEN_CALENDAR_STATUSES = ["cancelled", "refunded", "refund_pending"] as const;
+
+export function isHiddenCalendarStatus(status: string): boolean {
+  return (HIDDEN_CALENDAR_STATUSES as readonly string[]).includes(status);
+}
+
 export type PublicAvailabilitySlot = {
   date: string;
   time: string;
@@ -254,15 +261,16 @@ export function serializeProvinces(provinces: string[]): string {
 }
 
 export function jobMatchesFilters(job: CalendarJobRecord, filters: CalendarFilters): boolean {
+  if (isHiddenCalendarStatus(job.status)) return false;
+  const status = filters.status === "cancelled" ? "all" : filters.status;
   if (filters.provinces.length > 0 && !filters.provinces.includes(job.province ?? "")) return false;
   if (filters.staffId === "tbd" && job.staffId) return false;
   if (filters.staffId && filters.staffId !== "tbd" && job.staffId !== filters.staffId) return false;
   if (filters.serviceId && job.serviceId !== filters.serviceId) return false;
-  if (filters.status === "confirmed" && job.status !== "confirmed") return false;
-  if (filters.status === "completed" && job.status !== "completed") return false;
-  if (filters.status === "cancelled" && job.status !== "cancelled") return false;
-  if (filters.status === "tbd" && !job.allDay) return false;
-  if (filters.status === "scheduled" && (job.allDay || job.status === "cancelled" || job.status === "completed")) {
+  if (status === "confirmed" && job.status !== "confirmed") return false;
+  if (status === "completed" && job.status !== "completed") return false;
+  if (status === "tbd" && !job.allDay) return false;
+  if (status === "scheduled" && (job.allDay || job.status === "completed")) {
     return false;
   }
   const q = filters.q.trim().toLowerCase();
@@ -313,7 +321,7 @@ export function toPublicSlot(input: {
   serviceName: string;
   status: string;
 }): PublicAvailabilitySlot | null {
-  if (input.status === "cancelled" || input.status === "refunded" || input.status === "refund_pending") return null;
+  if (isHiddenCalendarStatus(input.status)) return null;
   return {
     date: bangkokDateInputValue(input.start),
     time: input.allDay ? "TBD" : formatBangkokTime(input.start),
@@ -347,7 +355,7 @@ export function schedulingWarnings(
   const warnings: ScheduleWarning[] = [];
   for (const other of others) {
     if (other.caseId === candidate.caseId || other.staffId !== candidate.staffId) continue;
-    if (other.status === "cancelled" || other.status === "refunded") continue;
+    if (isHiddenCalendarStatus(other.status)) continue;
     const overlaps = candidate.start < other.end && other.start < candidate.end;
     if (overlaps) {
       warnings.push({

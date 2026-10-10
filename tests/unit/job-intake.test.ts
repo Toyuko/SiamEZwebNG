@@ -209,6 +209,17 @@ describe("confirmed job intake", () => {
         timeTbd: true,
       }).action
     ).toBe("none");
+    expect(
+      planCalendarEvent({
+        customerName: "Michael Brown",
+        jobType: "Visa",
+        staffName: "Grace",
+        location: "Bangkok",
+        status: "cancelled",
+        scheduledAt: bangkokDateTime("2026-10-10", "10:00"),
+        timeTbd: false,
+      }).action
+    ).toBe("none");
   });
 
   it("builds copy text from the saved job fields", () => {
