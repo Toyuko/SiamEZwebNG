@@ -7,6 +7,7 @@ import { nextCaseNumber } from "@/lib/utils";
 import { assertEligibleSalesperson, planAttributionChange } from "@/lib/finance/sales";
 import { assertCaseStatusTransition } from "@/lib/domain/case-status";
 import {
+  JOB_INTAKE_CREATED_STATUS,
   JOB_INTAKE_DEPOSIT_SOURCE,
   JOB_INTAKE_EVENT_MARKER,
   CustomerChoiceRequiredError,
@@ -32,7 +33,7 @@ import {
   planCalendarEvent,
   scheduleWindowRange,
   staffDisplayName,
-  isAssignableJobStaff,
+  isAssignableWorker,
   validateJobIntake,
   type CustomerRecord,
   type JobIntakeInput,
@@ -247,9 +248,9 @@ async function assertReferences(input: ValidatedJobIntake) {
     });
   }
   if (input.assignedStaffId) {
-    if (!assignee || !assignee.active || (assignee.role !== "admin" && assignee.role !== "staff")) {
+    if (!isAssignableWorker(assignee)) {
       throw new JobIntakeValidationError("Check the highlighted fields.", {
-        assignedStaffId: "Choose an active staff member or TBD.",
+        assignedStaffId: "Choose an active staff member, freelancer, or TBD.",
       });
     }
   }
@@ -583,7 +584,7 @@ export async function createConfirmedJob(
       const created = await tx.case.create({
         data: {
           caseNumber: nextCaseNumber(),
-          status: "confirmed",
+          status: JOB_INTAKE_CREATED_STATUS,
           isGuest: false,
           closedAt: now,
           createdById: actorId,
@@ -650,7 +651,7 @@ export async function createConfirmedJob(
         staffName: input.assignedStaffId ? staffDisplayName(refs.assignee) : "TBD",
         location: input.location,
         province: input.province,
-        status: "confirmed",
+        status: JOB_INTAKE_CREATED_STATUS,
         scheduledAt: input.scheduledAt,
         timeTbd: input.timeTbd,
       });
@@ -658,7 +659,7 @@ export async function createConfirmedJob(
         data: {
           caseId: created.id,
           userId: actorId ?? input.closedByStaffId,
-          content: `Confirmed job created. Total ${input.totalSatang} satang, deposit ${input.depositSatang} satang.${
+          content: `Job created, awaiting payment. Total ${input.totalSatang} satang, deposit ${input.depositSatang} satang.${
             shouldIssueReceipt(input.createReceipt, input.depositSatang) ? " Receipt issued for the amount received." : ""
           }`,
           isInternal: true,
@@ -946,24 +947,27 @@ export async function regenerateJobInvoice(
   return toJobView(saved);
 }
 
+export async function listAssignablePeople() {
+  const people = await prisma.user.findMany({
+    where: { role: { in: ["admin", "staff", "freelancer"] }, active: true },
+    select: { id: true, name: true, email: true, role: true, active: true },
+    orderBy: [{ name: "asc" }],
+  });
+  return people.filter((person) => isAssignableWorker(person));
+}
+
 export async function listPublicIntakeOptions() {
-  const [services, staff] = await Promise.all([
+  const [services, people] = await Promise.all([
     prisma.service.findMany({
       where: { active: true },
       select: { id: true, name: true },
       orderBy: { sortOrder: "asc" },
     }),
-    prisma.user.findMany({
-      where: { role: { in: ["admin", "staff"] }, active: true },
-      select: { id: true, name: true, email: true },
-      orderBy: { name: "asc" },
-    }),
+    listAssignablePeople(),
   ]);
   return {
     services,
-    staff: staff
-      .filter((person) => isAssignableJobStaff(person))
-      .map((person) => ({ id: person.id, name: person.name, email: "" })),
+    staff: people.map((person) => ({ id: person.id, name: person.name, email: "", role: person.role })),
   };
 }
 

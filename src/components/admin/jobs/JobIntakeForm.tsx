@@ -45,7 +45,7 @@ type CreatedJob = {
 };
 
 type Option = { id: string; name: string };
-type StaffOption = { id: string; name: string | null; email: string };
+type StaffOption = { id: string; name: string | null; email: string; role?: string | null };
 type Candidate = { id: string; name: string | null; email: string; phone: string | null };
 
 export type JobFormValues = {
@@ -90,7 +90,7 @@ const EMPTY: JobFormValues = {
   location: "",
   province: "",
   documents: [],
-  status: "confirmed",
+  status: "awaiting_payment",
   createReceipt: true,
 };
 
@@ -249,7 +249,10 @@ export function JobIntakeForm({
   const [copied, setCopied] = useState(false);
   const [shareNote, setShareNote] = useState<string | null>(null);
 
-  const staffOptions = staff.map((person) => ({ id: person.id, name: staffLabel(person) }));
+  const assigneeOptions = staff.map((person) => ({ id: person.id, name: staffLabel(person) }));
+  const closerOptions = staff
+    .filter((person) => person.role !== "freelancer")
+    .map((person) => ({ id: person.id, name: staffLabel(person) }));
   const totalSatang = parseThbToSatang(values.totalPrice) ?? 0;
   const depositSatang = parseThbToSatang(values.depositAmount || "0") ?? 0;
   const outstanding =
@@ -622,10 +625,10 @@ export function JobIntakeForm({
     : values.createReceipt && depositSatang > 0
       ? `Will be created for ${formatThb(depositSatang)}`
       : "Not created";
-  const closedByName = staffOptions.find((person) => person.id === values.closedByStaffId)?.name ?? "—";
+  const closedByName = closerOptions.find((person) => person.id === values.closedByStaffId)?.name ?? "—";
   const assignedName =
     values.assignedStaffId && values.assignedStaffId !== "tbd"
-      ? staffOptions.find((person) => person.id === values.assignedStaffId)?.name ?? "TBD"
+      ? assigneeOptions.find((person) => person.id === values.assignedStaffId)?.name ?? "TBD"
       : "TBD";
 
   return (
@@ -640,7 +643,9 @@ export function JobIntakeForm({
       }}
       className="mx-auto w-full max-w-lg pb-40 md:pb-8"
     >
-      <p className="text-sm font-medium text-siam-blue">Confirmed job</p>
+      <p className="text-sm font-medium text-siam-blue">
+        {mode === "create" ? "Awaiting payment" : CASE_STATUS_LABELS[values.status].en}
+      </p>
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
         {memoryToken ? "Saved job" : mode === "create" ? "New job" : "Edit job"}
       </h1>
@@ -842,7 +847,7 @@ export function JobIntakeForm({
               required
               value={values.closedByStaffId}
               onChange={(id) => set("closedByStaffId", id)}
-              options={staffOptions}
+              options={closerOptions}
               placeholder="Search staff"
               error={fieldErrors.closedByStaffId}
             />
@@ -850,8 +855,8 @@ export function JobIntakeForm({
               label="Assigned staff"
               value={values.assignedStaffId}
               onChange={(id) => set("assignedStaffId", id)}
-              options={staffOptions}
-              placeholder="Search staff or leave TBD"
+              options={assigneeOptions}
+              placeholder="Search staff, freelancer, or leave TBD"
               allowTbd
               error={fieldErrors.assignedStaffId}
             />
@@ -1079,7 +1084,7 @@ export function JobIntakeForm({
               {savingLink ? "Saving link..." : memoryToken ? "Update saved link" : "Save link"}
             </Button>
             <Button type="button" className="min-h-12 w-full text-base" disabled={pending} onClick={submit}>
-              {pending ? "Creating job..." : mode === "create" ? "CREATE CONFIRMED JOB" : "Save job"}
+              {pending ? "Creating job..." : mode === "create" ? "Create job" : "Save job"}
             </Button>
           </div>
         ) : (

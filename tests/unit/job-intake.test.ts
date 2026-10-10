@@ -11,7 +11,9 @@ import {
   formatSequentialReceiptNumber,
   formatThb,
   isAssignableJobStaff,
+  isAssignableWorker,
   invoiceSequenceFromNumber,
+  JOB_INTAKE_CREATED_STATUS,
   invoiceStatusForDeposit,
   jobMoneyReconciliation,
   nextInvoiceSequence,
@@ -44,6 +46,10 @@ const base = {
 };
 
 describe("confirmed job intake", () => {
+  it("starts every new job as awaiting payment", () => {
+    expect(JOB_INTAKE_CREATED_STATUS).toBe("awaiting_payment");
+  });
+
   it("validates a complete job and keeps money in satang", () => {
     const job = validateJobIntake(base);
     expect(job.customerEmail).toBe("john@example.com");
@@ -333,6 +339,11 @@ describe("confirmed job intake", () => {
     expect(isAssignableJobStaff({ name: "Google Play Review Admin", email: "play-review-admin@siamez.com" })).toBe(false);
     expect(isAssignableJobStaff({ name: "SiamEZ Inquiries", email: "inquiries@siam-ez.com" })).toBe(false);
     expect(isAssignableJobStaff({ name: "Legacy migration", email: "migration-bot@siamez.internal" })).toBe(false);
+    expect(isAssignableWorker({ role: "freelancer", active: true, name: "Sam", email: "sam@example.com" })).toBe(true);
+    expect(isAssignableWorker({ role: "staff", active: true, name: "Grace", email: "grace@siamez.com" })).toBe(true);
+    expect(isAssignableWorker({ role: "customer", active: true, name: "John", email: "john@example.com" })).toBe(false);
+    expect(isAssignableWorker({ role: "freelancer", active: false, name: "Sam", email: "sam@example.com" })).toBe(false);
+    expect(isAssignableWorker({ role: "freelancer", active: true, name: "Legacy migration", email: "bot@siamez.internal" })).toBe(false);
   });
 
   it("surfaces a customer choice error instead of merging uncertain matches", () => {

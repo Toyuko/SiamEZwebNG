@@ -1,7 +1,8 @@
-import { getServices, getStaffUsers } from "@/actions/admin";
+import { getServices } from "@/actions/admin";
 import { listJobsAction } from "@/actions/job-intake";
+import { listAssignablePeople } from "@/data-access/job-intake";
 import { JobsList } from "@/components/admin/jobs/JobsList";
-import { isAssignableJobStaff, type ScheduleWindow } from "@/lib/jobs/intake";
+import { type ScheduleWindow } from "@/lib/jobs/intake";
 
 export default async function JobsPage({
   searchParams,
@@ -23,7 +24,7 @@ export default async function JobsPage({
       page: Number(params.page) || 1,
     }),
     getServices(),
-    getStaffUsers(),
+    listAssignablePeople(),
   ]);
 
   return (
@@ -33,7 +34,7 @@ export default async function JobsPage({
       page={result.page}
       totalPages={result.totalPages}
       services={services.filter((service) => service.active).map((service) => ({ id: service.id, name: service.name }))}
-      staff={staff.filter((person) => isAssignableJobStaff(person))}
+      staff={staff}
       filters={params}
     />
   );

@@ -5,7 +5,7 @@ import { flushSync } from "react-dom";
 import { ChevronLeft, ChevronRight, Filter, Menu, Plus, Printer, Search, X } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { formatThb } from "@/lib/jobs/intake";
-import { detectProvince, provinceOptions, provinceStyle } from "@/lib/calendar/provinces";
+import { detectProvince, provinceChipStyle, provinceOptions, provinceStyle } from "@/lib/calendar/provinces";
 import { bangkokDateInputValue, bangkokDateTime, bangkokTimeInputValue } from "@/lib/jobs/intake";
 import { canTransitionCaseStatus, CASE_STATUS_LABELS } from "@/lib/domain/case-status";
 import {
@@ -304,9 +304,15 @@ function eventAria(event: ManualCalendarEvent) {
   return place ? `Event, ${event.title}, ${place}` : `Event, ${event.title}`;
 }
 
-function eventAccent(event: { color: string | null; type: string; province?: string | null }) {
-  if (event.province) return provinceStyle(event.province).accent;
-  return EVENT_ACCENTS[event.color ?? ""] ?? EVENT_ACCENTS[event.type] ?? EVENT_ACCENTS.appointment;
+function eventChipStyle(event: { color: string | null; type: string; province?: string | null }) {
+  if (event.province) return provinceChipStyle(event.province);
+  const accent = EVENT_ACCENTS[event.color ?? ""] ?? EVENT_ACCENTS[event.type] ?? EVENT_ACCENTS.appointment;
+  return {
+    backgroundColor: `color-mix(in srgb, ${accent} 36%, white)`,
+    color: "#111827",
+    borderColor: accent,
+    boxShadow: `inset 5px 0 0 ${accent}`,
+  };
 }
 
 function eventsOnDate(events: ManualCalendarEvent[], date: string) {
@@ -1644,7 +1650,7 @@ function SidebarBody(props: {
             return (
             <li key={item.name}>
               <button type="button" aria-pressed={active} className="flex h-9 w-full items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-900" onClick={() => props.onProvince(needed ? PROVINCE_NEEDED_TOKEN : item.name)}>
-                <span className="h-2.5 w-2.5 rounded-sm" style={{ background: item.accent }} />
+                <span className="h-3.5 w-3.5 shrink-0 rounded-sm border-2" style={{ background: item.color, borderColor: item.accent }} />
                 {item.name} ({item.count})
               </button>
             </li>
@@ -1660,7 +1666,7 @@ function SidebarBody(props: {
               return (
                 <li key={name}>
                   <button type="button" aria-pressed={active} className="flex h-9 w-full items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-900" onClick={() => props.onProvince(name)}>
-                    <span className="h-2.5 w-2.5 rounded-sm" style={{ background: style.accent }} />
+                    <span className="h-3.5 w-3.5 shrink-0 rounded-sm border-2" style={{ background: style.color, borderColor: style.accent }} />
                     {name}
                   </button>
                 </li>
@@ -1683,11 +1689,13 @@ function SidebarBody(props: {
                 key={job.caseId}
                 draggable
                 onDragStart={(event) => writeDrag(event.dataTransfer, { kind: "job", id: job.caseId })}
-                className="cursor-grab rounded-lg px-2 py-1 hover:bg-gray-50 active:cursor-grabbing dark:hover:bg-gray-900"
+                className="cursor-grab rounded-lg border px-2 py-1 active:cursor-grabbing"
+                style={provinceChipStyle(job.province)}
               >
                 <p className="text-sm font-medium">{job.customerName}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-300">{job.serviceName} · {job.province ?? "Province needed"}</p>
-                <button type="button" className="mt-1 text-sm font-medium text-siam-blue" onClick={() => props.onOpenJob(job.caseId)}>
+                <p className="text-xs font-semibold">{job.province ?? "Province needed"}</p>
+                <p className="text-xs opacity-80">{job.serviceName}</p>
+                <button type="button" className="mt-1 text-sm font-semibold underline" onClick={() => props.onOpenJob(job.caseId)}>
                   Schedule
                 </button>
               </li>

@@ -39,7 +39,7 @@ export function JobsList({
   page: number;
   totalPages: number;
   services: { id: string; name: string }[];
-  staff: { id: string; name: string | null; email: string }[];
+  staff: { id: string; name: string | null; email: string; role?: string | null }[];
   filters: Record<string, string | undefined>;
 }) {
   const router = useRouter();
@@ -104,13 +104,24 @@ export function JobsList({
           label="Staff"
           value={filters.staffId ?? "all"}
           onChange={(staffId) => push({ staffId })}
-          options={[["all", "All staff"], ...staff.map((person) => [person.id, person.name || person.email] as [string, string])]}
+          options={[
+            ["all", "Everyone"],
+            ...staff.map((person) => [
+              person.id,
+              person.role === "freelancer" ? `${person.name || person.email} (freelancer)` : person.name || person.email,
+            ] as [string, string]),
+          ]}
         />
         <Select
           label="Closed by"
           value={filters.closedById ?? "all"}
           onChange={(closedById) => push({ closedById })}
-          options={[["all", "Everyone"], ...staff.map((person) => [person.id, person.name || person.email] as [string, string])]}
+          options={[
+            ["all", "Everyone"],
+            ...staff
+              .filter((person) => person.role !== "freelancer")
+              .map((person) => [person.id, person.name || person.email] as [string, string]),
+          ]}
         />
         <Select
           label="Service"

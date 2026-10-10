@@ -12,6 +12,7 @@ import {
   MANUAL_EVENT_COLORS,
   MANUAL_EVENT_TYPES,
   manualEventWindow,
+  normalizeManualJobType,
   normalizeManualPlace,
   planBackfill,
   schedulingWarnings,
@@ -31,9 +32,10 @@ import {
   formatBangkokDate,
   formatBangkokTime,
   parseDocumentsRequired,
+  isAssignableWorker,
   staffDisplayName,
 } from "@/lib/jobs/intake";
-import { resolveStaffActor, syncScheduleFromCase } from "@/data-access/job-intake";
+import { listAssignablePeople, resolveStaffActor, syncScheduleFromCase } from "@/data-access/job-intake";
 
 const calendarSelect = {
   id: true,
@@ -128,8 +130,8 @@ function applyEventProvinceFilter(where: Prisma.EventWhereInput, provinces: stri
 }
 
 function manualEventWhere(start: Date, end: Date, filters: CalendarFilters, searching: boolean, q: string): Prisma.EventWhereInput {
-  // Service and status belong to jobs. Province, staff, and search also apply to appointments.
-  const jobOnly = Boolean(filters.serviceId) || (filters.status !== "" && filters.status !== "all");
+  // Status belongs to jobs. Service, province, staff, and search also apply to appointments.
+  const jobOnly = filters.status !== "" && filters.status !== "all";
   if (jobOnly) return { id: { in: [] } };
   // Job appointments are drawn from Case. Events that still point at a case must not appear twice.
   const where: Prisma.EventWhereInput = { primaryForCaseId: null, caseId: null };
@@ -139,6 +141,8 @@ function manualEventWhere(start: Date, end: Date, filters: CalendarFilters, sear
       { description: { contains: q, mode: "insensitive" } },
       { location: { contains: q, mode: "insensitive" } },
       { province: { contains: q, mode: "insensitive" } },
+      { otherServiceName: { contains: q, mode: "insensitive" } },
+      { service: { is: { name: { contains: q, mode: "insensitive" } } } },
     ];
   } else {
     where.start = { lt: end };
@@ -146,6 +150,7 @@ function manualEventWhere(start: Date, end: Date, filters: CalendarFilters, sear
   }
   if (filters.staffId === "tbd") where.staffId = null;
   else if (filters.staffId) where.staffId = filters.staffId;
+  if (filters.serviceId) where.serviceId = filters.serviceId;
   applyEventProvinceFilter(where, filters.provinces);
   return where;
 }
@@ -162,6 +167,9 @@ function toManualEvent(event: {
   staffId: string | null;
   location: string | null;
   province: string | null;
+  serviceId: string | null;
+  otherServiceName: string | null;
+  service: { name: string } | null;
   staff: { name: string | null; email: string } | null;
 }): ManualCalendarEvent {
   return {
@@ -177,6 +185,9 @@ function toManualEvent(event: {
     staffName: event.staff ? staffDisplayName(event.staff) : null,
     location: event.location,
     province: event.province,
+    serviceId: event.serviceId,
+    otherServiceName: event.otherServiceName,
+    serviceName: event.service?.name ?? event.otherServiceName,
   };
 }
 
@@ -269,6 +280,9 @@ export async function loadCompanyCalendar(input: {
         staffId: true,
         location: true,
         province: true,
+        serviceId: true,
+        otherServiceName: true,
+        service: { select: { name: true } },
         staff: { select: { name: true, email: true } },
       },
       orderBy: { start: "asc" },
@@ -322,19 +336,31 @@ export async function listPublicAvailability(start: Date, end: Date) {
 }
 
 export async function loadCalendarLookups() {
-  const [staff, services] = await Promise.all([
-    prisma.user.findMany({
-      where: { role: { in: ["admin", "staff"] }, active: true },
-      select: { id: true, name: true, email: true },
-      orderBy: { name: "asc" },
-    }),
+  const [people, services] = await Promise.all([
+    listAssignablePeople(),
     prisma.service.findMany({
       where: { active: true },
       select: { id: true, name: true },
       orderBy: { sortOrder: "asc" },
     }),
   ]);
-  return { staff, services };
+  return {
+    staff: people.filter((person) => person.role !== "freelancer").map(calendarPerson),
+    freelancers: people.filter((person) => person.role === "freelancer").map(calendarPerson),
+    services,
+  };
+}
+
+function calendarPerson(person: { id: string; name: string | null; email: string }) {
+  return { id: person.id, name: person.name, email: person.email };
+}
+
+async function calendarAssignee(id: string) {
+  const person = await prisma.user.findFirst({
+    where: { id, active: true, role: { in: ["admin", "staff", "freelancer"] } },
+    select: { id: true, name: true, email: true, role: true, active: true },
+  });
+  return isAssignableWorker(person) ? person : null;
 }
 
 export async function loadCalendarHealth() {
@@ -500,10 +526,7 @@ export async function assignCalendarStaff(
   if (!existing) throw new Error("Job not found");
   let staffName = "TBD";
   if (staffId) {
-    const staff = await prisma.user.findFirst({
-      where: { id: staffId, active: true, role: { in: ["admin", "staff"] } },
-      select: { id: true, name: true, email: true },
-    });
+    const staff = await calendarAssignee(staffId);
     if (!staff) throw new Error("Job not found");
     staffName = staffDisplayName(staff);
   }
@@ -573,13 +596,27 @@ export async function saveManualCalendarEvent(input: ManualEventDraft) {
   if (place.errors.location || place.errors.province) {
     throw new JobIntakeValidationError("Check the highlighted fields.", place.errors);
   }
-  let staffId: string | null = null;
-  if (input.staffId) {
-    const person = await prisma.user.findFirst({
-      where: { id: input.staffId, role: { in: ["admin", "staff"] }, active: true },
+  const jobType = normalizeManualJobType(input);
+  if (jobType.errors.serviceId || jobType.errors.otherServiceName) {
+    throw new JobIntakeValidationError("Check the highlighted fields.", jobType.errors);
+  }
+  if (jobType.serviceId) {
+    const service = await prisma.service.findUnique({
+      where: { id: jobType.serviceId },
       select: { id: true },
     });
-    if (!person) throw new JobIntakeValidationError("Choose a staff member.", { staffId: "Choose a staff member." });
+    if (!service) {
+      throw new JobIntakeValidationError("Choose a job type from the list.", { serviceId: "Choose a service or Other." });
+    }
+  }
+  let staffId: string | null = null;
+  if (input.staffId) {
+    const person = await calendarAssignee(input.staffId);
+    if (!person) {
+      throw new JobIntakeValidationError("Choose a staff member or freelancer.", {
+        staffId: "Choose a staff member or freelancer.",
+      });
+    }
     staffId = person.id;
   }
   const data = {
@@ -593,6 +630,8 @@ export async function saveManualCalendarEvent(input: ManualEventDraft) {
     staffId,
     location: place.location,
     province: place.province,
+    serviceId: jobType.serviceId,
+    otherServiceName: jobType.otherServiceName,
     caseId: null,
     userId: null,
   };

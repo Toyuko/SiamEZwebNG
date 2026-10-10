@@ -304,7 +304,7 @@ export function filterCalendarJobs(jobs: CalendarJobRecord[], filters: CalendarF
 
 /** Appointments follow staff, service, and province in the browser. A job status hides them. */
 export function eventMatchesFilters(
-  event: { province: string | null; staffId: string | null; serviceId?: string | null },
+  event: { province: string | null; staffId: string | null; serviceId: string | null },
   filters: CalendarFilters
 ): boolean {
   if (!matchesProvince(event.province, filters.provinces)) return false;
@@ -456,6 +456,9 @@ export type ManualCalendarEvent = {
   staffName: string | null;
   location: string | null;
   province: string | null;
+  serviceId: string | null;
+  serviceName: string | null;
+  otherServiceName: string | null;
 };
 
 /** Fields saved for an appointment that is not a job. */
@@ -473,6 +476,9 @@ export type ManualEventDraft = {
   staffId: string | null;
   location: string;
   province: string;
+  /** Catalog service id, "other", or empty. */
+  serviceId: string;
+  otherServiceName: string;
 };
 
 const MANUAL_LOCATION_MAX = 500;
@@ -489,6 +495,33 @@ export function normalizeManualPlace(input: { location?: string | null; province
   const province = normalizeProvince(input.province);
   if (input.province?.trim() && !province) errors.province = "Choose a province from the list.";
   return { location: location || null, province, errors };
+}
+
+const OTHER_SERVICE_MAX = 200;
+
+/** A catalog service id, or Other plus a name. Empty is allowed. */
+export function normalizeManualJobType(input: { serviceId?: string | null; otherServiceName?: string | null }): {
+  serviceId: string | null;
+  otherServiceName: string | null;
+  errors: { serviceId?: string; otherServiceName?: string };
+} {
+  const raw = input.serviceId?.trim() ?? "";
+  const other = input.otherServiceName?.trim() ?? "";
+  const errors: { serviceId?: string; otherServiceName?: string } = {};
+  if (other.length > OTHER_SERVICE_MAX) errors.otherServiceName = "Use 200 characters or fewer.";
+  if (!raw) return { serviceId: null, otherServiceName: null, errors };
+  if (raw === "other") {
+    if (!other) errors.otherServiceName = "Enter the other job type.";
+    return { serviceId: null, otherServiceName: other || null, errors };
+  }
+  return { serviceId: raw, otherServiceName: null, errors };
+}
+
+export function manualJobTypeDraft(event: { serviceId: string | null; otherServiceName: string | null }) {
+  return {
+    serviceId: event.serviceId || (event.otherServiceName ? "other" : ""),
+    otherServiceName: event.otherServiceName ?? "",
+  };
 }
 
 export const MANUAL_EVENT_TYPES = ["appointment", "deadline", "milestone"] as const;
@@ -544,7 +577,11 @@ export function movedManualEvent(event: ManualCalendarEvent, date: string, time:
   if (!DATE_RE.test(date)) return null;
   const description = event.description ?? "";
   const color = event.color ?? "";
-  const place = { location: event.location ?? "", province: event.province ?? "" };
+  const place = {
+    location: event.location ?? "",
+    province: event.province ?? "",
+    ...manualJobTypeDraft(event),
+  };
   if (time === null) {
     const span = event.allDay ? inclusiveEventDays(event.start, event.end) : 1;
     const endDate = shiftCalendarDate(date, span - 1);

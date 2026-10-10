@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 import { getSession } from "@/lib/auth";
-import { isAssignableJobStaff } from "@/lib/jobs/intake";
 import { loadCalendarLookups, loadCompanyCalendar } from "@/data-access/company-calendar";
 import { calendarAnchor, calendarRange, parseProvinceParam, resolveCalendarView, type CalendarContextName, type CalendarFilters } from "@/lib/calendar/schedule";
 import { CompanyCalendar } from "./CompanyCalendar";
@@ -49,7 +48,8 @@ export default async function AdminCalendarPage({
       unscheduled={calendar.unscheduled}
       events={calendar.events}
       health={null}
-      staff={lookups.staff.filter((person) => isAssignableJobStaff(person))}
+      staff={lookups.staff}
+      freelancers={lookups.freelancers}
       services={lookups.services}
       view={view}
       anchor={anchor}

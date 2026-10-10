@@ -11,6 +11,8 @@ import { normalizeProvince } from "@/lib/calendar/provinces";
 export const JOB_INTAKE_TIMEZONE = "Asia/Bangkok";
 export const JOB_INTAKE_DEPOSIT_SOURCE = "job_intake_deposit";
 export const JOB_INTAKE_EVENT_MARKER = "[job-intake]";
+/** Every job created from intake starts here. Staff can change it later from the job page. */
+export const JOB_INTAKE_CREATED_STATUS: CaseStatus = "awaiting_payment";
 
 export const LEAD_SOURCES = ["facebook", "line", "whatsapp", "email", "other"] as const;
 export type LeadSource = (typeof LEAD_SOURCES)[number];
@@ -37,6 +39,16 @@ export function isAssignableJobStaff(staff: { email?: string | null; name?: stri
   if (NON_PERSON_STAFF_EMAILS.has(email)) return false;
   if (name.includes("legacy migration") || name.includes("google play review")) return false;
   return true;
+}
+
+const ASSIGNABLE_WORKER_ROLES = new Set(["admin", "staff", "freelancer"]);
+
+/** Someone who can be assigned the work: active staff, admin, or freelancer. Closers stay staff-only. */
+export function isAssignableWorker(
+  user: { role?: string | null; active?: boolean; email?: string | null; name?: string | null } | null | undefined
+) {
+  if (!user?.active || !user.role || !ASSIGNABLE_WORKER_ROLES.has(user.role)) return false;
+  return isAssignableJobStaff(user);
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
