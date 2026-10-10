@@ -10,6 +10,7 @@ import {
   manualEventWindow,
   matchesProvince,
   movedManualEvent,
+  normalizeManualJobType,
   normalizeManualPlace,
   isUnscheduledJob,
   monthGridDates,
@@ -146,6 +147,9 @@ describe("company calendar", () => {
       staffName: null,
       location: "DLT Chonburi",
       province: "Chonburi",
+      serviceId: "svc-license",
+      serviceName: "Driver's License",
+      otherServiceName: null,
     };
     const moved = movedManualEvent(timed, "2026-10-09", "14:00");
     expect(moved?.date).toBe("2026-10-09");
@@ -155,6 +159,7 @@ describe("company calendar", () => {
     expect(moved?.allDay).toBe(false);
     expect(moved?.location).toBe("DLT Chonburi");
     expect(moved?.province).toBe("Chonburi");
+    expect(moved?.serviceId).toBe("svc-license");
     const day = movedManualEvent(
       { ...timed, allDay: true, start: "2026-10-07T17:00:00.000Z", end: "2026-10-09T17:00:00.000Z" },
       "2026-10-12",
@@ -180,6 +185,23 @@ describe("company calendar", () => {
     expect(normalizeManualPlace({ location: "home", province: "Not a province" }).errors.province).toBe(
       "Choose a province from the list.",
     );
+  });
+
+  it("stores a catalog service or an other job type", () => {
+    expect(normalizeManualJobType({ serviceId: "svc-license", otherServiceName: "" })).toEqual({
+      serviceId: "svc-license",
+      otherServiceName: null,
+      errors: {},
+    });
+    expect(normalizeManualJobType({ serviceId: "other", otherServiceName: "  Embassy run  " })).toEqual({
+      serviceId: null,
+      otherServiceName: "Embassy run",
+      errors: {},
+    });
+    expect(normalizeManualJobType({ serviceId: "other", otherServiceName: " " }).errors.otherServiceName).toBe(
+      "Enter the other job type.",
+    );
+    expect(normalizeManualJobType({ serviceId: "", otherServiceName: "" }).serviceId).toBeNull();
   });
 
   it("keeps 10:00 Thailand as 03:00 UTC and prefers agenda on a phone", () => {

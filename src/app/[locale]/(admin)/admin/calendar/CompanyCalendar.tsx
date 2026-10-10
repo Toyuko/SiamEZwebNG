@@ -26,6 +26,7 @@ import {
   monthGridDates,
   movedManualEvent,
   nextCalendarDate,
+  normalizeManualJobType,
   normalizeManualPlace,
   parseCalendarView,
   parseProvinceParam,
@@ -274,6 +275,32 @@ function staffLabel(person: StaffOption) {
   return person.name || person.email;
 }
 
+function findAssignee(staff: StaffOption[], freelancers: StaffOption[], staffId: string | null) {
+  if (!staffId) return null;
+  return staff.find((person) => person.id === staffId) ?? freelancers.find((person) => person.id === staffId) ?? null;
+}
+
+function AssigneeOptions({ staff, freelancers }: { staff: StaffOption[]; freelancers: StaffOption[] }) {
+  return (
+    <>
+      {staff.length > 0 && (
+        <optgroup label="Staff">
+          {staff.map((person) => (
+            <option key={person.id} value={person.id}>{staffLabel(person)}</option>
+          ))}
+        </optgroup>
+      )}
+      {freelancers.length > 0 && (
+        <optgroup label="Freelancers">
+          {freelancers.map((person) => (
+            <option key={person.id} value={person.id}>{staffLabel(person)}</option>
+          ))}
+        </optgroup>
+      )}
+    </>
+  );
+}
+
 function waHref(phone: string) {
   let digits = phone.replace(/\D/g, "");
   if (digits.startsWith("0")) digits = `66${digits.slice(1)}`;
@@ -300,7 +327,7 @@ const EVENT_ACCENTS: Record<string, string> = {
 };
 
 function eventAria(event: ManualCalendarEvent) {
-  const place = [event.province, event.location].filter(Boolean).join(", ");
+  const place = [event.serviceName, event.province, event.location].filter(Boolean).join(", ");
   return place ? `Event, ${event.title}, ${place}` : `Event, ${event.title}`;
 }
 
@@ -376,6 +403,7 @@ export function CompanyCalendar({
   events: loadedEvents,
   health,
   staff,
+  freelancers,
   services,
   view,
   anchor,
@@ -390,6 +418,7 @@ export function CompanyCalendar({
   events: ManualCalendarEvent[];
   health: Health;
   staff: StaffOption[];
+  freelancers: StaffOption[];
   services: ServiceOption[];
   view: CalendarViewName;
   anchor: string;
@@ -745,7 +774,11 @@ export function CompanyCalendar({
     });
     if (!span) return null;
     const place = normalizeManualPlace(input);
-    const person = input.staffId ? staff.find((item) => item.id === input.staffId) : null;
+    const jobType = normalizeManualJobType(input);
+    const person = findAssignee(staff, freelancers, input.staffId);
+    const serviceName = jobType.serviceId
+      ? services.find((item) => item.id === jobType.serviceId)?.name ?? null
+      : jobType.otherServiceName;
     const type = input.type === "deadline" || input.type === "milestone" ? input.type : "appointment";
     return {
       id,
@@ -760,6 +793,9 @@ export function CompanyCalendar({
       staffName: person ? staffLabel(person) : null,
       location: place.location,
       province: place.province,
+      serviceId: jobType.serviceId,
+      otherServiceName: jobType.otherServiceName,
+      serviceName,
     };
   }
 
@@ -1002,12 +1038,10 @@ export function CompanyCalendar({
         </header>
 
         <div className="hidden shrink-0 flex-wrap items-center gap-2 border-b border-gray-200 px-3 py-2 lg:flex dark:border-gray-800">
-          <FilterSelect label="Staff" value={filters.staffId} onChange={(staffId) => applyBrowse({ staffId })}>
-            <option value="">All staff</option>
+          <FilterSelect label="Assigned" value={filters.staffId} onChange={(staffId) => applyBrowse({ staffId })}>
+            <option value="">Everyone</option>
             <option value="tbd">TBD</option>
-            {staff.map((person) => (
-              <option key={person.id} value={person.id}>{staffLabel(person)}</option>
-            ))}
+            <AssigneeOptions staff={staff} freelancers={freelancers} />
           </FilterSelect>
           <FilterSelect
             label="Province"
@@ -1109,6 +1143,7 @@ export function CompanyCalendar({
                 today={today}
                 jobDates={jobDates}
                 staff={staff}
+                freelancers={freelancers}
                 filters={filters}
                 summary={summary}
                 unscheduled={unscheduled}
@@ -1280,12 +1315,10 @@ export function CompanyCalendar({
             </div>
             {panel === "filters" ? (
               <div className="space-y-3">
-                <FilterSelect label="Staff" value={filters.staffId} onChange={(staffId) => applyBrowse({ staffId })}>
-                  <option value="">All staff</option>
+                <FilterSelect label="Assigned" value={filters.staffId} onChange={(staffId) => applyBrowse({ staffId })}>
+                  <option value="">Everyone</option>
                   <option value="tbd">TBD</option>
-                  {staff.map((person) => (
-                    <option key={person.id} value={person.id}>{staffLabel(person)}</option>
-                  ))}
+                  <AssigneeOptions staff={staff} freelancers={freelancers} />
                 </FilterSelect>
                 <FilterSelect
                   label="Province"
@@ -1327,6 +1360,7 @@ export function CompanyCalendar({
                 today={today}
                 jobDates={jobDates}
                 staff={staff}
+                freelancers={freelancers}
                 filters={filters}
                 summary={summary}
                 unscheduled={unscheduled}
@@ -1357,6 +1391,8 @@ export function CompanyCalendar({
           editor={eventEditor}
           event={eventEditor.mode === "edit" ? mergedEvents.find((item) => item.id === eventEditor.id) ?? null : null}
           staff={staff}
+          freelancers={freelancers}
+          services={services}
           pending={pending}
           error={error}
           onClose={() => setEventEditor(null)}
@@ -1399,6 +1435,7 @@ export function CompanyCalendar({
         <JobPopover
           job={selected}
           staff={staff}
+          freelancers={freelancers}
           pending={pending}
           error={error}
           onClose={() => setSelectedId(null)}
@@ -1406,7 +1443,7 @@ export function CompanyCalendar({
           onStaff={(staffId) => {
             const caseId = selected.caseId;
             const previous = patchesRef.current[caseId];
-            const person = staff.find((item) => item.id === staffId);
+            const person = findAssignee(staff, freelancers, staffId);
             rememberPatch(caseId, { staffId, staffName: person ? staffLabel(person) : "TBD" });
             setError(null);
             startTransition(async () => {
@@ -1572,6 +1609,7 @@ function SidebarBody(props: {
   today: string;
   jobDates: Set<string>;
   staff: StaffOption[];
+  freelancers: StaffOption[];
   filters: CalendarFilters;
   summary: Summary;
   unscheduled: CalendarJobRecord[];
@@ -1632,15 +1670,20 @@ function SidebarBody(props: {
             </button>
           </li>
           {props.staff.map((person) => (
-            <li key={person.id}>
-              <button type="button" className={`flex h-10 w-full items-center gap-2 rounded-lg px-2 text-left text-sm ${props.filters.staffId === person.id ? "bg-gray-100 font-semibold dark:bg-gray-800" : "hover:bg-gray-50 dark:hover:bg-gray-900"}`} aria-pressed={props.filters.staffId === person.id} onClick={() => props.onStaff(props.filters.staffId === person.id ? "" : person.id)}>
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold dark:bg-gray-700">{staffLabel(person).slice(0, 1)}</span>
-                {staffLabel(person)}
-              </button>
-            </li>
+            <PersonFilter key={person.id} person={person} active={props.filters.staffId === person.id} onStaff={props.onStaff} />
           ))}
         </ul>
       </div>
+      {props.freelancers.length > 0 && (
+        <div>
+          <h2 className="px-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Freelancers</h2>
+          <ul className="mt-1 max-h-48 overflow-auto">
+            {props.freelancers.map((person) => (
+              <PersonFilter key={person.id} person={person} active={props.filters.staffId === person.id} onStaff={props.onStaff} />
+            ))}
+          </ul>
+        </div>
+      )}
       <div>
         <h2 className="px-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Provinces</h2>
         <ul className="mt-1 max-h-40 overflow-auto">
@@ -1750,6 +1793,7 @@ function ManualEventChip({ event }: { event: ManualCalendarEvent }) {
     >
       {event.province ? <span className="font-bold">{event.province} · </span> : null}
       {clockLabel(event.start, event.allDay)} {event.title}
+      {event.serviceName ? <span className="opacity-80"> · {event.serviceName}</span> : null}
     </span>
   );
 }
@@ -1764,9 +1808,34 @@ function ManualEventCard({ event, dense = false }: { event: ManualCalendarEvent;
       <span className="block truncate font-semibold">
         {clockLabel(event.start, event.allDay)} {event.title}
       </span>
+      {event.serviceName ? <span className="block truncate opacity-80">{event.serviceName}</span> : null}
       {event.location ? <span className="block truncate opacity-80">{event.location}</span> : null}
       <span className="block truncate opacity-80">{event.staffName ?? "Event"}</span>
     </span>
+  );
+}
+
+function PersonFilter({
+  person,
+  active,
+  onStaff,
+}: {
+  person: StaffOption;
+  active: boolean;
+  onStaff: (staffId: string) => void;
+}) {
+  return (
+    <li>
+      <button
+        type="button"
+        className={`flex h-10 w-full items-center gap-2 rounded-lg px-2 text-left text-sm ${active ? "bg-gray-100 font-semibold dark:bg-gray-800" : "hover:bg-gray-50 dark:hover:bg-gray-900"}`}
+        aria-pressed={active}
+        onClick={() => onStaff(active ? "" : person.id)}
+      >
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold dark:bg-gray-700">{staffLabel(person).slice(0, 1)}</span>
+        <span className="truncate">{staffLabel(person)}</span>
+      </button>
+    </li>
   );
 }
 
@@ -1774,6 +1843,8 @@ function EventDialog({
   editor,
   event,
   staff,
+  freelancers,
+  services,
   pending,
   error,
   onClose,
@@ -1783,10 +1854,28 @@ function EventDialog({
   editor: EventEditor;
   event: ManualCalendarEvent | null;
   staff: StaffOption[];
+  freelancers: StaffOption[];
+  services: ServiceOption[];
   pending: boolean;
   error: string | null;
   onClose: () => void;
-  onSave: (input: ManualEventDraft) => void;
+  onSave: (input: {
+    id?: string | null;
+    title: string;
+    description: string;
+    date: string;
+    time: string;
+    endDate: string;
+    endTime: string;
+    allDay: boolean;
+    type: string;
+    color: string;
+    staffId: string | null;
+    location: string;
+    province: string;
+    serviceId: string;
+    otherServiceName: string;
+  }) => void;
   onDelete: (id: string) => void;
 }) {
   const creating = editor.mode === "create";
@@ -1807,6 +1896,8 @@ function EventDialog({
   const [staffId, setStaffId] = useState(event?.staffId ?? "");
   const [location, setLocation] = useState(event?.location ?? "");
   const [province, setProvince] = useState(event?.province ?? "");
+  const [serviceId, setServiceId] = useState(event?.serviceId ?? (event?.otherServiceName ? "other" : ""));
+  const [otherServiceName, setOtherServiceName] = useState(event?.otherServiceName ?? "");
   const provinceTouched = useRef(Boolean(event?.province));
   const [confirmDelete, setConfirmDelete] = useState(false);
   const fieldClass = "mt-1 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-base dark:border-gray-600 dark:bg-gray-900";
@@ -1847,13 +1938,15 @@ function EventDialog({
             staffId: staffId || null,
             location,
             province,
+            serviceId,
+            otherServiceName,
           });
         }}
       >
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 id="manual-event-title" className="text-lg font-semibold">{creating ? "Add appointment" : "Edit appointment"}</h2>
-            <p className="text-sm text-gray-500">Location and province are the same as on a job.</p>
+            <p className="text-sm text-gray-500">Job type, location, and province are the same as on a job.</p>
           </div>
           <button type="button" className="inline-flex h-11 w-11 items-center justify-center" onClick={onClose} aria-label="Close">
             <X className="h-5 w-5" />
@@ -1864,6 +1957,28 @@ function EventDialog({
           Title
           <input className={fieldClass} value={title} onChange={(change) => setTitle(change.target.value)} required maxLength={200} />
         </label>
+        <label className="mt-3 block text-sm font-medium">
+          Job type
+          <select className={fieldClass} value={serviceId} onChange={(change) => setServiceId(change.target.value)}>
+            <option value="">Select a service</option>
+            {services.map((service) => (
+              <option key={service.id} value={service.id}>{service.name}</option>
+            ))}
+            <option value="other">Other</option>
+          </select>
+        </label>
+        {serviceId === "other" && (
+          <label className="mt-3 block text-sm font-medium">
+            Other job type
+            <input
+              className={fieldClass}
+              value={otherServiceName}
+              maxLength={200}
+              required
+              onChange={(change) => setOtherServiceName(change.target.value)}
+            />
+          </label>
+        )}
         <label className="mt-3 block text-sm font-medium">
           Location
           <input
@@ -1953,12 +2068,10 @@ function EventDialog({
           </select>
         </label>
         <label className="mt-3 block text-sm font-medium">
-          Staff
+          Assigned
           <select className={fieldClass} value={staffId} onChange={(change) => setStaffId(change.target.value)}>
             <option value="">None</option>
-            {staff.map((person) => (
-              <option key={person.id} value={person.id}>{staffLabel(person)}</option>
-            ))}
+            <AssigneeOptions staff={staff} freelancers={freelancers} />
           </select>
         </label>
         <label className="mt-3 block text-sm font-medium">
@@ -2568,6 +2681,7 @@ function AgendaList({
 function JobPopover({
   job,
   staff,
+  freelancers,
   pending,
   error,
   onClose,
@@ -2578,6 +2692,7 @@ function JobPopover({
 }: {
   job: CalendarJobRecord;
   staff: StaffOption[];
+  freelancers: StaffOption[];
   pending: boolean;
   error: string | null;
   onClose: () => void;
@@ -2685,7 +2800,7 @@ function JobPopover({
           </form>
         )}
         <label className="mt-3 block text-sm">
-          Staff
+          Assigned
           <select
             className="mt-1 h-11 w-full rounded-lg border px-2 dark:border-gray-600 dark:bg-gray-900"
             value={staffId}
@@ -2697,9 +2812,7 @@ function JobPopover({
             }}
           >
             <option value="">TBD</option>
-            {staff.map((person) => (
-              <option key={person.id} value={person.id}>{staffLabel(person)}</option>
-            ))}
+            <AssigneeOptions staff={staff} freelancers={freelancers} />
           </select>
         </label>
         <label className="mt-3 block text-sm">
@@ -2772,7 +2885,7 @@ function printRows(date: string, jobs: CalendarJobRecord[], events: ManualCalend
       return {
         key: `event-${event.id}`,
         sort: event.allDay ? -1 : bangkokMinutes(event.start),
-        text: `${event.province ? `${event.province} · ` : ""}${clockLabel(event.start, event.allDay)} · ${event.title}${event.location ? ` · ${event.location}` : ""}${event.staffName ? ` · ${event.staffName}` : ""} · Event`,
+        text: `${event.province ? `${event.province} · ` : ""}${clockLabel(event.start, event.allDay)} · ${event.title}${event.serviceName ? ` · ${event.serviceName}` : ""}${event.location ? ` · ${event.location}` : ""}${event.staffName ? ` · ${event.staffName}` : ""} · Event`,
         ...place,
       };
     }),
