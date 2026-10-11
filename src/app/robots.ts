@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getSiteOrigin } from "@/lib/seo/urls";
 
-const PRIVATE_PATHS = [
+export const PRIVATE_PATHS = [
   "/admin",
   "/admin/",
   "/en/admin",
@@ -39,6 +39,10 @@ const PRIVATE_PATHS = [
   "/vehicle/confirmation",
   "/en/vehicle/confirmation",
   "/th/vehicle/confirmation",
+  "/staff-calendar",
+  "/en/staff-calendar",
+  "/th/staff-calendar",
+  "/api/public-calendar",
 ] as const;
 
 export default function robots(): MetadataRoute.Robots {

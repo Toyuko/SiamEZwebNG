@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import { flushSync } from "react-dom";
-import { ChevronLeft, ChevronRight, Filter, Menu, Plus, Printer, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, Menu, Plus, Printer, RefreshCw, Search, X } from "lucide-react";
+import { useRouter as useAppRouter } from "next/navigation";
 import { Link, useRouter } from "@/i18n/navigation";
 import { formatThb } from "@/lib/jobs/intake";
 import { detectProvince, provinceChipStyle, provinceOptions, provinceStyle } from "@/lib/calendar/provinces";
@@ -429,6 +430,8 @@ export function CompanyCalendar({
   explicitView: boolean;
 }) {
   const router = useRouter();
+  const appRouter = useAppRouter();
+  const [updatedLabel, setUpdatedLabel] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
   const pickedView = useRef(false);
@@ -523,6 +526,14 @@ export function CompanyCalendar({
   const jobDates = useMemo(() => new Set(jobs.map(jobDate).filter(Boolean)), [jobs]);
   const mine = Boolean(currentUserId && staff.some((person) => person.id === currentUserId));
   const filtersActive = Boolean(filters.provinces.length || filters.staffId || filters.serviceId || (filters.status && filters.status !== "all") || filters.q);
+
+  useEffect(() => {
+    setUpdatedLabel(
+      new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Bangkok", hour: "numeric", minute: "2-digit" })
+        .format(new Date())
+        .replace(/\u202f/g, " ")
+    );
+  }, [loadedJobs, loadedEvents, anchor, view]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMinutes(bangkokClockMinutes()), 60_000);
@@ -907,7 +918,7 @@ export function CompanyCalendar({
 
   return (
     <>
-      <div className="print:hidden -mx-4 -my-4 flex h-[calc(100dvh-3.5rem)] flex-col bg-white text-gray-900 md:-mx-6 md:-my-6 dark:bg-gray-950 dark:text-gray-100">
+      <div className="print:hidden -mx-4 -my-4 flex h-[calc(100dvh-3.5rem)] flex-col bg-white pb-[env(safe-area-inset-bottom)] text-gray-900 md:-mx-6 md:-my-6 dark:bg-gray-950 dark:text-gray-100">
         {navPending && <div className="h-0.5 shrink-0 animate-pulse bg-siam-blue" aria-hidden />}
         <header className="flex shrink-0 flex-col gap-2 border-b border-gray-200 px-2 py-2 dark:border-gray-800 sm:px-3 lg:flex-row lg:items-center">
           <button
@@ -923,15 +934,30 @@ export function CompanyCalendar({
           </button>
           <button
             type="button"
-            className={`h-10 rounded-full border px-4 text-sm font-medium ${anchor === today ? "border-gray-200 text-gray-400 dark:border-gray-700" : "border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-900"}`}
+            className={`h-11 rounded-full border px-4 text-sm font-medium ${anchor === today ? "border-gray-200 text-gray-400 dark:border-gray-700" : "border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-900"}`}
             onClick={goToday}
           >
             Today
           </button>
-          <button type="button" className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Previous" onClick={() => go({ date: shiftAnchor(anchor, view, -1) })}>
+          <button
+            type="button"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+            aria-label="Refresh"
+            onClick={() => {
+              setUpdatedLabel(
+                new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Bangkok", hour: "numeric", minute: "2-digit" })
+                  .format(new Date())
+                  .replace(/\u202f/g, " ")
+              );
+              appRouter.refresh();
+            }}
+          >
+            <RefreshCw className={`h-5 w-5 ${navPending ? "animate-spin" : ""}`} />
+          </button>
+          <button type="button" className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Previous" onClick={() => go({ date: shiftAnchor(anchor, view, -1) })}>
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <button type="button" className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Next" onClick={() => go({ date: shiftAnchor(anchor, view, 1) })}>
+          <button type="button" className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Next" onClick={() => go({ date: shiftAnchor(anchor, view, 1) })}>
             <ChevronRight className="h-5 w-5" />
           </button>
           <div className="relative min-w-0">
@@ -973,14 +999,14 @@ export function CompanyCalendar({
                   type="button"
                   role="tab"
                   aria-selected={view === item}
-                  className={`h-9 rounded-md px-3 text-sm ${view === item ? "bg-white font-semibold text-siam-blue shadow-sm dark:bg-gray-800" : "text-gray-600 dark:text-gray-300"}`}
+                  className={`h-11 rounded-md px-3 text-sm ${view === item ? "bg-white font-semibold text-siam-blue shadow-sm dark:bg-gray-800" : "text-gray-600 dark:text-gray-300"}`}
                   onClick={() => go({ view: item })}
                 >
                   {viewLabel(item)}
                 </button>
               ))}
               {view === "threeday" && (
-                <button type="button" role="tab" aria-selected className="h-9 rounded-md bg-white px-3 text-sm font-semibold text-siam-blue shadow-sm dark:bg-gray-800">
+                <button type="button" role="tab" aria-selected className="h-11 rounded-md bg-white px-3 text-sm font-semibold text-siam-blue shadow-sm dark:bg-gray-800">
                   3-day
                 </button>
               )}
@@ -988,7 +1014,7 @@ export function CompanyCalendar({
             <label className="lg:hidden">
               <span className="sr-only">Calendar view</span>
               <select
-                className="h-10 rounded-lg border border-gray-300 bg-white px-2 text-sm dark:border-gray-600 dark:bg-gray-900"
+                className="h-11 rounded-lg border border-gray-300 bg-white px-2 text-sm dark:border-gray-600 dark:bg-gray-900"
                 value={view}
                 aria-label="Calendar view"
                 onChange={(event) => go({ view: event.target.value as CalendarViewName })}
@@ -1000,7 +1026,7 @@ export function CompanyCalendar({
             </label>
             <button
               type="button"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 lg:hidden dark:hover:bg-gray-800"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-gray-100 lg:hidden dark:hover:bg-gray-800"
               aria-label="Filters"
               onClick={() => setPanel("filters")}
             >
@@ -1008,7 +1034,7 @@ export function CompanyCalendar({
             </button>
             <button
               type="button"
-              className={`inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 ${searchOpen ? "bg-gray-100 dark:bg-gray-800" : ""}`}
+              className={`inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 ${searchOpen ? "bg-gray-100 dark:bg-gray-800" : ""}`}
               aria-label="Search jobs"
               aria-expanded={searchOpen}
               onClick={() => setSearchOpen((open) => !open)}
@@ -1017,24 +1043,28 @@ export function CompanyCalendar({
             </button>
             <button
               type="button"
-              className="inline-flex h-10 items-center gap-1 rounded-full bg-siam-blue px-3 text-sm font-semibold text-white"
+              className="hidden h-11 items-center gap-1 rounded-full bg-siam-blue px-3 text-sm font-semibold text-white lg:inline-flex"
               onClick={() => openAppointment(anchor, "09:00")}
             >
               <Plus className="h-4 w-4" />
               Appointment
             </button>
-            <Link href={createHref(anchor, "09:00")} className="inline-flex h-10 items-center rounded-full border border-gray-300 px-3 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-900">
+            <Link href={createHref(anchor, "09:00")} className="hidden h-11 items-center rounded-full border border-gray-300 px-3 text-sm font-medium hover:bg-gray-50 lg:inline-flex dark:border-gray-600 dark:hover:bg-gray-900">
               Job
+            </Link>
+            <Link href="/staff-calendar" className="hidden h-11 items-center rounded-full px-3 text-sm font-medium text-siam-blue lg:inline-flex">
+              Staff calendar
             </Link>
             <button
               type="button"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-900"
+              className="hidden h-11 w-11 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-50 lg:inline-flex dark:border-gray-600 dark:hover:bg-gray-900"
               aria-label="Print this view"
               onClick={() => window.print()}
             >
               <Printer className="h-4 w-4" />
             </button>
           </div>
+          {updatedLabel && <p className="px-1 text-xs text-gray-500 lg:hidden">Updated {updatedLabel}</p>}
         </header>
 
         <div className="hidden shrink-0 flex-wrap items-center gap-2 border-b border-gray-200 px-3 py-2 lg:flex dark:border-gray-800">
@@ -1074,7 +1104,31 @@ export function CompanyCalendar({
               Clear filters
             </button>
           )}
+          {updatedLabel && <span className="ml-auto text-xs text-gray-500">Updated {updatedLabel}</span>}
         </div>
+        {summary.provinces.length > 0 && (
+          <div className="hidden shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-gray-200 px-3 py-1.5 text-xs lg:flex dark:border-gray-800" aria-label="Province legend">
+            {summary.provinces.slice(0, 12).map((item) => (
+              <span key={item.name} className="inline-flex items-center gap-1">
+                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.accent }} />
+                {item.name}
+              </span>
+            ))}
+          </div>
+        )}
+        {summary.provinces.length > 0 && (
+          <details className="shrink-0 border-b border-gray-200 px-3 lg:hidden dark:border-gray-800">
+            <summary className="flex h-11 cursor-pointer items-center text-sm font-medium">Province legend</summary>
+            <ul className="space-y-1 pb-2">
+              {summary.provinces.slice(0, 12).map((item) => (
+                <li key={item.name} className="flex items-center gap-2 text-sm">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.accent }} />
+                  {item.name}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
 
         {searchOpen && (
           <div className="shrink-0 border-b border-gray-200 px-3 py-2 dark:border-gray-800">
@@ -1282,7 +1336,7 @@ export function CompanyCalendar({
 
         <button
           type="button"
-          className="fixed bottom-5 right-5 z-30 inline-flex h-14 w-14 items-center justify-center rounded-full bg-siam-blue text-white shadow-lg lg:hidden"
+          className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-[max(1.25rem,env(safe-area-inset-right))] z-30 inline-flex h-14 w-14 items-center justify-center rounded-full bg-siam-blue text-white shadow-lg lg:hidden"
           aria-label="Add appointment"
           onClick={() => openAppointment(anchor, "09:00")}
         >
