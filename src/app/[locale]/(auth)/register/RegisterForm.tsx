@@ -3,7 +3,7 @@
 import { ConversationalRegister } from "@/components/auth/ConversationalRegister";
 import type { AuthSocialProviders } from "@/lib/auth-providers";
 
-/** Single-screen customer signup — same `register` server action as before. */
+/** Stepped signup for client, freelancer, and company accounts. */
 export function RegisterForm({
   locale,
   prefillEmail,

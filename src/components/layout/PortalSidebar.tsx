@@ -57,6 +57,7 @@ const softLaunchClientNav = [
   { labelKey: "browseCars", href: "/sales", icon: Car },
   { labelKey: "browseRealEstate", href: "/real-estate", icon: Home },
   { labelKey: "documents", href: "/portal/documents", icon: FileText },
+  { labelKey: "publicProfile", href: "/portal/freelancer-profile", icon: UserRound },
   { labelKey: "settings", href: "/portal/profile", icon: Settings },
 ];
 

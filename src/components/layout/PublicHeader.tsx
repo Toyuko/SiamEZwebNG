@@ -42,6 +42,12 @@ function isGroupActive(items: PublicNavLink[], pathname: string): boolean {
   return items.some((item) => isNavActive(item, pathname));
 }
 
+function accountHome(role: SessionUser["role"] | undefined): string {
+  if (role === "freelancer") return "/portal/freelancer";
+  if (role === "company") return "/portal/company";
+  return "/portal";
+}
+
 function visiblePublicNav() {
   return publicNav.filter((entry) => {
     if (entry.type === "link" && entry.href === "/freelancers") {
@@ -58,7 +64,11 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
   const tCommon = useTranslations("common");
   const pathname = usePathname();
   const locale = useLocale();
-  const getStartedHref = user ? "/portal" : "/register";
+  const accountHref = accountHome(user?.role);
+  const secondaryHref =
+    user?.role === "freelancer" ? "/portal/freelancer-profile" : "/portal/cases";
+  const secondaryLabel = user?.role === "freelancer" ? t("publicProfile") : t("myCases");
+  const getStartedHref = user ? accountHref : "/register";
 
   const toggleMobileGroup = (id: string, currentlyOpen: boolean) => {
     setMobileGroups((prev) => ({ ...prev, [id]: !currentlyOpen }));
@@ -184,15 +194,15 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link href="/portal" className="flex items-center gap-2">
+                  <Link href={accountHref} className="flex items-center gap-2">
                     <LayoutDashboard className="h-4 w-4" />
                     {t("dashboard")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/portal/cases" className="flex items-center gap-2">
+                  <Link href={secondaryHref} className="flex items-center gap-2">
                     <Briefcase className="h-4 w-4" />
-                    {t("myCases")}
+                    {secondaryLabel}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
@@ -318,18 +328,18 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
           {user ? (
             <>
               <Link
-                href="/portal"
+                href={accountHref}
                 className="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10 text-header-text hover:text-siam-blue"
                 onClick={closeMenu}
               >
                 {t("dashboard")}
               </Link>
               <Link
-                href="/portal/cases"
+                href={secondaryHref}
                 className="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10 text-header-text hover:text-siam-blue"
                 onClick={closeMenu}
               >
-                {t("myCases")}
+                {secondaryLabel}
               </Link>
               <form action={logout} className="mt-1">
                 <button

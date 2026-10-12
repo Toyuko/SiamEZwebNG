@@ -27,7 +27,7 @@ export const softLaunch = {
   showCompanies: false,
 
   /** Staff / freelancer ops depth in admin nav. */
-  showFreelancerOps: false,
+  showFreelancerOps: true,
 
   /** Advanced admin insights (analytics depth can stay; hide experimental groups). */
   showAdvancedCatalog: false,
