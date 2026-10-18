@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CHATWOOT_CLOUD_BASE_URL,
   getChatwootPublicConfig,
+  isChatwootConfigured,
   isChatwootRouteEnabled,
 } from "@/lib/chatwoot";
 
@@ -9,6 +10,7 @@ describe("getChatwootPublicConfig", () => {
   it("returns null when website token is missing", () => {
     expect(getChatwootPublicConfig({})).toBeNull();
     expect(getChatwootPublicConfig({ NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN: "  " })).toBeNull();
+    expect(isChatwootConfigured({})).toBe(false);
   });
 
   it("defaults to Chatwoot Cloud base URL", () => {
@@ -20,6 +22,7 @@ describe("getChatwootPublicConfig", () => {
       websiteToken: "abc123",
       baseUrl: CHATWOOT_CLOUD_BASE_URL,
     });
+    expect(isChatwootConfigured({ NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN: "abc123" })).toBe(true);
   });
 
   it("uses custom base URL without trailing slash", () => {

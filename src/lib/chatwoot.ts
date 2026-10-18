@@ -34,6 +34,11 @@ export function getChatwootPublicConfig(
   return { websiteToken, baseUrl };
 }
 
+/** True when the public website token is configured (widget will load on customer routes). */
+export function isChatwootConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
+  return getChatwootPublicConfig(env) !== null;
+}
+
 /**
  * Customer-facing routes only — skip admin and staff tools.
  * Path shape: /{locale}/admin/..., /{locale}/staff-calendar/...

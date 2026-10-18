@@ -34,7 +34,8 @@ export function ConciergeFab({
       aria-haspopup="dialog"
       className={cn(
         "fixed z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-siam-blue text-white shadow-lg transition-all hover:scale-110 hover:bg-siam-blue-light hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-siam-yellow focus-visible:ring-offset-2",
-        placement === "stacked" ? "bottom-24 right-6" : "bottom-6 right-6"
+        // stacked clears Chatwoot (~64px + 20px) and other bottom-right floats
+        placement === "stacked" ? "bottom-28 right-6" : "bottom-6 right-6"
       )}
     >
       {open ? (

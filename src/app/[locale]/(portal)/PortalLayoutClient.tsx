@@ -5,6 +5,7 @@ import { LazyAiConciergeShell } from "@/components/ai";
 import { PortalSidebar } from "@/components/layout/PortalSidebar";
 import { PortalTopBar } from "@/components/portal/PortalTopBar";
 import { usePathname } from "@/i18n/navigation";
+import { isChatwootConfigured } from "@/lib/chatwoot";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -86,7 +87,11 @@ export function PortalLayoutClient({
           {children}
         </main>
       </div>
-      {showConcierge ? <LazyAiConciergeShell placement="default" /> : null}
+      {showConcierge ? (
+        <LazyAiConciergeShell
+          placement={isChatwootConfigured() ? "stacked" : "default"}
+        />
+      ) : null}
     </div>
   );
 }

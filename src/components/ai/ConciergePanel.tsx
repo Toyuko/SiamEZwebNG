@@ -72,7 +72,7 @@ export function ConciergePanel({
           id={CONCIERGE_PANEL_ID}
           className={cn(
             "fixed right-4 z-[60] flex h-[min(34rem,calc(100vh-11rem))] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-siam-blue/15 bg-white shadow-2xl dark:border-white/10 dark:bg-gray-950 sm:right-6",
-            placement === "stacked" ? "bottom-56" : "bottom-40"
+            placement === "stacked" ? "bottom-60" : "bottom-40"
           )}
           role="dialog"
           aria-modal="true"
