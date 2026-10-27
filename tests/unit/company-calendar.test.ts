@@ -135,7 +135,7 @@ describe("company calendar", () => {
     expect(resolveCalendarSpan("2026-02-31", "2026-03-01").ok).toBe(false);
   });
 
-  it("puts a job on the calendar only after a payment is recorded", () => {
+  it("keeps unpaid jobs on the calendar and marks which ones have a payment", () => {
     expect(isPaidCalendarJob({ status: "awaiting_payment", paidSatang: 0 })).toBe(false);
     expect(isPaidCalendarJob({ status: "confirmed", paidSatang: 0 })).toBe(false);
     expect(isPaidCalendarJob({ status: "awaiting_payment", paidSatang: 500_000 })).toBe(true);
@@ -144,12 +144,11 @@ describe("company calendar", () => {
     const unpaid = baseJob({ caseId: "unpaid", status: "awaiting_payment", paidSatang: 0, depositSatang: 0, outstandingSatang: 1_500_000 });
     const deposit = baseJob({ caseId: "deposit", status: "awaiting_payment", paidSatang: 500_000 });
     const markedPaid = baseJob({ caseId: "marked", status: "paid", paidSatang: 0, depositSatang: 0 });
-    expect(filterCalendarJobs([unpaid, deposit, markedPaid], { provinces: [], staffId: "", serviceId: "", status: "all", q: "" }).map((job) => job.caseId)).toEqual(["deposit", "marked"]);
-    expect(isUnscheduledJob({ scheduledAt: null, status: "awaiting_payment", paidSatang: 0 })).toBe(false);
-    expect(isUnscheduledJob({ scheduledAt: null, status: "awaiting_payment", paidSatang: 500_000 })).toBe(true);
-    expect(isUnscheduledJob({ scheduledAt: null, status: "confirmed", paidSatang: 0 })).toBe(false);
-    expect(isUnscheduledJob({ scheduledAt: null, status: "paid", paidSatang: 0 })).toBe(true);
-    expect(isUnscheduledJob({ scheduledAt: new Date(), status: "paid", paidSatang: 1_500_000 })).toBe(false);
+    expect(filterCalendarJobs([unpaid, deposit, markedPaid], { provinces: [], staffId: "", serviceId: "", status: "all", q: "" }).map((job) => job.caseId)).toEqual(["unpaid", "deposit", "marked"]);
+    expect(isUnscheduledJob({ scheduledAt: null, status: "awaiting_payment" })).toBe(true);
+    expect(isUnscheduledJob({ scheduledAt: null, status: "confirmed" })).toBe(true);
+    expect(isUnscheduledJob({ scheduledAt: null, status: "paid" })).toBe(true);
+    expect(isUnscheduledJob({ scheduledAt: new Date(), status: "paid" })).toBe(false);
   });
 
   it("stores a manual event in Thailand time and keeps an all-day event on that date", () => {
@@ -379,9 +378,9 @@ describe("company calendar", () => {
     ]);
     expect(second.added).toBe(0);
     expect(second.already).toBe(1);
-    expect(isUnscheduledJob({ scheduledAt: null, status: "paid", paidSatang: 0 })).toBe(true);
-    expect(isUnscheduledJob({ scheduledAt: null, status: "confirmed", paidSatang: 100 })).toBe(true);
-    expect(isUnscheduledJob({ scheduledAt: new Date(), status: "confirmed", paidSatang: 100 })).toBe(false);
+    expect(isUnscheduledJob({ scheduledAt: null, status: "awaiting_payment" })).toBe(true);
+    expect(isUnscheduledJob({ scheduledAt: null, status: "confirmed" })).toBe(true);
+    expect(isUnscheduledJob({ scheduledAt: new Date(), status: "confirmed" })).toBe(false);
   });
 
   it("reschedules the same job, invoice, and customer", () => {

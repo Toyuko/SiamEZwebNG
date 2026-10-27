@@ -67,9 +67,8 @@ export function isHiddenCalendarStatus(status: string): boolean {
 const PAID_CALENDAR_STATUSES = new Set(["paid", "initial_payment_paid"]);
 
 /**
- * A job is on the admin calendar after money is recorded.
- * An approved deposit counts. A status of Paid or Initial payment paid counts
- * when the payment row was not stored.
+ * Money has been recorded for this job.
+ * An approved deposit counts. Paid or Initial payment paid counts when the payment row is missing.
  */
 export function isPaidCalendarJob(job: { status: string; paidSatang: number }): boolean {
   if (PAID_CALENDAR_STATUSES.has(job.status)) return true;
@@ -351,7 +350,6 @@ export function matchesProvince(province: string | null | undefined, provinces: 
 
 export function jobMatchesFilters(job: CalendarJobRecord, filters: CalendarFilters): boolean {
   if (isHiddenCalendarStatus(job.status)) return false;
-  if (!isPaidCalendarJob(job)) return false;
   const status = filters.status === "cancelled" ? "all" : filters.status;
   if (!matchesProvince(job.province, filters.provinces)) return false;
   if (filters.staffId === "tbd" && job.staffId) return false;
@@ -522,14 +520,19 @@ export function reschedulePlan(
   };
 }
 
-export function isUnscheduledJob(job: {
-  scheduledAt: Date | string | null;
-  status: string;
-  paidSatang: number;
-}): boolean {
+const UNSCHEDULED_STATUSES = new Set([
+  "awaiting_payment",
+  "confirmed",
+  "in_progress",
+  "pending_docs",
+  "paid",
+  "initial_payment_paid",
+]);
+
+export function isUnscheduledJob(job: { scheduledAt: Date | string | null; status: string }): boolean {
   if (job.scheduledAt) return false;
   if (isHiddenCalendarStatus(job.status)) return false;
-  return isPaidCalendarJob(job);
+  return UNSCHEDULED_STATUSES.has(job.status);
 }
 
 export type ManualCalendarEvent = {
