@@ -69,6 +69,7 @@ export type JobFormValues = {
   documents: string[];
   status: CaseStatus;
   createReceipt: boolean;
+  showOnCalendar: boolean;
 };
 
 const EMPTY: JobFormValues = {
@@ -92,6 +93,7 @@ const EMPTY: JobFormValues = {
   documents: [],
   status: "awaiting_payment",
   createReceipt: true,
+  showOnCalendar: true,
 };
 
 const fieldClass = "mt-1 min-h-11 w-full text-base";
@@ -372,6 +374,7 @@ export function JobIntakeForm({
       existingCustomerId,
       status: values.status,
       createReceipt: values.createReceipt,
+      showOnCalendar: values.showOnCalendar,
     };
     const result =
       mode === "edit"
@@ -717,6 +720,7 @@ export function JobIntakeForm({
           <Row label="Staff" value={assignedName} />
           <Row label="Date" value={values.scheduledDate || "TBD"} />
           <Row label="Time" value={values.timeTbd ? "TBD" : values.scheduledTime || "TBD"} />
+          <Row label="Calendar" value={values.showOnCalendar ? "Show on the calendar" : "Keep off the calendar"} />
           <Row label="Total" value={formatThb(totalSatang)} />
           <Row label="Deposit" value={formatThb(depositSatang)} />
           <Row label="Outstanding" value={formatThb(outstanding)} />
@@ -885,6 +889,20 @@ export function JobIntakeForm({
                 onChange={(event) => set("timeTbd", event.target.checked)}
               />
               Time is TBD
+            </label>
+            <label className="flex min-h-11 items-start gap-3 text-base">
+              <input
+                type="checkbox"
+                className="mt-1 h-5 w-5"
+                checked={values.showOnCalendar}
+                onChange={(event) => set("showOnCalendar", event.target.checked)}
+              />
+              <span>
+                Show on the calendar
+                <span className="mt-0.5 block text-sm text-gray-500">
+                  Turn this off to save the job without listing it on the calendar.
+                </span>
+              </span>
             </label>
           </section>
 

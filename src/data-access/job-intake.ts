@@ -133,6 +133,7 @@ function toJobView(row: JobRow) {
     assignedStaff: assigned,
     scheduledAt: row.scheduledAt?.toISOString() ?? null,
     scheduleTimeTbd: row.scheduleTimeTbd,
+    showOnCalendar: row.showOnCalendar,
     serviceId: row.serviceId,
     serviceName: row.service?.name ?? null,
     otherServiceName: row.otherServiceName,
@@ -276,6 +277,7 @@ function caseData(input: ValidatedJobIntake, actorId: string | null, userId: str
     leadSourceDetail: input.leadSourceDetail,
     scheduledAt: input.scheduledAt,
     scheduleTimeTbd: input.timeTbd,
+    showOnCalendar: input.showOnCalendar,
     location: input.location,
     province: input.province,
     jobDescription: input.jobDescription,
@@ -300,6 +302,7 @@ async function syncSchedule(
     status: string;
     scheduledAt: Date | null;
     timeTbd: boolean;
+    showOnCalendar: boolean;
   }
 ) {
   const plan = planCalendarEvent(input);
@@ -350,6 +353,7 @@ export async function syncScheduleFromCase(tx: Prisma.TransactionClient, caseId:
       status: true,
       scheduledAt: true,
       scheduleTimeTbd: true,
+      showOnCalendar: true,
       guestName: true,
       otherServiceName: true,
       user: { select: { name: true } },
@@ -373,6 +377,7 @@ export async function syncScheduleFromCase(tx: Prisma.TransactionClient, caseId:
     status: row.status,
     scheduledAt: row.scheduledAt,
     timeTbd: row.scheduleTimeTbd,
+    showOnCalendar: row.showOnCalendar,
   });
 }
 
@@ -654,6 +659,7 @@ export async function createConfirmedJob(
         status: JOB_INTAKE_CREATED_STATUS,
         scheduledAt: input.scheduledAt,
         timeTbd: input.timeTbd,
+        showOnCalendar: input.showOnCalendar,
       });
       await tx.caseNote.create({
         data: {
@@ -853,6 +859,7 @@ export async function updateConfirmedJob(
       status: nextStatus,
       scheduledAt: input.scheduledAt,
       timeTbd: input.timeTbd,
+      showOnCalendar: input.showOnCalendar,
     });
 
     const notes: string[] = [];
@@ -872,6 +879,9 @@ export async function updateConfirmedJob(
       existing.scheduleTimeTbd !== input.timeTbd
     ) {
       notes.push("Schedule changed.");
+    }
+    if (existing.showOnCalendar !== input.showOnCalendar) {
+      notes.push(input.showOnCalendar ? "Added to the calendar." : "Removed from the calendar.");
     }
     if (notes.length > 0) {
       await tx.caseNote.create({

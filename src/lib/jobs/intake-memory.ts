@@ -53,6 +53,7 @@ export type JobIntakeMemoryDetails = {
   documents: string[];
   status: CaseStatus;
   createReceipt: boolean;
+  showOnCalendar: boolean;
   customerChoice: "use_existing" | "create_new" | null;
   existingCustomerId: string | null;
 };
@@ -79,6 +80,7 @@ export function emptyJobIntakeMemoryDetails(): JobIntakeMemoryDetails {
     documents: [],
     status: "confirmed",
     createReceipt: true,
+    showOnCalendar: true,
     customerChoice: null,
     existingCustomerId: null,
   };
@@ -163,6 +165,7 @@ export function sanitizeJobIntakeMemoryDetails(value: unknown): JobIntakeMemoryD
     documents: cleanDocs,
     status: CASE_STATUS_SET.has(status) ? (status as CaseStatus) : "confirmed",
     createReceipt: flag(raw.createReceipt, true),
+    showOnCalendar: flag(raw.showOnCalendar, true),
     customerChoice: choice === "use_existing" || choice === "create_new" ? choice : null,
     existingCustomerId: clip(raw.existingCustomerId, 64) || null,
   };
@@ -226,6 +229,7 @@ export function formatJobIntakeMemoryBrief(input: {
     `Province: ${details.province || "—"}`,
     `Documents: ${details.documents.length ? details.documents.join(", ") : "—"}`,
     `Create receipt: ${details.createReceipt ? "yes" : "no"}`,
+    `Show on calendar: ${details.showOnCalendar ? "yes" : "no"}`,
     `Status: ${details.status}`,
     `Customer choice: ${details.customerChoice ?? "—"}`,
     `Existing customer id: ${details.existingCustomerId ?? "—"}`,

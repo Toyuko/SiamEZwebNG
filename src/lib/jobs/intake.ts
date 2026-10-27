@@ -82,6 +82,8 @@ export type JobIntakeInput = {
   existingCustomerId?: string | null;
   /** When true and a deposit was collected, also issue a numbered receipt. */
   createReceipt?: boolean;
+  /** When false, the job is saved but left off the calendar. Omitted means show it. */
+  showOnCalendar?: boolean;
 };
 
 export type ValidatedJobIntake = {
@@ -109,6 +111,7 @@ export type ValidatedJobIntake = {
   customerChoice: CustomerChoice | null;
   existingCustomerId: string | null;
   createReceipt: boolean;
+  showOnCalendar: boolean;
 };
 
 export type FieldErrors = Record<string, string>;
@@ -368,6 +371,7 @@ export function validateJobIntake(raw: JobIntakeInput, options?: { requireIdempo
     customerChoice: raw.customerChoice ?? null,
     existingCustomerId: raw.existingCustomerId?.trim() || null,
     createReceipt: raw.createReceipt === true,
+    showOnCalendar: raw.showOnCalendar !== false,
   };
 }
 
@@ -550,8 +554,15 @@ export function planCalendarEvent(input: {
   status: string;
   scheduledAt: Date | null;
   timeTbd: boolean;
+  showOnCalendar?: boolean;
 }): CalendarPlan {
-  if (!input.scheduledAt || input.status === "cancelled" || input.status === "refunded" || input.status === "refund_pending") {
+  if (
+    !input.scheduledAt ||
+    input.showOnCalendar === false ||
+    input.status === "cancelled" ||
+    input.status === "refunded" ||
+    input.status === "refund_pending"
+  ) {
     return { action: "none" };
   }
   const allDay = input.timeTbd;
@@ -646,6 +657,7 @@ export function jobFormValuesFromRecord(job: {
   depositSatang: number;
   status: CaseStatus;
   receiptNumber?: string | null;
+  showOnCalendar?: boolean;
 }) {
   const scheduled = job.scheduledAt ? new Date(job.scheduledAt) : null;
   return {
@@ -669,6 +681,7 @@ export function jobFormValuesFromRecord(job: {
     documents: job.documents,
     status: job.status,
     createReceipt: Boolean(job.receiptNumber),
+    showOnCalendar: job.showOnCalendar !== false,
   };
 }
 

@@ -22,7 +22,6 @@ import {
   datesInRange,
   eventCoversDate,
   eventMatchesFilters,
-  isPaidCalendarJob,
   jobMatchesFilters,
   jobsOnDate,
   manualEventWindow,
@@ -319,20 +318,7 @@ function waHref(phone: string) {
 
 function eventLabel(job: CalendarJobRecord) {
   const when = job.start ? clockLabel(job.start, job.allDay) : "Unscheduled";
-  const payment = isPaidCalendarJob(job) ? "Paid" : "Unpaid";
-  return `${when}, ${job.customerName}, ${job.serviceName}, ${job.province ?? "Province needed"}, ${job.staffName}, ${payment}${job.status === "cancelled" ? ", Cancelled" : ""}`;
-}
-
-function PaymentBadge({ paid, dense = false }: { paid: boolean; dense?: boolean }) {
-  return (
-    <span
-      className={`inline-flex shrink-0 items-center rounded px-1 py-0.5 font-bold uppercase tracking-wide ${
-        paid ? "bg-emerald-700 text-white" : "bg-amber-100 text-amber-950 ring-1 ring-amber-700"
-      } ${dense ? "text-[9px] leading-none" : "text-[10px] leading-none"}`}
-    >
-      {paid ? "Paid" : "Unpaid"}
-    </span>
-  );
+  return `${when}, ${job.customerName}, ${job.serviceName}, ${job.province ?? "Province needed"}, ${job.staffName}${job.status === "cancelled" ? ", Cancelled" : ""}`;
 }
 
 const EVENT_ACCENTS: Record<string, string> = {
@@ -1119,11 +1105,6 @@ export function CompanyCalendar({
             {rangeError}
           </p>
         )}
-        <p className="flex shrink-0 items-center gap-4 border-b border-gray-200 px-3 py-1 text-xs text-gray-600 dark:border-gray-800 dark:text-gray-300">
-          <span className="inline-flex items-center gap-1"><PaymentBadge paid /> payment recorded</span>
-          <span className="inline-flex items-center gap-1"><PaymentBadge paid={false} /> no payment yet</span>
-        </p>
-
         <div className="hidden shrink-0 flex-wrap items-center gap-2 border-b border-gray-200 px-3 py-2 lg:flex dark:border-gray-800">
           <DateRangePicker
             span={span}
@@ -2049,13 +2030,10 @@ function SidebarBody(props: {
                 key={job.caseId}
                 draggable
                 onDragStart={(event) => writeDrag(event.dataTransfer, { kind: "job", id: job.caseId })}
-                className={`cursor-grab rounded-lg px-2 py-1 active:cursor-grabbing ${isPaidCalendarJob(job) ? "border" : "border-2 border-dashed"}`}
+                className="cursor-grab rounded-lg border px-2 py-1 active:cursor-grabbing"
                 style={provinceChipStyle(job.province)}
               >
-                <p className="flex items-center gap-1 text-sm font-medium">
-                  <span className="truncate">{job.customerName}</span>
-                  <PaymentBadge paid={isPaidCalendarJob(job)} />
-                </p>
+                <p className="text-sm font-medium">{job.customerName}</p>
                 <p className="text-xs font-semibold">{job.province ?? "Province needed"}</p>
                 <p className="text-xs opacity-80">{job.serviceName}</p>
                 <button type="button" className="mt-1 text-sm font-semibold underline" onClick={() => props.onOpenJob(job.caseId)}>
@@ -2093,17 +2071,14 @@ function SidebarBody(props: {
 
 function AllDayChip({ job }: { job: CalendarJobRecord }) {
   const cancelled = job.status === "cancelled";
-  const paid = isPaidCalendarJob(job);
   return (
     <span
-      className={`block truncate rounded px-1 py-0.5 text-left text-[11px] ${paid ? "border" : "border-2 border-dashed"} ${cancelled ? "line-through opacity-60" : ""}`}
+      className={`block truncate rounded border px-1 py-0.5 text-left text-[11px] ${cancelled ? "line-through opacity-60" : ""}`}
       style={provinceChipStyle(job.province)}
     >
       <span className="font-bold">{job.province ?? "Province needed"}</span>
       {" · "}
       {job.start ? clockLabel(job.start, job.allDay) : "TBD"} {job.customerName}
-      {" · "}
-      <PaymentBadge paid={paid} dense />
     </span>
   );
 }
@@ -2442,16 +2417,12 @@ function EventCard({ job, dense = false }: { job: CalendarJobRecord; dense?: boo
   const style = provinceStyle(job.province);
   const place = job.province ?? "Province needed";
   const cancelled = job.status === "cancelled";
-  const paid = isPaidCalendarJob(job);
   return (
     <span
-      className={`block h-full overflow-hidden rounded-md text-left ${paid ? "border" : "border-2 border-dashed"} ${cancelled ? "line-through opacity-60" : ""} ${job.status === "completed" ? "opacity-80" : ""} ${dense ? "px-1.5 py-0.5 text-[11px] leading-tight" : "px-2 py-1.5 text-sm leading-snug"}`}
+      className={`block h-full overflow-hidden rounded-md border text-left ${cancelled ? "line-through opacity-60" : ""} ${job.status === "completed" ? "opacity-80" : ""} ${dense ? "px-1.5 py-0.5 text-[11px] leading-tight" : "px-2 py-1.5 text-sm leading-snug"}`}
       style={provinceChipStyle(job.province)}
     >
-      <span className="flex items-center gap-1">
-        <span className="truncate font-bold">{place}</span>
-        <PaymentBadge paid={paid} dense={dense} />
-      </span>
+      <span className="block truncate font-bold">{place}</span>
       <span className="block truncate font-semibold">
         {job.start ? clockLabel(job.start, job.allDay) : "TBD"} {job.customerName}
       </span>
@@ -2936,13 +2907,9 @@ function DaySchedule({
 function DayDetail({ job }: { job: CalendarJobRecord }) {
   const style = provinceStyle(job.province);
   const place = job.province ?? "Province needed";
-  const paid = isPaidCalendarJob(job);
   return (
-    <span className={`block rounded-xl px-3 py-2 text-left ${paid ? "border" : "border-2 border-dashed"}`} style={provinceChipStyle(job.province)}>
-      <span className="flex items-center gap-1">
-        <span className="inline-flex rounded px-1.5 py-0.5 text-xs font-bold text-white" style={{ backgroundColor: style.accent }}>{place}</span>
-        <PaymentBadge paid={paid} />
-      </span>
+    <span className="block rounded-xl border px-3 py-2 text-left" style={provinceChipStyle(job.province)}>
+      <span className="inline-flex rounded px-1.5 py-0.5 text-xs font-bold text-white" style={{ backgroundColor: style.accent }}>{place}</span>
       <span className="mt-1 block text-sm font-semibold">{job.start ? clockLabel(job.start, job.allDay) : "Time TBD"}</span>
       <span className="block text-base font-semibold">{job.customerName}</span>
       <span className="block text-sm">{job.serviceName}</span>
@@ -3080,9 +3047,8 @@ function JobPopover({
           <div>{CASE_STATUS_LABELS[job.status].en}</div>
           <div>{job.staffName}</div>
           {job.location && <div className="text-gray-600 dark:text-gray-300">{job.location}</div>}
-          <div className="flex items-center gap-2 pt-1 text-gray-600 dark:text-gray-300">
-            <PaymentBadge paid={isPaidCalendarJob(job)} />
-            <span>{formatThb(job.totalSatang)} · Deposit {formatThb(job.depositSatang)}</span>
+          <div className="pt-1 text-gray-600 dark:text-gray-300">
+            {formatThb(job.totalSatang)} · Deposit {formatThb(job.depositSatang)}
           </div>
           {job.invoiceNumber && <div>Invoice {job.invoiceNumber}</div>}
         </dl>
@@ -3208,7 +3174,7 @@ function printRows(date: string, jobs: CalendarJobRecord[], events: ManualCalend
       return {
         key: `job-${job.caseId}`,
         sort: job.start && !job.allDay ? bangkokMinutes(job.start) : -1,
-        text: `${job.province ?? "Province needed"} · ${job.start ? clockLabel(job.start, job.allDay) : "TBD"} · ${job.customerName} · ${job.serviceName} · ${job.staffName} · ${isPaidCalendarJob(job) ? "Paid" : "Unpaid"}${job.status === "cancelled" ? " · Cancelled" : ""}`,
+        text: `${job.province ?? "Province needed"} · ${job.start ? clockLabel(job.start, job.allDay) : "TBD"} · ${job.customerName} · ${job.serviceName} · ${job.staffName}${job.status === "cancelled" ? " · Cancelled" : ""}`,
         ...place,
       };
     }),

@@ -214,7 +214,9 @@ function applyProvinceFilter(where: Prisma.CaseWhereInput, provinces: string[]) 
 }
 
 function rangeWhere(start: Date, end: Date, filters: CalendarFilters, searching: boolean): Prisma.CaseWhereInput {
-  const where: Prisma.CaseWhereInput = searching ? { scheduledAt: { not: null } } : { scheduledAt: { gte: start, lt: end } };
+  const where: Prisma.CaseWhereInput = searching
+    ? { scheduledAt: { not: null }, showOnCalendar: true }
+    : { scheduledAt: { gte: start, lt: end }, showOnCalendar: true };
   applyProvinceFilter(where, filters.provinces);
   if (filters.staffId === "tbd") where.staffAssignments = { none: {} };
   else if (filters.staffId) where.staffAssignments = { some: { userId: filters.staffId } };
@@ -269,7 +271,7 @@ export async function loadCompanyCalendar(input: {
       take: searching ? 80 : 400,
     }),
     prisma.case.findMany({
-      where: { scheduledAt: null, status: { in: ACTIVE_UNSCHEDULED } },
+      where: { scheduledAt: null, status: { in: ACTIVE_UNSCHEDULED }, showOnCalendar: true },
       select: calendarSelect,
       orderBy: { updatedAt: "desc" },
       take: 40,
@@ -321,6 +323,7 @@ export async function listPublicAvailability(start: Date, end: Date) {
   const rows = await prisma.case.findMany({
     where: {
       scheduledAt: { gte: start, lt: end },
+      showOnCalendar: true,
       status: { notIn: [...HIDDEN_CALENDAR_STATUSES] },
     },
     select: {
@@ -377,12 +380,18 @@ async function calendarAssignee(id: string) {
 
 export async function loadCalendarHealth() {
   const [scheduled, linked, missing, unscheduled, duplicateGroups] = await Promise.all([
-    prisma.case.count({ where: { scheduledAt: { not: null } } }),
+    prisma.case.count({ where: { scheduledAt: { not: null }, showOnCalendar: true } }),
     prisma.event.count({ where: { primaryForCaseId: { not: null } } }),
     prisma.case.count({
-      where: { scheduledAt: { not: null }, events: { none: { primaryForCaseId: { not: null } } } },
+      where: {
+        scheduledAt: { not: null },
+        showOnCalendar: true,
+        events: { none: { primaryForCaseId: { not: null } } },
+      },
     }),
-    prisma.case.count({ where: { scheduledAt: null, status: { in: ACTIVE_UNSCHEDULED } } }),
+    prisma.case.count({
+      where: { scheduledAt: null, status: { in: ACTIVE_UNSCHEDULED }, showOnCalendar: true },
+    }),
     prisma.$queryRaw<Array<{ count: number }>>`
       SELECT COUNT(*)::int AS count FROM (
         SELECT case_id FROM events
@@ -405,6 +414,7 @@ export async function syncExistingJobsToCalendar(actor: { id: string; email: str
   await resolveStaffActor(actor);
   const rows = await prisma.case.findMany({
     where: {
+      showOnCalendar: true,
       OR: [{ scheduledAt: { not: null } }, { scheduledAt: null, status: { in: ACTIVE_UNSCHEDULED } }],
     },
     select: {
@@ -450,6 +460,7 @@ async function warningsFor(
     where: {
       id: { not: caseId },
       scheduledAt: { gte: windowStart, lt: windowEnd },
+      showOnCalendar: true,
       status: { notIn: [...HIDDEN_CALENDAR_STATUSES] },
       staffAssignments: { some: { userId: staffId } },
     },

@@ -89,7 +89,7 @@ function andWhere(where: Prisma.CaseWhereInput, extra: Prisma.CaseWhereInput | n
 }
 
 export function staffCaseWhere(start: Date, end: Date, filters: CalendarFilters): Prisma.CaseWhereInput {
-  const where: Prisma.CaseWhereInput = { scheduledAt: { gte: start, lt: end } };
+  const where: Prisma.CaseWhereInput = { scheduledAt: { gte: start, lt: end }, showOnCalendar: true };
   andWhere(where, provinceClause(filters.provinces));
   const staff = filters.staffId.trim();
   if (staff === "tbd") {

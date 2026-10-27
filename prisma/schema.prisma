@@ -528,6 +528,8 @@ model Case {
   /// Appointment instant in UTC. Interpret in Asia/Bangkok.
   scheduledAt         DateTime?  @map("scheduled_at")
   scheduleTimeTbd     Boolean    @default(false) @map("schedule_time_tbd")
+  /// Staff can keep a job without listing it on the company or staff calendar.
+  showOnCalendar      Boolean    @default(true) @map("show_on_calendar")
   location            String?
   /// Official English province name from the Thailand province list. Null until staff choose one.
   province            String?

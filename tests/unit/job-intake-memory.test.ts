@@ -27,6 +27,7 @@ describe("job intake memory", () => {
       location: "Bangkok",
       documents: ["Passport", "passport", "Thai address certificate"],
       createReceipt: false,
+      showOnCalendar: false,
       customerChoice: "use_existing",
       existingCustomerId: "cust-1",
       password: "should-not-stick",
@@ -36,6 +37,7 @@ describe("job intake memory", () => {
     expect(details.customerEmail).toBe("john@example.com");
     expect(details.documents).toEqual(["Passport", "Thai address certificate"]);
     expect(details.createReceipt).toBe(false);
+    expect(details.showOnCalendar).toBe(false);
     expect(details).not.toHaveProperty("password");
   });
 
@@ -46,6 +48,7 @@ describe("job intake memory", () => {
     expect(details.assignedStaffId).toBe("tbd");
     expect(details.status).toBe("confirmed");
     expect(details.depositAmount).toBe("0");
+    expect(details.showOnCalendar).toBe(true);
   });
 
   it("caps the memory note", () => {

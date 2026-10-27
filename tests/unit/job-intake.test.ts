@@ -186,6 +186,8 @@ describe("confirmed job intake", () => {
     expect(shouldIssueReceipt(false, 500_000)).toBe(false);
     expect(validateJobIntake({ ...base, createReceipt: true }).createReceipt).toBe(true);
     expect(validateJobIntake(base).createReceipt).toBe(false);
+    expect(validateJobIntake(base).showOnCalendar).toBe(true);
+    expect(validateJobIntake({ ...base, showOnCalendar: false }).showOnCalendar).toBe(false);
   });
 
   it("plans one calendar event for a confirmed time and none when the date is missing", () => {
@@ -224,6 +226,18 @@ describe("confirmed job intake", () => {
         status: "cancelled",
         scheduledAt: bangkokDateTime("2026-10-10", "10:00"),
         timeTbd: false,
+      }).action
+    ).toBe("none");
+    expect(
+      planCalendarEvent({
+        customerName: "John Smith",
+        jobType: "Visa",
+        staffName: "Grace",
+        location: "Bangkok",
+        status: "confirmed",
+        scheduledAt: bangkokDateTime("2026-10-10", "10:00"),
+        timeTbd: false,
+        showOnCalendar: false,
       }).action
     ).toBe("none");
   });
