@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { getSession } from "@/lib/auth";
 import { loadCalendarLookups, loadCompanyCalendar } from "@/data-access/company-calendar";
-import { calendarAnchor, calendarRange, parseProvinceParam, resolveCalendarView, type CalendarContextName, type CalendarFilters } from "@/lib/calendar/schedule";
+import { calendarAnchor, calendarRange, parseProvinceParam, resolveCalendarSpan, resolveCalendarView, type CalendarContextName, type CalendarFilters, type CalendarSpan } from "@/lib/calendar/schedule";
 import { CompanyCalendar } from "./CompanyCalendar";
 
 export default async function AdminCalendarPage({
@@ -19,7 +19,11 @@ export default async function AdminCalendarPage({
     context,
   });
   const anchor = calendarAnchor(params.date);
-  const range = calendarRange(view, anchor);
+  const spanResult = resolveCalendarSpan(params.from, params.to);
+  const span: CalendarSpan | null = spanResult.ok ? spanResult.span : null;
+  const range = spanResult.ok && spanResult.span
+    ? { start: spanResult.start, end: spanResult.end }
+    : calendarRange(view, anchor);
   const filters: CalendarFilters = {
     provinces: parseProvinceParam(params.provinces),
     staffId: params.staff ?? "",
@@ -53,6 +57,8 @@ export default async function AdminCalendarPage({
       services={lookups.services}
       view={view}
       anchor={anchor}
+      span={span}
+      rangeError={spanResult.ok ? null : spanResult.message}
       filters={filters}
       canRepair={session?.user.role === "admin"}
       truncated={calendar.truncated}

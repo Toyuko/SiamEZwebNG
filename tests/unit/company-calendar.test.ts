@@ -4,9 +4,11 @@ import { detectProvince, provinceStyle, suggestedProvince, THAI_PROVINCE_NAMES }
 import {
   calendarRange,
   calendarSummary,
+  datesInRange,
   eventCoversDate,
   eventMatchesFilters,
   filterCalendarJobs,
+  isPaidCalendarJob,
   manualEventWindow,
   matchesProvince,
   movedManualEvent,
@@ -18,8 +20,10 @@ import {
   parseProvinceParam,
   planBackfill,
   preferredCalendarView,
+  resolveCalendarSpan,
   resolveCalendarView,
   reschedulePlan,
+  shiftCalendarSpan,
   schedulingWarnings,
   serializeProvinces,
   threeDayDates,
@@ -48,6 +52,7 @@ const baseJob = (overrides: Partial<CalendarJobRecord> = {}): CalendarJobRecord 
   totalSatang: 1_500_000,
   depositSatang: 500_000,
   outstandingSatang: 1_000_000,
+  paidSatang: 500_000,
   documents: ["Passport"],
   description: "License conversion",
   ...overrides,
@@ -113,6 +118,38 @@ describe("company calendar", () => {
     const day = calendarRange("day", "2026-10-10");
     expect(day.start.toISOString()).toBe("2026-10-09T17:00:00.000Z");
     expect(day.end.toISOString()).toBe("2026-10-10T17:00:00.000Z");
+  });
+
+  it("keeps a custom range inclusive and rejects a range that cannot be shown", () => {
+    const week = resolveCalendarSpan("2026-10-01", "2026-10-07");
+    expect(week.ok).toBe(true);
+    if (!week.ok || !week.span) throw new Error("expected a span");
+    expect(week.start.toISOString()).toBe("2026-09-30T17:00:00.000Z");
+    expect(week.end.toISOString()).toBe("2026-10-07T17:00:00.000Z");
+    expect(datesInRange("2026-10-01", "2026-10-07")).toHaveLength(7);
+    expect(shiftCalendarSpan(week.span, 1)).toEqual({ from: "2026-10-08", to: "2026-10-14" });
+    expect(resolveCalendarSpan(undefined, undefined)).toEqual({ ok: true, span: null });
+    expect(resolveCalendarSpan("2026-10-08", undefined).ok).toBe(false);
+    expect(resolveCalendarSpan("2026-10-08", "2026-10-01").ok).toBe(false);
+    expect(resolveCalendarSpan("2026-10-01", "2027-01-01").ok).toBe(false);
+    expect(resolveCalendarSpan("2026-02-31", "2026-03-01").ok).toBe(false);
+  });
+
+  it("puts a job on the calendar only after a payment is recorded", () => {
+    expect(isPaidCalendarJob({ status: "awaiting_payment", paidSatang: 0 })).toBe(false);
+    expect(isPaidCalendarJob({ status: "confirmed", paidSatang: 0 })).toBe(false);
+    expect(isPaidCalendarJob({ status: "awaiting_payment", paidSatang: 500_000 })).toBe(true);
+    expect(isPaidCalendarJob({ status: "paid", paidSatang: 0 })).toBe(true);
+    expect(isPaidCalendarJob({ status: "initial_payment_paid", paidSatang: 0 })).toBe(true);
+    const unpaid = baseJob({ caseId: "unpaid", status: "awaiting_payment", paidSatang: 0, depositSatang: 0, outstandingSatang: 1_500_000 });
+    const deposit = baseJob({ caseId: "deposit", status: "awaiting_payment", paidSatang: 500_000 });
+    const markedPaid = baseJob({ caseId: "marked", status: "paid", paidSatang: 0, depositSatang: 0 });
+    expect(filterCalendarJobs([unpaid, deposit, markedPaid], { provinces: [], staffId: "", serviceId: "", status: "all", q: "" }).map((job) => job.caseId)).toEqual(["deposit", "marked"]);
+    expect(isUnscheduledJob({ scheduledAt: null, status: "awaiting_payment", paidSatang: 0 })).toBe(false);
+    expect(isUnscheduledJob({ scheduledAt: null, status: "awaiting_payment", paidSatang: 500_000 })).toBe(true);
+    expect(isUnscheduledJob({ scheduledAt: null, status: "confirmed", paidSatang: 0 })).toBe(false);
+    expect(isUnscheduledJob({ scheduledAt: null, status: "paid", paidSatang: 0 })).toBe(true);
+    expect(isUnscheduledJob({ scheduledAt: new Date(), status: "paid", paidSatang: 1_500_000 })).toBe(false);
   });
 
   it("stores a manual event in Thailand time and keeps an all-day event on that date", () => {
@@ -342,9 +379,9 @@ describe("company calendar", () => {
     ]);
     expect(second.added).toBe(0);
     expect(second.already).toBe(1);
-    expect(isUnscheduledJob({ scheduledAt: null, status: "awaiting_payment" })).toBe(true);
-    expect(isUnscheduledJob({ scheduledAt: null, status: "confirmed" })).toBe(true);
-    expect(isUnscheduledJob({ scheduledAt: new Date(), status: "confirmed" })).toBe(false);
+    expect(isUnscheduledJob({ scheduledAt: null, status: "paid", paidSatang: 0 })).toBe(true);
+    expect(isUnscheduledJob({ scheduledAt: null, status: "confirmed", paidSatang: 100 })).toBe(true);
+    expect(isUnscheduledJob({ scheduledAt: new Date(), status: "confirmed", paidSatang: 100 })).toBe(false);
   });
 
   it("reschedules the same job, invoice, and customer", () => {

@@ -19,6 +19,7 @@ import {
   bangkokClockMinutes,
   calendarContext,
   calendarSummary,
+  datesInRange,
   eventCoversDate,
   eventMatchesFilters,
   jobMatchesFilters,
@@ -32,12 +33,15 @@ import {
   parseCalendarView,
   parseProvinceParam,
   preferredCalendarView,
+  resolveCalendarSpan,
   serializeProvinces,
   shiftAnchor,
+  shiftCalendarSpan,
   threeDayDates,
   weekDates,
   type CalendarFilters,
   type CalendarJobRecord,
+  type CalendarSpan,
   type CalendarViewName,
   type ManualCalendarEvent,
   type ManualEventDraft,
@@ -73,6 +77,10 @@ const MOBILE_VIEWS: CalendarViewName[] = ["day", "threeday", "week", "month", "a
 const HOURS = Array.from({ length: CALENDAR_END_HOUR - CALENDAR_START_HOUR + 1 }, (_, index) => CALENDAR_START_HOUR + index);
 const HOUR_PX = 64;
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+type CalendarNav = Partial<CalendarFilters & { view: CalendarViewName; date: string; from: string; to: string }> & {
+  clearRange?: boolean;
+};
 
 type BrowseFilters = {
   provinces: string[];
@@ -408,6 +416,8 @@ export function CompanyCalendar({
   services,
   view,
   anchor,
+  span,
+  rangeError,
   filters: loadedFilters,
   canRepair,
   truncated,
@@ -423,6 +433,8 @@ export function CompanyCalendar({
   services: ServiceOption[];
   view: CalendarViewName;
   anchor: string;
+  span: CalendarSpan | null;
+  rangeError: string | null;
   filters: CalendarFilters;
   canRepair: boolean;
   truncated: boolean;
@@ -435,7 +447,7 @@ export function CompanyCalendar({
   const scroller = useRef<HTMLDivElement>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
   const pickedView = useRef(false);
-  const goRef = useRef<(next: Partial<CalendarFilters & { view: CalendarViewName; date: string }>) => void>(() => {});
+  const goRef = useRef<(next: CalendarNav) => void>(() => {});
   const [navPending, startNav] = useTransition();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -523,6 +535,8 @@ export function CompanyCalendar({
   const monthDates = monthGridDates(anchor);
   const threeDays = threeDayDates(anchor);
   const agenda = agendaDates(anchor);
+  const rangeDates = span ? datesInRange(span.from, span.to) : [];
+  const showingRange = rangeDates.length > 0;
   const jobDates = useMemo(() => new Set(jobs.map(jobDate).filter(Boolean)), [jobs]);
   const mine = Boolean(currentUserId && staff.some((person) => person.id === currentUserId));
   const filtersActive = Boolean(filters.provinces.length || filters.staffId || filters.serviceId || (filters.status && filters.status !== "all") || filters.q);
@@ -625,26 +639,35 @@ export function CompanyCalendar({
       if (typing || event.metaKey || event.ctrlKey || event.altKey || selectedId || move || warnings) return;
       if (event.key === "t" || event.key === "T") {
         event.preventDefault();
-        goRef.current({ date: today });
+        goRef.current({ date: today, clearRange: true });
       } else if (event.key === "ArrowLeft") {
         event.preventDefault();
-        goRef.current({ date: shiftAnchor(anchor, view, -1) });
+        goRef.current(stepRange(span, anchor, view, -1));
       } else if (event.key === "ArrowRight") {
         event.preventDefault();
-        goRef.current({ date: shiftAnchor(anchor, view, 1) });
-      } else if (event.key === "d") goRef.current({ view: "day" });
-      else if (event.key === "w") goRef.current({ view: "week" });
-      else if (event.key === "m") goRef.current({ view: "month" });
-      else if (event.key === "a") goRef.current({ view: "agenda" });
+        goRef.current(stepRange(span, anchor, view, 1));
+      } else if (event.key === "d") goRef.current({ view: "day", clearRange: true });
+      else if (event.key === "w") goRef.current({ view: "week", clearRange: true });
+      else if (event.key === "m") goRef.current({ view: "month", clearRange: true });
+      else if (event.key === "a") goRef.current({ view: "agenda", clearRange: true });
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [anchor, view, today, selectedId, move, warnings]);
+  }, [anchor, view, today, selectedId, move, warnings, span]);
 
-  function buildHref(next: Partial<CalendarFilters & { view: CalendarViewName; date: string }>) {
+  function buildHref(next: CalendarNav) {
     const params = new URLSearchParams();
-    params.set("date", next.date ?? anchor);
+    const settingRange = Boolean(next.from && next.to);
+    const clearingRange = Boolean(next.clearRange) || (next.date !== undefined && !settingRange);
+    const kept = !settingRange && !clearingRange ? span : null;
+    const nextFrom = settingRange ? next.from! : kept?.from;
+    const nextTo = settingRange ? next.to! : kept?.to;
+    params.set("date", nextFrom ?? next.date ?? anchor);
     params.set("view", next.view ?? view);
+    if (nextFrom && nextTo) {
+      params.set("from", nextFrom);
+      params.set("to", nextTo);
+    }
     const provinces = next.provinces ?? filters.provinces;
     if (provinces.length) params.set("provinces", serializeProvinces(provinces));
     const staffId = next.staffId ?? filters.staffId;
@@ -658,24 +681,26 @@ export function CompanyCalendar({
     return `/admin/calendar?${params.toString()}`;
   }
 
-  function go(next: Parameters<typeof buildHref>[0]) {
+  function go(next: CalendarNav) {
     if (next.view) rememberCalendarView(next.view);
     startNav(() => router.push(buildHref(next)));
   }
 
   function goToday() {
-    if (anchor === today) {
+    if (!span && anchor === today) {
       scroller.current?.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    go({ date: today });
+    go({ date: today, clearRange: true });
   }
   goRef.current = go;
 
   useEffect(() => {
-    router.prefetch(buildHref({ date: shiftAnchor(anchor, view, -1) }));
-    router.prefetch(buildHref({ date: shiftAnchor(anchor, view, 1) }));
-  }, [anchor, view, filters.staffId, filters.serviceId, filters.status, filters.q, filters.provinces, router]);
+    const previous = stepRange(span, anchor, view, -1);
+    const following = stepRange(span, anchor, view, 1);
+    router.prefetch(buildHref(previous));
+    router.prefetch(buildHref(following));
+  }, [anchor, view, span, filters.staffId, filters.serviceId, filters.status, filters.q, filters.provinces, router]);
 
   function writeBrowseUrl(next: BrowseFilters) {
     const params = new URLSearchParams(window.location.search);
@@ -897,22 +922,26 @@ export function CompanyCalendar({
     go({ date, q: "", view: view === "month" ? "day" : view });
   }
 
-  const title = view === "month"
-    ? monthTitle(anchor)
-    : view === "week"
-      ? weekRangeTitle(week[0], week[6])
-      : view === "threeday"
-        ? `${shortMonthDay(threeDays[0])} – ${shortMonthDay(threeDays[2])}`
-        : view === "agenda"
-          ? `${shortMonthDay(agenda[0])} – ${shortMonthDay(agenda[agenda.length - 1])}`
-          : dayHeading(anchor);
-  const compactTitle = view === "month"
-    ? monthTitle(anchor)
-    : view === "week"
-      ? `${shortMonthDay(week[0])} – ${Number(week[6].slice(-2))}`
-      : view === "day" || view === "agenda"
-        ? shortMonthDay(anchor)
-        : `${shortMonthDay(threeDays[0])} – ${Number(threeDays[2].slice(-2))}`;
+  const title = showingRange && span
+    ? weekRangeTitle(span.from, span.to)
+    : view === "month"
+      ? monthTitle(anchor)
+      : view === "week"
+        ? weekRangeTitle(week[0], week[6])
+        : view === "threeday"
+          ? `${shortMonthDay(threeDays[0])} – ${shortMonthDay(threeDays[2])}`
+          : view === "agenda"
+            ? `${shortMonthDay(agenda[0])} – ${shortMonthDay(agenda[agenda.length - 1])}`
+            : dayHeading(anchor);
+  const compactTitle = showingRange && span
+    ? `${shortMonthDay(span.from)} – ${shortMonthDay(span.to)}`
+    : view === "month"
+      ? monthTitle(anchor)
+      : view === "week"
+        ? `${shortMonthDay(week[0])} – ${Number(week[6].slice(-2))}`
+        : view === "day" || view === "agenda"
+          ? shortMonthDay(anchor)
+          : `${shortMonthDay(threeDays[0])} – ${Number(threeDays[2].slice(-2))}`;
 
   const gridDays = view === "week" ? week : view === "threeday" ? threeDays : [anchor];
 
@@ -954,10 +983,10 @@ export function CompanyCalendar({
           >
             <RefreshCw className={`h-5 w-5 ${navPending ? "animate-spin" : ""}`} />
           </button>
-          <button type="button" className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Previous" onClick={() => go({ date: shiftAnchor(anchor, view, -1) })}>
+          <button type="button" className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Previous" onClick={() => go(stepRange(span, anchor, view, -1))}>
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <button type="button" className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Next" onClick={() => go({ date: shiftAnchor(anchor, view, 1) })}>
+          <button type="button" className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Next" onClick={() => go(stepRange(span, anchor, view, 1))}>
             <ChevronRight className="h-5 w-5" />
           </button>
           <div className="relative min-w-0">
@@ -965,9 +994,9 @@ export function CompanyCalendar({
               type="button"
               className="truncate px-1 text-left text-lg font-medium sm:text-xl"
               aria-expanded={pickerOpen}
-              aria-label={`Jump to a date, ${title}`}
+              aria-label={`Set a date range, ${title}`}
               onClick={() => {
-                setPickerMonth(`${anchor.slice(0, 7)}-01`);
+                setPickerMonth(`${(span?.from ?? anchor).slice(0, 7)}-01`);
                 setPickerOpen((open) => !open);
               }}
             >
@@ -975,17 +1004,21 @@ export function CompanyCalendar({
               <span className="hidden lg:inline">{title}</span>
             </button>
             {pickerOpen && (
-              <div className="absolute left-0 top-11 z-30 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-900">
-                <MiniMonth
-                  monthAnchor={pickerMonth}
-                  selected={anchor}
+              <div className="absolute left-0 top-11 z-30 w-80 rounded-xl border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                <DateRangePicker
+                  span={span}
+                  anchor={anchor}
                   today={today}
                   jobDates={jobDates}
-                  onPrev={() => setPickerMonth(shiftAnchor(pickerMonth, "month", -1))}
-                  onNext={() => setPickerMonth(shiftAnchor(pickerMonth, "month", 1))}
-                  onPick={(date) => {
+                  monthAnchor={pickerMonth}
+                  onMonth={setPickerMonth}
+                  onApply={(next) => {
                     setPickerOpen(false);
-                    go({ date });
+                    go({ from: next.from, to: next.to, date: next.from });
+                  }}
+                  onClear={() => {
+                    setPickerOpen(false);
+                    go({ date: anchor, clearRange: true });
                   }}
                 />
               </div>
@@ -1000,7 +1033,7 @@ export function CompanyCalendar({
                   role="tab"
                   aria-selected={view === item}
                   className={`h-11 rounded-md px-3 text-sm ${view === item ? "bg-white font-semibold text-siam-blue shadow-sm dark:bg-gray-800" : "text-gray-600 dark:text-gray-300"}`}
-                  onClick={() => go({ view: item })}
+                  onClick={() => go({ view: item, clearRange: true })}
                 >
                   {viewLabel(item)}
                 </button>
@@ -1017,7 +1050,7 @@ export function CompanyCalendar({
                 className="h-11 rounded-lg border border-gray-300 bg-white px-2 text-sm dark:border-gray-600 dark:bg-gray-900"
                 value={view}
                 aria-label="Calendar view"
-                onChange={(event) => go({ view: event.target.value as CalendarViewName })}
+                onChange={(event) => go({ view: event.target.value as CalendarViewName, clearRange: true })}
               >
                 {MOBILE_VIEWS.map((item) => (
                   <option key={item} value={item}>{viewLabel(item)}</option>
@@ -1067,7 +1100,27 @@ export function CompanyCalendar({
           {updatedLabel && <p className="px-1 text-xs text-gray-500 lg:hidden">Updated {updatedLabel}</p>}
         </header>
 
+        {rangeError && (
+          <p className="shrink-0 border-b border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100" role="alert">
+            {rangeError}
+          </p>
+        )}
+        <p className="shrink-0 border-b border-gray-200 px-3 py-1 text-xs text-gray-500 dark:border-gray-800">
+          Showing paid jobs.
+        </p>
+
         <div className="hidden shrink-0 flex-wrap items-center gap-2 border-b border-gray-200 px-3 py-2 lg:flex dark:border-gray-800">
+          <DateRangePicker
+            span={span}
+            anchor={anchor}
+            today={today}
+            jobDates={jobDates}
+            monthAnchor={pickerMonth}
+            showMonth={false}
+            onMonth={setPickerMonth}
+            onApply={(next) => go({ from: next.from, to: next.to, date: next.from })}
+            onClear={() => go({ date: anchor, clearRange: true })}
+          />
           <FilterSelect label="Assigned" value={filters.staffId} onChange={(staffId) => applyBrowse({ staffId })}>
             <option value="">Everyone</option>
             <option value="tbd">TBD</option>
@@ -1228,18 +1281,36 @@ export function CompanyCalendar({
               touch.current = point ? { x: point.clientX, y: point.clientY } : null;
             }}
             onTouchEnd={(event) => {
-              if (!touch.current || view === "month") return;
+              if (!touch.current || (view === "month" && !showingRange)) return;
               const point = event.changedTouches[0];
               if (!point) return;
               const dx = point.clientX - touch.current.x;
               const dy = point.clientY - touch.current.y;
               if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy)) return;
               const direction = dx < 0 ? 1 : -1;
+              if (showingRange) {
+                go(stepRange(span, anchor, view, direction));
+                return;
+              }
               const step = view === "week" || view === "threeday" ? "day" : view;
               go({ date: shiftAnchor(anchor, step, direction) });
             }}
           >
-            {view === "month" && (
+            {showingRange && (
+              <AgendaList
+                dates={rangeDates}
+                jobs={jobs}
+                events={events}
+                today={today}
+                nowMinutes={nowMinutes}
+                onOpen={setSelectedId}
+                onOpenEvent={(id) => {
+                  setSelectedId(null);
+                  setEventEditor({ mode: "edit", id });
+                }}
+              />
+            )}
+            {!showingRange && view === "month" && (
               <MonthGrid
                 dates={monthDates}
                 monthKey={anchor.slice(0, 7)}
@@ -1258,7 +1329,7 @@ export function CompanyCalendar({
                 dragged={dragged}
               />
             )}
-            {(view === "week" || view === "threeday") && (
+            {!showingRange && (view === "week" || view === "threeday") && (
               <>
                 <div className={view === "week" ? "hidden md:block" : "block"}>
                   <TimeGrid
@@ -1299,7 +1370,7 @@ export function CompanyCalendar({
                 )}
               </>
             )}
-            {view === "day" && (
+            {!showingRange && view === "day" && (
               <DaySchedule
                 date={anchor}
                 jobs={jobsOnDate(jobs, anchor)}
@@ -1317,7 +1388,7 @@ export function CompanyCalendar({
                 detailed
               />
             )}
-            {view === "agenda" && (
+            {!showingRange && view === "agenda" && (
               <AgendaList
                 dates={agenda}
                 jobs={jobs}
@@ -1346,14 +1417,14 @@ export function CompanyCalendar({
 
       {printing && (
         <PrintableView
-          view={view}
+          view={showingRange ? "agenda" : view}
           title={title}
           jobs={jobs}
           events={events}
-          days={view === "week" ? week : view === "threeday" ? threeDays : view === "day" ? [anchor] : []}
+          days={showingRange ? [] : view === "week" ? week : view === "threeday" ? threeDays : view === "day" ? [anchor] : []}
           monthDates={monthDates}
           monthKey={anchor.slice(0, 7)}
-          agenda={agenda}
+          agenda={showingRange ? rangeDates : agenda}
           today={today}
         />
       )}
@@ -1369,6 +1440,22 @@ export function CompanyCalendar({
             </div>
             {panel === "filters" ? (
               <div className="space-y-3">
+                <DateRangePicker
+                  span={span}
+                  anchor={anchor}
+                  today={today}
+                  jobDates={jobDates}
+                  monthAnchor={pickerMonth}
+                  onMonth={setPickerMonth}
+                  onApply={(next) => {
+                    setPanel(null);
+                    go({ from: next.from, to: next.to, date: next.from });
+                  }}
+                  onClear={() => {
+                    setPanel(null);
+                    go({ date: anchor, clearRange: true });
+                  }}
+                />
                 <FilterSelect label="Assigned" value={filters.staffId} onChange={(staffId) => applyBrowse({ staffId })}>
                   <option value="">Everyone</option>
                   <option value="tbd">TBD</option>
@@ -1598,11 +1685,167 @@ function FilterSelect({
   );
 }
 
+function stepRange(
+  span: CalendarSpan | null,
+  anchor: string,
+  view: CalendarViewName,
+  direction: -1 | 1
+): CalendarNav {
+  if (span) {
+    const next = shiftCalendarSpan(span, direction);
+    if (next) return { from: next.from, to: next.to, date: next.from };
+  }
+  return { date: shiftAnchor(anchor, view, direction), clearRange: true };
+}
+
+function DateRangePicker({
+  span,
+  anchor,
+  today,
+  jobDates,
+  monthAnchor,
+  showMonth = true,
+  onMonth,
+  onApply,
+  onClear,
+}: {
+  span: CalendarSpan | null;
+  anchor: string;
+  today: string;
+  jobDates: Set<string>;
+  monthAnchor: string;
+  showMonth?: boolean;
+  onMonth: (month: string) => void;
+  onApply: (next: CalendarSpan) => void;
+  onClear: () => void;
+}) {
+  const [from, setFrom] = useState(span?.from ?? "");
+  const [to, setTo] = useState(span?.to ?? "");
+  const [awaitingEnd, setAwaitingEnd] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const field = "mt-1 block h-11 rounded-lg border border-gray-300 bg-white px-2 text-sm dark:border-gray-600 dark:bg-gray-900";
+
+  useEffect(() => {
+    setFrom(span?.from ?? "");
+    setTo(span?.to ?? "");
+    setAwaitingEnd(false);
+    setMessage(null);
+  }, [span?.from, span?.to]);
+
+  function choose(date: string) {
+    if (!awaitingEnd || !from) {
+      setFrom(date);
+      setTo("");
+      setAwaitingEnd(true);
+      setMessage("Now choose the end date. Choose this day again for a single day.");
+      return;
+    }
+    const start = date < from ? date : from;
+    const end = date < from ? from : date;
+    setFrom(start);
+    setTo(end);
+    setAwaitingEnd(false);
+    const resolved = resolveCalendarSpan(start, end);
+    if (!resolved.ok || !resolved.span) {
+      setMessage(resolved.ok ? "Choose both a start date and an end date." : resolved.message);
+      return;
+    }
+    setMessage(null);
+    onApply(resolved.span);
+  }
+
+  function applyTyped() {
+    const resolved = resolveCalendarSpan(from, to);
+    if (!resolved.ok) {
+      setMessage(resolved.message);
+      return;
+    }
+    if (!resolved.span) {
+      setMessage("Choose both a start date and an end date.");
+      return;
+    }
+    setMessage(null);
+    onApply(resolved.span);
+  }
+
+  return (
+    <div className={showMonth ? "space-y-2" : "flex flex-wrap items-end gap-2"}>
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="text-xs font-medium text-gray-600 dark:text-gray-300">
+          From
+          <input
+            className={field}
+            type="date"
+            value={from}
+            aria-label="Range start"
+            onChange={(event) => {
+              setFrom(event.target.value);
+              setAwaitingEnd(false);
+              setMessage(null);
+            }}
+          />
+        </label>
+        <label className="text-xs font-medium text-gray-600 dark:text-gray-300">
+          To
+          <input
+            className={field}
+            type="date"
+            value={to}
+            aria-label="Range end"
+            onChange={(event) => {
+              setTo(event.target.value);
+              setAwaitingEnd(false);
+              setMessage(null);
+            }}
+          />
+        </label>
+        <button type="button" className="h-11 rounded-lg bg-siam-blue px-3 text-sm font-semibold text-white" onClick={applyTyped}>
+          Apply
+        </button>
+        {(span || from || to) && (
+          <button
+            type="button"
+            className="h-11 rounded-lg px-2 text-sm font-medium text-siam-blue"
+            onClick={() => {
+              setFrom("");
+              setTo("");
+              setAwaitingEnd(false);
+              setMessage(null);
+              if (span) onClear();
+            }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      {message && <p className="w-full text-xs text-amber-800 dark:text-amber-200" role="status">{message}</p>}
+      {showMonth && (
+        <>
+          <p className="text-xs text-gray-500">Click the start date, then the end date.</p>
+          <MiniMonth
+            monthAnchor={monthAnchor}
+            selected={anchor}
+            today={today}
+            jobDates={jobDates}
+            rangeFrom={from}
+            rangeTo={to || from}
+            onPrev={() => onMonth(shiftAnchor(monthAnchor, "month", -1))}
+            onNext={() => onMonth(shiftAnchor(monthAnchor, "month", 1))}
+            onPick={choose}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
 function MiniMonth({
   monthAnchor,
   selected,
   today,
   jobDates,
+  rangeFrom = "",
+  rangeTo = "",
   onPrev,
   onNext,
   onPick,
@@ -1611,6 +1854,8 @@ function MiniMonth({
   selected: string;
   today: string;
   jobDates: Set<string>;
+  rangeFrom?: string;
+  rangeTo?: string;
   onPrev: () => void;
   onNext: () => void;
   onPick: (date: string) => void;
@@ -1638,12 +1883,15 @@ function MiniMonth({
           const outside = !date.startsWith(monthKey);
           const isToday = date === today;
           const isSelected = date === selected;
+          const inRange = Boolean(rangeFrom && rangeTo && date >= rangeFrom && date <= rangeTo);
+          const edge = date === rangeFrom || date === rangeTo;
           return (
             <button
               key={date}
               type="button"
               onClick={() => onPick(date)}
-              className={`flex h-8 flex-col items-center justify-center rounded-full text-xs ${outside ? "text-gray-400" : ""} ${isSelected && !isToday ? "bg-gray-200 dark:bg-gray-700" : ""}`}
+              aria-pressed={inRange || undefined}
+              className={`flex h-8 flex-col items-center justify-center rounded-full text-xs ${outside ? "text-gray-400" : ""} ${inRange ? "bg-blue-100 dark:bg-blue-950" : ""} ${edge ? "ring-2 ring-siam-blue" : ""} ${isSelected && !isToday && !inRange ? "bg-gray-200 dark:bg-gray-700" : ""}`}
             >
               <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${isToday ? "bg-siam-blue font-semibold text-white" : ""}`}>
                 {Number(date.slice(-2))}
@@ -1778,7 +2026,7 @@ function SidebarBody(props: {
           Unscheduled — {props.unscheduled.length === 40 ? "40+" : props.unscheduled.length}
         </h2>
         {props.unscheduled.length === 0 ? (
-          <p className="px-2 py-2 text-sm text-gray-500">Every confirmed job in this list has a date.</p>
+          <p className="px-2 py-2 text-sm text-gray-500">Every paid job in this list has a date.</p>
         ) : (
           <ul className="mt-1 space-y-1">
             {props.unscheduled.slice(0, 8).map((job) => (

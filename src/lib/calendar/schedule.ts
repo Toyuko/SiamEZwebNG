@@ -42,6 +42,8 @@ export type CalendarJobRecord = {
   totalSatang: number;
   depositSatang: number;
   outstandingSatang: number;
+  /** Approved payments, in satang. A deposit counts. */
+  paidSatang: number;
   documents: string[];
   description: string | null;
 };
@@ -59,6 +61,19 @@ export const HIDDEN_CALENDAR_STATUSES = ["cancelled", "refunded", "refund_pendin
 
 export function isHiddenCalendarStatus(status: string): boolean {
   return (HIDDEN_CALENDAR_STATUSES as readonly string[]).includes(status);
+}
+
+/** Statuses that mean money was received even when the payment row is missing. */
+const PAID_CALENDAR_STATUSES = new Set(["paid", "initial_payment_paid"]);
+
+/**
+ * A job is on the admin calendar after money is recorded.
+ * An approved deposit counts. A status of Paid or Initial payment paid counts
+ * when the payment row was not stored.
+ */
+export function isPaidCalendarJob(job: { status: string; paidSatang: number }): boolean {
+  if (PAID_CALENDAR_STATUSES.has(job.status)) return true;
+  return job.paidSatang > 0;
 }
 
 export type PublicAvailabilitySlot = {
@@ -203,6 +218,74 @@ export function calendarRange(view: CalendarViewName, anchor: string): { start: 
   return { start, end: new Date(start.getTime() + days * 24 * 60 * 60 * 1000) };
 }
 
+/** Longest custom range the admin calendar will load, including both ends. */
+export const CALENDAR_RANGE_MAX_DAYS = 92;
+
+export type CalendarSpan = { from: string; to: string };
+
+export type CalendarSpanResult =
+  | { ok: true; span: null }
+  | { ok: true; span: CalendarSpan; start: Date; end: Date }
+  | { ok: false; message: string };
+
+function isCalendarDate(value: string): boolean {
+  return DATE_RE.test(value) && Boolean(bangkokDateTime(value, "12:00"));
+}
+
+function collectCalendarDates(from: string, to: string, limit: number): string[] {
+  const dates: string[] = [];
+  let cursor = from;
+  while (cursor && cursor <= to && dates.length < limit) {
+    dates.push(cursor);
+    const next = nextCalendarDate(cursor);
+    if (!next || next === cursor) break;
+    cursor = next;
+  }
+  return dates;
+}
+
+/**
+ * A custom admin range. Both ends are inclusive Bangkok dates.
+ * Missing params mean "use the view". A half-set or impossible range is rejected
+ * so the calendar does not silently show the wrong days.
+ */
+export function resolveCalendarSpan(from: string | undefined, to: string | undefined): CalendarSpanResult {
+  const rawFrom = from?.trim() ?? "";
+  const rawTo = to?.trim() ?? "";
+  if (!rawFrom && !rawTo) return { ok: true, span: null };
+  if (!rawFrom || !rawTo) return { ok: false, message: "Choose both a start date and an end date." };
+  if (!isCalendarDate(rawFrom) || !isCalendarDate(rawTo)) {
+    return { ok: false, message: "Use a real calendar date for the start and the end." };
+  }
+  if (rawFrom > rawTo) return { ok: false, message: "The start date has to be on or before the end date." };
+  const count = collectCalendarDates(rawFrom, rawTo, CALENDAR_RANGE_MAX_DAYS + 1).length;
+  if (count > CALENDAR_RANGE_MAX_DAYS) {
+    return { ok: false, message: `Choose ${CALENDAR_RANGE_MAX_DAYS} days or fewer.` };
+  }
+  const start = bangkokDateTime(rawFrom, "00:00");
+  const end = bangkokDateTime(nextCalendarDate(rawTo), "00:00");
+  if (!start || !end || end.getTime() <= start.getTime()) {
+    return { ok: false, message: "Use a real calendar date for the start and the end." };
+  }
+  return { ok: true, span: { from: rawFrom, to: rawTo }, start, end };
+}
+
+export function datesInRange(from: string, to: string): string[] {
+  const resolved = resolveCalendarSpan(from, to);
+  if (!resolved.ok || !resolved.span) return [];
+  return collectCalendarDates(resolved.span.from, resolved.span.to, CALENDAR_RANGE_MAX_DAYS);
+}
+
+/** Move a custom range by its own length. Oct 1–7 moves to Oct 8–14. */
+export function shiftCalendarSpan(span: CalendarSpan, direction: -1 | 1): CalendarSpan | null {
+  const count = collectCalendarDates(span.from, span.to, CALENDAR_RANGE_MAX_DAYS + 1).length;
+  if (count < 1 || count > CALENDAR_RANGE_MAX_DAYS) return null;
+  const from = shiftCalendarDate(span.from, direction * count);
+  const to = shiftCalendarDate(span.to, direction * count);
+  if (!from || !to || !isCalendarDate(from) || !isCalendarDate(to)) return null;
+  return { from, to };
+}
+
 export function shiftAnchor(anchor: string, view: CalendarViewName, direction: -1 | 1): string {
   const safe = calendarAnchor(anchor);
   if (view === "month") {
@@ -268,6 +351,7 @@ export function matchesProvince(province: string | null | undefined, provinces: 
 
 export function jobMatchesFilters(job: CalendarJobRecord, filters: CalendarFilters): boolean {
   if (isHiddenCalendarStatus(job.status)) return false;
+  if (!isPaidCalendarJob(job)) return false;
   const status = filters.status === "cancelled" ? "all" : filters.status;
   if (!matchesProvince(job.province, filters.provinces)) return false;
   if (filters.staffId === "tbd" && job.staffId) return false;
@@ -438,9 +522,14 @@ export function reschedulePlan(
   };
 }
 
-export function isUnscheduledJob(job: { scheduledAt: Date | string | null; status: string }): boolean {
+export function isUnscheduledJob(job: {
+  scheduledAt: Date | string | null;
+  status: string;
+  paidSatang: number;
+}): boolean {
   if (job.scheduledAt) return false;
-  return ["awaiting_payment", "confirmed", "in_progress", "pending_docs"].includes(job.status);
+  if (isHiddenCalendarStatus(job.status)) return false;
+  return isPaidCalendarJob(job);
 }
 
 export type ManualCalendarEvent = {

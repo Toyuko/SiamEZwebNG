@@ -108,12 +108,28 @@ function toRecord(row: CalendarRow): CalendarJobRecord {
     totalSatang,
     depositSatang,
     outstandingSatang: Math.max(0, totalSatang - paid),
+    paidSatang: paid,
     documents: parseDocumentsRequired(row.documentsRequired),
     description: row.jobDescription,
   };
 }
 
 const ACTIVE_UNSCHEDULED: CaseStatus[] = ["awaiting_payment", "confirmed", "in_progress", "pending_docs"];
+
+/** Money recorded, or a status that means the payment was received. */
+function paidCalendarWhere(): Prisma.CaseWhereInput {
+  return {
+    OR: [
+      { status: { in: ["paid", "initial_payment_paid"] } },
+      { invoices: { some: { payments: { some: { status: "approved", amount: { gt: 0 } } } } } },
+    ],
+  };
+}
+
+function andWhere(where: Prisma.CaseWhereInput, clause: Prisma.CaseWhereInput) {
+  const current = Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : [];
+  where.AND = [...current, clause];
+}
 
 function applyEventProvinceFilter(where: Prisma.EventWhereInput, provinces: string[]) {
   if (provinces.length === 0) return;
@@ -223,6 +239,7 @@ function rangeWhere(start: Date, end: Date, filters: CalendarFilters, searching:
   } else {
     where.status = { notIn: [...HIDDEN_CALENDAR_STATUSES] };
   }
+  andWhere(where, paidCalendarWhere());
   return where;
 }
 
@@ -261,7 +278,11 @@ export async function loadCompanyCalendar(input: {
       take: searching ? 80 : 400,
     }),
     prisma.case.findMany({
-      where: { scheduledAt: null, status: { in: ACTIVE_UNSCHEDULED } },
+      where: {
+        scheduledAt: null,
+        status: { notIn: [...HIDDEN_CALENDAR_STATUSES] },
+        AND: [paidCalendarWhere()],
+      },
       select: calendarSelect,
       orderBy: { updatedAt: "desc" },
       take: 40,
@@ -294,7 +315,11 @@ export async function loadCompanyCalendar(input: {
   const jobs = filterCalendarJobs(rows.map(toRecord), input.filters);
   const unscheduled = unscheduledRows
     .map(toRecord)
-    .filter((job) => isUnscheduledJob({ scheduledAt: null, status: job.status }) && jobMatchesFilters(job, input.filters));
+    .filter(
+      (job) =>
+        isUnscheduledJob({ scheduledAt: null, status: job.status, paidSatang: job.paidSatang }) &&
+        jobMatchesFilters(job, input.filters)
+    );
   return {
     jobs,
     unscheduled,
@@ -370,7 +395,13 @@ export async function loadCalendarHealth() {
     prisma.case.count({
       where: { scheduledAt: { not: null }, events: { none: { primaryForCaseId: { not: null } } } },
     }),
-    prisma.case.count({ where: { scheduledAt: null, status: { in: ACTIVE_UNSCHEDULED } } }),
+    prisma.case.count({
+      where: {
+        scheduledAt: null,
+        status: { notIn: [...HIDDEN_CALENDAR_STATUSES] },
+        AND: [paidCalendarWhere()],
+      },
+    }),
     prisma.$queryRaw<Array<{ count: number }>>`
       SELECT COUNT(*)::int AS count FROM (
         SELECT case_id FROM events
@@ -439,6 +470,7 @@ async function warningsFor(
       id: { not: caseId },
       scheduledAt: { gte: windowStart, lt: windowEnd },
       status: { notIn: [...HIDDEN_CALENDAR_STATUSES] },
+      AND: [paidCalendarWhere()],
       staffAssignments: { some: { userId: staffId } },
     },
     select: {
