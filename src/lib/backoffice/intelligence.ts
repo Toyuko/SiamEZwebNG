@@ -94,7 +94,13 @@ function ageLabel(oldest: Date | null, now: Date): string {
 
 async function approvedRevenue(range: NamedRange): Promise<{ total: number; ranked: { name: string; amount: number }[] }> {
   const payments = await prisma.payment.findMany({
-    where: { status: "approved", approvedAt: { gte: range.start, lte: range.end } },
+    where: {
+      status: "approved",
+      OR: [
+        { approvedAt: { gte: range.start, lte: range.end } },
+        { approvedAt: null, submittedAt: { gte: range.start, lte: range.end } },
+      ],
+    },
     select: { amount: true, case: { select: { service: { select: { name: true } }, otherServiceName: true } } },
   });
   const ranked = rankByAmount(

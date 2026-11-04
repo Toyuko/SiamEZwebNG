@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { extractDocumentFields } from "@/lib/documents/extract";
-import { resolveDateRange, endOfBangkokDay, startOfBangkokDay } from "@/lib/finance/dates";
+import { endOfBangkokDay, resolveDateRange, startOfBangkokDay } from "@/lib/finance/dates";
 import { listReceivables } from "@/lib/finance/summaries";
 import { sumSatang } from "@/lib/finance/money";
 import {
@@ -14,6 +14,8 @@ import {
 import { OPEN_FOLLOW_UP_STATUSES } from "@/lib/follow-ups/constants";
 import { getVehicleServicePricing } from "@/lib/vehicle-leads/pricing";
 import { answerCommand } from "@/lib/backoffice/command";
+import { explainRevenue } from "@/lib/backoffice/finance-answer";
+import { readEveryPage } from "@/lib/finance/read-all";
 import { findDuplicateGroups } from "@/lib/backoffice/duplicates";
 import {
   missingRequiredDocuments,
@@ -83,9 +85,9 @@ export async function answerIntent(
     case "send_reminders":
       return proposeReminders(intent.when);
     case "revenue":
-      return revenue(intent.period);
     case "revenue_by_service":
-      return revenueByService(intent.period);
+    case "revenue_compare":
+      return explainRevenue(intent, role, actorId);
     case "vehicles_for_sale":
       return vehiclesForSale();
     case "vehicle_fees":
@@ -444,9 +446,10 @@ async function outstandingPayments(): Promise<AssistantFact> {
   if (rows.length === 0) return fact("No outstanding customer balances.", ["Open invoices have no remaining balance in the payment records."]);
   const total = rows.reduce((sum, row) => sum + row.outstanding, 0);
   const shown = rows.slice(0, 25);
-  const lines = shown.map((row) =>
-    `${row.customerName} · ${row.caseNumber} · ${formatSatang(row.outstanding)} of ${formatSatang(row.total)} · ${row.status}`
-  );
+  const lines = [
+    "Every open invoice was included. This is not a dashboard sample.",
+    ...shown.map((row) => `${row.customerName} · ${row.caseNumber} · ${formatSatang(row.outstanding)} of ${formatSatang(row.total)} · ${row.status}`),
+  ];
   if (rows.length > shown.length) lines.push(`Showing ${shown.length} of ${rows.length} invoices. The total includes every outstanding invoice.`);
   return fact(
     `Outstanding balances: ${formatSatang(total)} across ${rows.length} invoice${rows.length === 1 ? "" : "s"}.`,
@@ -456,70 +459,51 @@ async function outstandingPayments(): Promise<AssistantFact> {
 }
 
 async function outstandingDeposits(): Promise<AssistantFact> {
-  const invoices = await prisma.invoice.findMany({
-    where: { depositAmount: { not: null }, status: { in: ["draft", "unpaid", "pending_verification"] } },
-    include: {
-      payments: { where: { status: "approved" }, select: { amount: true } },
-      user: { select: { name: true, email: true } },
-      case: { select: { id: true, caseNumber: true, guestName: true } },
-    },
-    take: 40,
-  });
-  const due = invoices
+  const read = await readEveryPage((cursor, take) =>
+    prisma.invoice.findMany({
+      where: { depositAmount: { not: null }, status: { in: ["draft", "unpaid", "pending_verification"] } },
+      orderBy: { id: "asc" },
+      take,
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+      include: {
+        payments: { where: { status: "approved" }, select: { amount: true } },
+        user: { select: { name: true, email: true } },
+        case: { select: { id: true, caseNumber: true, guestName: true } },
+      },
+    })
+  );
+  if (!read.complete) {
+    return fact("Outstanding deposits could not be read completely.", [read.note ?? "I am not showing a total."]);
+  }
+  const due = read.rows
     .map((invoice) => {
       const paid = sumSatang(invoice.payments.map((payment) => payment.amount));
       const deposit = invoice.depositAmount ?? 0;
       return { invoice, remaining: Math.max(0, deposit - paid) };
     })
     .filter((row) => row.remaining > 0);
-  if (due.length === 0) return fact("No outstanding deposits.", ["Deposit invoices are either paid or not recorded."]);
-  return fact(`${due.length} deposit${due.length === 1 ? "" : "s"} still short.`, due.map(({ invoice, remaining }) =>
+  if (due.length === 0) return fact("No outstanding deposits.", ["Every deposit invoice was checked. They are either paid or not recorded."]);
+  const shown = due.slice(0, 25);
+  const lines = shown.map(({ invoice, remaining }) =>
     `${customerLabel(invoice.user, invoice.case.guestName)} · ${invoice.case.caseNumber} · ${formatSatang(remaining)} still due of ${formatSatang(invoice.depositAmount ?? 0)}`
-  ));
+  );
+  if (due.length > shown.length) lines.push(`Showing ${shown.length} of ${due.length} deposits. The count includes every short deposit.`);
+  return fact(`${due.length} deposit${due.length === 1 ? "" : "s"} still short.`, lines);
 }
 
 async function approvedTotal(preset: "today" | "this_week" | "this_month" | "last_month"): Promise<number> {
   const range = resolveDateRange(preset);
   const sum = await prisma.payment.aggregate({
-    where: { status: "approved", approvedAt: { gte: range.start, lte: range.end } },
+    where: {
+      status: "approved",
+      OR: [
+        { approvedAt: { gte: range.start, lte: range.end } },
+        { approvedAt: null, submittedAt: { gte: range.start, lte: range.end } },
+      ],
+    },
     _sum: { amount: true },
   });
   return sum._sum.amount ?? 0;
-}
-
-async function revenue(period: "today" | "week" | "this_month" | "last_month" | "compare"): Promise<AssistantFact> {
-  if (period === "compare") {
-    const [current, previous] = await Promise.all([approvedTotal("this_month"), approvedTotal("last_month")]);
-    const delta = current - previous;
-    return fact("Revenue from approved payments.", [
-      `This month: ${formatSatang(current)}.`,
-      `Last month: ${formatSatang(previous)}.`,
-      `Difference: ${delta >= 0 ? "+" : "−"}${formatSatang(Math.abs(delta))}.`,
-      "Payments without an approval time are not included. I did not estimate missing days.",
-    ]);
-  }
-  const preset = period === "week" ? "this_week" : period === "today" ? "today" : period === "last_month" ? "last_month" : "this_month";
-  const total = await approvedTotal(preset);
-  return fact(`Approved revenue for ${period.replaceAll("_", " ")}: ${formatSatang(total)}.`, [
-    "This is the sum of approved payments in Asia/Bangkok. It is not a forecast.",
-  ]);
-}
-
-async function revenueByService(period: "today" | "week" | "this_month" | "last_month" | "compare"): Promise<AssistantFact> {
-  const preset = period === "compare" || period === "this_month" ? "this_month" : period === "week" ? "this_week" : period === "today" ? "today" : "last_month";
-  const range = resolveDateRange(preset);
-  const payments = await prisma.payment.findMany({
-    where: { status: "approved", approvedAt: { gte: range.start, lte: range.end } },
-    select: { amount: true, case: { select: { service: { select: { name: true } }, otherServiceName: true } } },
-  });
-  const totals = new Map<string, number>();
-  for (const payment of payments) {
-    const name = payment.case.service?.name ?? payment.case.otherServiceName ?? "Unspecified service";
-    totals.set(name, (totals.get(name) ?? 0) + payment.amount);
-  }
-  const ranked = [...totals.entries()].sort((a, b) => b[1] - a[1]);
-  if (ranked.length === 0) return fact("No approved service revenue in that period.", ["There are no approved payments with an approval time to group."]);
-  return fact("Approved revenue by service.", ranked.slice(0, 12).map(([name, amount]) => `${name}: ${formatSatang(amount)}`));
 }
 
 async function renewals(window: "this_month" | "next_month" | "overdue" | "soon"): Promise<AssistantFact> {
