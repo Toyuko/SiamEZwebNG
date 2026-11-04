@@ -22,6 +22,7 @@ export const CONFIRMABLE_TOOLS = [
   "save_draft_quote",
   "send_appointment_reminders",
   "create_customer",
+  "send_payment_reminders",
 ] as const;
 
 export type ConfirmableTool = (typeof CONFIRMABLE_TOOLS)[number];

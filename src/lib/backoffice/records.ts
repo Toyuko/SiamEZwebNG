@@ -13,6 +13,7 @@ import {
 } from "@/lib/follow-ups/dates";
 import { OPEN_FOLLOW_UP_STATUSES } from "@/lib/follow-ups/constants";
 import { getVehicleServicePricing } from "@/lib/vehicle-leads/pricing";
+import { answerCommand } from "@/lib/backoffice/command";
 import { findDuplicateGroups } from "@/lib/backoffice/duplicates";
 import {
   missingRequiredDocuments,
@@ -56,7 +57,13 @@ function monthBounds(offset: number): { startKey: string; endKey: string } {
   return { startKey, endKey };
 }
 
-export async function answerIntent(intent: BackofficeIntent, context: BackofficeContext): Promise<AssistantFact> {
+export async function answerIntent(
+  intent: BackofficeIntent,
+  context: BackofficeContext,
+  role: "admin" | "staff" = "staff"
+): Promise<AssistantFact> {
+  const extended = await answerCommand(intent, context, role);
+  if (extended) return extended;
   switch (intent.kind) {
     case "help":
       return helpFact();
@@ -114,12 +121,14 @@ export async function answerIntent(intent: BackofficeIntent, context: Backoffice
       return knowledge(intent.query);
     case "unknown":
       return knowledge(intent.query);
+    default:
+      return fact("I could not match that request to a record.", ["Try naming the customer, booking, or report you want."]);
   }
 }
 
 function helpFact(): AssistantFact {
   return fact("I can work from live SiamEZ records.", [
-    "Ask about customers, bookings, payments, quotations, licence renewals, vehicle leads, documents, and staff tasks.",
+    "Ask about customers, bookings, payments, quotations, documents, staff tasks, workflows, and the management briefing.",
     "I will not change a customer, send a message, or save a quotation until you confirm.",
     "I will not invent a payment or a booking. If a record is missing, I will say so.",
     "Document checks are for staff review. I do not certify that a document is genuine or legally valid.",
@@ -430,12 +439,19 @@ async function proposeReminders(when: "today" | "tomorrow"): Promise<AssistantFa
 }
 
 async function outstandingPayments(): Promise<AssistantFact> {
-  const rows = (await listReceivables()).filter((row) => row.outstanding > 0).slice(0, 25);
+  const rows = (await listReceivables()).filter((row) => row.outstanding > 0);
   if (rows.length === 0) return fact("No outstanding customer balances.", ["Open invoices have no remaining balance in the payment records."]);
   const total = rows.reduce((sum, row) => sum + row.outstanding, 0);
-  return fact(`Outstanding balances: ${formatSatang(total)}.`, rows.map((row) =>
+  const shown = rows.slice(0, 25);
+  const lines = shown.map((row) =>
     `${row.customerName} · ${row.caseNumber} · ${formatSatang(row.outstanding)} of ${formatSatang(row.total)} · ${row.status}`
-  ), { links: rows.slice(0, 8).map((row) => ({ href: `/admin/cases/${row.caseId}`, label: row.caseNumber })) });
+  );
+  if (rows.length > shown.length) lines.push(`Showing ${shown.length} of ${rows.length} invoices. The total includes every outstanding invoice.`);
+  return fact(
+    `Outstanding balances: ${formatSatang(total)} across ${rows.length} invoice${rows.length === 1 ? "" : "s"}.`,
+    lines,
+    { links: shown.slice(0, 8).map((row) => ({ href: `/admin/cases/${row.caseId}`, label: row.caseNumber })) }
+  );
 }
 
 async function outstandingDeposits(): Promise<AssistantFact> {

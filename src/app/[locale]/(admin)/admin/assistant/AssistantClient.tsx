@@ -30,6 +30,11 @@ type Snapshot = {
 type Article = { id: string; title: string; body: string; category: string; active: boolean };
 type PriceItem = { id: string; name: string; amountSatang: number; active: boolean; code: string };
 type AuditEntry = { id: string; createdAt: string; actorEmail: string; action: string; status: string; summary: string };
+type ChartBar = { label: string; value: number; display: string };
+type Briefing = { title: string; lines: string[]; charts: { title: string; bars: ChartBar[] }[]; priorities: string[] };
+type AutomationRule = { id: string; key: string; name: string; description: string; enabled: boolean };
+type AutomationRun = { id: string; status: string; trigger: string; summary: string; error: string | null; actorLabel: string };
+type AutomationData = { rules: AutomationRule[]; runs: AutomationRun[]; counts: { activeRules: number; pendingApproval: number; failed: number; completed: number } };
 
 const PROMPTS = [
   "Show me all customers with outstanding payments.",
@@ -40,6 +45,8 @@ const PROMPTS = [
   "Find customers who haven't sent their required documents.",
   "Show all vehicles currently listed for sale.",
   "Show me all overdue staff tasks.",
+  "Which services make us the most money?",
+  "Where are bookings getting delayed?",
 ];
 
 function baht(satang: number): string {
@@ -66,10 +73,12 @@ export function AssistantClient() {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [role, setRole] = useState<"admin" | "staff">("staff");
   const [llmConfigured, setLlmConfigured] = useState(false);
-  const [tab, setTab] = useState<"knowledge" | "prices" | "audit">("knowledge");
+  const [tab, setTab] = useState<"knowledge" | "prices" | "audit" | "briefing" | "automation">("knowledge");
   const [articles, setArticles] = useState<Article[]>([]);
   const [prices, setPrices] = useState<PriceItem[]>([]);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const [briefing, setBriefing] = useState<Briefing | null>(null);
+  const [automation, setAutomation] = useState<AutomationData | null>(null);
   const [articleTitle, setArticleTitle] = useState("");
   const [articleBody, setArticleBody] = useState("");
   const threadRef = useRef<HTMLDivElement>(null);
@@ -90,14 +99,28 @@ export function AssistantClient() {
         ? "/api/admin/assistant/knowledge"
         : next === "prices"
           ? "/api/admin/assistant/prices"
-          : "/api/admin/assistant/audit";
+          : next === "briefing"
+            ? "/api/admin/assistant/briefing"
+            : next === "automation"
+              ? "/api/admin/assistant/automation"
+              : "/api/admin/assistant/audit";
     const response = await fetch(path);
     const body = await readJson(response);
     if (!body.success || !body.data || typeof body.data !== "object") return;
-    const data = body.data as { articles?: Article[]; items?: PriceItem[]; entries?: AuditEntry[] };
+    const data = body.data as {
+      articles?: Article[];
+      items?: PriceItem[];
+      entries?: AuditEntry[];
+      briefing?: Briefing;
+      rules?: AutomationRule[];
+      runs?: AutomationRun[];
+      counts?: AutomationData["counts"];
+    };
     if (data.articles) setArticles(data.articles);
     if (data.items) setPrices(data.items);
     if (data.entries) setAudit(data.entries);
+    if (data.briefing) setBriefing(data.briefing);
+    if (data.rules && data.runs && data.counts) setAutomation({ rules: data.rules, runs: data.runs, counts: data.counts });
   }, []);
 
   useEffect(() => {
@@ -223,9 +246,9 @@ export function AssistantClient() {
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <div>
         <p className="text-sm font-semibold uppercase tracking-wide text-siam-blue">SiamEZ</p>
-        <h1 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">AI Assistant</h1>
+        <h1 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">AI Command Centre</h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Operations assistant for staff. Answers use the database. Changes and outbound messages wait for confirmation.
+          Ask in ordinary language. Workflows draft the repetitive booking steps. The briefing uses recorded figures. Changes and outbound messages wait for confirmation.
           {llmConfigured ? " A language model is connected for unfamiliar phrasing." : " Add an AI key later to understand a wider range of phrasing."}
         </p>
       </div>
@@ -361,6 +384,8 @@ export function AssistantClient() {
             [
               ["knowledge", "Knowledge"],
               ["prices", "Prices"],
+              ["briefing", "Briefing"],
+              ["automation", "Automation"],
               ["audit", "Audit"],
             ] as const
           ).map(([id, label]) => (
@@ -424,8 +449,84 @@ export function AssistantClient() {
             ))}
           </ul>
         ) : null}
+        {tab === "briefing" && briefing ? (
+          <div className="mt-4 space-y-4">
+            <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
+              {briefing.lines.map((line) => <li key={line}>{line}</li>)}
+            </ul>
+            {briefing.charts.map((chart) => (
+              <div key={chart.title}>
+                <h2 className="text-sm font-semibold">{chart.title}</h2>
+                <Bars items={chart.bars} />
+              </div>
+            ))}
+            <ul className="list-disc space-y-1 pl-5 text-sm">
+              {briefing.priorities.map((item) => <li key={item}>{item}</li>)}
+            </ul>
+          </div>
+        ) : null}
+        {tab === "automation" && automation ? (
+          <div className="mt-4 space-y-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {automation.counts.activeRules} active · {automation.counts.completed} completed · {automation.counts.failed} failed · {automation.counts.pendingApproval} waiting for approval
+            </p>
+            <ul className="space-y-3">
+              {automation.rules.map((rule) => (
+                <li key={rule.id} className="rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-800">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-semibold">{rule.name}</span>
+                    {role === "admin" ? (
+                      <button
+                        type="button"
+                        className="min-h-11 rounded-lg bg-gray-100 px-3 font-semibold dark:bg-gray-800"
+                        onClick={async () => {
+                          await fetch("/api/admin/assistant/automation", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ key: rule.key, enabled: !rule.enabled }),
+                          });
+                          await loadTab("automation");
+                        }}
+                      >
+                        {rule.enabled ? "Turn off" : "Turn on"}
+                      </button>
+                    ) : (
+                      <span>{rule.enabled ? "On" : "Off"}</span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-gray-600 dark:text-gray-400">{rule.description}</p>
+                </li>
+              ))}
+            </ul>
+            <ul className="space-y-2 text-sm">
+              {automation.runs.map((run) => (
+                <li key={run.id} className="rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-800">
+                  <span className="font-medium">{run.trigger}</span> · {run.status} · {run.actorLabel}
+                  <p className="text-gray-600 dark:text-gray-400">{run.summary}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </section>
     </div>
+  );
+}
+
+function Bars({ items }: { items: ChartBar[] }) {
+  const max = Math.max(1, ...items.map((item) => item.value));
+  if (items.length === 0) return <p className="mt-2 text-sm text-gray-500">No rows in this chart.</p>;
+  return (
+    <ul className="mt-2 space-y-2">
+      {items.map((item) => (
+        <li key={item.label}>
+          <div className="flex justify-between text-sm"><span>{item.label}</span><span>{item.display}</span></div>
+          <div className="mt-1 h-2 rounded bg-gray-100 dark:bg-gray-800">
+            <div className="h-2 rounded bg-siam-blue" style={{ width: `${Math.max(4, Math.round((item.value / max) * 100))}%` }} />
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }
 

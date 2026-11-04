@@ -6,7 +6,7 @@ import { createFollowUp } from "@/lib/follow-ups/service";
 import { endOfBangkokDay, startOfBangkokDay } from "@/lib/finance/dates";
 import type { BackofficeActor } from "@/lib/backoffice/types";
 import { isConfirmableTool } from "@/lib/backoffice/types";
-import { buildReminderPlan, reminderBody, type ReminderBooking } from "@/lib/backoffice/parse";
+import { buildReminderPlan, draftPaymentReminder, reminderBody, type PaymentReminderDraft, type ReminderBooking } from "@/lib/backoffice/parse";
 import { formatWhen } from "@/lib/backoffice/format";
 import { BackofficeError } from "@/lib/backoffice/auth";
 
@@ -48,6 +48,10 @@ const quoteSchema = z.object({
 const reminderSchema = z.object({
   caseIds: z.array(z.string().min(1)).min(1).max(50),
   whenKey: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+const paymentReminderSchema = z.object({
+  invoiceIds: z.array(z.string().min(1)).min(1).max(20),
 });
 
 const customerSchema = z.object({
@@ -192,6 +196,54 @@ async function executeConfirmed(
       entityType: "user",
       entityId: user.id,
     };
+  }
+
+  if (toolName === "send_payment_reminders") {
+    const data = paymentReminderSchema.parse(payload);
+    const invoices = await prisma.invoice.findMany({
+      where: { id: { in: data.invoiceIds } },
+      select: {
+        id: true,
+        amount: true,
+        caseId: true,
+        user: { select: { email: true, name: true } },
+        case: { select: { caseNumber: true, guestEmail: true, guestName: true } },
+        payments: { where: { status: "approved" }, select: { amount: true } },
+      },
+    });
+    const drafts: PaymentReminderDraft[] = [];
+    for (const invoice of invoices) {
+      const paid = invoice.payments.reduce((sum, payment) => sum + payment.amount, 0);
+      const outstanding = Math.max(0, invoice.amount - paid);
+      const email = invoice.user?.email || invoice.case.guestEmail || "";
+      if (outstanding <= 0 || !email.includes("@")) continue;
+      drafts.push({
+        invoiceId: invoice.id,
+        caseId: invoice.caseId,
+        caseNumber: invoice.case.caseNumber,
+        email,
+        name: invoice.user?.name || invoice.case.guestName || "there",
+        outstandingSatang: outstanding,
+      });
+    }
+    if (drafts.length === 0) throw new BackofficeError("Those balances are already clear, or there is no email address. Nothing was sent.", 409);
+    let sent = 0;
+    let failed = 0;
+    let skipped = false;
+    for (const draft of drafts) {
+      const body = draftPaymentReminder(draft);
+      const result = await sendEmail({
+        to: draft.email,
+        subject: `SiamEZ payment reminder — ${draft.caseNumber}`,
+        text: body,
+        html: `<pre>${body.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</pre>`,
+      });
+      if (result.ok) sent += 1;
+      else if (result.skipped) skipped = true;
+      else failed += 1;
+    }
+    if (skipped && sent === 0) throw new BackofficeError("Email is not configured, so no payment reminder was sent.", 409);
+    return { summary: `Payment reminders sent: ${sent}. Failed: ${failed}.`, entityType: "invoice", entityId: drafts[0]?.invoiceId };
   }
 
   if (toolName === "send_appointment_reminders") {

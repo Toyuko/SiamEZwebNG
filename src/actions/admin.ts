@@ -1762,6 +1762,8 @@ export async function createServiceJob(data: {
       });
     }
   }
+  const { enqueueBookingWorkflow } = await import("@/lib/backoffice/enqueue");
+  enqueueBookingWorkflow(c.id);
   return c;
 }
 

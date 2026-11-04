@@ -686,6 +686,8 @@ export async function createConfirmedJob(
 
   const saved = await loadJob(caseId);
   if (!saved) throw new Error("Job was created but could not be reloaded.");
+  const { enqueueBookingWorkflow } = await import("@/lib/backoffice/enqueue");
+  enqueueBookingWorkflow(caseId);
   const view = toJobView(saved);
   try {
     const notices = await sendJobIntakeNotices(view);

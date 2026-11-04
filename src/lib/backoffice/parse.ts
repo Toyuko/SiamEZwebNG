@@ -1,11 +1,15 @@
 import { addCalendarDays, todayInBangkok, type DateParts } from "@/lib/follow-ups/dates";
-import { dateKeyFromParts } from "@/lib/backoffice/format";
+import { dateKeyFromParts, formatSatang } from "@/lib/backoffice/format";
 
 export function parseAssigneeName(text: string): string | null {
   const match = text.match(/\b(?:for|assign(?:ed)? to)\s+([A-Za-z][A-Za-z.'-]{1,40})/i);
-  if (!match?.[1]) return null;
-  if (/^(this|the|a|an|me|tomorrow|today|customer|everyone)$/i.test(match[1])) return null;
-  return match[1];
+  const tail = text.match(/\bto\s+([A-Za-z][A-Za-z.'-]{1,40})\s*\.?\s*$/i);
+  const raw = (match?.[1] ?? tail?.[1] ?? "").replace(/\.$/, "");
+  if (!raw) return null;
+  if (/^(this|the|a|an|me|tomorrow|today|customer|everyone|monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/i.test(raw)) {
+    return null;
+  }
+  return raw;
 }
 
 export function parseDueDateKey(text: string, today: DateParts = todayInBangkok()): string {
@@ -47,6 +51,28 @@ export function buildReminderPlan(bookings: ReminderBooking[]): {
     bookings: capped,
     summary: `Send ${capped.length} appointment reminder${capped.length === 1 ? "" : "s"}. Nothing is sent until you confirm.`,
   };
+}
+
+export type PaymentReminderDraft = {
+  invoiceId: string;
+  caseId: string;
+  caseNumber: string;
+  email: string;
+  name: string;
+  outstandingSatang: number;
+};
+
+export function draftPaymentReminder(item: PaymentReminderDraft): string {
+  return [
+    `Hello ${item.name},`,
+    "",
+    `This is a reminder from SiamEZ about booking ${item.caseNumber}.`,
+    `The outstanding balance on our records is ${formatSatang(item.outstandingSatang)}.`,
+    "",
+    "If you have already paid, reply to this email and we will check the receipt.",
+    "",
+    "SiamEZ",
+  ].join("\n");
 }
 
 export function reminderBody(booking: ReminderBooking): string {

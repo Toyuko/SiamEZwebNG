@@ -121,11 +121,14 @@ export async function createCase(data: {
   dealValue?: number | null;
   salesNotes?: string | null;
 }) {
-  return prisma.case.create({
+  const created = await prisma.case.create({
     data: {
       ...data,
       status: data.status ?? "new",
       isGuest: data.isGuest ?? false,
     },
   });
+  const { enqueueBookingWorkflow } = await import("@/lib/backoffice/enqueue");
+  enqueueBookingWorkflow(created.id);
+  return created;
 }

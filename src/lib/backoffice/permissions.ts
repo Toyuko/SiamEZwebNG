@@ -16,6 +16,15 @@ export function canDeleteKnowledge(role: BackofficeRole): boolean {
   return role === "admin";
 }
 
+/** Profit, margin, and operating cost stay with administrators. */
+export function canViewManagementFinancials(role: BackofficeRole): boolean {
+  return role === "admin";
+}
+
+export function canConfigureAutomations(role: BackofficeRole): boolean {
+  return role === "admin";
+}
+
 /** Model-picked writes are dropped when the staff text tried to override safeguards. */
 export function shouldBlockUntrustedWrite(flags: string[], source: "staff" | "model"): boolean {
   return source === "model" && flags.length > 0;

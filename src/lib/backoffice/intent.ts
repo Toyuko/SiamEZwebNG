@@ -17,10 +17,19 @@ export type BackofficeIntent =
   | { kind: "bookings"; when: BookingWhen }
   | { kind: "revenue_by_service"; period: RevenuePeriod }
   | { kind: "revenue"; period: RevenuePeriod }
-  | { kind: "vehicles_for_sale" }
+  | { kind: "vehicles_for_sale"; query?: string | null }
   | { kind: "vehicle_fees" }
-  | { kind: "vehicle_leads"; vehicleKind: VehicleKindFilter; stale: boolean; leadType: VehicleLeadFilter }
+  | { kind: "vehicle_leads"; vehicleKind: VehicleKindFilter; stale: boolean; leadType: VehicleLeadFilter; query?: string | null }
   | { kind: "tasks"; scope: TaskScope }
+  | { kind: "tasks_for_staff"; name: string }
+  | { kind: "payment_reminders"; scope: "all" | "context" }
+  | { kind: "customer_balance" }
+  | { kind: "profit" }
+  | { kind: "bottlenecks" }
+  | { kind: "briefing" }
+  | { kind: "staff_workload" }
+  | { kind: "service_demand" }
+  | { kind: "not_contacted" }
   | { kind: "unassigned" }
   | { kind: "missing_documents" }
   | { kind: "quotes" }
@@ -41,6 +50,7 @@ const WRITE_KINDS = new Set<BackofficeIntent["kind"]>([
   "draft_quote",
   "create_task",
   "create_customer",
+  "payment_reminders",
 ]);
 
 export function isWriteIntent(intent: BackofficeIntent): boolean {
@@ -65,8 +75,22 @@ export function classifyBackofficeIntent(raw: string): BackofficeIntent {
   if (!text) return { kind: "help" };
   if (/^(help|what can you do|capabilities)\b/.test(t)) return { kind: "help" };
 
+  if (/\bprofit\b|\bmargin\b|operating cost/.test(t)) return { kind: "profit" };
+  if (/getting delayed|getting stuck|bottleneck|where are bookings/.test(t)) return { kind: "bottlenecks" };
+  if (/executive briefing|management briefing|business overview|daily briefing/.test(t)) return { kind: "briefing" };
+  if (/haven'?t been contacted|not been contacted|haven't contacted/.test(t)) return { kind: "not_contacted" };
+  if (/how much do they owe|what do they owe|their balance/.test(t)) return { kind: "customer_balance" };
+  if (/payment reminder/.test(t) || (/remind/.test(t) && /(payment|outstanding|unpaid|balance)/.test(t))) {
+    const all = /customers|everyone|all /.test(t) || /outstanding/.test(t);
+    return { kind: "payment_reminders", scope: all ? "all" : "context" };
+  }
+  if (/most popular|requesting most|customers requesting/.test(t)) return { kind: "service_demand" };
+  if (/staff workload|outstanding tasks|most overdue tasks/.test(t)) return { kind: "staff_workload" };
+  const assigned = text.match(/\bassigned to\s+([A-Za-z][A-Za-z.'-]{1,40})/i);
+  if (assigned && /task/.test(t)) return { kind: "tasks_for_staff", name: assigned[1]!.replace(/\.$/, "") };
+
   if (/outstanding deposit|deposits outstanding|unpaid deposit/.test(t)) return { kind: "deposits" };
-  if (/outstanding (customer )?payment|owe us|who still owes|unpaid invoice|outstanding balance/.test(t)) {
+  if (/outstanding (customer )?payment|payments? (are|is) outstanding|owe us|who still owes|unpaid invoice|outstanding balance/.test(t)) {
     return { kind: "outstanding_payments" };
   }
   if (/licen[cs]e/.test(t) && /renew/.test(t)) {
@@ -81,16 +105,16 @@ export function classifyBackofficeIntent(raw: string): BackofficeIntent {
   if (/quotation|quote/.test(t) && /haven'?t responded|no response|outstanding quotation|outstanding quote/.test(t)) {
     return { kind: "quotes" };
   }
-  if (/create (a )?(new )?customer|add (a )?customer|new customer record/.test(t)) {
+  if (/create (a )?(new )?customer|add (a )?customer|new customer record/.test(t) && !/quot/.test(t)) {
     return { kind: "create_customer", request: text };
   }
-  if (/prepar(e|ing) a quotation|draft (a )?quot|quotation for|quote for/.test(t)) {
+  if (/prepar(e|ing) a quotation|draft (a )?quot|quotation for|quote for|create (a )?(customer )?quot/.test(t)) {
     return { kind: "draft_quote", request: text };
   }
-  if (/create (a )?(follow-?up )?task|follow-?up task|assign a task/.test(t)) {
+  if (/create (a )?(follow-?up )?task|follow-?up task|assign a task|assign this customer follow-?up/.test(t)) {
     return { kind: "create_task", request: text };
   }
-  if (/prepare a message|draft a message|write a message|confirming tomorrow|message for a customer/.test(t)) {
+  if (/prepare .*message|draft a message|write a message|confirming tomorrow|message for a customer/.test(t)) {
     return { kind: "draft_message", request: text };
   }
   if (/free (appointment )?slot|available slot|find a slot/.test(t)) {
@@ -105,7 +129,7 @@ export function classifyBackofficeIntent(raw: string): BackofficeIntent {
   if (/\btoday\b/.test(t) && /appointment|booking/.test(t)) {
     return { kind: "bookings", when: "today" };
   }
-  if (/which services generated|most revenue|revenue by service/.test(t)) {
+  if (/which services generated|most revenue|revenue by service|most money|make us the most/.test(t)) {
     return { kind: "revenue_by_service", period: periodOf(t) };
   }
   if (/compare this month/.test(t) && /revenue|last month/.test(t)) {
@@ -155,7 +179,7 @@ export function classifyBackofficeIntent(raw: string): BackofficeIntent {
   ) {
     return { kind: "customer_summary", query: extractCustomerQuery(text) };
   }
-  if (/find (all )?customers|search customers|customer named|customers named|find customer|look up/.test(t)) {
+  if (/find (?:a |all )?customers?|search customers|customer named|customers named|look up/.test(t)) {
     return { kind: "customer_search", query: extractCustomerQuery(text) ?? text };
   }
   if (/policy|how do we|procedure|faq|knowledge base|what documents/.test(t)) {
@@ -195,6 +219,15 @@ const CLASSIFIER_KINDS = [
   "vehicle_fees",
   "vehicle_leads",
   "tasks",
+  "tasks_for_staff",
+  "payment_reminders",
+  "customer_balance",
+  "profit",
+  "bottlenecks",
+  "briefing",
+  "staff_workload",
+  "service_demand",
+  "not_contacted",
   "unassigned",
   "missing_documents",
   "quotes",
@@ -244,6 +277,18 @@ export function parseClassifierJson(raw: unknown, staffMessage: string): Backoff
       };
     case "tasks":
       return { kind, scope: value.scope === "overdue" ? "overdue" : "today" };
+    case "tasks_for_staff":
+      return { kind, name: (query || "staff").slice(0, 40) };
+    case "payment_reminders":
+      return { kind, scope: value.scope === "context" ? "context" : "all" };
+    case "customer_balance":
+    case "profit":
+    case "bottlenecks":
+    case "briefing":
+    case "staff_workload":
+    case "service_demand":
+    case "not_contacted":
+      return { kind };
     case "daily_report":
       return { kind, reportKind: value.reportKind === "eod" ? "eod" : "morning" };
     case "draft_quote":
@@ -259,8 +304,18 @@ export function parseClassifierJson(raw: unknown, staffMessage: string): Backoff
     case "knowledge":
     case "unknown":
       return { kind, query: query || staffMessage };
+    case "help":
+    case "outstanding_payments":
+    case "deposits":
+    case "unconfirmed_bookings":
+    case "unassigned":
+    case "missing_documents":
+    case "quotes":
+    case "vehicle_fees":
+    case "vehicles_for_sale":
+      return { kind };
     default:
-      return { kind: kind as "help" };
+      return null;
   }
 }
 

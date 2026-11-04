@@ -138,6 +138,7 @@ model User {
   backofficeConversations    BackofficeConversation[]     @relation("BackofficeConversationStaff")
   backofficeAudits           BackofficeAuditLog[]         @relation("BackofficeAuditStaff")
   backofficePendingActions   BackofficePendingAction[]    @relation("BackofficePendingStaff")
+  backofficeAutomationEdits  BackofficeAutomationRule[]   @relation("BackofficeAutomationEditor")
 }
 
 enum FreelancerVerificationStatus {
@@ -2897,4 +2898,65 @@ model BackofficeDailyReport {
 
   @@unique([reportDate, kind])
   @@map("backoffice_daily_reports")
+}
+
+enum BackofficeAutomationStatus {
+  completed
+  failed
+  pending_approval
+  skipped
+}
+
+model BackofficeWorkflowTemplate {
+  id          String   @id @default(cuid())
+  serviceKey  String   @unique @map("service_key")
+  name        String
+  matchTokens String[] @map("match_tokens")
+  documents   Json
+  stages      Json
+  taskTitle   String   @map("task_title")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("backoffice_workflow_templates")
+}
+
+model BackofficeAutomationRule {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String   @db.Text
+  trigger     String
+  enabled     Boolean  @default(false)
+  updatedById String?  @map("updated_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  updatedBy User?                     @relation("BackofficeAutomationEditor", fields: [updatedById], references: [id], onDelete: SetNull)
+  runs      BackofficeAutomationRun[]
+
+  @@map("backoffice_automation_rules")
+}
+
+model BackofficeAutomationRun {
+  id             String                     @id @default(cuid())
+  ruleId         String                     @map("rule_id")
+  idempotencyKey String                     @unique @map("idempotency_key")
+  status         BackofficeAutomationStatus
+  trigger        String
+  caseId         String?                    @map("case_id")
+  customerId     String?                    @map("customer_id")
+  summary        String                     @db.Text
+  result         Json?
+  error          String?                    @db.Text
+  actorLabel     String                     @default("automation") @map("actor_label")
+  createdAt      DateTime                   @default(now()) @map("created_at")
+  executedAt     DateTime                   @default(now()) @map("executed_at")
+
+  rule BackofficeAutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([caseId])
+  @@map("backoffice_automation_runs")
 }
