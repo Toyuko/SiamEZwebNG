@@ -217,7 +217,8 @@
     "analytics": "การวิเคราะห์",
     "featureFlags": "ฟีเจอร์แฟล็ก",
     "accountDeletionRequests": "คำขอลบบัญชี",
-    "officeDirectory": "สมุดรายชื่อหน่วยงาน"
+    "officeDirectory": "สมุดรายชื่อหน่วยงาน",
+    "aiAssistant": "ผู้ช่วย AI SiamEZ"
   },
   "sales": {
     "inventoryTitle": "คลังรถสำหรับขาย",

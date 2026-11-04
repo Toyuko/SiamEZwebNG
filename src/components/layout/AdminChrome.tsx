@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { Bell, Menu, X } from "lucide-react";
+import { Bell, Menu, Sparkles, X } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
@@ -67,7 +67,16 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
         </header>
-        <main className="min-w-0 flex-1 p-4 md:p-6 print:p-0">{children}</main>
+        <main className="min-w-0 flex-1 p-4 pb-24 md:p-6 md:pb-24 print:p-0">{children}</main>
+        {pathname.startsWith("/admin/assistant") ? null : (
+          <Link
+            href="/admin/assistant"
+            className="fixed bottom-4 right-4 z-40 inline-flex min-h-11 items-center gap-2 rounded-full bg-siam-blue px-4 text-sm font-semibold text-white shadow-lg print:hidden"
+          >
+            <Sparkles className="h-4 w-4 text-siam-yellow" />
+            AI Assistant
+          </Link>
+        )}
       </div>
     </div>
   );

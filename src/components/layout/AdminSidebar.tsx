@@ -54,6 +54,7 @@ type NavGroup = {
 
 const topNav: NavItem[] = [
   { label: "dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "aiAssistant", href: "/admin/assistant", icon: Sparkles },
 ];
 
 const allNavGroups: NavGroup[] = [

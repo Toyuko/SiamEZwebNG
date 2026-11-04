@@ -10,6 +10,14 @@
     {
       "path": "/api/cron/followup-reminders",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/backoffice-report?kind=morning",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/backoffice-report?kind=eod",
+      "schedule": "0 12 * * *"
     }
   ]
 }

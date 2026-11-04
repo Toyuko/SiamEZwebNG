@@ -217,7 +217,8 @@
     "analytics": "Analytics",
     "featureFlags": "Feature flags",
     "accountDeletionRequests": "Account Deletion",
-    "officeDirectory": "Office directory"
+    "officeDirectory": "Office directory",
+    "aiAssistant": "SiamEZ AI Assistant"
   },
   "sales": {
     "inventoryTitle": "Sales Inventory",
