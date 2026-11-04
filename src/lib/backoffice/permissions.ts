@@ -21,6 +21,10 @@ export function canViewManagementFinancials(role: BackofficeRole): boolean {
   return role === "admin";
 }
 
+export function canConfigureModels(role: BackofficeRole): boolean {
+  return role === "admin";
+}
+
 export function canConfigureAutomations(role: BackofficeRole): boolean {
   return role === "admin";
 }

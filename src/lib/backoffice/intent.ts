@@ -1,3 +1,5 @@
+import { detectWorkSteps } from "@/lib/backoffice/operations";
+
 export type RenewalWindow = "this_month" | "next_month" | "overdue" | "soon";
 export type BookingWhen = "today" | "tomorrow";
 export type RevenuePeriod = "today" | "week" | "this_month" | "last_month" | "compare";
@@ -36,6 +38,16 @@ export type BackofficeIntent =
   | { kind: "draft_quote"; request: string }
   | { kind: "create_task"; request: string }
   | { kind: "create_customer"; request: string }
+  | { kind: "create_job"; request: string }
+  | { kind: "create_invoice"; request: string }
+  | { kind: "revise_invoice"; request: string }
+  | { kind: "update_customer"; request: string }
+  | { kind: "update_case_status"; request: string }
+  | { kind: "assign_case"; request: string }
+  | { kind: "work_plan"; request: string }
+  | { kind: "my_tasks" }
+  | { kind: "completed_work" }
+  | { kind: "sales_help"; request: string }
   | { kind: "draft_message"; request: string }
   | { kind: "daily_report"; reportKind: ReportKind }
   | { kind: "document_review"; query: string | null }
@@ -50,6 +62,13 @@ const WRITE_KINDS = new Set<BackofficeIntent["kind"]>([
   "draft_quote",
   "create_task",
   "create_customer",
+  "create_job",
+  "create_invoice",
+  "revise_invoice",
+  "update_customer",
+  "update_case_status",
+  "assign_case",
+  "work_plan",
   "payment_reminders",
 ]);
 
@@ -85,7 +104,7 @@ export function classifyBackofficeIntent(raw: string): BackofficeIntent {
     return { kind: "payment_reminders", scope: all ? "all" : "context" };
   }
   if (/most popular|requesting most|customers requesting/.test(t)) return { kind: "service_demand" };
-  if (/staff workload|outstanding tasks|most overdue tasks/.test(t)) return { kind: "staff_workload" };
+  if (/staff workload|outstanding tasks|most overdue tasks|everyone'?s workload|team workload/.test(t)) return { kind: "staff_workload" };
   const assigned = text.match(/\bassigned to\s+([A-Za-z][A-Za-z.'-]{1,40})/i);
   if (assigned && /task/.test(t)) return { kind: "tasks_for_staff", name: assigned[1]!.replace(/\.$/, "") };
 
@@ -105,13 +124,36 @@ export function classifyBackofficeIntent(raw: string): BackofficeIntent {
   if (/quotation|quote/.test(t) && /haven'?t responded|no response|outstanding quotation|outstanding quote/.test(t)) {
     return { kind: "quotes" };
   }
-  if (/create (a )?(new )?customer|add (a )?customer|new customer record/.test(t) && !/quot/.test(t)) {
+  if (/create (a )?(new )?customer|add (a )?customer|new customer record/.test(t) && !/quot/.test(t) && !/\bjob\b/.test(t)) {
     return { kind: "create_customer", request: text };
+  }
+  const steps = detectWorkSteps(text);
+  if (steps.length >= 2) return { kind: "work_plan", request: text };
+  if (/create (an |a )?invoice|\binvoice for\b/.test(t) && !/unpaid|outstanding|show|remind/.test(t)) {
+    return { kind: "create_invoice", request: text };
+  }
+  if (/invoice/.test(t) && /(change|edit|add|amount|discount)/.test(t)) {
+    return { kind: "revise_invoice", request: text };
+  }
+  if (/update (the )?customer|change (the )?(customer )?(phone|email|name)|rename (the )?customer/.test(t)) {
+    return { kind: "update_customer", request: text };
+  }
+  if (/(update|change|set|mark) (the )?(job|booking|case) status|mark (the )?(job|booking|case) as/.test(t)) {
+    return { kind: "update_case_status", request: text };
+  }
+  if (/assign (this |the )?(job|booking|case)\b/.test(t)) {
+    return { kind: "assign_case", request: text };
+  }
+  if (/create (?:a |the )?(?:new )?(?:customer )?(?:job|booking)|registration job/.test(t)) {
+    return { kind: "create_job", request: text };
   }
   if (/prepar(e|ing) a quotation|draft (a )?quot|quotation for|quote for|create (a )?(customer )?quot/.test(t)) {
     return { kind: "draft_quote", request: text };
   }
   if (/create (a )?(follow-?up )?task|follow-?up task|assign a task|assign this customer follow-?up/.test(t)) {
+    return { kind: "create_task", request: text };
+  }
+  if (/\bremind\s+[a-z]/.test(t) && /contact|customer|follow/.test(t)) {
     return { kind: "create_task", request: text };
   }
   if (/prepare .*message|draft a message|write a message|confirming tomorrow|message for a customer/.test(t)) {
@@ -158,6 +200,7 @@ export function classifyBackofficeIntent(raw: string): BackofficeIntent {
       leadType: "buy",
     };
   }
+  if (/what do i need|my tasks|tasks for me|need to complete today/.test(t)) return { kind: "my_tasks" };
   if (/overdue (staff )?task|overdue work/.test(t)) return { kind: "tasks", scope: "overdue" };
   if (/without an assigned|no assigned staff|unassigned/.test(t)) return { kind: "unassigned" };
   if (/team needs|task list|today'?s tasks|complete today|need follow-?ups?/.test(t)) {
@@ -165,6 +208,10 @@ export function classifyBackofficeIntent(raw: string): BackofficeIntent {
   }
   if (/missing document|haven'?t sent their required|required documents/.test(t)) {
     return { kind: "missing_documents" };
+  }
+  if (/completed work|what was completed|finished today/.test(t)) return { kind: "completed_work" };
+  if (/sales template|recommend (a |the )?(best )?response|customer objection|promotional message|translate (this |the )?(message|draft)/.test(t)) {
+    return { kind: "sales_help", request: text };
   }
   if (/end of day|end-of-day|daily report|operations report|morning report|summarise today|summarize today/.test(t)) {
     return { kind: "daily_report", reportKind: /end of day|end-of-day/.test(t) ? "eod" : "morning" };
@@ -234,6 +281,16 @@ const CLASSIFIER_KINDS = [
   "draft_quote",
   "create_task",
   "create_customer",
+  "create_job",
+  "create_invoice",
+  "revise_invoice",
+  "update_customer",
+  "update_case_status",
+  "assign_case",
+  "work_plan",
+  "my_tasks",
+  "completed_work",
+  "sales_help",
   "draft_message",
   "daily_report",
   "document_review",
@@ -294,8 +351,19 @@ export function parseClassifierJson(raw: unknown, staffMessage: string): Backoff
     case "draft_quote":
     case "create_task":
     case "create_customer":
+    case "create_job":
+    case "create_invoice":
+    case "revise_invoice":
+    case "update_customer":
+    case "update_case_status":
+    case "assign_case":
+    case "work_plan":
+    case "sales_help":
     case "draft_message":
       return { kind, request: staffMessage };
+    case "my_tasks":
+    case "completed_work":
+      return { kind };
     case "document_review":
     case "duplicates":
     case "customer_summary":
@@ -322,5 +390,5 @@ export function parseClassifierJson(raw: unknown, staffMessage: string): Backoff
 export const CLASSIFIER_INSTRUCTIONS = `Classify one SiamEZ staff request as JSON.
 Allowed kind values: ${CLASSIFIER_KINDS.join(", ")}.
 Use outstanding_payments, bookings, revenue, renewals, quotes, vehicle_leads, tasks, or customer_search when the request asks for records.
-Use draft_quote, create_task, create_customer, or send_reminders only when the staff member asks for that action.
+Use draft_quote, create_task, create_customer, create_job, create_invoice, revise_invoice, or send_reminders only when the staff member asks for that action.
 Never invent a kind outside the list. Return only JSON with a kind field and optional window, when, period, query, vehicleKind, stale, leadType, scope, reportKind.`;

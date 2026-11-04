@@ -56,7 +56,7 @@ export async function runBackofficeTurn(input: {
         ],
         links: [],
       }
-    : await answerIntent(intent, context, input.actor.role);
+    : await answerIntent(intent, context, input.actor.role, input.actor.id);
 
   const pending = blocked ? null : await storePending(conversation.id, input.actor, answer.pending);
   const reply = renderFact(answer);

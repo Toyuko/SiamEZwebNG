@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ModelsPanel, TemplatesPanel } from "./AssistantPanels";
 import { Link } from "@/i18n/navigation";
 import { Sparkles } from "lucide-react";
 
@@ -47,6 +48,7 @@ const PROMPTS = [
   "Show me all overdue staff tasks.",
   "Which services make us the most money?",
   "Where are bookings getting delayed?",
+  "Create a job for this customer, prepare their invoice, assign it to Grace and draft a message explaining the next steps.",
 ];
 
 function baht(satang: number): string {
@@ -73,7 +75,7 @@ export function AssistantClient() {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [role, setRole] = useState<"admin" | "staff">("staff");
   const [llmConfigured, setLlmConfigured] = useState(false);
-  const [tab, setTab] = useState<"knowledge" | "prices" | "audit" | "briefing" | "automation">("knowledge");
+  const [tab, setTab] = useState<"knowledge" | "prices" | "audit" | "briefing" | "automation" | "models" | "templates">("knowledge");
   const [articles, setArticles] = useState<Article[]>([]);
   const [prices, setPrices] = useState<PriceItem[]>([]);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
@@ -103,7 +105,10 @@ export function AssistantClient() {
             ? "/api/admin/assistant/briefing"
             : next === "automation"
               ? "/api/admin/assistant/automation"
+              : next === "models" || next === "templates"
+                ? ""
               : "/api/admin/assistant/audit";
+    if (!path) return;
     const response = await fetch(path);
     const body = await readJson(response);
     if (!body.success || !body.data || typeof body.data !== "object") return;
@@ -386,6 +391,8 @@ export function AssistantClient() {
               ["prices", "Prices"],
               ["briefing", "Briefing"],
               ["automation", "Automation"],
+              ["models", "Models"],
+              ["templates", "Templates"],
               ["audit", "Audit"],
             ] as const
           ).map(([id, label]) => (
@@ -439,6 +446,8 @@ export function AssistantClient() {
             ))}
           </ul>
         ) : null}
+        {tab === "models" ? <ModelsPanel role={role} /> : null}
+        {tab === "templates" ? <TemplatesPanel onUse={(body) => setDraft(body)} /> : null}
         {tab === "audit" ? (
           <ul className="mt-4 space-y-2 text-sm">
             {audit.map((entry) => (

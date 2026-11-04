@@ -9,6 +9,7 @@ import {
   serviceDemand,
   staffWorkload,
 } from "@/lib/backoffice/intelligence";
+import { proposeOperation } from "@/lib/backoffice/operate";
 import { draftPaymentReminder, type PaymentReminderDraft } from "@/lib/backoffice/parse";
 import { listReceivables } from "@/lib/finance/summaries";
 import type { AssistantFact, BackofficeContext, BackofficeRole } from "@/lib/backoffice/types";
@@ -20,7 +21,8 @@ function fact(title: string, lines: string[], extra?: Partial<AssistantFact>): A
 export async function answerCommand(
   intent: BackofficeIntent,
   context: BackofficeContext,
-  role: BackofficeRole
+  role: BackofficeRole,
+  actorId: string | null = null
 ): Promise<AssistantFact | null> {
   switch (intent.kind) {
     case "payment_reminders":
@@ -42,7 +44,7 @@ export async function answerCommand(
     case "not_contacted":
       return customersNotContacted().then((report) => fact(report.title, report.lines));
     default:
-      return null;
+      return proposeOperation(intent, context, role, actorId);
   }
 }
 

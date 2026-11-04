@@ -2,21 +2,29 @@ import { addCalendarDays, todayInBangkok, type DateParts } from "@/lib/follow-up
 import { dateKeyFromParts, formatSatang } from "@/lib/backoffice/format";
 
 export function parseAssigneeName(text: string): string | null {
-  const match = text.match(/\b(?:for|assign(?:ed)? to)\s+([A-Za-z][A-Za-z.'-]{1,40})/i);
+  const remind = text.match(/\bremind\s+([A-Za-z][A-Za-z.'-]{1,40})\b/i);
+  const match = text.match(/\bassign(?:ed)?(?:\s+\w+){0,4}\s+to\s+([A-Za-z][A-Za-z.'-]{1,40})/i);
+  const named = text.match(/\bfor\s+([A-Za-z][A-Za-z.'-]{1,40})/i);
   const tail = text.match(/\bto\s+([A-Za-z][A-Za-z.'-]{1,40})\s*\.?\s*$/i);
-  const raw = (match?.[1] ?? tail?.[1] ?? "").replace(/\.$/, "");
+  const raw = (remind?.[1] ?? match?.[1] ?? named?.[1] ?? tail?.[1] ?? "").replace(/\.$/, "");
   if (!raw) return null;
-  if (/^(this|the|a|an|me|tomorrow|today|customer|everyone|monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/i.test(raw)) {
+  if (/^(this|the|a|an|me|tomorrow|today|customer|everyone|monday|tuesday|wednesday|thursday|friday|saturday|sunday|contact|call|email|message)$/i.test(raw)) {
     return null;
   }
   return raw;
 }
 
 export function parseDueDateKey(text: string, today: DateParts = todayInBangkok()): string {
+  return parseExplicitDateKey(text, today) ?? dateKeyFromParts(addCalendarDays(today, 1));
+}
+
+/** A date the staff member actually named. Does not invent tomorrow. */
+export function parseExplicitDateKey(text: string, today: DateParts = todayInBangkok()): string | null {
   const iso = text.match(/\b(20\d{2}-\d{2}-\d{2})\b/)?.[1];
   if (iso) return iso;
   if (/\btoday\b/i.test(text)) return dateKeyFromParts(today);
-  return dateKeyFromParts(addCalendarDays(today, 1));
+  if (/\btomorrow\b/i.test(text)) return dateKeyFromParts(addCalendarDays(today, 1));
+  return null;
 }
 
 export function parseCustomerDraft(text: string): {

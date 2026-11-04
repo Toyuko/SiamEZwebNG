@@ -910,8 +910,27 @@ model Invoice {
   user      User?              @relation("InvoiceCustomer", fields: [userId], references: [id], onDelete: SetNull)
   payments  Payment[]
   milestone PaymentMilestone?  @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  revisions InvoiceRevision[]
 
   @@map("invoices")
+}
+
+/// Staff-approved invoice change. Issued invoices are not edited in place.
+model InvoiceRevision {
+  id                   String   @id @default(cuid())
+  invoiceId            String   @map("invoice_id")
+  previousAmount       Int      @map("previous_amount")
+  proposedAmount       Int      @map("proposed_amount")
+  reason               String   @db.Text
+  applied              Boolean
+  replacementInvoiceId String?  @map("replacement_invoice_id")
+  staffId              String?  @map("staff_id")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId, createdAt])
+  @@map("invoice_revisions")
 }
 
 // ----- Calendar Events -----

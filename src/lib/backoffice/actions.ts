@@ -9,6 +9,7 @@ import { isConfirmableTool } from "@/lib/backoffice/types";
 import { buildReminderPlan, draftPaymentReminder, reminderBody, type PaymentReminderDraft, type ReminderBooking } from "@/lib/backoffice/parse";
 import { formatWhen } from "@/lib/backoffice/format";
 import { BackofficeError } from "@/lib/backoffice/auth";
+import { executeWorkTool } from "@/lib/backoffice/operate";
 
 const followUpSchema = z.object({
   clientId: z.string().min(1),
@@ -93,7 +94,7 @@ export async function resolvePendingAction(input: {
     return { summary: "Cancelled. Nothing was changed or sent." };
   }
 
-  const result = await executeConfirmed(action.toolName, action.payload);
+  const result = await executeConfirmed(action.toolName, action.payload, input.actor);
   await prisma.backofficePendingAction.update({
     where: { id: action.id },
     data: { status: "confirmed", resolvedAt: new Date() },
@@ -116,7 +117,8 @@ export async function resolvePendingAction(input: {
 
 async function executeConfirmed(
   toolName: string,
-  payload: unknown
+  payload: unknown,
+  actor: BackofficeActor
 ): Promise<{ summary: string; href?: string; entityType?: string; entityId?: string }> {
   if (toolName === "create_follow_up") {
     const data = followUpSchema.parse(payload);
@@ -304,6 +306,18 @@ async function executeConfirmed(
       entityType: "case",
       entityId: plan.bookings[0]?.caseId,
     };
+  }
+
+  if (
+    toolName === "create_job" ||
+    toolName === "create_invoice" ||
+    toolName === "revise_invoice" ||
+    toolName === "update_customer" ||
+    toolName === "update_case_status" ||
+    toolName === "assign_case" ||
+    toolName === "run_work_plan"
+  ) {
+    return executeWorkTool(toolName, payload as Record<string, unknown>, actor.id);
   }
 
   throw new BackofficeError("That action is not available.", 400);

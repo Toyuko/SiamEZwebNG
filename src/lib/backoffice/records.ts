@@ -60,9 +60,10 @@ function monthBounds(offset: number): { startKey: string; endKey: string } {
 export async function answerIntent(
   intent: BackofficeIntent,
   context: BackofficeContext,
-  role: "admin" | "staff" = "staff"
+  role: "admin" | "staff" = "staff",
+  actorId: string | null = null
 ): Promise<AssistantFact> {
-  const extended = await answerCommand(intent, context, role);
+  const extended = await answerCommand(intent, context, role, actorId);
   if (extended) return extended;
   switch (intent.kind) {
     case "help":
@@ -128,8 +129,8 @@ export async function answerIntent(
 
 function helpFact(): AssistantFact {
   return fact("I can work from live SiamEZ records.", [
-    "Ask about customers, bookings, payments, quotations, documents, staff tasks, workflows, and the management briefing.",
-    "I will not change a customer, send a message, or save a quotation until you confirm.",
+    "Ask about customers, bookings, jobs, invoices, payments, quotations, documents, staff tasks, workflows, and the management briefing.",
+    "I will not change a customer, invoice, job, or message until you confirm.",
     "I will not invent a payment or a booking. If a record is missing, I will say so.",
     "Document checks are for staff review. I do not certify that a document is genuine or legally valid.",
     "Refunds and payment edits stay in the finance screens.",
