@@ -47,6 +47,25 @@ export default async function LicenceUploadReportPage({
           Links sent from the sales chat, through AI screening, to a staff-approved quotation. An AI pass is not counted as paid.
         </p>
       </div>
+      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+        <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+          <h2 className="font-semibold text-gray-900 dark:text-white">Send the upload link from WhatsApp, Facebook, or LINE</h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+            Copy the message in the command centre, paste it into the chat you already use, then check the file when the customer uploads it.
+          </p>
+          <a className="mt-2 inline-block text-sm font-semibold text-siam-blue" href="/api/licence-verification/sales-walkthrough?download=1">
+            Download this video
+          </a>
+        </div>
+        <video
+          className="aspect-video w-full bg-black"
+          controls
+          preload="metadata"
+          src="/api/licence-verification/sales-walkthrough"
+        >
+          Your browser cannot play this video.
+        </video>
+      </section>
       <form className="grid gap-3 rounded-2xl border border-gray-200 bg-white p-4 md:grid-cols-4 dark:border-gray-700 dark:bg-gray-900" method="get">
         <label className="text-sm">From
           <input className="mt-1 w-full rounded-lg border px-3 py-2" type="date" name="from" defaultValue={one(query, "from") ?? ""} />
