@@ -40,6 +40,8 @@ const wizardSchema = z
     paidVia: z.enum(["bank", "qr", "wise"]).optional(),
     /** Optional deposit due now in satang; omit/null = pay full amount. */
     depositAmount: z.coerce.number().int().positive().nullable().optional(),
+    /** Required only when a linked licence application is not yet approved. */
+    licenceOverrideReason: z.string().trim().max(2000).optional(),
   })
   .superRefine((val, ctx) => {
     if (val.mode === "existing_case") {
@@ -119,7 +121,7 @@ export async function searchClientsForInvoiceWizard(query: string) {
 
 export async function createInvoiceViaWizard(raw: unknown) {
   try {
-    await requireStaff();
+    const session = await requireStaff();
     const parsed = wizardSchema.safeParse(raw);
     if (!parsed.success) {
       const msg = parsed.error.flatten().formErrors[0] ?? parsed.error.issues[0]?.message ?? "Invalid input";
@@ -226,6 +228,8 @@ export async function createInvoiceViaWizard(raw: unknown) {
       dueDate,
       lineItems: linePayload,
       clientAddress,
+      licenceOverrideReason: input.licenceOverrideReason,
+      licenceOverrideStaffId: session.user.id,
     });
 
     if (input.initialStatus === "unpaid" || input.initialStatus === "paid") {
@@ -310,6 +314,7 @@ export interface CreateInvoiceFromQuoteInput {
   currency?: string;
   dueDate?: Date;
   lineItems?: object;
+  licenceOverrideReason?: string;
 }
 
 /**
@@ -318,7 +323,7 @@ export interface CreateInvoiceFromQuoteInput {
  */
 export async function createInvoiceFromQuote(input: CreateInvoiceFromQuoteInput) {
   try {
-    await requireStaff();
+    const session = await requireStaff();
     const created = await invoiceDA.createInvoice({
       caseId: input.caseId,
       quoteId: input.quoteId,
@@ -328,6 +333,8 @@ export async function createInvoiceFromQuote(input: CreateInvoiceFromQuoteInput)
       status: "draft",
       dueDate: input.dueDate ?? null,
       lineItems: input.lineItems ?? null,
+      licenceOverrideReason: input.licenceOverrideReason,
+      licenceOverrideStaffId: session.user.id,
     });
     const invoice = await invoiceDA.updateInvoiceStatus(created.id, "unpaid");
     return { success: true, invoice };

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import type { InvoiceStatus, InvoicePaymentMethod } from "@prisma/client";
+import { enforceLicenceInvoiceGate } from "@/lib/licence-verification/billing-gate";
 
 export async function getInvoiceById(id: string) {
   return prisma.invoice.findUnique({
@@ -54,7 +55,15 @@ export async function createInvoice(data: {
   clientAddress?: string | null;
   kind?: "full" | "initial" | "milestone" | "balance";
   milestoneId?: string | null;
+  licenceOverrideReason?: string | null;
+  licenceOverrideStaffId?: string | null;
 }) {
+  await enforceLicenceInvoiceGate({
+    caseId: data.caseId,
+    quoteId: data.quoteId,
+    overrideReason: data.licenceOverrideReason,
+    staffId: data.licenceOverrideStaffId,
+  });
   return prisma.invoice.create({
     data: {
       caseId: data.caseId,

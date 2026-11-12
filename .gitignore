@@ -19,6 +19,9 @@ data/legacy-extract/
 # Database dumps contain production data — never commit
 data/backups/
 
+# Local copies of licence documents — never commit
+data/licence-verification/
+
 # Vercel (keep project.json in git for CI; ignore local link cache)
 .vercel/*
 !.vercel/project.json

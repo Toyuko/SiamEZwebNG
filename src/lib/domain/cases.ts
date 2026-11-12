@@ -15,6 +15,9 @@ import { parseStoredPaymentPlan } from "@/lib/payments/quote-plan";
 import { CheckoutValidationError, validateCheckoutAmount } from "@/lib/payments/checkout-guard";
 import { trackPlatformEvent } from "@/lib/analytics/track";
 import { isOfficeCashDeposit } from "@/lib/payments/deposit-method";
+import { findLicenceBillingSubject } from "@/lib/licence-verification/billing-gate";
+import { invoiceGateDecision } from "@/lib/licence-verification/gate";
+import { linkLicenceBooking } from "@/lib/licence-verification/booking-link";
 
 export interface CreateBookingCaseInput {
   serviceId: string;
@@ -224,6 +227,16 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
     invoiceAmount = service.priceAmount;
   }
 
+  if (input.quoteId) {
+    const licenceApplication = await findLicenceBillingSubject({ quoteId: input.quoteId });
+    const licenceDecision = invoiceGateDecision({ application: licenceApplication });
+    if (!licenceDecision.allowed) {
+      treatAsPayable = false;
+      invoiceAmount = null;
+      caseStatus = "custom_quote_required";
+    }
+  }
+
   const payAtOffice = isOfficeCashDeposit(input.formData);
 
   const c = await createCaseRecord({
@@ -309,6 +322,14 @@ export async function createBookingCase(input: CreateBookingCaseInput) {
       amount: invoiceAmount,
       kind: invoiceKind,
     });
+  }
+
+  if (input.quoteId) {
+    try {
+      await linkLicenceBooking({ quoteId: input.quoteId, caseId: c.id });
+    } catch (linkError) {
+      console.error("Licence application link failed for case", c.id, linkError);
+    }
   }
 
   if (input.postToMarketplace) {

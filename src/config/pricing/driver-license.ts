@@ -210,6 +210,13 @@ export const driverLicensePricing: ServicePricingConfig = {
       when: { field: "category", equals: "idp" },
     },
     {
+      id: "lost-replacement",
+      label: "Lost licence / address update",
+      category: "service",
+      amountThb: DRIVER_LICENSE_PRICES.addons.lostLicenseAddressUpdate,
+      when: { field: "category", equals: "lost_replacement" },
+    },
+    {
       id: "translation-letter",
       label: "Translation letter",
       category: "addon",

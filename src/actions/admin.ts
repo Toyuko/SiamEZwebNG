@@ -1057,6 +1057,8 @@ export async function createInvoice(data: {
   dueDate?: Date | null;
 }) {
   await ensureStaffAccess();
+  const { enforceLicenceInvoiceGate } = await import("@/lib/licence-verification/billing-gate");
+  await enforceLicenceInvoiceGate({ caseId: data.caseId });
   return prisma.invoice.create({
     data: {
       caseId: data.caseId,

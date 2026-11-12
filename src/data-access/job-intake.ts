@@ -805,6 +805,8 @@ export async function updateConfirmedJob(
     const jobType = input.otherServiceName ?? refs.service?.name ?? "Service";
     let invoice = existing.invoices[0] ?? null;
     if (!invoice) {
+      const { enforceLicenceInvoiceGate } = await import("@/lib/licence-verification/billing-gate");
+      await enforceLicenceInvoiceGate({ caseId });
       invoice = await tx.invoice.create({
         data: {
           invoiceNumber: await allocateInvoiceNumber(tx, now),
@@ -918,6 +920,10 @@ export async function regenerateJobInvoice(
   const jobType = caseServiceName(existing);
   const total = invoice?.amount ?? existing.dealValue ?? 0;
   const now = new Date();
+  if (!invoice) {
+    const { enforceLicenceInvoiceGate } = await import("@/lib/licence-verification/billing-gate");
+    await enforceLicenceInvoiceGate({ caseId, staffId: actorId });
+  }
   await prisma.$transaction(async (tx) => {
     if (!invoice) {
       await tx.invoice.create({

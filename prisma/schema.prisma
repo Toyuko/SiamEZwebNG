@@ -139,6 +139,23 @@ model User {
   backofficeAudits           BackofficeAuditLog[]         @relation("BackofficeAuditStaff")
   backofficePendingActions   BackofficePendingAction[]    @relation("BackofficePendingStaff")
   backofficeAutomationEdits  BackofficeAutomationRule[]   @relation("BackofficeAutomationEditor")
+
+  licenceApplications            LicenceApplication[]       @relation("LicenceApplicationCustomer")
+  licenceApplicationsAssigned    LicenceApplication[]       @relation("LicenceApplicationAssignee")
+  licenceHistoryEvents           LicenceApplicationHistory[] @relation("LicenceHistoryActor")
+  licenceNotes                   LicenceInternalNote[]      @relation("LicenceNoteAuthor")
+  licenceAssignmentsMade         LicenceStaffAssignment[]   @relation("LicenceAssignmentStaff")
+  licenceAssignmentsCreated      LicenceStaffAssignment[]   @relation("LicenceAssignmentAssigner")
+  licenceApprovals               LicenceApprovalRecord[]    @relation("LicenceApprovalStaff")
+  licenceDocumentsUploaded       LicenceDocument[]          @relation("LicenceDocumentUploader")
+  dltPackagesGenerated           LicenceDocumentPackage[]   @relation("DltPackageGenerator")
+  dltPackagePrints               LicencePackagePrint[]      @relation("DltPackagePrinter")
+  dltAppointmentsAssigned        DltAppointment[]           @relation("DltAppointmentStaff")
+  dltVisitsRecorded              LicenceVisitResult[]       @relation("DltVisitRecorder")
+  licenceFindingAcks             LicenceFindingAcknowledgement[] @relation("LicenceFindingAckStaff")
+  licenceUploadRequestsSold      LicenceUploadRequest[]     @relation("LicenceUploadSalesRep")
+  licenceUploadRequestsReceived  LicenceUploadRequest[]     @relation("LicenceUploadCustomer")
+  licenceUploadEvents            LicenceUploadEvent[]       @relation("LicenceUploadEventActor")
 }
 
 enum FreelancerVerificationStatus {
@@ -477,6 +494,7 @@ model Service {
   followUps          FollowUp[]
   followUpTemplates  FollowUpTemplate[]
   financialTransactions FinancialTransaction[]
+  licenceApplications   LicenceApplication[]
 }
 
 // ----- Cases (every booking becomes a case) -----
@@ -571,6 +589,7 @@ model Case {
   financialTransactions FinancialTransaction[]
   salesCommission SalesCommission?
   salesAttributionAudits SalesAttributionAudit[]
+  licenceApplication LicenceApplication?
 
   @@index([salesPersonId, closedAt])
   @@index([closedAt])
@@ -707,6 +726,7 @@ model Quote {
   adjustedBy User?     @relation("QuoteAdjustedBy", fields: [adjustedById], references: [id], onDelete: SetNull)
   invoices   Invoice[]
   paymentMilestones PaymentMilestone[]
+  licenceApplication LicenceApplication?
 
   @@index([serviceId])
   @@index([status])
@@ -911,6 +931,7 @@ model Invoice {
   payments  Payment[]
   milestone PaymentMilestone?  @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
   revisions InvoiceRevision[]
+  licenceApplication LicenceApplication?
 
   @@map("invoices")
 }
@@ -2843,10 +2864,11 @@ model BackofficeConversation {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  staff    User?                     @relation("BackofficeConversationStaff", fields: [staffId], references: [id], onDelete: SetNull)
-  messages BackofficeMessage[]
-  audits   BackofficeAuditLog[]
-  pending  BackofficePendingAction[]
+  staff                 User?                     @relation("BackofficeConversationStaff", fields: [staffId], references: [id], onDelete: SetNull)
+  messages              BackofficeMessage[]
+  audits                BackofficeAuditLog[]
+  pending               BackofficePendingAction[]
+  licenceUploadRequests LicenceUploadRequest[]
 
   @@index([staffId, updatedAt])
   @@map("backoffice_conversations")
@@ -2978,4 +3000,570 @@ model BackofficeAutomationRun {
   @@index([status, createdAt])
   @@index([caseId])
   @@map("backoffice_automation_runs")
+}
+
+// ----- Thai driving licence pre-approval -----
+
+enum LicenceServiceKind {
+  NEW_CAR
+  NEW_MOTORCYCLE
+  NEW_BOTH
+  CONVERSION_CAR
+  CONVERSION_MOTORCYCLE
+  CONVERSION_BOTH
+  RENEWAL
+  LOST_REPLACEMENT
+  IDP
+}
+
+enum LicenceApplicationStatus {
+  DRAFT
+  AWAITING_DOCUMENTS
+  AI_IN_PROGRESS
+  READY_FOR_STAFF_REVIEW
+  CORRECTIONS_REQUIRED
+  MANUAL_REVIEW
+  APPROVED_FOR_QUOTATION
+  QUOTATION_SENT
+  BOOKING_CONFIRMED
+  REJECTED
+}
+
+enum LicenceAssessmentOutcome {
+  PASS
+  ACTION_REQUIRED
+  MANUAL_REVIEW
+}
+
+enum LicenceRequirementLevel {
+  REQUIRED
+  OPTIONAL
+}
+
+enum LicenceApprovalDecision {
+  APPROVED
+  REJECTED
+  OVERRIDE
+  ASSESSMENT_OVERRIDE
+}
+
+enum LicenceNotificationStatus {
+  SENT
+  SKIPPED
+  FAILED
+}
+
+/// Customer pre-approval before a driver-licence quotation or invoice.
+model LicenceApplication {
+  id                String                   @id @default(cuid())
+  referenceNumber   String                   @unique @map("reference_number")
+  /// Unguessable guest access secret. Same pattern as Case.guestCheckoutToken.
+  accessToken       String                   @unique @map("access_token")
+  userId            String?                  @map("user_id")
+  serviceId         String?                  @map("service_id")
+  caseId            String?                  @unique @map("case_id")
+  quoteId           String?                  @unique @map("quote_id")
+  invoiceId         String?                  @unique @map("invoice_id")
+  assignedStaffId   String?                  @map("assigned_staff_id")
+  serviceKind       LicenceServiceKind       @map("service_kind")
+  status            LicenceApplicationStatus @default(DRAFT)
+  email             String
+  phone             String?
+  locale            String                   @default("en")
+  createdAt         DateTime                 @default(now()) @map("created_at")
+  updatedAt         DateTime                 @updatedAt @map("updated_at")
+
+  user          User?                    @relation("LicenceApplicationCustomer", fields: [userId], references: [id], onDelete: SetNull)
+  assignedStaff User?                    @relation("LicenceApplicationAssignee", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  service       Service?                 @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  case          Case?                    @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  quote         Quote?                   @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  invoice       Invoice?                 @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  applicant     LicenceApplicantDetails?
+  documents     LicenceDocument[]
+  assessments   LicenceAssessmentResult[]
+  history       LicenceApplicationHistory[]
+  assignments   LicenceStaffAssignment[]
+  notes         LicenceInternalNote[]
+  notifications LicenceCustomerNotification[]
+  approvals     LicenceApprovalRecord[]
+  packages      LicenceDocumentPackage[]
+  appointments  DltAppointment[]
+  visits        LicenceVisitResult[]
+  findingAcks   LicenceFindingAcknowledgement[]
+  screeningLessons LicenceScreeningLesson[]
+  uploadRequests LicenceUploadRequest[]
+  uploadEvents   LicenceUploadEvent[]
+
+  @@index([status, createdAt])
+  @@index([serviceKind])
+  @@index([email])
+  @@index([assignedStaffId])
+  @@map("licence_applications")
+}
+
+model LicenceApplicantDetails {
+  id                        String   @id @default(cuid())
+  applicationId             String   @unique @map("application_id")
+  fullLegalName             String   @map("full_legal_name")
+  nationality               String
+  dateOfBirth               DateTime @map("date_of_birth") @db.Date
+  passportNumber            String   @map("passport_number")
+  countryOfResidence        String   @map("country_of_residence")
+  immigrationStatus         String   @map("immigration_status")
+  visaExpiryDate            DateTime? @map("visa_expiry_date") @db.Date
+  thaiAddress               String   @map("thai_address") @db.Text
+  hasResidenceCertificate   Boolean  @map("has_residence_certificate")
+  hasWorkPermit             Boolean  @map("has_work_permit")
+  hasForeignLicence         Boolean  @map("has_foreign_licence")
+  foreignLicenceCountry     String?  @map("foreign_licence_country")
+  foreignLicenceCategories  String?  @map("foreign_licence_categories")
+  foreignLicenceIssueDate   DateTime? @map("foreign_licence_issue_date") @db.Date
+  foreignLicenceExpiryDate  DateTime? @map("foreign_licence_expiry_date") @db.Date
+  /// physical | digital
+  foreignLicenceFormat      String?  @map("foreign_licence_format")
+  /// english | other
+  foreignLicenceLanguage    String?  @map("foreign_licence_language")
+  previouslyHeldThaiLicence Boolean  @map("previously_held_thai_licence")
+  failedOrAttemptedBefore   Boolean  @map("failed_or_attempted_before")
+  attemptNotes              String?  @map("attempt_notes") @db.Text
+  /// car | bike | both — used for renewal pricing
+  renewalVehicle            String?  @map("renewal_vehicle")
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+
+  application LicenceApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([nationality])
+  @@map("licence_applicant_details")
+}
+
+model LicenceDocument {
+  id                 String   @id @default(cuid())
+  applicationId      String   @map("application_id")
+  documentType       String   @map("document_type")
+  originalName       String   @map("original_name")
+  /// Server-only storage pointer. Never send this to the browser.
+  storageKey         String   @map("storage_key")
+  mimeType           String   @map("mime_type")
+  size               Int
+  uploadedById       String?  @map("uploaded_by_id")
+  replacesDocumentId String?  @map("replaces_document_id")
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  application LicenceApplication          @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  uploadedBy  User?                       @relation("LicenceDocumentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  extractions LicenceDocumentExtraction[]
+
+  @@index([applicationId, active])
+  @@index([documentType])
+  @@map("licence_documents")
+}
+
+model LicenceDocumentExtraction {
+  id                     String   @id @default(cuid())
+  documentId             String   @map("document_id")
+  assessmentId           String?  @map("assessment_id")
+  detectedType           String?  @map("detected_type")
+  holderName             String?  @map("holder_name")
+  documentNumber         String?  @map("document_number")
+  issueDate              String?  @map("issue_date")
+  expiryDate             String?  @map("expiry_date")
+  categories             Json?
+  issuingCountry         String?  @map("issuing_country")
+  readable               Boolean  @default(false)
+  complete               Boolean  @default(false)
+  possibleAlteration     Boolean  @default(false) @map("possible_alteration")
+  translationLikelyNeeded Boolean @default(false) @map("translation_likely_needed")
+  notes                  String   @default("") @db.Text
+  confidence             Float    @default(0)
+  /// Staff correction of an AI field. Original model output stays in raw.
+  corrected              Boolean  @default(false)
+  raw                    Json?
+  createdAt              DateTime @default(now()) @map("created_at")
+
+  document   LicenceDocument          @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  assessment LicenceAssessmentResult? @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+
+  @@index([documentId])
+  @@index([assessmentId])
+  @@map("licence_document_extractions")
+}
+
+/// Configurable Thai DLT / SiamEZ screening rules. Legal decisions are not left to the model.
+model LicenceRequirement {
+  id                  String                  @id @default(cuid())
+  ruleKey             String                  @unique @map("rule_key")
+  name                String
+  description         String                  @db.Text
+  serviceKinds        String[]                @map("service_kinds")
+  customerCategories  String[]                @map("customer_categories")
+  level               LicenceRequirementLevel @default(REQUIRED)
+  source              String                  @db.Text
+  lastVerifiedOn      DateTime                @map("last_verified_on") @db.Date
+  active              Boolean                 @default(true)
+  evaluatorKey        String                  @map("evaluator_key")
+  createdAt           DateTime                @default(now()) @map("created_at")
+  updatedAt           DateTime                @updatedAt @map("updated_at")
+
+  @@index([active])
+  @@map("licence_requirements")
+}
+
+model LicenceAssessmentResult {
+  id              String                    @id @default(cuid())
+  applicationId   String                    @map("application_id")
+  outcome         LicenceAssessmentOutcome
+  confidence      Float
+  summary         String                    @db.Text
+  nextSteps       String                    @map("next_steps") @db.Text
+  model           String?
+  aiAvailable     Boolean                   @map("ai_available")
+  aiError         String?                   @map("ai_error") @db.Text
+  disclaimer      String                    @db.Text
+  createdAt       DateTime                  @default(now()) @map("created_at")
+
+  application LicenceApplication         @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  findings    LicenceAssessmentFinding[]
+  extractions LicenceDocumentExtraction[]
+
+  @@index([applicationId, createdAt])
+  @@map("licence_assessment_results")
+}
+
+model LicenceAssessmentFinding {
+  id                 String   @id @default(cuid())
+  assessmentId       String   @map("assessment_id")
+  documentId         String?  @map("document_id")
+  documentType       String?  @map("document_type")
+  code               String
+  /// ACCEPTABLE | CLARIFICATION | UNSUITABLE | MANUAL | MISSING
+  status             String
+  severity           String
+  message            String   @db.Text
+  recommendedAction  String   @map("recommended_action") @db.Text
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  assessment LicenceAssessmentResult @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId])
+  @@map("licence_assessment_findings")
+}
+
+model LicenceApplicationHistory {
+  id            String   @id @default(cuid())
+  applicationId String   @map("application_id")
+  actorId       String?  @map("actor_id")
+  event         String
+  fromStatus    String?  @map("from_status")
+  toStatus      String?  @map("to_status")
+  detail        String   @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  application LicenceApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  actor       User?              @relation("LicenceHistoryActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId, createdAt])
+  @@map("licence_application_history")
+}
+
+model LicenceStaffAssignment {
+  id            String   @id @default(cuid())
+  applicationId String   @map("application_id")
+  staffId       String   @map("staff_id")
+  assignedById  String?  @map("assigned_by_id")
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  application LicenceApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  staff       User               @relation("LicenceAssignmentStaff", fields: [staffId], references: [id], onDelete: Cascade)
+  assignedBy  User?              @relation("LicenceAssignmentAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  @@index([applicationId, active])
+  @@index([staffId])
+  @@map("licence_staff_assignments")
+}
+
+model LicenceInternalNote {
+  id            String   @id @default(cuid())
+  applicationId String   @map("application_id")
+  authorId      String?  @map("author_id")
+  body          String   @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  application LicenceApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  author      User?              @relation("LicenceNoteAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId, createdAt])
+  @@map("licence_internal_notes")
+}
+
+model LicenceCustomerNotification {
+  id            String                    @id @default(cuid())
+  applicationId String                    @map("application_id")
+  channel       String
+  templateKey   String                    @map("template_key")
+  toAddress     String?                   @map("to_address")
+  subject       String
+  bodySummary   String                    @map("body_summary") @db.Text
+  status        LicenceNotificationStatus
+  error         String?                   @db.Text
+  createdAt     DateTime                  @default(now()) @map("created_at")
+
+  application LicenceApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, createdAt])
+  @@map("licence_customer_notifications")
+}
+
+model LicenceApprovalRecord {
+  id            String                  @id @default(cuid())
+  applicationId String                  @map("application_id")
+  staffId       String?                 @map("staff_id")
+  decision      LicenceApprovalDecision
+  reason        String                  @db.Text
+  previousStatus String?                @map("previous_status")
+  createdAt     DateTime                @default(now()) @map("created_at")
+
+  application LicenceApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  staff       User?              @relation("LicenceApprovalStaff", fields: [staffId], references: [id], onDelete: SetNull)
+
+  @@index([applicationId, createdAt])
+  @@map("licence_approval_records")
+}
+
+enum LicencePackageStatus {
+  BLOCKED
+  READY_TO_PRINT
+  PRINTED
+}
+
+enum DltAppointmentStatus {
+  NOT_BOOKED
+  BOOKING_IN_PROGRESS
+  AWAITING_CONFIRMATION
+  CONFIRMED
+  RESCHEDULED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum DltVisitOutcomeKind {
+  SUCCESSFULLY_COMPLETED
+  LICENCE_ISSUED
+  ADDITIONAL_DOCUMENTS
+  ANOTHER_APPOINTMENT
+  FAILED_EXAMINATION
+  REJECTED
+  POSTPONED
+}
+
+/// Provincial transport office used for licence visits. Addresses stay blank until staff confirm them.
+model DltOffice {
+  id                    String   @id @default(cuid())
+  slug                  String   @unique
+  nameEn                String   @map("name_en")
+  nameTh                String   @map("name_th")
+  province              String
+  address               String   @default("") @db.Text
+  phone                 String   @default("")
+  email                 String   @default("")
+  supportedServiceKinds String[] @map("supported_service_kinds")
+  openingHours          String   @default("") @map("opening_hours") @db.Text
+  bookingInstructions   String   @default("") @map("booking_instructions") @db.Text
+  specialRequirements   String   @default("") @map("special_requirements") @db.Text
+  bookingUrl            String   @default("https://gecc.dlt.go.th/webBooking/") @map("booking_url")
+  active                Boolean  @default(true)
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  appointments DltAppointment[]
+
+  @@index([province, active])
+  @@map("dlt_offices")
+}
+
+model LicenceDocumentPackage {
+  id             String               @id @default(cuid())
+  applicationId  String               @map("application_id")
+  version        Int
+  status         LicencePackageStatus
+  /// Server-only pointer to the master PDF. Never send this to the browser.
+  storageKey     String               @map("storage_key")
+  manifest       Json
+  issues         Json
+  overrideReason String?              @map("override_reason") @db.Text
+  generatedById  String?              @map("generated_by_id")
+  createdAt      DateTime             @default(now()) @map("created_at")
+
+  application LicenceApplication  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  generatedBy User?               @relation("DltPackageGenerator", fields: [generatedById], references: [id], onDelete: SetNull)
+  prints      LicencePackagePrint[]
+
+  @@unique([applicationId, version])
+  @@index([applicationId, createdAt])
+  @@index([status])
+  @@map("licence_document_packages")
+}
+
+model LicencePackagePrint {
+  id          String   @id @default(cuid())
+  packageId   String   @map("package_id")
+  kind        String
+  documentId  String?  @map("document_id")
+  printedById String?  @map("printed_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  package   LicenceDocumentPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  printedBy User?                  @relation("DltPackagePrinter", fields: [printedById], references: [id], onDelete: SetNull)
+
+  @@index([packageId, createdAt])
+  @@map("licence_package_prints")
+}
+
+model DltAppointment {
+  id                   String               @id @default(cuid())
+  applicationId        String               @map("application_id")
+  officeId             String?              @map("office_id")
+  appointmentDate      String?              @map("appointment_date")
+  appointmentTime      String?              @map("appointment_time")
+  confirmationNumber   String?              @map("confirmation_number")
+  bookingMethod        String               @default("smart_queue_web") @map("booking_method")
+  status               DltAppointmentStatus @default(NOT_BOOKED)
+  specialInstructions  String               @default("") @map("special_instructions") @db.Text
+  assignedStaffId      String?              @map("assigned_staff_id")
+  confirmedAt          DateTime?            @map("confirmed_at")
+  reminderSentAt       DateTime?            @map("reminder_sent_at")
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @updatedAt @map("updated_at")
+
+  application   LicenceApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  office        DltOffice?         @relation(fields: [officeId], references: [id], onDelete: SetNull)
+  assignedStaff User?              @relation("DltAppointmentStaff", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  visits        LicenceVisitResult[]
+
+  @@index([applicationId, createdAt])
+  @@index([appointmentDate, status])
+  @@index([assignedStaffId])
+  @@map("dlt_appointments")
+}
+
+model LicenceVisitResult {
+  id                     String              @id @default(cuid())
+  applicationId          String              @map("application_id")
+  appointmentId          String?             @map("appointment_id")
+  outcome                DltVisitOutcomeKind
+  feedback               String              @default("") @db.Text
+  additionalRequirements String              @default("") @map("additional_requirements") @db.Text
+  nextAppointmentDate    String?             @map("next_appointment_date")
+  notes                  String              @default("") @db.Text
+  recordedById           String?             @map("recorded_by_id")
+  createdAt              DateTime            @default(now()) @map("created_at")
+
+  application LicenceApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  appointment DltAppointment?    @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  recordedBy  User?              @relation("DltVisitRecorder", fields: [recordedById], references: [id], onDelete: SetNull)
+
+  @@index([applicationId, createdAt])
+  @@index([outcome])
+  @@map("licence_visit_results")
+}
+
+/// Earlier DLT results shown on later screenings. They do not decide eligibility.
+model LicenceScreeningLesson {
+  id            String   @id @default(cuid())
+  applicationId String   @map("application_id")
+  serviceKind   String   @map("service_kind")
+  email         String
+  userId        String?  @map("user_id")
+  outcome       String
+  note          String   @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  application LicenceApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([serviceKind, createdAt])
+  @@index([email])
+  @@map("licence_screening_lessons")
+}
+
+model LicenceFindingAcknowledgement {
+  id            String   @id @default(cuid())
+  applicationId String   @map("application_id")
+  findingKey    String   @map("finding_key")
+  staffId       String?  @map("staff_id")
+  note          String   @default("") @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  application LicenceApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  staff       User?              @relation("LicenceFindingAckStaff", fields: [staffId], references: [id], onDelete: SetNull)
+
+  @@unique([applicationId, findingKey])
+  @@index([applicationId])
+  @@map("licence_finding_acknowledgements")
+}
+
+enum LicenceUploadRequestStatus {
+  ACTIVE
+  OPENED
+  SUBMITTED
+  EXPIRED
+  REVOKED
+}
+
+/// Personal upload link sent from the sales chat. Uploads stay on one LicenceApplication.
+model LicenceUploadRequest {
+  id             String                     @id @default(cuid())
+  applicationId  String                     @map("application_id")
+  conversationId String?                    @map("conversation_id")
+  salesRepId     String?                    @map("sales_rep_id")
+  customerUserId String?                    @map("customer_user_id")
+  customerName   String                     @map("customer_name")
+  email          String?
+  phone          String?
+  serviceKind    LicenceServiceKind         @map("service_kind")
+  renewalVehicle String?                    @map("renewal_vehicle")
+  message        String?                    @db.Text
+  checklist      Json
+  /// Unguessable upload secret. Compared with timingSafeEqual. Never a storage URL.
+  token          String                     @unique
+  status         LicenceUploadRequestStatus @default(ACTIVE)
+  expiresAt      DateTime?                  @map("expires_at")
+  openedAt       DateTime?                  @map("opened_at")
+  submittedAt    DateTime?                  @map("submitted_at")
+  revokedAt      DateTime?                  @map("revoked_at")
+  createdAt      DateTime                   @default(now()) @map("created_at")
+  updatedAt      DateTime                   @updatedAt @map("updated_at")
+
+  application  LicenceApplication      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  conversation BackofficeConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  salesRep     User?                   @relation("LicenceUploadSalesRep", fields: [salesRepId], references: [id], onDelete: SetNull)
+  customer     User?                   @relation("LicenceUploadCustomer", fields: [customerUserId], references: [id], onDelete: SetNull)
+  events       LicenceUploadEvent[]
+
+  @@index([applicationId, createdAt])
+  @@index([conversationId, createdAt])
+  @@index([salesRepId, createdAt])
+  @@index([status, createdAt])
+  @@map("licence_upload_requests")
+}
+
+model LicenceUploadEvent {
+  id            String   @id @default(cuid())
+  requestId     String   @map("request_id")
+  applicationId String   @map("application_id")
+  actorId       String?  @map("actor_id")
+  event         String
+  detail        String   @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  request     LicenceUploadRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  application LicenceApplication   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  actor       User?                @relation("LicenceUploadEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([requestId, createdAt])
+  @@index([applicationId, createdAt])
+  @@map("licence_upload_events")
 }

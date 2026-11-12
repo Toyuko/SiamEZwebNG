@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModelsPanel, TemplatesPanel } from "./AssistantPanels";
+import { LicenceRequestPanel } from "@/components/licence/LicenceRequestPanel";
 import { Link } from "@/i18n/navigation";
 import { Sparkles } from "lucide-react";
 
@@ -313,6 +314,16 @@ export function AssistantClient() {
               </div>
             ))}
           </div>
+          <LicenceRequestPanel
+            conversationId={conversationId}
+            onConversation={(id) => {
+              setConversationId(id);
+              window.sessionStorage.setItem("siamez.backoffice.conversation", id);
+            }}
+            onPosted={(text) => {
+              setMessages((current) => [...current, { id: `licence-${Date.now()}`, role: "user", content: text }]);
+            }}
+          />
           <div className="border-t border-gray-200 p-3 dark:border-gray-800">
             <div className="mb-2 flex gap-2 overflow-x-auto">
               {PROMPTS.slice(0, 4).map((prompt) => (

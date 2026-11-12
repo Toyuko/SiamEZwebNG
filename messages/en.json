@@ -187,6 +187,9 @@
     "newJob": "New Job",
     "cases": "Cases",
     "driverLicenseFollowups": "DL Follow-Ups",
+    "licenceVerification": "AI Licence Verification",
+    "licenceUploadReport": "Licence upload report",
+    "dltCentre": "DLT Document & Appointment Centre",
     "followUps": "Follow-ups",
     "vehicleLeads": "Vehicle Leads",
     "clients": "Clients",
@@ -958,6 +961,8 @@
       }
     ],
     "resourcesCta": "Start your booking",
+    "precheckCta": "Check documents before you book",
+    "precheckNote": "Upload your passport and licence for an initial SiamEZ check. We do not send a quotation until staff approve the file.",
     "disclaimer": "SiamEZ offers professional assistance as an independent company. We are not connected to or endorsed by the Thai government or the DLT.",
     "bookingEmailNote": "Booking requests and receipts are handled through our team and {email}.",
     "legacyWizardIntro": "The same step-by-step experience is also available as",

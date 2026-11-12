@@ -219,6 +219,13 @@ export async function markCasePaidManually(
     };
   }
 
+  try {
+    const { enforceLicenceInvoiceGate } = await import("@/lib/licence-verification/billing-gate");
+    await enforceLicenceInvoiceGate({ caseId });
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Invoice blocked" };
+  }
+
   const invoice = await prisma.invoice.create({
     data: {
       caseId,

@@ -33,6 +33,8 @@ import {
   Wallet,
   Banknote,
   Landmark,
+  ShieldCheck,
+  Printer,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -68,6 +70,9 @@ const allNavGroups: NavGroup[] = [
       { label: "newJob", href: "/admin/jobs/new", icon: Briefcase },
       { label: "cases", href: "/admin/cases", icon: FolderOpen },
       { label: "driverLicenseFollowups", href: "/admin/driver-license-followups", icon: ClipboardList },
+      { label: "licenceVerification", href: "/admin/licence-verification", icon: ShieldCheck },
+      { label: "licenceUploadReport", href: "/admin/licence-verification/sales", icon: BarChart3 },
+      { label: "dltCentre", href: "/admin/dlt-centre", icon: Printer },
       { label: "followUps", href: "/admin/followups", icon: Bell },
       { label: "officeDirectory", href: "/directory", icon: Landmark },
       { label: "vehicleLeads", href: "/admin/vehicle-leads", icon: Car },

@@ -76,6 +76,7 @@ export function CreateInvoiceWizard({
   const [step, setStep] = useState(0);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [licenceOverrideReason, setLicenceOverrideReason] = useState("");
 
   const [mode, setMode] = useState<"existing_case" | "new_case">("existing_case");
   const [caseQuery, setCaseQuery] = useState(initialCase?.caseNumber ?? "");
@@ -190,6 +191,7 @@ export function CreateInvoiceWizard({
         const satang = thbToSatang(raw);
         return satang > 0 ? satang : null;
       })(),
+      licenceOverrideReason: licenceOverrideReason.trim() || undefined,
     };
 
     startTransition(async () => {
@@ -548,6 +550,16 @@ export function CreateInvoiceWizard({
               <span className="text-gray-500">Mode:</span> {mode === "existing_case" ? "Existing case" : "New case"}
             </p>
             {mode === "existing_case" && <p className="font-mono text-xs">Case ID: {caseId}</p>}
+            <label className="mt-4 block space-y-1">
+              <span className="text-gray-500">Licence pre-approval override</span>
+              <textarea
+                value={licenceOverrideReason}
+                onChange={(event) => setLicenceOverrideReason(event.target.value)}
+                rows={3}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
+                placeholder="Leave blank unless this case is blocked because the driving licence application is not approved. A reason is stored in the audit log."
+              />
+            </label>
             {mode === "new_case" && (
               <p>
                 <span className="text-gray-500">Service:</span>{" "}

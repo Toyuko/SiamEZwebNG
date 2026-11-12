@@ -71,9 +71,15 @@ export async function DriverLicenseExtras() {
             </Card>
           ))}
         </div>
-        <Button asChild className="mt-6 bg-siam-blue hover:bg-siam-blue-light" size="lg">
-          <Link href="/book/driver-license">{t("resourcesCta")}</Link>
-        </Button>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <Button asChild className="bg-siam-blue hover:bg-siam-blue-light" size="lg">
+            <Link href="/driving-licence/apply">{t("precheckCta")}</Link>
+          </Button>
+          <Button asChild variant="outline" size="lg">
+            <Link href="/book/driver-license">{t("resourcesCta")}</Link>
+          </Button>
+        </div>
+        <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">{t("precheckNote")}</p>
       </section>
 
       <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400">{t("disclaimer")}</p>

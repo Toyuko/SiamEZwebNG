@@ -399,6 +399,8 @@ export async function createJobRecord(input: { userId: string; serviceId: string
 }
 
 export async function createDraftInvoice(input: { caseId: string; userId?: string | null; amountSatang: number; lines: unknown; reason: string }) {
+  const { enforceLicenceInvoiceGate } = await import("@/lib/licence-verification/billing-gate");
+  await enforceLicenceInvoiceGate({ caseId: input.caseId });
   const invoiceNumber = await nextInvoiceNumber();
   return prisma.invoice.create({
     data: {

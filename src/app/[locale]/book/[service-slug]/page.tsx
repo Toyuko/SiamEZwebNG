@@ -62,6 +62,14 @@ export default async function BookServicePage({
         </Button>
       </div>
       <VehicleWizardBanner serviceSlug={serviceSlug} />
+      {serviceSlug === "driver-license" ? (
+        <p className="mb-4 rounded-xl border border-siam-yellow/70 bg-amber-50 px-4 py-3 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+          <Link href="/driving-licence/apply" className="font-semibold text-siam-blue">
+            Check your documents before booking.
+          </Link>{" "}
+          SiamEZ screens the file before a quotation is sent. This is not Department of Land Transport approval.
+        </p>
+      ) : null}
       <WizardEngine
         service={service}
         serviceSlug={serviceSlug}

@@ -33,6 +33,7 @@ import { getPopularRecommendations, getServiceBySlug } from "@/lib/ai/recommend"
 import type { ConciergeLocale } from "@/lib/ai/types";
 import { getMyDriverLicenseRenewals } from "@/actions/driver-license-renewals";
 import { PortalDriverLicenseCard } from "@/components/portal/PortalDriverLicenseCard";
+import { PortalLicenceCard } from "@/components/portal/PortalLicenceCard";
 import { buildUserOwner } from "@/lib/marketplace-engagement";
 import { loadRecommendationContext, recommendSync } from "@/lib/recommendations";
 
@@ -273,6 +274,8 @@ export default async function PortalDashboardPage({
           <PortalDriverLicenseCard renewals={driverLicenseRenewals} />
         </div>
       )}
+
+      <PortalLicenceCard userId={session.user.id} />
 
       <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {softLaunch.enabled ? null : (

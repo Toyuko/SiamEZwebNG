@@ -28,7 +28,7 @@ export function normalizeDriverLicenseRequirements(
 ): Record<string, unknown> {
   const next: Record<string, unknown> = { ...requirements };
   const category = next.category;
-  if (category !== "renewal" && category !== "idp") {
+  if (category !== "renewal" && category !== "idp" && category !== "lost_replacement") {
     if (isYesAnswer(next.hasForeignLicense)) next.category = "conversion";
     else if (isNoAnswer(next.hasForeignLicense)) next.category = "apply_new";
   }

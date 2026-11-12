@@ -25,10 +25,13 @@ export async function GET(request: NextRequest) {
   const followUps = await processDueFollowUpReminders();
   // Legacy / unlinked DL renewals (new ones go through FollowUp)
   const driverLicense = await processDueDriverLicenseReminders();
+  const { sendDueDltReminders } = await import("@/lib/dlt-package/service");
+  const dltAppointments = await sendDueDltReminders();
 
   return NextResponse.json({
     ok: true,
     followUps,
     driverLicense,
+    dltAppointments,
   });
 }
