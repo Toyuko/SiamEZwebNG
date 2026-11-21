@@ -41,7 +41,7 @@ export function ServicesPageClient({ services, search }: ServicesPageClientProps
     <>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Services</h1>
+          <h1 className="text-xl font-bold tracking-tight text-siam-ink sm:text-2xl">Catalog &amp; Services</h1>
           <p className="mt-1 text-gray-600 dark:text-gray-400">
             Manage service catalog: pricing, type (fixed or quote), and visibility.
           </p>

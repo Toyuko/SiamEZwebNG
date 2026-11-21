@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { getCases, getServices } from "@/actions/admin";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { CaseTable } from "./CaseTable";
 import { CaseFilter } from "./CaseFilter";
 import { CaseSearch } from "./CaseSearch";
@@ -24,18 +25,15 @@ export default async function AdminCasesPage({
   ]);
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-        Cases
-      </h1>
-      <p className="mt-1 text-gray-600 dark:text-gray-400">
-        Manage all cases: status, assignments, notes, and documents.
-      </p>
-      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:flex-wrap">
+    <AdminPageShell
+      title="Cases & Bookings"
+      description="Search, filter, and manage cases — status, clients, documents, and assignments."
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:flex-wrap">
         <CaseFilter statusDefault={params.status ?? "all"} serviceIdDefault={params.serviceId} services={services} />
         <CaseSearch defaultValue={search} status={params.status} serviceId={params.serviceId} />
       </div>
-      <Card className="mt-4">
+      <Card className="overflow-hidden rounded-2xl border-[#DCE6F5] shadow-soft">
         <CardContent className="p-0">
           <CaseTable
             cases={cases}
@@ -46,6 +44,6 @@ export default async function AdminCasesPage({
           />
         </CardContent>
       </Card>
-    </div>
+    </AdminPageShell>
   );
 }

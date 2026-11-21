@@ -63,10 +63,10 @@ export default async function AdminPaymentsPage({
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-xl font-bold tracking-tight text-siam-ink sm:text-2xl">
             Payments &amp; Orders
           </h1>
-          <p className="mt-1 text-gray-600 dark:text-gray-400">
+          <p className="mt-1 text-sm text-siam-ink-muted">
             Track payments, filter by status, and record manual payments.
           </p>
         </div>

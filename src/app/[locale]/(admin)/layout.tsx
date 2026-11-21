@@ -18,6 +18,8 @@ export default async function AdminLayout({
 }) {
   // Local/dev only — ignored in production / Vercel preview (see isAdminAuthBypassEnabled)
   const bypassAuth = isAdminAuthBypassEnabled();
+  let adminName = "Admin";
+  let adminInitial = "A";
 
   if (!bypassAuth) {
     const session = await getSession();
@@ -41,7 +43,14 @@ export default async function AdminLayout({
             : "portal";
       redirect(`/${locale}/${portalPath}`);
     }
+
+    adminName = session.user.name?.trim() || session.user.email || "Admin";
+    adminInitial = (adminName.charAt(0) || "A").toUpperCase();
   }
 
-  return <AdminChrome>{children}</AdminChrome>;
+  return (
+    <AdminChrome adminName={adminName} adminInitial={adminInitial}>
+      {children}
+    </AdminChrome>
+  );
 }

@@ -52,34 +52,32 @@ export function ClientsPageClient({
   };
 
   return (
-    <>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Clients
-          </h1>
-          <p className="mt-1 text-gray-600 dark:text-gray-400">
-            View and manage client accounts.
+          <h1 className="text-xl font-bold tracking-tight text-siam-ink sm:text-2xl">Clients</h1>
+          <p className="mt-1 text-sm text-siam-ink-muted">
+            Search profiles, booking history, and contact details.
           </p>
         </div>
-        <Button onClick={openAddModal}>
+        <Button onClick={openAddModal} variant="primary">
           <Plus className="h-4 w-4" />
-          Add client
+          Add Client
         </Button>
       </div>
-      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <ClientSearch defaultValue={search} />
       </div>
-      <Card className="mt-4">
+      <Card className="overflow-hidden rounded-2xl border-[#DCE6F5] shadow-soft">
         <CardContent className="p-0">
-      <ClientTable
-        clients={clients}
-        total={total}
-        page={page}
-        totalPages={totalPages}
-        search={search}
-        onEdit={openEditModal}
-      />
+          <ClientTable
+            clients={clients}
+            total={total}
+            page={page}
+            totalPages={totalPages}
+            search={search}
+            onEdit={openEditModal}
+          />
         </CardContent>
       </Card>
       <ClientModal
@@ -88,6 +86,6 @@ export function ClientsPageClient({
         mode={editClient ? "edit" : "add"}
         client={editClient}
       />
-    </>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 import {
@@ -65,19 +66,18 @@ const allNavGroups: NavGroup[] = [
     label: "groupOperations",
     icon: Briefcase,
     items: [
+      { label: "cases", href: "/admin/cases", icon: FolderOpen },
       { label: "serviceJobs", href: "/admin/service-jobs", icon: Briefcase },
       { label: "jobList", href: "/admin/jobs", icon: ClipboardList },
-      { label: "newJob", href: "/admin/jobs/new", icon: Briefcase },
-      { label: "cases", href: "/admin/cases", icon: FolderOpen },
+      { label: "calendar", href: "/admin/calendar", icon: Calendar },
+      { label: "followUps", href: "/admin/followups", icon: Bell },
       { label: "driverLicenseFollowups", href: "/admin/driver-license-followups", icon: ClipboardList },
       { label: "licenceVerification", href: "/admin/licence-verification", icon: ShieldCheck },
       { label: "licenceUploadReport", href: "/admin/licence-verification/sales", icon: BarChart3 },
       { label: "dltCentre", href: "/admin/dlt-centre", icon: Printer },
-      { label: "followUps", href: "/admin/followups", icon: Bell },
-      { label: "officeDirectory", href: "/directory", icon: Landmark },
-      { label: "vehicleLeads", href: "/admin/vehicle-leads", icon: Car },
-      { label: "calendar", href: "/admin/calendar", icon: Calendar },
       { label: "workQueue", href: "/admin/work-queue", icon: ListChecks },
+      { label: "vehicleLeads", href: "/admin/vehicle-leads", icon: Car },
+      { label: "officeDirectory", href: "/directory", icon: Landmark },
     ],
   },
   {
@@ -87,15 +87,15 @@ const allNavGroups: NavGroup[] = [
     items: softLaunch.enabled && !softLaunch.showFreelancerOps
       ? [
           { label: "clients", href: "/admin/clients", icon: Users },
-          { label: "accountDeletionRequests", href: "/admin/account-deletion-requests", icon: UserCog },
           { label: "staff", href: "/admin/staff", icon: UserCog },
+          { label: "accountDeletionRequests", href: "/admin/account-deletion-requests", icon: UserCog },
         ]
       : [
           { label: "clients", href: "/admin/clients", icon: Users },
           { label: "freelancers", href: "/admin/freelancers", icon: UserCheck },
           { label: "freelancerJobs", href: "/admin/service-jobs?source=freelancer", icon: ClipboardList },
-          { label: "accountDeletionRequests", href: "/admin/account-deletion-requests", icon: UserCog },
           { label: "staff", href: "/admin/staff", icon: UserCog },
+          { label: "accountDeletionRequests", href: "/admin/account-deletion-requests", icon: UserCog },
         ],
   },
   {
@@ -132,13 +132,13 @@ const allNavGroups: NavGroup[] = [
     label: "groupFinance",
     icon: CreditCard,
     items: [
-      { label: "financials", href: "/admin/financials", icon: Wallet },
-      { label: "financialAnalytics", href: "/admin/financials/analytics", icon: BarChart3 },
       { label: "invoices", href: "/admin/invoices", icon: FileText },
-      { label: "quotes", href: "/admin/quotes", icon: Sparkles },
       { label: "paymentsOrders", href: "/admin/payments", icon: CreditCard },
+      { label: "financials", href: "/admin/financials", icon: Wallet },
+      { label: "quotes", href: "/admin/quotes", icon: Sparkles },
       { label: "staffPayments", href: "/admin/financials/staff-payments", icon: Banknote },
       { label: "documents", href: "/admin/documents", icon: FileStack },
+      { label: "financialAnalytics", href: "/admin/financials/analytics", icon: BarChart3 },
     ],
   },
   {
@@ -147,8 +147,8 @@ const allNavGroups: NavGroup[] = [
     icon: BarChart3,
     items: [
       { label: "reports", href: "/admin/reports", icon: BarChart3 },
-      { label: "staffActivity", href: "/admin/staff-activity", icon: Activity },
       { label: "analytics", href: "/admin/analytics", icon: BarChart3 },
+      { label: "staffActivity", href: "/admin/staff-activity", icon: Activity },
       { label: "featureFlags", href: "/admin/feature-flags", icon: Flag },
     ],
   },
@@ -192,10 +192,12 @@ function NavLink({
   item,
   active,
   nested = false,
+  onNavigate,
 }: {
   item: NavItem;
   active: boolean;
   nested?: boolean;
+  onNavigate?: () => void;
 }) {
   const t = useTranslations("adminNav");
   const Icon = item.icon;
@@ -203,15 +205,17 @@ function NavLink({
   return (
     <Link
       href={item.href}
+      prefetch
+      onClick={onNavigate}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors duration-premium",
         nested && "pl-9",
         active
-          ? "bg-siam-blue text-white"
-          : "text-gray-600 hover:bg-gray-200 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+          ? "bg-siam-blue text-white shadow-soft"
+          : "text-white/75 hover:bg-white/10 hover:text-white"
       )}
     >
-      <Icon className="h-5 w-5 shrink-0" />
+      <Icon className="h-4.5 w-4.5 h-[18px] w-[18px] shrink-0" />
       <span className="truncate">{t(item.label)}</span>
     </Link>
   );
@@ -219,8 +223,10 @@ function NavLink({
 
 export function AdminSidebar({
   mobileOpen = false,
+  onNavigate,
 }: {
   mobileOpen?: boolean;
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -268,21 +274,40 @@ export function AdminSidebar({
   return (
     <aside
       className={cn(
-        "z-50 w-56 shrink-0 flex-col border-r border-gray-200 bg-gray-50 print:hidden dark:border-gray-800 dark:bg-gray-900",
+        "z-50 w-60 shrink-0 flex-col bg-siam-navy text-white print:hidden",
         "fixed inset-y-0 left-0 md:sticky md:top-0 md:flex md:h-screen",
         mobileOpen ? "flex" : "hidden"
       )}
     >
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
+      <div className="flex items-center gap-2.5 border-b border-white/10 px-4 py-4">
+        <Image
+          src="/images/logo.png"
+          alt="SiamEZ"
+          width={32}
+          height={32}
+          className="h-8 w-8 brightness-0 invert"
+          priority
+        />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-bold tracking-tight text-white">SiamEZ</p>
+          <p className="truncate text-[11px] font-medium text-siam-yellow">Admin Portal</p>
+        </div>
+      </div>
+
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-3">
+        <p className="mb-1 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-white/40">
+          Overview
+        </p>
         {topNav.map((item) => (
           <NavLink
             key={item.href}
             item={item}
             active={isItemActive(item, pathname, isMarketplaceJobs)}
+            onNavigate={onNavigate}
           />
         ))}
 
-        <div className="mt-1 space-y-1">
+        <div className="mt-3 space-y-1">
           {navGroups.map((group) => {
             const isOpen = openGroups[group.id];
             const hasActiveChild = activeGroupIds.has(group.id);
@@ -295,17 +320,17 @@ export function AdminSidebar({
                   onClick={() => toggleGroup(group.id)}
                   aria-expanded={isOpen}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors duration-premium",
                     hasActiveChild && !isOpen
-                      ? "bg-gray-200/80 text-gray-900 dark:bg-gray-800 dark:text-gray-100"
-                      : "text-gray-700 hover:bg-gray-200 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                      ? "bg-white/15 text-white"
+                      : "text-white/70 hover:bg-white/10 hover:text-white"
                   )}
                 >
-                  <GroupIcon className="h-5 w-5 shrink-0" />
+                  <GroupIcon className="h-[18px] w-[18px] shrink-0" />
                   <span className="flex-1 truncate text-left">{t(group.label)}</span>
                   <ChevronDown
                     className={cn(
-                      "h-4 w-4 shrink-0 text-gray-400 transition-transform duration-200",
+                      "h-4 w-4 shrink-0 text-white/40 transition-transform duration-premium",
                       isOpen && "rotate-180"
                     )}
                   />
@@ -313,7 +338,7 @@ export function AdminSidebar({
 
                 <div
                   className={cn(
-                    "grid transition-[grid-template-rows] duration-200 ease-out",
+                    "grid transition-[grid-template-rows] duration-premium ease-out",
                     isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
                   )}
                 >
@@ -325,6 +350,7 @@ export function AdminSidebar({
                           item={item}
                           nested
                           active={isItemActive(item, pathname, isMarketplaceJobs)}
+                          onNavigate={onNavigate}
                         />
                       ))}
                     </div>
@@ -335,16 +361,26 @@ export function AdminSidebar({
           })}
         </div>
 
-        <div className="mt-auto border-t border-gray-200 pt-2 dark:border-gray-800">
+        <div className="mt-auto border-t border-white/10 pt-2">
           {bottomNav.map((item) => (
             <NavLink
               key={item.href}
               item={item}
               active={isItemActive(item, pathname, isMarketplaceJobs)}
+              onNavigate={onNavigate}
             />
           ))}
         </div>
       </nav>
+
+      <div
+        className="pointer-events-none h-16 shrink-0 opacity-90"
+        style={{
+          background:
+            "linear-gradient(180deg, transparent 0%, rgb(7 84 232 / 0.35) 55%, rgb(255 214 0 / 0.55) 100%)",
+        }}
+        aria-hidden
+      />
     </aside>
   );
 }

@@ -48,6 +48,7 @@ const config: Config = {
             DEFAULT: "var(--siam-surface)",
             pale: "var(--siam-surface-pale)",
           },
+          "admin-bg": "var(--siam-admin-bg)",
           ink: {
             DEFAULT: "var(--siam-ink)",
             muted: "var(--siam-ink-muted)",
