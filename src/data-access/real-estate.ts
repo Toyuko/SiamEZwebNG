@@ -12,7 +12,6 @@ import {
   type PropertyListingInput,
 } from "@/lib/marketplace/listing-schemas";
 import { unstable_cache } from "next/cache";
-import { after } from "next/server";
 
 export type PropertyTypeFilter = "all" | PropertyType;
 export type PropertyListingTypeFilter = "all" | PropertyListingType;
@@ -55,14 +54,9 @@ export async function expireStalePropertyBoostsNow() {
   }
 }
 
+/** Fire-and-forget; do not import `after` from next/server (client search graph). */
 function scheduleExpireStalePropertyBoosts() {
-  try {
-    after(() => {
-      void expireStalePropertyBoostsNow();
-    });
-  } catch {
-    void expireStalePropertyBoostsNow();
-  }
+  void expireStalePropertyBoostsNow();
 }
 
 const getCachedFeaturedBoostedSalesProperties = unstable_cache(

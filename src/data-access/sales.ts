@@ -13,7 +13,6 @@ import {
   type VehicleListingInput,
 } from "@/lib/marketplace/listing-schemas";
 import { unstable_cache } from "next/cache";
-import { after } from "next/server";
 
 export type VehicleCategoryFilter = "all" | "car" | "motorcycle";
 export type SalesSellerKindFilter = "all" | "dealer" | "private";
@@ -108,15 +107,10 @@ export async function expireStaleSalesBoostsNow() {
   }
 }
 
-/** Non-blocking expiry so public reads are not gated on write-on-read maintenance. */
+/** Fire-and-forget expiry so public reads are not gated on write-on-read maintenance.
+ * Avoid `after()` from next/server here — this module is pulled into the client search graph. */
 function scheduleExpireStaleSalesBoosts() {
-  try {
-    after(() => {
-      void expireStaleSalesBoostsNow();
-    });
-  } catch {
-    void expireStaleSalesBoostsNow();
-  }
+  void expireStaleSalesBoostsNow();
 }
 
 /**
