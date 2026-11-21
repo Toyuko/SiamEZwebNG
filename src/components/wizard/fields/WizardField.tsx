@@ -332,7 +332,7 @@ export function WizardField<T extends FieldValues>({
           );
         }}
       />
-      {field.description && field.type !== "checkbox" ? (
+      {field.description ? (
         <FieldDescription>{field.description}</FieldDescription>
       ) : null}
       <FieldError error={errorMessage} />
