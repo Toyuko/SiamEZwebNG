@@ -30,9 +30,14 @@ export type WizardCondition =
 export interface WizardFieldOption {
   value: string;
   label: string;
+  /** Optional one-line helper shown on card-style selects */
+  description?: string;
   /** Optional next-intl key under a wizard messages namespace */
   labelKey?: string;
 }
+
+/** Customer-facing progress stages (may span multiple internal steps). */
+export type WizardStageId = "service" | "quote" | "details" | "confirm";
 
 export interface WizardFieldConfig {
   name: string;
@@ -44,6 +49,10 @@ export interface WizardFieldConfig {
   description?: string;
   required?: boolean;
   options?: WizardFieldOption[];
+  /**
+   * Select presentation. Defaults to cards when ≤6 options; use "native" for long lists.
+   */
+  presentation?: "cards" | "native" | "segmented";
   /** Show this field only when condition matches */
   showWhen?: WizardCondition;
   /** Extra zod constraints */
@@ -88,6 +97,13 @@ export interface WizardStepConfig {
   description?: string;
   descriptionKey?: string;
   fields?: WizardFieldConfig[];
+  /**
+   * Maps this internal step onto a compact customer-facing progress stage.
+   * Multiple steps can share a stage (e.g. details + receipt upload).
+   */
+  stage?: WizardStageId;
+  /** Override the default stage label in the progress indicator */
+  stageLabel?: string;
   /** Hide entire step when condition fails */
   showWhen?: WizardCondition;
   /** When type is documents, require at least one file before continuing */
@@ -99,6 +115,8 @@ export interface WizardStepConfig {
    * before advancing (used by AI quote engine services).
    */
   generatesQuote?: boolean;
+  /** Primary CTA label override for this step (Continue, Confirm, etc.) */
+  continueLabel?: string;
 }
 
 export interface WizardConfig {

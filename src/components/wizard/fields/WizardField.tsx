@@ -2,6 +2,7 @@
 
 import type { Control, FieldErrors, FieldValues, Path } from "react-hook-form";
 import { Controller, useWatch } from "react-hook-form";
+import { Check } from "lucide-react";
 import type { WizardFieldConfig } from "@/config/wizards/types";
 import { evaluateCondition } from "@/components/wizard/lib/conditionals";
 import {
@@ -20,6 +21,15 @@ interface WizardFieldProps<T extends FieldValues> {
   control: Control<T>;
   errors: FieldErrors<T>;
   values: Record<string, unknown>;
+}
+
+function resolveSelectPresentation(
+  field: WizardFieldConfig
+): "cards" | "native" | "segmented" {
+  if (field.presentation) return field.presentation;
+  const count = field.options?.length ?? 0;
+  if (count > 0 && count <= 6) return "cards";
+  return "native";
 }
 
 export function WizardField<T extends FieldValues>({
@@ -48,7 +58,12 @@ export function WizardField<T extends FieldValues>({
           render={({ field: rhf }) => (
             <label
               htmlFor={inputId}
-              className="flex cursor-pointer items-start gap-3 text-sm text-foreground"
+              className={cn(
+                "flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3.5 text-sm transition-colors",
+                rhf.value
+                  ? "border-siam-blue bg-siam-blue/5 text-siam-ink"
+                  : "border-[#DCE6F5] bg-white text-siam-ink hover:border-siam-blue/40"
+              )}
             >
               <input
                 id={inputId}
@@ -57,20 +72,19 @@ export function WizardField<T extends FieldValues>({
                 onChange={(e) => rhf.onChange(e.target.checked)}
                 onBlur={rhf.onBlur}
                 ref={rhf.ref}
-                className="mt-1 h-4 w-4 rounded border-border text-siam-blue focus:ring-siam-blue"
+                className="mt-1 h-4 w-4 rounded border-[#DCE6F5] text-siam-blue focus:ring-siam-blue"
               />
               <span>
-                {field.label}
-                {field.required ? (
-                  <span className="ml-0.5 text-destructive" aria-hidden>
-                    *
+                <span className="font-medium">{field.label}</span>
+                {field.description ? (
+                  <span className="mt-0.5 block text-xs text-[#64748B]">
+                    {field.description}
                   </span>
                 ) : null}
               </span>
             </label>
           )}
         />
-        {field.description ? <FieldDescription>{field.description}</FieldDescription> : null}
         <FieldError error={errorMessage} />
       </Field>
     );
@@ -100,21 +114,34 @@ export function WizardField<T extends FieldValues>({
                 </span>
                 {options.map((opt) => {
                   const optId = `${inputId}-${opt.value}`;
+                  const isOn = selected.includes(opt.value);
                   return (
                     <label
                       key={opt.value}
                       htmlFor={optId}
-                      className="flex cursor-pointer items-center gap-3 rounded-lg border border-border px-4 py-3 text-sm"
+                      className={cn(
+                        "flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3.5 text-sm transition-colors",
+                        isOn
+                          ? "border-siam-blue bg-siam-blue/5 ring-1 ring-siam-blue/30"
+                          : "border-[#DCE6F5] bg-white hover:border-siam-blue/40"
+                      )}
                     >
                       <input
                         id={optId}
                         type="checkbox"
-                        checked={selected.includes(opt.value)}
+                        checked={isOn}
                         onChange={() => toggle(opt.value)}
                         onBlur={rhf.onBlur}
-                        className="h-4 w-4 rounded border-border text-siam-blue focus:ring-siam-blue"
+                        className="mt-1 h-4 w-4 rounded border-[#DCE6F5] text-siam-blue focus:ring-siam-blue"
                       />
-                      <span className="font-medium text-foreground">{opt.label}</span>
+                      <span>
+                        <span className="font-medium text-siam-ink">{opt.label}</span>
+                        {opt.description ? (
+                          <span className="mt-0.5 block text-xs text-[#64748B]">
+                            {opt.description}
+                          </span>
+                        ) : null}
+                      </span>
                     </label>
                   );
                 })}
@@ -156,13 +183,102 @@ export function WizardField<T extends FieldValues>({
           };
 
           if (field.type === "textarea") {
-            return <Textarea {...common} rows={4} />;
+            return <Textarea {...common} rows={3} />;
           }
+
           if (field.type === "select") {
+            const presentation = resolveSelectPresentation(field);
+            const options = field.options ?? [];
+
+            if (presentation === "segmented") {
+              return (
+                <div
+                  className="grid gap-2"
+                  style={{
+                    gridTemplateColumns: `repeat(${Math.min(options.length, 3)}, minmax(0, 1fr))`,
+                  }}
+                  role="radiogroup"
+                  aria-labelledby={`${inputId}-label`}
+                >
+                  <span id={`${inputId}-label`} className="sr-only">
+                    {field.label}
+                  </span>
+                  {options.map((opt) => {
+                    const selected = rhf.value === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => rhf.onChange(opt.value)}
+                        onBlur={rhf.onBlur}
+                        className={cn(
+                          "min-h-12 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-siam-blue",
+                          selected
+                            ? "border-siam-blue bg-siam-blue text-white"
+                            : "border-[#DCE6F5] bg-white text-siam-ink hover:border-siam-blue/50"
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            }
+
+            if (presentation === "cards") {
+              return (
+                <div
+                  className="grid gap-3 sm:grid-cols-2"
+                  role="radiogroup"
+                  aria-labelledby={`${inputId}-label`}
+                >
+                  <span id={`${inputId}-label`} className="sr-only">
+                    {field.label}
+                  </span>
+                  {options.map((opt) => {
+                    const selected = rhf.value === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => rhf.onChange(opt.value)}
+                        onBlur={rhf.onBlur}
+                        className={cn(
+                          "relative flex min-h-[4.5rem] flex-col items-start rounded-2xl border px-4 py-3.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-siam-blue",
+                          selected
+                            ? "border-siam-blue bg-siam-blue/5 shadow-sm ring-1 ring-siam-blue/25"
+                            : "border-[#DCE6F5] bg-white hover:border-siam-blue/40"
+                        )}
+                      >
+                        {selected ? (
+                          <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-siam-blue text-white">
+                            <Check className="h-3 w-3" aria-hidden />
+                          </span>
+                        ) : null}
+                        <span className="pr-6 text-sm font-semibold text-siam-ink">
+                          {opt.label}
+                        </span>
+                        {opt.description ? (
+                          <span className="mt-1 text-xs leading-snug text-[#64748B]">
+                            {opt.description}
+                          </span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            }
+
             return (
               <Select {...common}>
                 <option value="">{field.placeholder ?? "Select…"}</option>
-                {(field.options ?? []).map((opt) => (
+                {options.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -186,6 +302,18 @@ export function WizardField<T extends FieldValues>({
             <Input
               {...common}
               type={inputType}
+              autoComplete={
+                field.type === "email"
+                  ? "email"
+                  : field.type === "phone" || field.type === "tel"
+                    ? "tel"
+                    : field.name === "name"
+                      ? "name"
+                      : undefined
+              }
+              inputMode={
+                field.type === "phone" || field.type === "tel" ? "tel" : undefined
+              }
               min={dateMin}
               onChange={(e) => {
                 const raw = e.target.value;
@@ -204,7 +332,9 @@ export function WizardField<T extends FieldValues>({
           );
         }}
       />
-      {field.description ? <FieldDescription>{field.description}</FieldDescription> : null}
+      {field.description && field.type !== "checkbox" ? (
+        <FieldDescription>{field.description}</FieldDescription>
+      ) : null}
       <FieldError error={errorMessage} />
     </Field>
   );

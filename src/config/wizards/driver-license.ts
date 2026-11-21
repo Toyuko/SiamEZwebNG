@@ -77,75 +77,113 @@ export const driverLicenseWizard: WizardConfig = {
   buildFormData: buildDriverLicenseFormData,
   steps: [
     {
-      id: "summary",
-      type: "summary",
-      label: "Service summary",
-      description:
-        "Thai driver's license assistance: conversion, renewal, new license, or IDP. See the quick price guide below, then answer each question so we can calculate your quote. Pay 25% now online or in cash at our Bangkok office on your appointment day; the remaining 75% is due after you get your license.",
-    },
-    {
       id: "service",
       type: "fields",
-      label: "Quote questions",
+      label: "Tell us what you need",
       description:
-        "Take time to answer each question so we can give you a quotation. Your 25% deposit is due at booking; the remaining 75% is due after you get your license.",
+        "Answer a few quick questions so we can find the right service and quote for you.",
+      stage: "service",
+      stageLabel: "Service",
+      continueLabel: "Continue",
       generatesQuote: true,
       fields: [
         {
           name: "category",
           type: "select",
-          label: "License service",
+          label: "What do you need?",
           required: true,
+          presentation: "cards",
           options: [
-            { value: "conversion", label: "Foreign license conversion" },
-            { value: "renewal", label: "Renewal" },
-            { value: "apply_new", label: "Apply for new license" },
-            { value: "idp", label: "International Driving Permit (IDP)" },
+            {
+              value: "apply_new",
+              label: "New Thai license",
+              description: "First-time license with SiamEZ support",
+            },
+            {
+              value: "conversion",
+              label: "Convert foreign license",
+              description: "Turn your home license into a Thai one",
+            },
+            {
+              value: "renewal",
+              label: "Renew license",
+              description: "Renew your existing Thai license",
+            },
+            {
+              value: "idp",
+              label: "International Driving Permit",
+              description: "Get an IDP for travel abroad",
+            },
           ],
         },
         ...driverLicenseQuoteQuestions,
         {
           name: "nationality",
           type: "text",
-          label: "Nationality",
+          label: "Nationality (optional)",
           placeholder: "e.g. Canadian",
         },
         {
           name: "addonTranslationLetter",
           type: "checkbox",
-          label: "Translation letter (+1,500 THB)",
+          label: "Add translation letter (+1,500 THB)",
+          description: "Useful when your documents need an official Thai translation.",
         },
       ],
     },
-    quoteReviewStep,
     {
-      id: "appointment",
+      ...quoteReviewStep,
+      label: "Your service & quote",
+      description: "Here's what we recommend based on your answers.",
+      stage: "quote",
+      stageLabel: "Quote",
+      continueLabel: "Continue to booking",
+    },
+    {
+      id: "details",
       type: "fields",
-      label: "Appointment",
+      label: "Your booking details",
       description:
-        "Choose a weekday (Monday–Friday) at least 3 calendar days ahead. Weekends are not available.",
+        "Tell us how to reach you and pick a preferred appointment. We'll confirm the time with you.",
+      stage: "details",
+      stageLabel: "Details",
+      continueLabel: "Continue to confirmation",
       fields: [
         {
           name: "appointmentDate",
           type: "date",
           label: "Preferred appointment date",
+          description:
+            "Preferred date — pending confirmation. Weekdays only, at least 3 days ahead.",
           required: true,
           customValidate: "driverLicenseAppointment",
         },
-        depositPaymentMethodAppointmentField,
-      ],
-    },
-    {
-      id: "details",
-      type: "fields",
-      label: "Your details",
-      fields: [
+        {
+          ...depositPaymentMethodAppointmentField,
+          presentation: "cards",
+          label: "How would you like to pay the deposit?",
+          options: [
+            {
+              value: "online",
+              label: "Pay online now",
+              description: "PromptPay, bank transfer, or Wise",
+            },
+            {
+              value: "office_cash",
+              label: "Pay at the office",
+              description: "Cash at SiamEZ Bangkok on appointment day",
+            },
+          ],
+        },
         ...contactFields.map((f) =>
           f.name === "phone"
             ? { ...f, label: "Phone / WhatsApp", placeholder: "+66…" }
             : f
         ),
-        notesField,
+        {
+          ...notesField,
+          label: "Anything else we should know? (optional)",
+        },
       ],
     },
     {
@@ -153,13 +191,17 @@ export const driverLicenseWizard: WizardConfig = {
       type: "documents",
       label: "Payment receipt",
       description:
-        "Upload your 25% deposit bank transfer / PromptPay receipt (required). The remaining 75% is due after you get your license. Signed-in uploads are linked to your booking via document IDs.",
+        "Upload your deposit receipt so we can verify payment. PDF, JPG, or PNG up to 10MB.",
+      stage: "details",
+      stageLabel: "Details",
+      continueLabel: "Continue to confirmation",
       showWhen: { field: "depositPaymentMethod", notEquals: "office_cash" },
       documentsRequired: true,
       requiredDocuments: [
         {
           id: "payment_receipt",
-          label: "Payment receipt / bank slip",
+          label: "Deposit payment receipt",
+          description: "Bank transfer / PromptPay / Wise slip for the amount due now",
           documentType: "payment_receipt",
           required: true,
         },
@@ -168,7 +210,11 @@ export const driverLicenseWizard: WizardConfig = {
     {
       id: "review",
       type: "review",
-      label: "Review & submit",
+      label: "Review your booking",
+      description: "Check your details before submitting.",
+      stage: "confirm",
+      stageLabel: "Confirm",
+      continueLabel: "Confirm & submit booking",
     },
   ],
 };

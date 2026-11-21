@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Check } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type { GenerateQuoteResult } from "@/actions/quote";
@@ -55,8 +56,10 @@ export function QuoteReviewStep({
   if (!quote) {
     return (
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-foreground">{t("title")}</h2>
-        <p className="text-sm text-muted">{t("missingQuote")}</p>
+        <h2 className="text-xl font-bold tracking-tight text-siam-ink sm:text-2xl">
+          Your service
+        </h2>
+        <p className="text-sm text-[#64748B]">{t("missingQuote")}</p>
         {onRecalculate ? (
           <Button type="button" variant="outline" onClick={onRecalculate} disabled={loading}>
             {t("recalculate")}
@@ -75,55 +78,59 @@ export function QuoteReviewStep({
   const customRequired = plan?.requires_human_review || isRange;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
-        <p className="text-xs font-medium uppercase tracking-wide text-siam-gold">
-          {t("eyebrow")}
+        <h2 className="text-xl font-bold tracking-tight text-siam-ink sm:text-2xl">
+          Your service
+        </h2>
+        <p className="mt-1.5 text-sm text-[#64748B]">
+          Here&apos;s what we recommend based on your answers.
         </p>
-        <h2 className="mt-1 text-xl font-semibold text-foreground">{t("title")}</h2>
-        <p className="mt-1 text-sm text-muted">{serviceName}</p>
+        <p className="mt-1 text-sm font-medium text-siam-ink">{serviceName}</p>
         {quote.quoteNumber ? (
-          <p className="mt-1 text-xs text-muted">
+          <p className="mt-0.5 text-xs text-[#64748B]">
             {t("quoteNumber", { number: quote.quoteNumber })}
           </p>
         ) : null}
       </div>
 
       {isRange && quote.rangeMin != null && quote.rangeMax != null ? (
-        <div className="rounded-lg border border-border bg-muted/20 p-4">
-          <p className="text-sm font-medium text-foreground">{t("estimatedRange")}</p>
-          <p className="mt-2 text-2xl font-semibold text-siam-blue">
+        <div className="rounded-2xl border border-[#DCE6F5] bg-siam-surface/60 p-5">
+          <p className="text-sm font-semibold text-siam-ink">Personalized quotation</p>
+          <p className="mt-2 text-2xl font-bold text-siam-blue">
             {formatCurrency(quote.rangeMin, quote.currency)} –{" "}
             {formatCurrency(quote.rangeMax, quote.currency)}
           </p>
-          <p className="mt-2 text-sm text-muted">{t("customQuoteBody")}</p>
+          <p className="mt-2 text-sm text-[#64748B]">
+            We&apos;ll review your details and confirm the final price.
+          </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-border">
-          <ul className="divide-y divide-border">
+        <div className="overflow-hidden rounded-2xl border border-[#DCE6F5] bg-white">
+          <ul className="divide-y divide-[#DCE6F5]">
             {quote.lineItems.map((item) => (
               <li
                 key={item.id}
                 className="flex items-start justify-between gap-4 px-4 py-3 text-sm"
               >
                 <div>
-                  <p className="font-medium text-foreground">{item.label}</p>
-                  <p className="text-xs text-muted">
+                  <p className="font-medium text-siam-ink">{item.label}</p>
+                  <p className="text-xs text-[#64748B]">
                     {categoryLabel(item.category, t)}
                     {item.feeGuarantee === "estimated" ? ` · ${t("estimated")}` : ` · ${t("exact")}`}
                   </p>
                 </div>
-                <p className="shrink-0 font-medium text-foreground">
+                <p className="shrink-0 font-semibold text-siam-ink">
                   {formatCurrency(item.amount, quote.currency)}
                 </p>
               </li>
             ))}
           </ul>
-          <div className="flex items-center justify-between border-t border-border bg-siam-blue/5 px-4 py-3">
-            <p className="font-semibold text-foreground">
+          <div className="flex items-center justify-between border-t border-[#DCE6F5] bg-siam-surface/80 px-4 py-4">
+            <p className="font-semibold text-siam-ink">
               {hasEstimated ? t("estimatedTotal") : t("total")}
             </p>
-            <p className="text-lg font-semibold text-siam-blue">
+            <p className="text-2xl font-bold text-siam-blue">
               {formatCurrency(quote.total, quote.currency)}
             </p>
           </div>
@@ -133,53 +140,53 @@ export function QuoteReviewStep({
       {!customRequired && plan ? (
         <>
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-lg border border-border bg-background p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted">{t("total")}</p>
-              <p className="mt-1 text-lg font-semibold text-foreground">
+            <div className="rounded-2xl border border-[#DCE6F5] bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                Total
+              </p>
+              <p className="mt-1 text-lg font-bold text-siam-ink">
                 {formatCurrency(plan.total_estimate, quote.currency)}
               </p>
             </div>
-            <div className="rounded-lg border border-siam-gold/40 bg-siam-gold/10 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-siam-gold">
-                {t("payToday")}
+            <div className="rounded-2xl border border-siam-yellow/50 bg-siam-yellow/15 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-siam-ink">
+                Due now
               </p>
-              <p className="mt-1 text-lg font-semibold text-foreground">
+              <p className="mt-1 text-lg font-bold text-siam-ink">
                 {formatCurrency(payToday, quote.currency)}
               </p>
               {plan.required_upfront_costs > 0 ? (
-                <p className="mt-1 text-xs text-muted">
+                <p className="mt-1 text-xs text-[#64748B]">
                   {t("includesUpfront", {
                     amount: formatCurrency(plan.required_upfront_costs, quote.currency),
                   })}
                 </p>
               ) : null}
             </div>
-            <div className="rounded-lg border border-border bg-background p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted">
-                {t("remaining")}
+            <div className="rounded-2xl border border-[#DCE6F5] bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                Remaining
               </p>
-              <p className="mt-1 text-lg font-semibold text-foreground">
+              <p className="mt-1 text-lg font-bold text-siam-ink">
                 {formatCurrency(remaining, quote.currency)}
               </p>
+              <p className="mt-1 text-xs text-[#64748B]">After you get your license</p>
             </div>
           </div>
 
           {plan.milestones.length > 0 ? (
-            <div className="rounded-lg border border-border p-4">
-              <h3 className="text-sm font-semibold text-foreground">{t("paymentPlanTitle")}</h3>
+            <div className="rounded-2xl border border-[#DCE6F5] p-4">
+              <h3 className="text-sm font-semibold text-siam-ink">{t("paymentPlanTitle")}</h3>
               <ol className="mt-3 space-y-2">
                 {plan.milestones.map((m, i) => (
                   <li key={`${m.name}-${i}`} className="flex items-start justify-between gap-3 text-sm">
                     <div>
-                      <p className="font-medium text-foreground">
-                        {i === 0 ? "✓ " : "○ "}
-                        {m.name}
-                      </p>
+                      <p className="font-medium text-siam-ink">{m.name}</p>
                       {m.description ? (
-                        <p className="text-xs text-muted">{m.description}</p>
+                        <p className="text-xs text-[#64748B]">{m.description}</p>
                       ) : null}
                     </div>
-                    <p className="shrink-0 font-medium">
+                    <p className="shrink-0 font-semibold">
                       {formatCurrency(m.amount, quote.currency)}
                     </p>
                   </li>
@@ -188,15 +195,17 @@ export function QuoteReviewStep({
             </div>
           ) : null}
 
-          <div className="rounded-lg border border-siam-blue/20 bg-siam-blue/5 px-4 py-3">
-            <p className="text-sm font-medium text-foreground">{t("whyTitle")}</p>
-            <p className="mt-1 text-sm text-muted">{plan.reason || t(copy.whyLow)}</p>
-            <p className="mt-2 text-xs text-muted">{plan.customer_message}</p>
+          <div className="rounded-2xl border border-siam-blue/15 bg-siam-blue/5 px-4 py-3">
+            <p className="text-sm font-semibold text-siam-ink">{t("whyTitle")}</p>
+            <p className="mt-1 text-sm text-[#64748B]">{plan.reason || t(copy.whyLow)}</p>
+            {plan.customer_message ? (
+              <p className="mt-2 text-xs text-[#64748B]">{plan.customer_message}</p>
+            ) : null}
           </div>
         </>
       ) : null}
 
-      <p className="text-xs text-muted">
+      <p className="text-xs text-[#64748B]">
         {t("validUntil", {
           date: validUntil.toLocaleDateString(undefined, {
             year: "numeric",
@@ -207,7 +216,8 @@ export function QuoteReviewStep({
       </p>
 
       {accepted ? (
-        <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-foreground">
+        <p className="flex items-center gap-2 rounded-2xl border border-[#16A34A]/30 bg-[#16A34A]/10 px-4 py-3 text-sm font-medium text-siam-ink">
+          <Check className="h-4 w-4 text-[#16A34A]" aria-hidden />
           {t("accepted")}
         </p>
       ) : customRequired ? (
@@ -217,6 +227,7 @@ export function QuoteReviewStep({
           </Button>
           <Button
             type="button"
+            variant="primary"
             onClick={onRequestCustomQuote}
             disabled={loading || !onRequestCustomQuote}
             className="sm:ml-auto"
@@ -228,6 +239,8 @@ export function QuoteReviewStep({
         <div className="flex flex-col gap-3">
           <Button
             type="button"
+            variant="primary"
+            size="lg"
             onClick={() => onAccept("initial")}
             disabled={loading}
             className="w-full"

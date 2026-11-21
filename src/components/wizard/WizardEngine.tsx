@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useLocale } from "next-intl";
 import type { Service } from "@prisma/client";
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { MarketplacePostToggle } from "@/components/booking/MarketplacePostToggle";
 import { submitBooking } from "@/actions/booking";
 import {
@@ -27,6 +27,9 @@ import { validateStep } from "@/components/wizard/lib/build-step-schema";
 import { resolveVisibleSteps } from "@/components/wizard/lib/resolve-steps";
 import { WizardProgress } from "@/components/wizard/WizardProgress";
 import { WizardStepRenderer } from "@/components/wizard/WizardStepRenderer";
+import { BookingHeader } from "@/components/wizard/BookingHeader";
+import { BookingSideSummary } from "@/components/wizard/BookingSideSummary";
+import { CompactPriceGuide } from "@/components/wizard/CompactPriceGuide";
 import { SummaryStep } from "@/components/wizard/steps/SummaryStep";
 import { FieldsStep } from "@/components/wizard/steps/FieldsStep";
 import {
@@ -45,6 +48,8 @@ import {
   validateWizardDocument,
 } from "@/lib/documents";
 import { trackEvent } from "@/lib/analytics";
+import { site } from "@/config/site";
+import { cn } from "@/lib/utils";
 
 type QuoteSuccess = Extract<GenerateQuoteResult, { success: true }>;
 
@@ -121,6 +126,7 @@ function WizardEngineInner({
   userName,
 }: WizardEngineProps & { config: WizardConfig }) {
   const router = useRouter();
+  const locale = useLocale();
   const storageKey = autosaveStorageKey(serviceSlug, config.autosaveKey);
   const hydratedRef = useRef(false);
 
@@ -153,7 +159,7 @@ function WizardEngineInner({
     setError: setFormError,
     clearErrors,
     reset,
-    formState: { errors },
+    formState: { errors, isDirty },
     watch,
   } = form;
 
@@ -208,6 +214,7 @@ function WizardEngineInner({
   const canUpload = Boolean(userId);
   const docsStep = useMemo(() => documentsStepConfig(config), [config]);
   const requiredDocuments = docsStep?.requiredDocuments;
+  const showSideSummary = serviceSlug === "driver-license";
 
   const missingDocWarning = useMemo(() => {
     const result = getMissingDocuments(requiredDocuments, documents);
@@ -219,7 +226,7 @@ function WizardEngineInner({
     if (!hydratedRef.current) return;
     const handle = window.setTimeout(() => {
       saveAutosave(storageKey, {
-        version: 1,
+        version: 2,
         serviceSlug,
         stepIndex,
         values: getValues() as Record<string, unknown>,
@@ -451,10 +458,9 @@ function WizardEngineInner({
 
     if (currentStep.type === "documents") {
       if (currentStep.documentsRequired && documents.length < 1) {
-        setError("Please upload at least one document to continue.");
+        setError("Please upload your deposit receipt to continue.");
         return;
       }
-      // Soft warn on missing checklist items — guests and partial uploads may continue.
       if (missingDocWarning) {
         setDocWarning(missingDocWarning);
       }
@@ -486,6 +492,14 @@ function WizardEngineInner({
     setStepIndex((i) => Math.max(i - 1, 0));
   }, [clearErrors]);
 
+  const goToStepById = useCallback(
+    (stepId: string) => {
+      const idx = visibleSteps.findIndex((s) => s.id === stepId);
+      if (idx >= 0) setStepIndex(idx);
+    },
+    [visibleSteps]
+  );
+
   const applyExtractPrefill = useCallback(
     async (meta: {
       fileName: string;
@@ -509,7 +523,6 @@ function WizardEngineInner({
           setValue(name, value, { shouldDirty: true, shouldValidate: false });
         });
         if (extracted.warnings?.length && !canUpload) {
-          // Guest path already shows guest banner; keep OCR note mild.
           setDocWarning((prev) => prev ?? extracted.warnings?.[0] ?? null);
         }
       } catch {
@@ -687,185 +700,286 @@ function WizardEngineInner({
     setPaymentChoice("initial");
   };
 
-  const locale =
-    typeof window !== "undefined"
-      ? window.location.pathname.split("/")[1] ?? "en"
-      : "en";
   const loginHref = `/${locale}/login?redirect=/${locale}/book/${serviceSlug}`;
   const registerHref = `/${locale}/register?redirect=/${locale}/book/${serviceSlug}`;
 
   const guestFooter =
     !userId && currentStep?.id === "details" ? (
-      <div className="rounded-lg border border-border bg-muted/30 p-4">
-        <p className="mb-3 text-sm font-medium text-foreground">
-          Want to track your case? Create an account
+      <div className="rounded-2xl border border-[#DCE6F5] bg-siam-surface/50 p-4">
+        <p className="mb-1 text-sm font-semibold text-siam-ink">
+          Want to track your booking?
         </p>
-        <p className="mb-3 text-xs text-muted">
-          Continue as guest below, or create an account to track your case, upload
-          documents, and see invoices.
+        <p className="mb-3 text-xs text-[#64748B]">
+          Continue as guest, or create an account to upload documents and see invoices.
         </p>
         <div className="flex flex-wrap gap-2">
           <a href={loginHref} className="text-sm font-medium text-siam-blue hover:underline">
-            Already have an account? Log in
+            Log in
           </a>
-          <span className="text-muted">·</span>
+          <span className="text-[#64748B]">·</span>
           <a
             href={registerHref}
             className="text-sm font-medium text-siam-blue hover:underline"
           >
-            Create an account
+            Create account
           </a>
         </div>
       </div>
     ) : null;
 
+  const continueLabel = (() => {
+    if (loading) {
+      if (currentStep?.type === "quote_review") return "Working…";
+      if (isLastStep) return "Submitting…";
+      if (currentStep?.generatesQuote) return "Calculating quote…";
+      return "Working…";
+    }
+    if (isLastStep) {
+      return currentStep?.continueLabel ?? "Confirm & submit booking";
+    }
+    if (currentStep?.type === "quote_review") {
+      return quoteAccepted
+        ? currentStep.continueLabel ?? "Continue to booking"
+        : "Accept quote above";
+    }
+    return currentStep?.continueLabel ?? "Continue";
+  })();
+
+  const hidePrimaryCta =
+    currentStep?.type === "quote_review" && !quoteAccepted && !customQuoteRequested;
+
   if (!currentStep) return null;
 
   return (
-    <Card>
-      <CardHeader className="border-b border-border pb-6">
-        <WizardProgress steps={visibleSteps} currentIndex={stepIndex} />
-      </CardHeader>
-      <CardContent className="pt-6">
-        {resumeBanner ? (
-          <div className="mb-6 flex flex-col gap-3 rounded-lg border border-siam-blue/30 bg-siam-blue/5 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-foreground">
-              We restored your saved progress for this booking.
+    <div className="min-h-[100dvh] bg-[linear-gradient(180deg,#EEF5FF_0%,#FFFFFF_42%)]">
+      <BookingHeader
+        serviceSlug={serviceSlug}
+        serviceName={service.name}
+        dirty={isDirty || stepIndex > 0 || documents.length > 0}
+      />
+
+      <div className="mx-auto max-w-5xl px-4 pb-28 pt-5 sm:px-6 sm:pb-10 sm:pt-8">
+        {serviceSlug === "driver-license" ? (
+          <div className="mb-4">
+            <h1 className="text-xl font-bold tracking-tight text-siam-ink sm:text-2xl">
+              Let&apos;s get your driver&apos;s license sorted
+            </h1>
+            <p className="mt-1 max-w-2xl text-sm text-[#64748B]">
+              A few quick questions to get your quote.
             </p>
-            <Button type="button" variant="outline" size="sm" onClick={discardDraft}>
+          </div>
+        ) : (
+          <div className="mb-4">
+            <h1 className="text-xl font-bold tracking-tight text-siam-ink sm:text-2xl">
+              Book: {service.name}
+            </h1>
+          </div>
+        )}
+
+        <div className="mb-5 rounded-2xl border border-[#DCE6F5] bg-white/90 px-4 py-3 shadow-sm sm:px-5">
+          <WizardProgress steps={visibleSteps} currentIndex={stepIndex} />
+        </div>
+
+        {resumeBanner ? (
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-xl bg-siam-blue/5 px-3 py-2 text-sm">
+            <p className="text-siam-ink">
+              <span className="font-semibold">Welcome back</span>
+              <span className="text-[#64748B]"> — your booking is saved.</span>
+            </p>
+            <button
+              type="button"
+              onClick={discardDraft}
+              className="shrink-0 text-xs font-semibold text-siam-blue hover:underline"
+            >
               Start over
-            </Button>
+            </button>
           </div>
         ) : null}
 
-        <WizardStepRenderer stepKey={currentStep.id}>
-          {currentStep.type === "summary" ? (
-            <SummaryStep
-              service={service}
-              serviceSlug={serviceSlug}
-              description={currentStep.description}
-            />
-          ) : null}
-          {currentStep.type === "fields" ? (
-            <>
-              {config.enableSmartQuote &&
-              (currentStep.generatesQuote ||
-                currentStep.id === "service" ||
-                currentStep.id === "questions" ||
-                currentStep.id === "details") ? (
-                <QuoteConciergeAssist
+        <div
+          className={cn(
+            "grid gap-6",
+            showSideSummary && "lg:grid-cols-[minmax(0,1fr)_17.5rem]"
+          )}
+        >
+          <div className="rounded-2xl border border-[#DCE6F5] bg-white p-4 shadow-sm sm:p-6">
+            <WizardStepRenderer stepKey={currentStep.id}>
+              {currentStep.type === "summary" ? (
+                <SummaryStep
+                  service={service}
                   serviceSlug={serviceSlug}
-                  currentRequirements={watchedValues as Record<string, unknown>}
-                  onApply={(requirements) => {
-                    for (const [name, value] of Object.entries(requirements)) {
-                      setValue(name, value, {
-                        shouldDirty: true,
-                        shouldValidate: false,
-                      });
-                    }
+                  description={currentStep.description}
+                />
+              ) : null}
+              {currentStep.type === "fields" ? (
+                <FieldsStep
+                  step={currentStep}
+                  control={control}
+                  errors={errors}
+                  values={watchedValues as Record<string, unknown>}
+                  footer={
+                    <>
+                      {guestFooter}
+                      {serviceSlug === "driver-license" && currentStep.id === "service" ? (
+                        <CompactPriceGuide />
+                      ) : null}
+                      {config.enableSmartQuote &&
+                      (currentStep.generatesQuote ||
+                        currentStep.id === "service" ||
+                        currentStep.id === "questions") ? (
+                        <QuoteConciergeAssist
+                          serviceSlug={serviceSlug}
+                          currentRequirements={watchedValues as Record<string, unknown>}
+                          onApply={(requirements) => {
+                            for (const [name, value] of Object.entries(requirements)) {
+                              setValue(name, value, {
+                                shouldDirty: true,
+                                shouldValidate: false,
+                              });
+                            }
+                          }}
+                        />
+                      ) : null}
+                    </>
+                  }
+                />
+              ) : null}
+              {currentStep.type === "quote_review" ? (
+                <QuoteReviewStep
+                  quote={quote}
+                  serviceName={service.name}
+                  accepted={quoteAccepted}
+                  loading={loading}
+                  onAccept={handleAcceptQuote}
+                  onRequestCustomQuote={handleRequestCustomQuote}
+                  onEdit={() => {
+                    setQuoteAccepted(false);
+                    setCustomQuoteRequested(false);
+                    setStepIndex((i) => Math.max(i - 1, 0));
+                  }}
+                  onRecalculate={() => {
+                    void runGenerateQuote();
                   }}
                 />
               ) : null}
-              <FieldsStep
-                step={currentStep}
-                control={control}
-                errors={errors}
-                values={watchedValues as Record<string, unknown>}
-                footer={guestFooter}
-              />
-            </>
-          ) : null}
-          {currentStep.type === "quote_review" ? (
-            <QuoteReviewStep
-              quote={quote}
-              serviceName={service.name}
-              accepted={quoteAccepted}
-              loading={loading}
-              onAccept={handleAcceptQuote}
-              onRequestCustomQuote={handleRequestCustomQuote}
-              onEdit={() => {
-                setQuoteAccepted(false);
-                setCustomQuoteRequested(false);
-                setStepIndex((i) => Math.max(i - 1, 0));
-              }}
-              onRecalculate={() => {
-                void runGenerateQuote();
-              }}
-            />
-          ) : null}
-          {currentStep.type === "documents" ? (
-            <DocumentsStep
-              documents={documents}
-              description={currentStep.description}
-              requiredDocuments={currentStep.requiredDocuments}
-              canUpload={canUpload}
-              uploading={uploading}
-              warning={docWarning ?? missingDocWarning}
-              selectedRequiredId={selectedRequiredId}
-              onSelectRequiredId={setSelectedRequiredId}
-              onFileChange={handleFileChange}
-              onRemove={removeDocument}
-            />
-          ) : null}
-          {currentStep.type === "review" ? (
-            <>
-              <ReviewStep
-                service={service}
-                config={config}
-                values={watchedValues as Record<string, unknown>}
-                documents={documents}
-              />
-              {config.showMarketplaceToggle !== false ? (
-                <MarketplacePostToggle
-                  checked={postToMarketplace}
-                  onCheckedChange={setPostToMarketplace}
-                  disabled={loading}
-                  className="mt-6"
+              {currentStep.type === "documents" ? (
+                <DocumentsStep
+                  documents={documents}
+                  title={currentStep.label}
+                  description={currentStep.description}
+                  requiredDocuments={currentStep.requiredDocuments}
+                  canUpload={canUpload}
+                  uploading={uploading}
+                  warning={docWarning ?? missingDocWarning}
+                  selectedRequiredId={selectedRequiredId}
+                  onSelectRequiredId={setSelectedRequiredId}
+                  onFileChange={handleFileChange}
+                  onRemove={removeDocument}
                 />
               ) : null}
-            </>
+              {currentStep.type === "review" ? (
+                <>
+                  <ReviewStep
+                    service={service}
+                    config={config}
+                    values={watchedValues as Record<string, unknown>}
+                    documents={documents}
+                    quote={quote}
+                    quoteAccepted={quoteAccepted}
+                    paymentChoice={paymentChoice}
+                    onEditStep={goToStepById}
+                  />
+                  {config.showMarketplaceToggle !== false ? (
+                    <MarketplacePostToggle
+                      checked={postToMarketplace}
+                      onCheckedChange={setPostToMarketplace}
+                      disabled={loading}
+                      className="mt-6"
+                    />
+                  ) : null}
+                </>
+              ) : null}
+            </WizardStepRenderer>
+
+            {error ? (
+              <p className="mt-4 text-sm text-destructive" role="alert">
+                {error}
+              </p>
+            ) : null}
+
+            {/* Desktop / tablet actions */}
+            <div className="mt-8 hidden items-center justify-between gap-4 sm:flex">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleBack}
+                disabled={stepIndex === 0 || loading}
+              >
+                Back
+              </Button>
+              {!hidePrimaryCta ? (
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="lg"
+                  onClick={handleNext}
+                  disabled={loading}
+                >
+                  {continueLabel}
+                </Button>
+              ) : null}
+            </div>
+          </div>
+
+          {showSideSummary ? (
+            <BookingSideSummary
+              serviceName={service.name}
+              values={watchedValues as Record<string, unknown>}
+              quote={quote}
+              quoteAccepted={quoteAccepted}
+              paymentChoice={paymentChoice}
+            />
           ) : null}
-        </WizardStepRenderer>
+        </div>
 
-        {error ? (
-          <p className="mt-4 text-sm text-destructive" role="alert">
-            {error}
-          </p>
-        ) : null}
+        <p className="mt-6 text-center text-xs text-[#64748B]">
+          Need help?{" "}
+          <a href={`mailto:${site.email}`} className="font-medium text-siam-blue hover:underline">
+            Contact SiamEZ
+          </a>
+        </p>
+      </div>
 
-        <div className="mt-8 flex flex-col-reverse justify-between gap-4 sm:flex-row">
+      {/* Mobile sticky CTA */}
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#DCE6F5] bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:hidden">
+        <div className="mx-auto flex max-w-5xl gap-2">
           <Button
             type="button"
             variant="outline"
             onClick={handleBack}
             disabled={stepIndex === 0 || loading}
-            className="w-full sm:w-auto"
+            className="min-w-[5.5rem]"
           >
             Back
           </Button>
-          <Button
-            type="button"
-            onClick={handleNext}
-            disabled={
-              loading ||
-              (currentStep.type === "quote_review" && !quoteAccepted && !customQuoteRequested)
-            }
-            className="w-full sm:w-auto"
-          >
-            {loading
-              ? currentStep.type === "quote_review"
-                ? "Working…"
-                : "Submitting…"
-              : isLastStep
-                ? "Submit booking"
-                : currentStep.type === "quote_review"
-                  ? quoteAccepted
-                    ? "Continue"
-                    : "Accept quote above"
-                  : "Next"}
-          </Button>
+          {!hidePrimaryCta ? (
+            <Button
+              type="button"
+              variant="primary"
+              size="lg"
+              onClick={handleNext}
+              disabled={loading}
+              className="flex-1"
+            >
+              {continueLabel}
+            </Button>
+          ) : (
+            <p className="flex flex-1 items-center justify-center text-xs text-[#64748B]">
+              Accept the quote above to continue
+            </p>
+          )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

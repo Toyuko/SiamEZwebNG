@@ -353,6 +353,24 @@ describe("specialty formData transforms", () => {
   });
 });
 
+describe("wizard progress stages", () => {
+  it("collapses shared stages for driver-license", async () => {
+    const { resolveProgressStages } = await import(
+      "@/components/wizard/lib/resolve-stages"
+    );
+    const { driverLicenseWizard } = await import("@/config/wizards/driver-license");
+    const stages = resolveProgressStages(driverLicenseWizard.steps);
+    expect(stages.map((s) => s.id)).toEqual([
+      "service",
+      "quote",
+      "details",
+      "confirm",
+    ]);
+    expect(driverLicenseWizard.steps.some((s) => s.id === "summary")).toBe(false);
+    expect(driverLicenseWizard.steps.find((s) => s.id === "details")?.fields?.some((f) => f.name === "appointmentDate")).toBe(true);
+  });
+});
+
 describe("wizard autosave (localStorage)", () => {
   const store = new Map<string, string>();
 
@@ -374,7 +392,7 @@ describe("wizard autosave (localStorage)", () => {
   it("saves, loads, and clears draft", () => {
     const key = autosaveStorageKey("marriage-registration");
     const payload: WizardAutosavePayload = {
-      version: 1,
+      version: 2,
       serviceSlug: "marriage-registration",
       stepIndex: 2,
       values: { name: "Ada", email: "ada@example.com", phone: "+66" },

@@ -1,10 +1,7 @@
 import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
-import { getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
 import { getOrEnsureServiceBySlug } from "@/data-access/service";
-import { Button } from "@/components/ui/button";
 import { hasWizardEngine } from "@/config/wizards";
 import { getSession } from "@/lib/auth";
 import { VehicleWizardBanner } from "@/components/vehicle-intake/VehicleWizardBanner";
@@ -20,10 +17,16 @@ const WizardEngine = dynamic(
   {
     loading: () => (
       <div
-        className="min-h-[28rem] animate-pulse rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/40"
+        className="min-h-[100dvh] animate-pulse bg-[linear-gradient(180deg,#EEF5FF_0%,#FFFFFF_42%)]"
         aria-busy="true"
         aria-label="Loading booking form"
-      />
+      >
+        <div className="mx-auto max-w-5xl px-4 pt-20">
+          <div className="h-8 w-2/3 rounded-lg bg-[#DCE6F5]" />
+          <div className="mt-4 h-4 w-1/2 rounded bg-[#DCE6F5]" />
+          <div className="mt-8 h-64 rounded-2xl border border-[#DCE6F5] bg-white" />
+        </div>
+      </div>
     ),
   }
 );
@@ -41,35 +44,15 @@ export default async function BookServicePage({
   const { locale, "service-slug": serviceSlug } = await params;
   setRequestLocale(locale);
   const session = await getSession();
-  const [service, t, tCommon] = await Promise.all([
-    getOrEnsureServiceBySlug(serviceSlug),
-    getTranslations("booking"),
-    getTranslations("common"),
-  ]);
+  const service = await getOrEnsureServiceBySlug(serviceSlug);
   if (!service) notFound();
   // Config (incl. buildFormData) is resolved inside WizardEngine on the client —
   // passing it from this Server Component breaks RSC serialization.
   if (!hasWizardEngine(serviceSlug)) notFound();
 
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-6 sm:py-8">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
-          {t("book", { name: service.name })}
-        </h1>
-        <Button asChild variant="ghost" size="sm">
-          <Link href={`/services/${serviceSlug}`}>{tCommon("cancel")}</Link>
-        </Button>
-      </div>
+    <>
       <VehicleWizardBanner serviceSlug={serviceSlug} />
-      {serviceSlug === "driver-license" ? (
-        <p className="mb-4 rounded-xl border border-siam-yellow/70 bg-amber-50 px-4 py-3 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-100">
-          <Link href="/driving-licence/apply" className="font-semibold text-siam-blue">
-            Check your documents before booking.
-          </Link>{" "}
-          SiamEZ screens the file before a quotation is sent. This is not Department of Land Transport approval.
-        </p>
-      ) : null}
       <WizardEngine
         service={service}
         serviceSlug={serviceSlug}
@@ -77,6 +60,6 @@ export default async function BookServicePage({
         userEmail={session?.user.email ?? undefined}
         userName={session?.user.name ?? undefined}
       />
-    </div>
+    </>
   );
 }

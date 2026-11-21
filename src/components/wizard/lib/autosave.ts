@@ -1,5 +1,6 @@
 export interface WizardAutosavePayload {
-  version: 1;
+  /** v2 = post redesign step consolidation; v1 drafts are ignored to avoid wrong step mapping */
+  version: 1 | 2;
   serviceSlug: string;
   stepIndex: number;
   values: Record<string, unknown>;
@@ -19,6 +20,7 @@ export interface WizardAutosavePayload {
 }
 
 const PREFIX = "siamez:wizard:";
+const CURRENT_VERSION = 2 as const;
 
 export function autosaveStorageKey(serviceSlug: string, suffix?: string): string {
   return `${PREFIX}${suffix ?? serviceSlug}`;
@@ -30,19 +32,26 @@ export function loadAutosave(key: string): WizardAutosavePayload | null {
     const raw = window.localStorage.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as WizardAutosavePayload;
-    if (parsed?.version !== 1 || typeof parsed.values !== "object") return null;
+    // Accept current version only — older drafts used a different step order.
+    if (parsed?.version !== CURRENT_VERSION || typeof parsed.values !== "object") {
+      return null;
+    }
     return parsed;
   } catch {
     return null;
   }
 }
 
-export function saveAutosave(key: string, payload: WizardAutosavePayload): void {
+export function saveAutosave(key: string, payload: Omit<WizardAutosavePayload, "version"> & { version?: 1 | 2 }): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(key, JSON.stringify(payload));
+    const next: WizardAutosavePayload = {
+      ...payload,
+      version: CURRENT_VERSION,
+    };
+    window.localStorage.setItem(key, JSON.stringify(next));
   } catch {
-    // Quota / private mode — ignore for v1
+    // Quota / private mode — ignore
   }
 }
 

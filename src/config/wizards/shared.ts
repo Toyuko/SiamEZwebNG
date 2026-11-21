@@ -77,7 +77,10 @@ export const quoteReviewStep: WizardStepConfig = {
   type: "quote_review",
   label: "Your quote",
   labelKey: "steps.quote",
-  description: "Review your personalized SiamEZ quote before continuing.",
+  description: "Here's what we recommend based on your answers.",
+  stage: "quote",
+  stageLabel: "Quote",
+  continueLabel: "Continue to booking",
 };
 
 type GenericWizardOptions = {
@@ -110,6 +113,9 @@ export function createGenericBookingWizard(
     type: "fields",
     label: "Your details",
     labelKey: "steps.details",
+    stage: "details",
+    stageLabel: "Details",
+    continueLabel: "Continue",
     fields: [
       ...contactFields,
       ...(options.extraDetailsFields ?? []),
@@ -127,6 +133,9 @@ export function createGenericBookingWizard(
       label: "Service summary",
       labelKey: "steps.summary",
       description: options.summaryDescription,
+      stage: "service",
+      stageLabel: "Service",
+      continueLabel: "Continue",
     },
     detailsStep,
   ];
@@ -134,6 +143,8 @@ export function createGenericBookingWizard(
   if (options.questionsStep) {
     steps.push({
       ...options.questionsStep,
+      stage: options.questionsStep.stage ?? "service",
+      stageLabel: options.questionsStep.stageLabel ?? "Service",
       generatesQuote: options.enableSmartQuote
         ? true
         : options.questionsStep.generatesQuote,
@@ -153,6 +164,9 @@ export function createGenericBookingWizard(
       description:
         options.documentsDescription ??
         "Upload supporting documents if you have them. Signed-in users store files for the booking; guests can attach metadata and finish uploads after login.",
+      stage: "details",
+      stageLabel: "Details",
+      continueLabel: "Continue to confirmation",
       documentsRequired: options.documentsRequired,
       requiredDocuments: options.requiredDocuments,
     },
@@ -161,6 +175,9 @@ export function createGenericBookingWizard(
       type: "review",
       label: "Review & submit",
       labelKey: "steps.review",
+      stage: "confirm",
+      stageLabel: "Confirm",
+      continueLabel: "Confirm & submit booking",
     }
   );
 
