@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 import {
@@ -8,14 +9,12 @@ import {
   FileText,
   Settings,
   CreditCard,
-  Moon,
   Car,
   Briefcase,
   Building2,
   Home,
   Megaphone,
   UserRound,
-  Bell,
   Bookmark,
   Flag,
   Workflow,
@@ -26,135 +25,220 @@ import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { LanguageSwitcher } from "@/components/portal/LanguageSwitcher";
+import { AskSiamEzSidebarCard } from "@/components/portal/AskSiamEzSidebarCard";
 import { softLaunch } from "@/config/soft-launch";
 
-const fullClientNav = [
-  { labelKey: "dashboard", href: "/portal", icon: LayoutDashboard },
-  { labelKey: "myCases", href: "/portal/cases", icon: FolderOpen },
-  { labelKey: "mySales", href: "/portal/sales", icon: Car },
-  { labelKey: "myRealEstate", href: "/portal/real-estate", icon: Home },
-  { labelKey: "listingEnquiries", href: "/portal/enquiries", icon: Inbox },
-  { labelKey: "savedListings", href: "/portal/saved", icon: Bookmark },
-  { labelKey: "goalsLifeEvents", href: "/portal/goals", icon: Flag },
-  { labelKey: "workflows", href: "/portal/workflows", icon: Workflow },
-  { labelKey: "invoices", href: "/portal/invoices", icon: CreditCard },
-  { labelKey: "documents", href: "/portal/documents", icon: FileText },
-  { labelKey: "notifications", href: "/portal/notifications", icon: Bell },
-  { labelKey: "publicProfile", href: "/portal/freelancer-profile", icon: UserRound },
-  { labelKey: "settings", href: "/portal/profile", icon: Settings },
+type NavItem = {
+  labelKey: string;
+  href: string;
+  icon: typeof LayoutDashboard;
+};
+
+type NavGroup = {
+  sectionKey?: string;
+  items: NavItem[];
+};
+
+const fullClientGroups: NavGroup[] = [
+  {
+    sectionKey: "navSections.overview",
+    items: [{ labelKey: "dashboard", href: "/portal", icon: LayoutDashboard }],
+  },
+  {
+    sectionKey: "navSections.services",
+    items: [
+      { labelKey: "myCases", href: "/portal/cases", icon: FolderOpen },
+      { labelKey: "invoices", href: "/portal/invoices", icon: CreditCard },
+      { labelKey: "documents", href: "/portal/documents", icon: FileText },
+    ],
+  },
+  {
+    sectionKey: "navSections.marketplace",
+    items: [
+      { labelKey: "mySales", href: "/portal/sales", icon: Car },
+      { labelKey: "myRealEstate", href: "/portal/real-estate", icon: Home },
+      { labelKey: "listingEnquiries", href: "/portal/enquiries", icon: Inbox },
+      { labelKey: "savedListings", href: "/portal/saved", icon: Bookmark },
+      { labelKey: "goalsLifeEvents", href: "/portal/goals", icon: Flag },
+      { labelKey: "workflows", href: "/portal/workflows", icon: Workflow },
+    ],
+  },
+  {
+    sectionKey: "navSections.account",
+    items: [
+      { labelKey: "publicProfile", href: "/portal/freelancer-profile", icon: UserRound },
+      { labelKey: "settings", href: "/portal/profile", icon: Settings },
+    ],
+  },
 ];
 
-const sellerListingNav = [
-  { labelKey: "mySales", href: "/portal/sales", icon: Car },
-  { labelKey: "myRealEstate", href: "/portal/real-estate", icon: Home },
+const softLaunchClientGroups: NavGroup[] = [
+  {
+    sectionKey: "navSections.overview",
+    items: [{ labelKey: "dashboard", href: "/portal", icon: LayoutDashboard }],
+  },
+  {
+    sectionKey: "navSections.services",
+    items: [
+      { labelKey: "myCases", href: "/portal/cases", icon: FolderOpen },
+      { labelKey: "invoices", href: "/portal/invoices", icon: CreditCard },
+      { labelKey: "documents", href: "/portal/documents", icon: FileText },
+    ],
+  },
+  {
+    sectionKey: "navSections.marketplace",
+    items: [
+      ...(softLaunch.showSellerListings
+        ? [
+            { labelKey: "mySales", href: "/portal/sales", icon: Car },
+            { labelKey: "myRealEstate", href: "/portal/real-estate", icon: Home },
+          ]
+        : []),
+      { labelKey: "browseCars", href: "/sales", icon: Car },
+      { labelKey: "browseRealEstate", href: "/real-estate", icon: Home },
+    ],
+  },
+  {
+    sectionKey: "navSections.account",
+    items: [
+      { labelKey: "publicProfile", href: "/portal/freelancer-profile", icon: UserRound },
+      { labelKey: "settings", href: "/portal/profile", icon: Settings },
+    ],
+  },
 ];
 
-const softLaunchClientNav = [
-  { labelKey: "dashboard", href: "/portal", icon: LayoutDashboard },
-  { labelKey: "myCases", href: "/portal/cases", icon: FolderOpen },
-  ...(softLaunch.showSellerListings ? sellerListingNav : []),
-  { labelKey: "invoices", href: "/portal/invoices", icon: CreditCard },
-  { labelKey: "browseCars", href: "/sales", icon: Car },
-  { labelKey: "browseRealEstate", href: "/real-estate", icon: Home },
-  { labelKey: "documents", href: "/portal/documents", icon: FileText },
-  { labelKey: "publicProfile", href: "/portal/freelancer-profile", icon: UserRound },
-  { labelKey: "settings", href: "/portal/profile", icon: Settings },
-];
-
-const clientNav =
+const clientGroups =
   softLaunch.enabled && !softLaunch.showLifeEvents && !softLaunch.showWorkflows
-    ? softLaunchClientNav
-    : fullClientNav;
+    ? softLaunchClientGroups
+    : fullClientGroups;
 
-const freelancerNav = [
-  { labelKey: "freelancerDashboard", href: "/portal/freelancer", icon: Briefcase },
-  { labelKey: "officeDirectory", href: "/directory", icon: Landmark },
-  { labelKey: "publicProfile", href: "/portal/freelancer-profile", icon: UserRound },
-  { labelKey: "settings", href: "/portal/profile", icon: Settings },
+const freelancerGroups: NavGroup[] = [
+  {
+    items: [
+      { labelKey: "freelancerDashboard", href: "/portal/freelancer", icon: Briefcase },
+      { labelKey: "officeDirectory", href: "/directory", icon: Landmark },
+      { labelKey: "publicProfile", href: "/portal/freelancer-profile", icon: UserRound },
+      { labelKey: "settings", href: "/portal/profile", icon: Settings },
+    ],
+  },
 ];
 
-const companyNav = [
-  { labelKey: "companyDashboard", href: "/portal/company", icon: Building2 },
-  { labelKey: "companyJobs", href: "/portal/company?tab=jobs", icon: Briefcase },
-  { labelKey: "companyAds", href: "/portal/company?tab=ads", icon: Megaphone },
-  { labelKey: "settings", href: "/portal/profile", icon: Settings },
+const companyGroups: NavGroup[] = [
+  {
+    items: [
+      { labelKey: "companyDashboard", href: "/portal/company", icon: Building2 },
+      { labelKey: "companyJobs", href: "/portal/company?tab=jobs", icon: Briefcase },
+      { labelKey: "companyAds", href: "/portal/company?tab=ads", icon: Megaphone },
+      { labelKey: "settings", href: "/portal/profile", icon: Settings },
+    ],
+  },
 ];
+
+function isItemActive(
+  item: NavItem,
+  pathname: string,
+  currentTab: string | null,
+  isCompany: boolean
+) {
+  const hrefPath = item.href.split("?")[0] ?? item.href;
+  const hrefTab = item.href.includes("tab=")
+    ? new URLSearchParams(item.href.split("?")[1]).get("tab")
+    : null;
+
+  if (isCompany && hrefPath === "/portal/company") {
+    if (hrefTab) {
+      return pathname === "/portal/company" && currentTab === hrefTab;
+    }
+    return pathname === "/portal/company" && (!currentTab || currentTab === "overview");
+  }
+
+  return (
+    pathname === hrefPath || (hrefPath !== "/portal" && pathname.startsWith(hrefPath))
+  );
+}
 
 export function PortalSidebar({
   isFreelancer = false,
   isCompany = false,
   showDirectory = false,
+  showAskSiamEz = true,
 }: {
   isFreelancer?: boolean;
   isCompany?: boolean;
   showDirectory?: boolean;
+  showAskSiamEz?: boolean;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const t = useTranslations("portal");
-  const baseNav = isCompany ? companyNav : isFreelancer ? freelancerNav : clientNav;
-  const nav = showDirectory
-    ? baseNav
-    : baseNav.filter((item) => item.href !== "/directory");
+  const baseGroups = isCompany
+    ? companyGroups
+    : isFreelancer
+      ? freelancerGroups
+      : clientGroups;
+  const groups = baseGroups.map((group) => ({
+    ...group,
+    items: showDirectory
+      ? group.items
+      : group.items.filter((item) => item.href !== "/directory"),
+  }));
   const currentTab = searchParams.get("tab");
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col bg-[#21438F] dark:bg-[#1a3569]">
-      {/* Logo */}
-      <div className="flex items-center gap-3 border-b border-blue-600/30 px-6 py-5">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
-          <span className="text-xl font-bold text-white">SZ</span>
-        </div>
-        <span className="text-lg font-bold text-white">SiamEZ</span>
+    <aside className="flex h-screen w-64 shrink-0 flex-col bg-siam-navy text-white">
+      <div className="flex items-center gap-3 border-b border-white/10 px-5 py-4">
+        <Image
+          src="/images/logo.png"
+          alt="SiamEZ"
+          width={36}
+          height={36}
+          className="h-9 w-9 rounded-lg object-contain"
+          priority
+        />
+        <span className="text-lg font-bold tracking-tight">SiamEZ</span>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-4 py-4">
-        {nav.map((item) => {
-          const hrefPath = item.href.split("?")[0] ?? item.href;
-          const hrefTab = item.href.includes("tab=")
-            ? new URLSearchParams(item.href.split("?")[1]).get("tab")
-            : null;
-          let isActive = false;
-          if (isCompany && hrefPath === "/portal/company") {
-            if (hrefTab) {
-              isActive = pathname === "/portal/company" && currentTab === hrefTab;
-            } else {
-              isActive =
-                pathname === "/portal/company" &&
-                (!currentTab || currentTab === "overview");
-            }
-          } else {
-            isActive =
-              pathname === hrefPath ||
-              (hrefPath !== "/portal" && pathname.startsWith(hrefPath));
-          }
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white transition-colors",
-                isActive
-                  ? "bg-[#3468E8] text-white"
-                  : "text-white/90 hover:bg-white/10 hover:text-white"
-              )}
-            >
-              <Icon className="h-5 w-5" />
-              {t(item.labelKey)}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
+        {groups.map((group, groupIndex) => (
+          <div key={group.sectionKey ?? `group-${groupIndex}`}>
+            {group.sectionKey ? (
+              <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-white/45">
+                {t(group.sectionKey)}
+              </p>
+            ) : null}
+            <div className="space-y-0.5">
+              {group.items.map((item) => {
+                const active = isItemActive(item, pathname, currentTab, isCompany);
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                      active
+                        ? "bg-siam-blue text-white shadow-soft"
+                        : "text-white/85 hover:bg-white/10 hover:text-white"
+                    )}
+                  >
+                    <Icon className="h-5 w-5 shrink-0" aria-hidden />
+                    <span className="truncate">{t(item.labelKey)}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
-      {/* Bottom: Theme Toggle */}
-      <div className="border-t border-blue-600/30 px-4 py-4">
-        <div className="mb-3 flex items-center gap-2 text-sm text-white/80">
-          <Moon className="h-4 w-4" />
-          <span>{t("switchTheme")}</span>
-        </div>
-        <div className="mb-4 flex flex-col gap-2">
+      <div className="border-t border-white/10 px-3 py-4">
+        {showAskSiamEz && !isFreelancer && !isCompany ? (
+          <AskSiamEzSidebarCard
+            title={t("sidebarAsk.title")}
+            subtitle={t("sidebarAsk.subtitle")}
+          />
+        ) : null}
+        <div className="flex flex-col gap-2">
           <ThemeSwitcher className="w-full" variant="sidebar" />
           <LanguageSwitcher className="w-full" variant="sidebar" />
         </div>

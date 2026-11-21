@@ -1521,7 +1521,7 @@
     "bookServiceHint": "เลือกบริการแล้วเริ่มจอง",
     "carsHint": "ดูยานพาหนะที่ประกาศขาย",
     "realEstateHint": "ดูบ้านและคอนโด",
-    "mySales": "รายการขายของฉัน",
+    "mySales": "ยานพาหนะของฉัน",
     "mySalesSubtitle": "สร้างและแก้ไขรายการรถของคุณ — รูปภาพ ราคา คำอธิบาย และสถานะ",
     "myRealEstateSubtitle": "สร้างและแก้ไขรายการอสังหาของคุณ — รูปภาพ ราคา คำอธิบาย และสถานะ",
     "editListing": "แก้ไขรายการ",
@@ -1725,7 +1725,64 @@
     "listingEnquiries": "ข้อความจากผู้ซื้อ",
     "savedListings": "รายการที่บันทึกและเปรียบเทียบ",
     "goalsLifeEvents": "เป้าหมายและการย้ายถิ่น",
-    "workflows": "เวิร์กโฟลว์"
+    "workflows": "เวิร์กโฟลว์",
+    "welcome": {
+      "title": "ยินดีต้อนรับกลับ, {name}",
+      "subtitle": "จัดการบริการและดูความคืบหน้าการจองของคุณ"
+    },
+    "actionRequired": {
+      "title": "รายการที่ต้องดำเนินการ",
+      "count": "{count} รายการที่ต้องการความสนใจของคุณ",
+      "emptyTitle": "คุณทำครบแล้ว!",
+      "emptyDescription": "ตอนนี้ไม่มีสิ่งที่ต้องทำ",
+      "ctaPay": "ชำระเงิน →",
+      "ctaUpload": "อัปโหลดเอกสาร →",
+      "ctaReview": "ตรวจสอบ →",
+      "ctaBook": "จองบริการ →"
+    },
+    "activeBookings": {
+      "title": "การจองที่กำลังดำเนินการ",
+      "subtitle": "{count} รายการ",
+      "viewAll": "ดูการจองทั้งหมด →",
+      "emptyTitle": "ยังไม่มีการจองที่กำลังดำเนินการ",
+      "emptyDescription": "เมื่อคุณจองบริการ SiamEZ คุณจะติดตามได้ที่นี่"
+    },
+    "bookingProgress": {
+      "booked": "จองแล้ว",
+      "documents": "เอกสาร",
+      "review": "ตรวจสอบ",
+      "appointment": "กำลังดำเนินการ",
+      "completed": "เสร็จสิ้น"
+    },
+    "bookingActions": {
+      "view": "ดูการจอง",
+      "upload": "อัปโหลดเอกสาร",
+      "pay": "ชำระเงิน",
+      "reviewJob": "ตรวจสอบงาน"
+    },
+    "jobStatus": {
+      "open": "รอฟรีแลนซ์",
+      "inProgress": "กำลังดำเนินการ",
+      "awaitingReview": "รอการตรวจสอบจากคุณ"
+    },
+    "preCheck": {
+      "title": "วางแผนขอใบขับขี่ไทยอยู่หรือไม่?",
+      "titleWithStatus": "ตรวจสอบเอกสารใบขับขี่ล่วงหน้า",
+      "description": "ตรวจสอบเอกสารก่อนจองเพื่อลดความล่าช้า",
+      "startCta": "เริ่มตรวจสอบเอกสาร",
+      "viewCta": "ดูผลล่าสุด",
+      "newCheckCta": "เริ่มการตรวจสอบใหม่"
+    },
+    "navSections": {
+      "overview": "ภาพรวม",
+      "services": "บริการ",
+      "marketplace": "ตลาด",
+      "account": "บัญชี"
+    },
+    "sidebarAsk": {
+      "title": "ต้องการความช่วยเหลือ? ถาม SiamEZ",
+      "subtitle": "ถามคำถามเกี่ยวกับการจองและบริการได้ทันที"
+    }
   },
   "workflows": {
     "pageTitle": "เวิร์กโฟลว์",

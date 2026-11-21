@@ -48,27 +48,32 @@ export function PortalLayoutClient({
       >
         <Suspense
           fallback={
-            <aside className="flex h-screen w-64 shrink-0 flex-col bg-[#21438F]" />
+            <aside className="flex h-screen w-64 shrink-0 flex-col bg-siam-navy" />
           }
         >
           <PortalSidebar
             isFreelancer={user.role === "freelancer"}
             isCompany={user.role === "company"}
             showDirectory={showDirectory}
+            showAskSiamEz={showConcierge}
           />
         </Suspense>
       </aside>
 
       <div className="flex flex-1 flex-col overflow-hidden lg:ml-0">
-        <div className="flex h-14 items-center gap-4 border-b border-gray-200 bg-white px-4 lg:hidden dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex h-14 items-center gap-4 border-b border-[#DCE6F5] bg-white px-4 lg:hidden dark:border-gray-800 dark:bg-gray-900">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="lg:hidden"
+            aria-label={sidebarOpen ? "Close menu" : "Open menu"}
           >
             {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
+          <span className="text-sm font-semibold text-siam-ink dark:text-white">
+            SiamEZ
+          </span>
         </div>
 
         <PortalTopBar
@@ -83,7 +88,7 @@ export function PortalLayoutClient({
           userAvatar={user.image ?? undefined}
         />
 
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6 lg:p-8 dark:bg-gray-900">
+        <main className="flex-1 overflow-y-auto bg-[#F4F8FF] p-4 md:p-6 lg:p-8 dark:bg-gray-950">
           {children}
         </main>
       </div>

@@ -1,41 +1,50 @@
 import { setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { SummaryCard } from "@/components/portal/SummaryCard";
-import { ActivityFeed } from "@/components/portal/ActivityFeed";
-import { NextSteps } from "@/components/portal/NextSteps";
-import { QuickLinks } from "@/components/portal/QuickLinks";
-import { AiRecommendations } from "@/components/portal/AiRecommendations";
-import { SellerAnalyticsStub } from "@/components/portal/SellerAnalyticsStub";
-import { SuggestionSlot } from "@/components/recommendations/SuggestionSlot";
-import { PortalFooter } from "@/components/portal/PortalFooter";
-import { AskSiamEzButton } from "@/components/ai/AskSiamEzButton";
-import { Button } from "@/components/ui/button";
-import { Link } from "@/i18n/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth } from "@/lib/auth";
-import { softLaunch } from "@/config/soft-launch";
 import { getCasesByUserId } from "@/data-access/case";
 import { getJobsByClientId } from "@/data-access/job";
 import { getInvoicesByUserId } from "@/data-access/invoice";
-import { getDocumentsByUserId } from "@/data-access/document";
-import { getRecentActivityForUser } from "@/data-access/activity";
-import { countActiveGoalsForUser } from "@/data-access/goals";
-import { countActiveLifeEventProgressForUser } from "@/data-access/life-events";
-import { countBuyerHubEngagement } from "@/data-access/marketplace-engagement";
-import { countNewListingEnquiriesForSeller } from "@/data-access/listing-enquiries";
-import { getSellerListingViewStats } from "@/data-access/seller-analytics";
-import { buildCustomerNextSteps } from "@/lib/portal/next-steps";
 import {
-  portalHomeRedirectForRole,
-  resolveCustomerWorkspaceSections,
-} from "@/lib/portal/workspace-sections";
-import { getPopularRecommendations, getServiceBySlug } from "@/lib/ai/recommend";
-import type { ConciergeLocale } from "@/lib/ai/types";
-import { getMyDriverLicenseRenewals } from "@/actions/driver-license-renewals";
-import { PortalDriverLicenseCard } from "@/components/portal/PortalDriverLicenseCard";
-import { PortalLicenceCard } from "@/components/portal/PortalLicenceCard";
-import { buildUserOwner } from "@/lib/marketplace-engagement";
-import { loadRecommendationContext, recommendSync } from "@/lib/recommendations";
+  buildCustomerNextSteps,
+  filterActionRequiredSteps,
+} from "@/lib/portal/next-steps";
+import { isActiveBookingStatus } from "@/lib/portal/booking-progress";
+import { portalHomeRedirectForRole } from "@/lib/portal/workspace-sections";
+import { WelcomeSection } from "@/components/portal/WelcomeSection";
+import { ActionRequiredList } from "@/components/portal/ActionRequiredList";
+import {
+  ActiveBookingCard,
+  ActiveBookingsEmpty,
+  ActiveBookingsSection,
+  ActiveJobCard,
+} from "@/components/portal/ActiveBookingCard";
+import { PreCheckCard } from "@/components/portal/PreCheckCard";
+import { PortalFooter } from "@/components/portal/PortalFooter";
+
+const ACTIVE_JOB_STATUSES = new Set([
+  "open",
+  "in_progress",
+  "completed_awaiting_review",
+]);
+
+function firstNameFrom(name: string | null | undefined, email: string): string {
+  const raw = (name ?? "").trim();
+  if (raw) return raw.split(/\s+/)[0] ?? raw;
+  const local = email.split("@")[0] ?? "there";
+  return local.charAt(0).toUpperCase() + local.slice(1);
+}
+
+function isDrivingLicenseRelated(serviceName: string | null | undefined, slug?: string | null) {
+  const hay = `${serviceName ?? ""} ${slug ?? ""}`.toLowerCase();
+  return (
+    hay.includes("driving") ||
+    hay.includes("driver") ||
+    hay.includes("licence") ||
+    hay.includes("license") ||
+    hay.includes("ใบขับขี่")
+  );
+}
 
 export default async function PortalDashboardPage({
   params,
@@ -55,53 +64,13 @@ export default async function PortalDashboardPage({
   }
 
   const t = await getTranslations("portal");
-  const conciergeLocale: ConciergeLocale = locale === "th" ? "th" : "en";
-  const owner = buildUserOwner(session.user.id);
 
-  const [
-    cases,
-    invoices,
-    documents,
-    serviceJobs,
-    activities,
-    hubCounts,
-    activeGoalsCount,
-    activeEventsCount,
-    sellerStats,
-    newEnquiriesCount,
-    driverLicenseRenewals,
-  ] = await Promise.all([
+  // Lean dashboard load: bookings + invoices + jobs only (no marketplace/analytics/recs).
+  const [cases, invoices, serviceJobs] = await Promise.all([
     getCasesByUserId(session.user.id),
     getInvoicesByUserId(session.user.id),
-    getDocumentsByUserId(session.user.id),
     getJobsByClientId(session.user.id),
-    getRecentActivityForUser(session.user.id, 8),
-    countBuyerHubEngagement(owner),
-    countActiveGoalsForUser(session.user.id),
-    countActiveLifeEventProgressForUser(session.user.id),
-    getSellerListingViewStats(session.user.id),
-    countNewListingEnquiriesForSeller(session.user.id),
-    getMyDriverLicenseRenewals(),
   ]);
-
-  const sections = resolveCustomerWorkspaceSections({
-    listingCount: sellerStats.listingCount,
-  });
-  const showSeller = sections.includes("seller");
-  const showRecommendations = sections.includes("recommendations");
-
-  const activeCasesCount =
-    cases.filter((c) => !["cancelled", "completed"].includes(c.status)).length +
-    serviceJobs.filter((j) => !["completed", "approved"].includes(j.status)).length;
-  const pendingInvoicesCount = invoices.filter((i) =>
-    ["unpaid", "pending_verification", "draft"].includes(i.status)
-  ).length;
-  const documentsCount = documents.length;
-  const attentionCount = activities.filter(
-    (a) => a.status === "required" || a.status === "pending"
-  ).length;
-  const goalsHubCount = activeGoalsCount + activeEventsCount;
-  const savedHubCount = hubCounts.savedCount + hubCounts.compareCount;
 
   const nextSteps = buildCustomerNextSteps({
     cases,
@@ -119,272 +88,170 @@ export default async function PortalDashboardPage({
         t("nextSteps.awaitingQuoteDesc", { caseNumber }),
       bookFirst: t("nextSteps.bookFirst"),
       bookFirstDesc: t("nextSteps.bookFirstDesc"),
+      ctaPay: t("actionRequired.ctaPay"),
+      ctaUpload: t("actionRequired.ctaUpload"),
+      ctaReview: t("actionRequired.ctaReview"),
+      ctaBook: t("actionRequired.ctaBook"),
     },
   });
 
-  const recContext = await loadRecommendationContext({
-    locale: conciergeLocale,
-    owner,
-    userId: session.user.id,
-    limit: 6,
-  });
-  const engineRecs = recommendSync(recContext).suggestions;
-  const serviceChips =
-    engineRecs
-      .filter((s) => s.kind === "service")
-      .map((s) => getServiceBySlug(s.id, conciergeLocale))
-      .filter((s): s is NonNullable<typeof s> => Boolean(s))
-      .slice(0, 4);
-  const recommendations =
-    serviceChips.length > 0
-      ? serviceChips
-      : getPopularRecommendations(conciergeLocale, 4);
-  const crossDivision = engineRecs.filter((s) => s.kind !== "service").slice(0, 3);
+  const actionRequired = filterActionRequiredSteps(nextSteps);
 
-  const listingManageLinks = [
-    {
-      href: "/portal/sales",
-      label: t("mySales"),
-      hint: t("quickLinks.salesHint", { count: sellerStats.vehicleCount }),
-      icon: "sales" as const,
-      badge: sellerStats.vehicleCount,
-    },
-    {
-      href: "/portal/real-estate",
-      label: t("myRealEstate"),
-      hint: t("quickLinks.realEstateHint", { count: sellerStats.propertyCount }),
-      icon: "realEstate" as const,
-      badge: sellerStats.propertyCount,
-    },
-  ];
+  const activeCases = cases
+    .filter((c) => isActiveBookingStatus(c.status))
+    .sort((a, b) => {
+      const aNeeds = a.status === "pending_docs" || a.status.includes("payment") ? 0 : 1;
+      const bNeeds = b.status === "pending_docs" || b.status.includes("payment") ? 0 : 1;
+      if (aNeeds !== bNeeds) return aNeeds - bNeeds;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
 
-  const quickLinks = softLaunch.enabled
-    ? [
-        {
-          href: "/portal/cases",
-          label: t("myCases"),
-          hint: t("quickLinks.casesHint", { count: activeCasesCount }),
-          icon: "cases" as const,
-          badge: activeCasesCount,
-        },
-        ...listingManageLinks,
-        {
-          href: "/portal/invoices",
-          label: t("invoices"),
-          hint: t("quickLinks.invoicesHint", { count: pendingInvoicesCount }),
-          icon: "invoices" as const,
-          badge: pendingInvoicesCount,
-        },
-        {
-          href: "/portal/documents",
-          label: t("documents"),
-          hint: t("quickLinks.documentsHint", { count: documentsCount }),
-          icon: "documents" as const,
-          badge: documentsCount,
-        },
-      ]
-    : [
-    {
-      href: "/portal/cases",
-      label: t("myCases"),
-      hint: t("quickLinks.casesHint", { count: activeCasesCount }),
-      icon: "cases" as const,
-      badge: activeCasesCount,
-    },
-    ...listingManageLinks,
-    {
-      href: "/portal/goals",
-      label: t("goalsLifeEvents"),
-      hint: t("quickLinks.goalsHint", { count: goalsHubCount }),
-      icon: "goals" as const,
-      badge: goalsHubCount,
-    },
-    {
-      href: "/portal/saved",
-      label: t("savedListings"),
-      hint: t("quickLinks.savedHint", { count: hubCounts.savedCount }),
-      icon: "saved" as const,
-      badge: savedHubCount,
-    },
-    ...(showSeller || newEnquiriesCount > 0
-      ? [
-          {
-            href: "/portal/enquiries",
-            label: t("listingEnquiries"),
-            hint: t("quickLinks.enquiriesHint", { count: newEnquiriesCount }),
-            icon: "enquiries" as const,
-            badge: newEnquiriesCount,
-          },
-        ]
-      : []),
-    {
-      href: "/portal/invoices",
-      label: t("invoices"),
-      hint: t("quickLinks.invoicesHint", { count: pendingInvoicesCount }),
-      icon: "invoices" as const,
-      badge: pendingInvoicesCount,
-    },
-    {
-      href: "/portal/documents",
-      label: t("documents"),
-      hint: t("quickLinks.documentsHint", { count: documentsCount }),
-      icon: "documents" as const,
-      badge: documentsCount,
-    },
-    {
-      href: "/portal/notifications",
-      label: t("notifications"),
-      hint: t("quickLinks.notificationsHint", { count: attentionCount }),
-      icon: "notifications" as const,
-      badge: attentionCount,
-    },
-  ];
+  const activeJobs = serviceJobs
+    .filter((j) => ACTIVE_JOB_STATUSES.has(j.status))
+    .sort((a, b) => {
+      const aNeeds = a.status === "completed_awaiting_review" ? 0 : 1;
+      const bNeeds = b.status === "completed_awaiting_review" ? 0 : 1;
+      if (aNeeds !== bNeeds) return aNeeds - bNeeds;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+
+  type Highlight =
+    | { kind: "case"; priority: number; at: number; case: (typeof activeCases)[number] }
+    | { kind: "job"; priority: number; at: number; job: (typeof activeJobs)[number] };
+
+  const highlights: Highlight[] = [
+    ...activeCases.map((c) => ({
+      kind: "case" as const,
+      priority:
+        c.status === "pending_docs" || c.status.includes("payment") ? 0 : 1,
+      at: new Date(c.updatedAt).getTime(),
+      case: c,
+    })),
+    ...activeJobs.map((j) => ({
+      kind: "job" as const,
+      priority: j.status === "completed_awaiting_review" ? 0 : 2,
+      at: new Date(j.updatedAt).getTime(),
+      job: j,
+    })),
+  ]
+    .sort((a, b) => a.priority - b.priority || b.at - a.at)
+    .slice(0, 2);
+
+  const activeCount = activeCases.length + activeJobs.length;
+  const showViewAllBookings = activeCount > 0;
+
+  const hasActiveLicenseBooking =
+    activeCases.some((c) =>
+      isDrivingLicenseRelated(c.service?.name, c.service?.slug)
+    ) ||
+    activeJobs.some((j) =>
+      isDrivingLicenseRelated(j.service?.name, j.service?.slug)
+    );
+
+  const jobStatusLabels: Record<string, string> = {
+    open: t("jobStatus.open"),
+    in_progress: t("jobStatus.inProgress"),
+    completed_awaiting_review: t("jobStatus.awaitingReview"),
+  };
+
+  const firstName = firstNameFrom(session.user.name, session.user.email);
+
+  const progressLabels = {
+    booked: t("bookingProgress.booked"),
+    documents: t("bookingProgress.documents"),
+    review: t("bookingProgress.review"),
+    appointment: t("bookingProgress.appointment"),
+    completed: t("bookingProgress.completed"),
+  };
+
+  const bookingActionLabels = {
+    view: t("bookingActions.view"),
+    upload: t("bookingActions.upload"),
+    pay: t("bookingActions.pay"),
+  };
 
   return (
-    <div className="max-w-7xl">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {t("dashboard")}
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">{t("dashboardSubtitle")}</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button asChild variant="primary" size="lg">
-            <Link href="/services">{t("bookNewService")}</Link>
-          </Button>
-          <AskSiamEzButton
-            label={t("askSiamEz")}
-            variant="outline"
-            size="lg"
-          />
-        </div>
-      </div>
-
-      <QuickLinks title={t("quickLinksTitle")} links={quickLinks} />
-
-      <NextSteps
-        title={t("nextSteps.title")}
-        emptyLabel={t("nextSteps.empty")}
-        steps={nextSteps}
+    <div className="mx-auto max-w-5xl">
+      <WelcomeSection
+        title={t("welcome.title", { name: firstName })}
+        subtitle={t("welcome.subtitle")}
+        bookLabel={t("bookNewService")}
+        askLabel={t("askSiamEz")}
       />
 
-      {driverLicenseRenewals.length > 0 && (
-        <div className="mb-8 max-w-lg">
-          <PortalDriverLicenseCard renewals={driverLicenseRenewals} />
-        </div>
-      )}
-
-      <PortalLicenceCard userId={session.user.id} />
-
-      <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {softLaunch.enabled ? null : (
-        <SummaryCard
-          iconName="Flag"
-          title={t("workspace.goalsTitle")}
-          description={t("workspace.goalsDescription", {
-            goals: activeGoalsCount,
-            events: activeEventsCount,
-          })}
-          count={goalsHubCount}
-          href="/portal/goals"
-          buttonLabel={t("workspace.viewGoals")}
-          buttonVariant="outline"
-        />
-        )}
-        <SummaryCard
-          iconName="FolderOpen"
-          title={t("myCases")}
-          description={t("casesDescription", { count: activeCasesCount })}
-          count={activeCasesCount}
-          href="/portal/cases"
-          buttonLabel={t("viewCases")}
-          buttonVariant="default"
-        />
-        <SummaryCard
-          iconName="Car"
-          title={t("mySales")}
-          description={t("salesListingsDescription", { count: sellerStats.vehicleCount })}
-          count={sellerStats.vehicleCount}
-          href="/portal/sales"
-          buttonLabel={t("viewMySales")}
-          buttonVariant="outline"
-        />
-        <SummaryCard
-          iconName="Home"
-          title={t("myRealEstate")}
-          description={t("propertyListingsDescription", { count: sellerStats.propertyCount })}
-          count={sellerStats.propertyCount}
-          href="/portal/real-estate"
-          buttonLabel={t("viewMyProperties")}
-          buttonVariant="outline"
-        />
-        {softLaunch.enabled ? null : (
-        <SummaryCard
-          iconName="Bookmark"
-          title={t("workspace.savedTitle")}
-          description={t("workspace.savedDescription", {
-            saved: hubCounts.savedCount,
-            compare: hubCounts.compareCount,
-          })}
-          count={savedHubCount}
-          href="/portal/saved"
-          buttonLabel={t("workspace.viewSaved")}
-          buttonVariant="outline"
-        />
-        )}
-        <SummaryCard
-          iconName="CreditCard"
-          title={t("invoices")}
-          description={t("invoicesDescription", { count: pendingInvoicesCount })}
-          count={pendingInvoicesCount}
-          href="/portal/invoices"
-          buttonLabel={t("viewInvoices")}
-          buttonVariant="outline"
-        />
-        <SummaryCard
-          iconName="FileText"
-          title={t("documents")}
-          description={t("documentsDescription", { count: documentsCount })}
-          count={documentsCount}
-          href="/portal/documents"
-          buttonLabel={t("viewDocuments")}
-          buttonVariant="outline"
-        />
-      </div>
-
-      <SellerAnalyticsStub
-        title={t("sellerAnalytics.title")}
-        subtitle={t("sellerAnalytics.subtitle")}
-        emptyLabel={t("sellerAnalytics.empty")}
-        viewsLabel={(count) => t("sellerAnalytics.views", { count })}
-        manageSalesLabel={t("sellerAnalytics.manageSales")}
-        manageRealEstateLabel={t("sellerAnalytics.manageRealEstate")}
-        editListingLabel={t("editListing")}
-        totalViews={sellerStats.totalViews}
-        rows={sellerStats.rows}
+      <ActionRequiredList
+        title={t("actionRequired.title")}
+        emptyTitle={t("actionRequired.emptyTitle")}
+        emptyDescription={t("actionRequired.emptyDescription")}
+        countLabel={(count) => t("actionRequired.count", { count })}
+        steps={actionRequired}
       />
 
-      <ActivityFeed items={activities} viewAllHref="/portal/notifications" />
-
-      {showRecommendations ? (
-        <>
-          <AiRecommendations
-            title={t("aiRecommendations.title")}
-            subtitle={t("aiRecommendations.subtitle")}
-            askConciergeLabel={t("aiRecommendations.askConcierge")}
-            bookLabel={t("aiRecommendations.book")}
-            recommendations={recommendations}
+      <ActiveBookingsSection
+        title={t("activeBookings.title")}
+        subtitle={
+          activeCount > 0
+            ? t("activeBookings.subtitle", { count: activeCount })
+            : undefined
+        }
+        viewAllLabel={t("activeBookings.viewAll")}
+        showViewAll={showViewAllBookings}
+      >
+        {highlights.length === 0 ? (
+          <ActiveBookingsEmpty
+            title={t("activeBookings.emptyTitle")}
+            description={t("activeBookings.emptyDescription")}
+            bookLabel={t("bookNewService")}
           />
+        ) : (
+          <div className="grid gap-3 sm:gap-4">
+            {highlights.map((item) =>
+              item.kind === "case" ? (
+                <ActiveBookingCard
+                  key={item.case.id}
+                  id={item.case.id}
+                  serviceName={item.case.service?.name ?? t("serviceJobFallback")}
+                  caseNumber={item.case.caseNumber}
+                  status={item.case.status}
+                  locale={locale}
+                  progressLabels={progressLabels}
+                  actionLabels={bookingActionLabels}
+                />
+              ) : (
+                <ActiveJobCard
+                  key={item.job.id}
+                  id={item.job.id}
+                  title={item.job.title}
+                  serviceName={item.job.service?.name ?? t("serviceJobFallback")}
+                  status={item.job.status}
+                  statusLabel={
+                    jobStatusLabels[item.job.status] ?? item.job.status
+                  }
+                  actionLabel={
+                    item.job.status === "completed_awaiting_review"
+                      ? t("bookingActions.reviewJob")
+                      : t("bookingActions.view")
+                  }
+                />
+              )
+            )}
+          </div>
+        )}
+      </ActiveBookingsSection>
 
-          <SuggestionSlot
-            title={t("aiRecommendations.title")}
-            subtitle={t("aiRecommendations.subtitle")}
-            ctaLabel={t("aiRecommendations.cta")}
-            suggestions={crossDivision}
-          />
-        </>
-      ) : null}
+      <PreCheckCard
+        userId={session.user.id}
+        locale={locale}
+        hideWhenActiveLicenseBooking={hasActiveLicenseBooking}
+        labels={{
+          title: t("preCheck.title"),
+          titleWithStatus: t("preCheck.titleWithStatus"),
+          description: t("preCheck.description"),
+          startCta: t("preCheck.startCta"),
+          viewCta: t("preCheck.viewCta"),
+          newCheckCta: t("preCheck.newCheckCta"),
+        }}
+      />
 
       <PortalFooter />
     </div>

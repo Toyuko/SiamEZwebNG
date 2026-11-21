@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { buildCustomerNextSteps } from "@/lib/portal/next-steps";
+import {
+  buildCustomerNextSteps,
+  filterActionRequiredSteps,
+} from "@/lib/portal/next-steps";
 import { buildCaseTimeline } from "@/lib/portal/case-timeline";
+import {
+  buildBookingProgress,
+  getCasePrimaryAction,
+  isActiveBookingStatus,
+} from "@/lib/portal/booking-progress";
 
 const labels = {
   payInvoice: (service: string) => `Pay ${service}`,
@@ -50,6 +58,44 @@ describe("buildCustomerNextSteps", () => {
     });
     expect(steps).toHaveLength(1);
     expect(steps[0]?.id).toBe("book-first");
+  });
+
+  it("filters action-required to customer-actionable items only", () => {
+    const steps = buildCustomerNextSteps({
+      cases: [
+        {
+          id: "c1",
+          caseNumber: "SE-1",
+          status: "pending_docs",
+          service: { name: "Visa" },
+        },
+        {
+          id: "c2",
+          caseNumber: "SE-2",
+          status: "under_review",
+          service: { name: "License" },
+        },
+      ],
+      invoices: [],
+      jobs: [],
+      labels,
+    });
+
+    const actionable = filterActionRequiredSteps(steps);
+    expect(actionable.some((s) => s.id === "docs-c1")).toBe(true);
+    expect(actionable.some((s) => s.id === "review-c2")).toBe(false);
+    expect(actionable.some((s) => s.id === "book-first")).toBe(false);
+  });
+});
+
+describe("booking progress", () => {
+  it("marks pending docs as the documents stage", () => {
+    const stages = buildBookingProgress("pending_docs");
+    expect(stages.find((s) => s.id === "documents")?.state).toBe("current");
+    expect(stages.find((s) => s.id === "booked")?.state).toBe("done");
+    expect(getCasePrimaryAction("pending_docs")).toBe("upload");
+    expect(isActiveBookingStatus("completed")).toBe(false);
+    expect(isActiveBookingStatus("in_progress")).toBe(true);
   });
 });
 

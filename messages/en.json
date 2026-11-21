@@ -1521,7 +1521,7 @@
     "bookServiceHint": "Choose a service and start booking",
     "carsHint": "Browse vehicles for sale",
     "realEstateHint": "Browse homes and condos",
-    "mySales": "My Sales",
+    "mySales": "My Vehicles",
     "mySalesSubtitle": "Create and edit your vehicle listings — photos, price, description, and status.",
     "myRealEstateSubtitle": "Create and edit your property listings — photos, price, description, and status.",
     "editListing": "Edit listing",
@@ -1725,7 +1725,64 @@
     "listingEnquiries": "Buyer enquiries",
     "savedListings": "Saved & compare",
     "goalsLifeEvents": "Goals & journeys",
-    "workflows": "Workflows"
+    "workflows": "Workflows",
+    "welcome": {
+      "title": "Welcome back, {name}",
+      "subtitle": "Manage your services and see what's happening with your bookings."
+    },
+    "actionRequired": {
+      "title": "Action required",
+      "count": "{count} items that need your attention",
+      "emptyTitle": "You're all caught up!",
+      "emptyDescription": "There's nothing you need to do right now.",
+      "ctaPay": "Pay Now →",
+      "ctaUpload": "Upload Documents →",
+      "ctaReview": "Review →",
+      "ctaBook": "Book a Service →"
+    },
+    "activeBookings": {
+      "title": "Your active bookings",
+      "subtitle": "{count} ongoing",
+      "viewAll": "View all bookings →",
+      "emptyTitle": "No active bookings",
+      "emptyDescription": "When you book a SiamEZ service, you'll track it here."
+    },
+    "bookingProgress": {
+      "booked": "Booked",
+      "documents": "Documents",
+      "review": "Review",
+      "appointment": "In progress",
+      "completed": "Completed"
+    },
+    "bookingActions": {
+      "view": "View booking",
+      "upload": "Upload documents",
+      "pay": "Pay now",
+      "reviewJob": "Review job"
+    },
+    "jobStatus": {
+      "open": "Awaiting freelancer",
+      "inProgress": "In progress",
+      "awaitingReview": "Awaiting your review"
+    },
+    "preCheck": {
+      "title": "Planning to get a Thai driving license?",
+      "titleWithStatus": "Driving license pre-check",
+      "description": "Check your documents before booking to help avoid delays.",
+      "startCta": "Start document check",
+      "viewCta": "View latest check",
+      "newCheckCta": "Start new check"
+    },
+    "navSections": {
+      "overview": "Overview",
+      "services": "Services",
+      "marketplace": "Marketplace",
+      "account": "Account"
+    },
+    "sidebarAsk": {
+      "title": "Need help? Ask SiamEZ",
+      "subtitle": "Get quick answers about bookings and services"
+    }
   },
   "workflows": {
     "pageTitle": "Workflows",
