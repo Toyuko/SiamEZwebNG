@@ -1,4 +1,8 @@
 import { prisma } from "@/lib/db";
+import {
+  PUBLIC_CACHE_TAGS,
+  PUBLIC_CATALOG_REVALIDATE_SECONDS,
+} from "@/lib/cache/public";
 import { resolvePublicRealEstatePageSize } from "@/lib/public-real-estate-inventory";
 import type { PropertyListingType, PropertyType, SalesListingStatus } from "@prisma/client";
 import {
@@ -7,6 +11,8 @@ import {
   toListingSlug,
   type PropertyListingInput,
 } from "@/lib/marketplace/listing-schemas";
+import { unstable_cache } from "next/cache";
+import { after } from "next/server";
 
 export type PropertyTypeFilter = "all" | PropertyType;
 export type PropertyListingTypeFilter = "all" | PropertyListingType;
@@ -49,24 +55,45 @@ export async function expireStalePropertyBoostsNow() {
   }
 }
 
-export async function getPublicFeaturedBoostedSalesProperties() {
-  await expireStalePropertyBoostsNow();
-  const where = {
-    published: true,
-    status: { in: ["available", "reserved"] as SalesListingStatus[] },
-    isBoosted: true,
-    boostExpiresAt: { gt: new Date() },
-  };
+function scheduleExpireStalePropertyBoosts() {
   try {
-    return await prisma.salesProperty.findMany({
-      where,
-      orderBy: [{ boostExpiresAt: "desc" }, { createdAt: "desc" }],
-      take: 24,
+    after(() => {
+      void expireStalePropertyBoostsNow();
     });
-  } catch (error) {
-    console.warn("Featured boosted properties unavailable:", error);
-    return [];
+  } catch {
+    void expireStalePropertyBoostsNow();
   }
+}
+
+const getCachedFeaturedBoostedSalesProperties = unstable_cache(
+  async () => {
+    const where = {
+      published: true,
+      status: { in: ["available", "reserved"] as SalesListingStatus[] },
+      isBoosted: true,
+      boostExpiresAt: { gt: new Date() },
+    };
+    try {
+      return await prisma.salesProperty.findMany({
+        where,
+        orderBy: [{ boostExpiresAt: "desc" }, { createdAt: "desc" }],
+        take: 24,
+      });
+    } catch (error) {
+      console.warn("Featured boosted properties unavailable:", error);
+      return [];
+    }
+  },
+  ["public-featured-boosted-sales-properties"],
+  {
+    revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CACHE_TAGS.featuredRealEstate],
+  },
+);
+
+export async function getPublicFeaturedBoostedSalesProperties() {
+  scheduleExpireStalePropertyBoosts();
+  return getCachedFeaturedBoostedSalesProperties();
 }
 
 export async function getRealEstateFilterBounds() {
@@ -167,7 +194,7 @@ export async function getPublicSalesProperties(filters: RealEstateFilters) {
 
   const orderBy = [{ isBoosted: "desc" as const }, ...secondaryOrder];
 
-  await expireStalePropertyBoostsNow();
+  scheduleExpireStalePropertyBoosts();
 
   try {
     const [items, total] = await Promise.all([
@@ -200,7 +227,7 @@ export async function getPublicSalesProperties(filters: RealEstateFilters) {
 }
 
 export async function getPublicSalesPropertyById(id: string) {
-  await expireStalePropertyBoostsNow();
+  scheduleExpireStalePropertyBoosts();
   try {
     return await prisma.salesProperty.findFirst({
       where: { id, published: true },

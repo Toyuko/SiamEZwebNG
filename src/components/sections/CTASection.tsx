@@ -8,6 +8,8 @@ interface CTASectionProps {
   primaryHref?: string;
   secondaryLabel?: string;
   secondaryHref?: string;
+  /** When true, secondary opens externally (WhatsApp / LINE). */
+  secondaryExternal?: boolean;
   className?: string;
 }
 
@@ -18,6 +20,7 @@ export function CTASection({
   primaryHref = "/contact",
   secondaryLabel,
   secondaryHref = "/services",
+  secondaryExternal = false,
   className = "",
 }: CTASectionProps) {
   return (
@@ -45,7 +48,13 @@ export function CTASection({
               variant="outline"
               className="min-w-[160px] border-white text-white hover:bg-white/10 hover:text-white"
             >
-              <Link href={secondaryHref}>{secondaryLabel}</Link>
+              {secondaryExternal ? (
+                <a href={secondaryHref} target="_blank" rel="noopener noreferrer">
+                  {secondaryLabel}
+                </a>
+              ) : (
+                <Link href={secondaryHref}>{secondaryLabel}</Link>
+              )}
             </Button>
           )}
         </div>

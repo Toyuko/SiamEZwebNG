@@ -1,4 +1,8 @@
 import { prisma } from "@/lib/db";
+import {
+  PUBLIC_CACHE_TAGS,
+  PUBLIC_CATALOG_REVALIDATE_SECONDS,
+} from "@/lib/cache/public";
 import type { LifeEventRunStatus, LifeEventStepStatus, Prisma } from "@prisma/client";
 import {
   decideRunTransition,
@@ -12,6 +16,7 @@ import {
   summarizeStepStatuses,
   type LifeEventStepTarget,
 } from "@/lib/life-events";
+import { unstable_cache } from "next/cache";
 
 const stepInclude = {
   steps: { orderBy: { sortOrder: "asc" as const } },
@@ -27,13 +32,20 @@ export async function listLifeEventsAdmin() {
   });
 }
 
-export async function listActiveLifeEvents() {
-  return prisma.lifeEvent.findMany({
-    where: { active: true },
-    include: stepInclude,
-    orderBy: [{ sortOrder: "asc" }, { titleEn: "asc" }],
-  });
-}
+export const listActiveLifeEvents = unstable_cache(
+  async () => {
+    return prisma.lifeEvent.findMany({
+      where: { active: true },
+      include: stepInclude,
+      orderBy: [{ sortOrder: "asc" }, { titleEn: "asc" }],
+    });
+  },
+  ["public-active-life-events"],
+  {
+    revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CACHE_TAGS.lifeEvents],
+  },
+);
 
 export async function getLifeEventById(id: string) {
   return prisma.lifeEvent.findUnique({

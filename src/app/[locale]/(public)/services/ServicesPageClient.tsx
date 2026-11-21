@@ -210,7 +210,7 @@ export function ServicesPageClient({
       <ServicesStickyBar
         bookNowLabel={bookNowLabel}
         lineLabel={directoryLabels.lineShortcut}
-        bookHref={isLoggedIn ? "/book/driver-license" : `/login?redirect=/${locale}/book/driver-license`}
+        bookHref="/book/driver-license"
       />
 
       <WhatsAppFloat />

@@ -16,8 +16,8 @@ import { getPublicFeaturedBoostedSalesVehicles } from "@/data-access/sales";
 import { getPublicFeaturedBoostedSalesProperties } from "@/data-access/real-estate";
 import { serviceSlugs } from "@/config/services";
 import { getTranslations } from "next-intl/server";
-import { getSession } from "@/lib/auth";
 import { softLaunch } from "@/config/soft-launch";
+import { site } from "@/config/site";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { JsonLdScript } from "@/components/seo/JsonLd";
 import { CoverageSection } from "@/components/seo/CoverageSection";
@@ -54,9 +54,11 @@ export default async function HomePage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const session = await getSession();
-  const isLoggedIn = !!session?.user;
   const loc = locale === "th" ? "th" : "en";
+  // Avoid auth() on the homepage: it forces dynamic rendering and duplicates the
+  // session read already done in PublicHeaderWithAuth. Portal middleware handles login.
+  const goalsHref = "/portal/goals";
+  const whatsappHref = `https://wa.me/${site.phone.replace(/\D/g, "")}`;
 
   const [
     services,
@@ -96,16 +98,12 @@ export default async function HomePage({
     priceCurrency: s.priceCurrency,
   }));
 
-  const goalsHref = isLoggedIn ? "/portal/goals" : `/login?redirect=/${locale}/portal/goals`;
-
   const popularGoals = [
     {
       id: "moving",
       label: t("goalsSection.prompts.moving"),
       prompt: t("goalsSection.prompts.moving"),
-      href: isLoggedIn
-        ? "/portal/goals?event=moving-to-thailand"
-        : `/login?redirect=/${locale}/portal/goals%3Fevent%3Dmoving-to-thailand`,
+      href: "/portal/goals?event=moving-to-thailand",
     },
     {
       id: "license",
@@ -161,13 +159,14 @@ export default async function HomePage({
           label: tHero("primaryCta"),
           href: "/services",
         }}
+        secondaryCta={{
+          label: tHero("whatsappCta"),
+          href: whatsappHref,
+          external: true,
+        }}
         askCta={{
           label: tHero("askCta"),
           prompt: t("goalsSection.conciergePrompt"),
-        }}
-        secondaryCta={{
-          label: tHero("secondaryCta"),
-          href: "/sales",
         }}
       />
       <HomeGoalsSection
@@ -189,7 +188,7 @@ export default async function HomePage({
         popularGoals={popularGoals}
         lifeEvents={softLaunch.enabled && !softLaunch.showLifeEvents ? [] : lifeEventTeasers}
         featuredListings={featuredListings}
-        isLoggedIn={isLoggedIn}
+        isLoggedIn={false}
         goalsHref={goalsHref}
       />
       <StatsBar
@@ -234,10 +233,11 @@ export default async function HomePage({
       <CTASection
         title={t("ctaTitle")}
         subtitle={t("ctaSubtitle")}
-        primaryLabel={tCommon("contactUs")}
-        primaryHref="/contact"
-        secondaryLabel={tCommon("viewServices")}
-        secondaryHref="/services"
+        primaryLabel={tHero("primaryCta")}
+        primaryHref="/services"
+        secondaryLabel={tHero("whatsappCta")}
+        secondaryHref={whatsappHref}
+        secondaryExternal
       />
     </>
   );

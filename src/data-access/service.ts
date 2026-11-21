@@ -4,7 +4,12 @@ import {
   serviceShortDescriptions,
   type ServiceSlug,
 } from "@/config/services";
+import {
+  PUBLIC_CACHE_TAGS,
+  PUBLIC_CATALOG_REVALIDATE_SECONDS,
+} from "@/lib/cache/public";
 import { prisma } from "@/lib/db";
+import { unstable_cache } from "next/cache";
 
 /** Shape used by public services grid / homepage (DB row or config fallback). */
 export type PublicServiceListItem = {
@@ -70,9 +75,24 @@ export function buildPublicServicesList(
   return [...list, ...extras];
 }
 
+const getCachedActivePublicServicesList = unstable_cache(
+  async () => {
+    const db = await getServicesList(true).catch(() => []);
+    return buildPublicServicesList(db);
+  },
+  ["public-services-list-active"],
+  {
+    revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CACHE_TAGS.services],
+  },
+);
+
 /** Public-facing service list: DB when available, plus config fallbacks for new canonical slugs. */
 export async function getPublicServicesList(activeOnly = true) {
-  const db = await getServicesList(activeOnly).catch(() => []);
+  if (activeOnly) {
+    return getCachedActivePublicServicesList();
+  }
+  const db = await getServicesList(false).catch(() => []);
   return buildPublicServicesList(db);
 }
 

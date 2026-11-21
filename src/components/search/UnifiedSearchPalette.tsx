@@ -276,12 +276,17 @@ export function UnifiedSearchTrigger({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+  // Lazy-mount the cmdk/fuse palette only after first open (keeps header JS light).
+  const [mounted, setMounted] = useState(false);
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setMounted(true);
+          setOpen(true);
+        }}
         aria-label={labels.openAria}
         className={cn(
           "inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:border-siam-blue/40 hover:text-siam-blue",
@@ -291,12 +296,14 @@ export function UnifiedSearchTrigger({
         <Search className="h-3.5 w-3.5" aria-hidden />
         <span className="hidden lg:inline">⌘K</span>
       </button>
-      <UnifiedSearchPalette
-        open={open}
-        onOpenChange={setOpen}
-        locale={locale}
-        labels={labels}
-      />
+      {mounted ? (
+        <UnifiedSearchPalette
+          open={open}
+          onOpenChange={setOpen}
+          locale={locale}
+          labels={labels}
+        />
+      ) : null}
     </>
   );
 }

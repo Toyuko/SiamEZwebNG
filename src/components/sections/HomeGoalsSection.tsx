@@ -106,11 +106,7 @@ export function HomeGoalsSection({
                 {lifeEvents.slice(0, 3).map((event) => (
                   <li key={event.id}>
                     <Link
-                      href={
-                        isLoggedIn
-                          ? `/portal/goals?event=${encodeURIComponent(event.key)}`
-                          : `/login?redirect=${encodeURIComponent(`/portal/goals?event=${event.key}`)}`
-                      }
+                      href={`/portal/goals?event=${encodeURIComponent(event.key)}`}
                       className="group flex gap-3 rounded-xl border border-gray-200 bg-white p-4 transition hover:border-siam-blue/30 hover:shadow-sm dark:border-gray-800 dark:bg-gray-950"
                     >
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-siam-yellow/15 text-siam-blue">

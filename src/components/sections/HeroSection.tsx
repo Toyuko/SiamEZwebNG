@@ -7,30 +7,49 @@ import { site } from "@/config/site";
 /** Must stay in sync with `.hero-slide` animation duration in `globals.css` (15s). */
 const HERO_SLIDESHOW_DURATION_S = 15;
 
+/** Keep the slideshow short: 10 full-bleed layers (~1.5MB) dominated LCP/bandwidth. */
 const heroSlideshowImages = [
   "/images/gallery/hero-home/hero-01.png",
-  "/images/gallery/hero-home/hero-02.png",
   "/images/gallery/hero-home/hero-03.png",
-  "/images/gallery/hero-home/hero-04.png",
-  "/images/gallery/hero-home/hero-05.png",
-  "/images/gallery/hero-home/hero-06.png",
   "/images/gallery/hero-home/hero-07.png",
-  "/images/gallery/hero-home/hero-08.png",
-  "/images/gallery/hero-home/hero-09.png",
-  "/images/gallery/hero-home/hero-10.png",
 ];
+
+type HeroCta = {
+  label: string;
+  href: string;
+  /** Open in a new tab (WhatsApp / LINE / external). */
+  external?: boolean;
+};
 
 interface HeroSectionProps {
   /** Optional overrides; defaults to site tagline and standard headline */
   badge?: string;
   headline?: string;
   subline?: string;
-  primaryCta?: { label: string; href: string };
-  secondaryCta?: { label: string; href: string };
-  /** Opens the AI Concierge chat */
+  primaryCta?: HeroCta;
+  /** Secondary CTA — prefer WhatsApp / contact over competing product funnels. */
+  secondaryCta?: HeroCta;
+  /** Opens the AI Concierge chat (tertiary; less prominent than Book / WhatsApp). */
   askCta?: { label: string; prompt?: string };
   showLogo?: boolean;
   className?: string;
+}
+
+function HeroCtaLink({
+  cta,
+  children,
+}: {
+  cta: HeroCta;
+  children: React.ReactNode;
+}) {
+  if (cta.external) {
+    return (
+      <a href={cta.href} target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
+    );
+  }
+  return <Link href={cta.href}>{children}</Link>;
 }
 
 export function HeroSection({
@@ -103,7 +122,15 @@ export function HeroSection({
                 variant="primary"
                 className="min-w-[140px] text-siam-blue-dark"
               >
-                <Link href={primaryCta.href}>{primaryCta.label}</Link>
+                <HeroCtaLink cta={primaryCta}>{primaryCta.label}</HeroCtaLink>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="min-w-[140px] border-white/70 text-white hover:bg-white/10 hover:text-white"
+              >
+                <HeroCtaLink cta={secondaryCta}>{secondaryCta.label}</HeroCtaLink>
               </Button>
               {askCta ? (
                 <AskSiamEzButton
@@ -111,17 +138,9 @@ export function HeroSection({
                   prompt={askCta.prompt}
                   size="lg"
                   variant="outline"
-                  className="min-w-[140px] border-white text-white hover:bg-white/10 hover:text-white"
+                  className="min-w-[140px] border-white/40 text-white/90 hover:bg-white/10 hover:text-white"
                 />
               ) : null}
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="min-w-[140px] border-white/70 text-white hover:bg-white/10 hover:text-white"
-              >
-                <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
-              </Button>
             </div>
           </div>
           {showLogo && (

@@ -1,4 +1,4 @@
-import { LazyAiConciergeShell } from "@/components/ai";
+import { LazyAiConciergeShell } from "@/components/ai/LazyAiConciergeShell";
 import { PublicHeaderWithAuth } from "@/components/layout/PublicHeaderWithAuth";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { isChatwootConfigured } from "@/lib/chatwoot";

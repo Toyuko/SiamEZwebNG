@@ -25,6 +25,9 @@ import type {
 import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { toSlug } from "@/lib/slug";
+import { revalidatePublicFreelancers } from "@/lib/freelancers/revalidate-public";
+import { PUBLIC_CACHE_TAGS } from "@/lib/cache/public";
+import { updateTag } from "next/cache";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -261,11 +264,13 @@ export async function updateFreelancerVerification(
   });
   if (!user) throw new Error("Freelancer not found");
 
-  return prisma.freelancerProfile.upsert({
+  const profile = await prisma.freelancerProfile.upsert({
     where: { userId },
     create: { userId, verificationStatus },
     update: { verificationStatus },
   });
+  revalidatePublicFreelancers([profile.slug]);
+  return profile;
 }
 
 export async function approveFreelancerJob(jobId: string) {
@@ -792,7 +797,7 @@ export async function createService(data: {
   await ensureStaffAccess();
   const slug = data.slug.toLowerCase().replace(/\s+/g, "-");
   const { paymentConfig, ...rest } = data;
-  return prisma.service.create({
+  const created = await prisma.service.create({
     data: {
       ...rest,
       slug,
@@ -801,6 +806,8 @@ export async function createService(data: {
       ...(paymentConfig != null ? { paymentConfig } : {}),
     },
   });
+  updateTag(PUBLIC_CACHE_TAGS.services);
+  return created;
 }
 
 export async function updateService(
@@ -820,7 +827,7 @@ export async function updateService(
   await ensureStaffAccess();
   if (data.slug) data.slug = data.slug.toLowerCase().replace(/\s+/g, "-");
   const { paymentConfig, ...rest } = data;
-  return prisma.service.update({
+  const updated = await prisma.service.update({
     where: { id },
     data: {
       ...rest,
@@ -831,11 +838,15 @@ export async function updateService(
           : { paymentConfig }),
     },
   });
+  updateTag(PUBLIC_CACHE_TAGS.services);
+  return updated;
 }
 
 export async function deleteService(id: string) {
   await ensureStaffAccess();
-  return prisma.service.delete({ where: { id } });
+  const deleted = await prisma.service.delete({ where: { id } });
+  updateTag(PUBLIC_CACHE_TAGS.services);
+  return deleted;
 }
 
 // ----- Cases -----

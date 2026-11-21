@@ -23,7 +23,8 @@ async function loadFlags() {
   if (cache && cache.expiresAt > Date.now()) return cache.values;
   const rows = await prisma.featureFlag.findMany({ select: { key: true, enabled: true } });
   const values = new Map(rows.map((row) => [row.key, row.enabled]));
-  cache = { values, expiresAt: Date.now() + 30_000 };
+  // 5 minutes — flags change rarely; public layout hits this on every soft navigation.
+  cache = { values, expiresAt: Date.now() + 300_000 };
   return values;
 }
 

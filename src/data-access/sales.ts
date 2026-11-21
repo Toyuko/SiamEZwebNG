@@ -1,4 +1,8 @@
 import { prisma } from "@/lib/db";
+import {
+  PUBLIC_CACHE_TAGS,
+  PUBLIC_CATALOG_REVALIDATE_SECONDS,
+} from "@/lib/cache/public";
 import { resolvePublicSalesPageSize } from "@/lib/public-sales-inventory";
 import type { SalesListingStatus } from "@prisma/client";
 import { boostDaysFromTier } from "@/lib/sales-boost-packages";
@@ -8,6 +12,8 @@ import {
   vehicleListingSchema,
   type VehicleListingInput,
 } from "@/lib/marketplace/listing-schemas";
+import { unstable_cache } from "next/cache";
+import { after } from "next/server";
 
 export type VehicleCategoryFilter = "all" | "car" | "motorcycle";
 export type SalesSellerKindFilter = "all" | "dealer" | "private";
@@ -87,7 +93,7 @@ export async function applySalesSuperBoostForListing(salesVehicleId: string) {
   });
 }
 
-/** Clears boost flags when the window has passed (read-path maintenance, no cron required). */
+/** Clears boost flags when the window has passed (maintenance; prefer scheduleExpire…). */
 export async function expireStaleSalesBoostsNow() {
   try {
     await prisma.salesVehicle.updateMany({
@@ -102,25 +108,51 @@ export async function expireStaleSalesBoostsNow() {
   }
 }
 
-/** Active boosted vehicles for the featured carousel (empty when none). */
-export async function getPublicFeaturedBoostedSalesVehicles() {
-  await expireStaleSalesBoostsNow();
-  const where = {
-    published: true,
-    status: { in: ["available", "reserved"] as SalesListingStatus[] },
-    isBoosted: true,
-    boostExpiresAt: { gt: new Date() },
-  };
+/** Non-blocking expiry so public reads are not gated on write-on-read maintenance. */
+function scheduleExpireStaleSalesBoosts() {
   try {
-    return await prisma.salesVehicle.findMany({
-      where,
-      orderBy: [{ boostExpiresAt: "desc" }, { createdAt: "desc" }],
-      take: 24,
+    after(() => {
+      void expireStaleSalesBoostsNow();
     });
-  } catch (error) {
-    console.warn("Featured boosted vehicles unavailable:", error);
-    return [];
+  } catch {
+    void expireStaleSalesBoostsNow();
   }
+}
+
+/**
+ * Active boosted vehicles for the featured carousel (empty when none).
+ * Expiry cleanup runs after the response so homepage navigations are not blocked
+ * by write-on-read maintenance. The query already filters `boostExpiresAt > now`.
+ */
+const getCachedFeaturedBoostedSalesVehicles = unstable_cache(
+  async () => {
+    const where = {
+      published: true,
+      status: { in: ["available", "reserved"] as SalesListingStatus[] },
+      isBoosted: true,
+      boostExpiresAt: { gt: new Date() },
+    };
+    try {
+      return await prisma.salesVehicle.findMany({
+        where,
+        orderBy: [{ boostExpiresAt: "desc" }, { createdAt: "desc" }],
+        take: 24,
+      });
+    } catch (error) {
+      console.warn("Featured boosted vehicles unavailable:", error);
+      return [];
+    }
+  },
+  ["public-featured-boosted-sales-vehicles"],
+  {
+    revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CACHE_TAGS.featuredSales],
+  },
+);
+
+export async function getPublicFeaturedBoostedSalesVehicles() {
+  scheduleExpireStaleSalesBoosts();
+  return getCachedFeaturedBoostedSalesVehicles();
 }
 
 function isMissingSalesMediaColumnError(error: unknown) {
@@ -232,7 +264,7 @@ export async function getPublicSalesVehicles(filters: SalesFilters) {
 
   const orderBy = [{ isBoosted: "desc" as const }, ...secondaryOrder];
 
-  await expireStaleSalesBoostsNow();
+  scheduleExpireStaleSalesBoosts();
 
   try {
     const [items, total] = await Promise.all([
@@ -290,7 +322,7 @@ export async function getPublicSalesVehicles(filters: SalesFilters) {
 }
 
 export async function getPublicSalesVehicleById(id: string) {
-  await expireStaleSalesBoostsNow();
+  scheduleExpireStaleSalesBoosts();
   try {
     return await prisma.salesVehicle.findFirst({
       where: { id, published: true },

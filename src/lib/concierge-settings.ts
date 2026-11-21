@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { site } from "@/config/site";
+import {
+  PUBLIC_CACHE_TAGS,
+  PUBLIC_SETTINGS_REVALIDATE_SECONDS,
+} from "@/lib/cache/public";
+import { updateTag, unstable_cache } from "next/cache";
 
 export interface ConciergeSettings {
   enabled: boolean;
@@ -58,7 +63,7 @@ function asBool(v: unknown, fallback: boolean) {
   return typeof v === "boolean" ? v : fallback;
 }
 
-export async function getConciergeSettings(): Promise<ConciergeSettings> {
+async function loadConciergeSettingsFromDb(): Promise<ConciergeSettings> {
   const defaults = getDefaultConciergeSettings();
   const appSettingDelegate = (prisma as unknown as { appSetting?: { findUnique: Function } })
     .appSetting;
@@ -84,6 +89,19 @@ export async function getConciergeSettings(): Promise<ConciergeSettings> {
   }
 }
 
+const getCachedConciergeSettings = unstable_cache(
+  loadConciergeSettingsFromDb,
+  ["concierge-settings"],
+  {
+    revalidate: PUBLIC_SETTINGS_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CACHE_TAGS.conciergeSettings],
+  },
+);
+
+export async function getConciergeSettings(): Promise<ConciergeSettings> {
+  return getCachedConciergeSettings();
+}
+
 export async function saveConciergeSettings(input: ConciergeSettings) {
   const value = input as unknown as Prisma.InputJsonValue;
   const appSettingDelegate = (prisma as unknown as { appSetting?: { upsert: Function } }).appSetting;
@@ -97,6 +115,12 @@ export async function saveConciergeSettings(input: ConciergeSettings) {
     update: { value },
     create: { key: SETTINGS_KEY, value },
   });
+  // Immediate invalidation from Server Actions (Next.js 16 updateTag).
+  try {
+    updateTag(PUBLIC_CACHE_TAGS.conciergeSettings);
+  } catch {
+    // Non-action callers (scripts) may not have a request store — TTL still applies.
+  }
 }
 
 export async function isConciergeEnabled(): Promise<boolean> {
