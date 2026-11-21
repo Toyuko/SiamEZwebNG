@@ -1,28 +1,27 @@
 import { setRequestLocale } from "next-intl/server";
-import { HeroSection } from "@/components/sections/HeroSection";
-import {
-  HomeGoalsSection,
-  mapFeaturedProperty,
-  mapFeaturedVehicle,
-} from "@/components/sections/HomeGoalsSection";
-import { StatsBar } from "@/components/sections/StatsBar";
-import { DisclaimerBanner } from "@/components/sections/DisclaimerBanner";
-import { ServiceGrid } from "@/components/sections/ServiceGrid";
-import { WhyChooseSection } from "@/components/sections/WhyChooseSection";
-import { CTASection } from "@/components/sections/CTASection";
-import { getPublicServicesList } from "@/data-access/service";
-import { listActiveLifeEvents } from "@/data-access/life-events";
-import { getPublicFeaturedBoostedSalesVehicles } from "@/data-access/sales";
-import { getPublicFeaturedBoostedSalesProperties } from "@/data-access/real-estate";
-import { serviceSlugs } from "@/config/services";
 import { getTranslations } from "next-intl/server";
-import { softLaunch } from "@/config/soft-launch";
+import {
+  PremiumHero,
+  TrustBar,
+  ServiceCategoryGrid,
+  WhyChooseStrip,
+  FeaturedServicesRow,
+  BookingPromoPanel,
+  TrackBookingPanel,
+  HomeTestimonials,
+  MobileBookBar,
+} from "@/components/home";
+import { DisclaimerBanner } from "@/components/sections/DisclaimerBanner";
+import { CoverageSection } from "@/components/seo/CoverageSection";
+import { getPublicServicesList } from "@/data-access/service";
+import { popularServiceSlugs, getServiceCatalogEntry } from "@/config/service-catalog";
 import { site } from "@/config/site";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { JsonLdScript } from "@/components/seo/JsonLd";
-import { CoverageSection } from "@/components/seo/CoverageSection";
 import { breadcrumbListJsonLd, webPageJsonLd } from "@/lib/seo/jsonld";
 import { canonicalUrl } from "@/lib/seo/urls";
+import { GOOGLE_BUSINESS_REVIEWS } from "@/content/google-testimonials";
+import { homeCategoryTiles } from "@/config/home-categories";
 
 export async function generateMetadata({
   params,
@@ -55,88 +54,56 @@ export default async function HomePage({
   const { locale } = await params;
   setRequestLocale(locale);
   const loc = locale === "th" ? "th" : "en";
-  // Avoid auth() on the homepage: it forces dynamic rendering and duplicates the
-  // session read already done in PublicHeaderWithAuth. Portal middleware handles login.
-  const goalsHref = "/portal/goals";
-  const whatsappHref = `https://wa.me/${site.phone.replace(/\D/g, "")}`;
 
+  // Avoid auth() on the homepage: it forces dynamic rendering.
   const [
     services,
-    lifeEvents,
-    featuredVehicles,
-    featuredProperties,
     t,
     tCommon,
     tHero,
-    tSite,
     tWhy,
     tDisclaimer,
     tServices,
     tSeo,
+    tTestimonials,
   ] = await Promise.all([
     getPublicServicesList().catch(() => []),
-    listActiveLifeEvents().catch(() => []),
-    getPublicFeaturedBoostedSalesVehicles().catch(() => []),
-    getPublicFeaturedBoostedSalesProperties().catch(() => []),
     getTranslations("home"),
     getTranslations("common"),
     getTranslations("hero"),
-    getTranslations("site"),
     getTranslations("whyChoose"),
     getTranslations("disclaimer"),
     getTranslations("services"),
     getTranslations("seo"),
+    getTranslations("testimonials"),
   ]);
 
-  const displayServices = services.map((s) => ({
-    id: s.id,
-    name: s.name,
+  const widgetServices = services.map((s) => ({
     slug: s.slug,
-    shortDescription: s.shortDescription,
-    description: s.description,
-    priceAmount: s.priceAmount,
-    priceCurrency: s.priceCurrency,
+    name: s.name,
   }));
 
-  const popularGoals = [
-    {
-      id: "moving",
-      label: t("goalsSection.prompts.moving"),
-      prompt: t("goalsSection.prompts.moving"),
-      href: "/portal/goals?event=moving-to-thailand",
-    },
-    {
-      id: "license",
-      label: t("goalsSection.prompts.license"),
-      prompt: t("goalsSection.prompts.license"),
-    },
-    {
-      id: "vehicle",
-      label: t("goalsSection.prompts.vehicle"),
-      prompt: t("goalsSection.prompts.vehicle"),
-    },
-    {
-      id: "property",
-      label: t("goalsSection.prompts.property"),
-      prompt: t("goalsSection.prompts.property"),
-    },
-  ];
+  const featuredWithImages = popularServiceSlugs
+    .map((slug) => {
+      const fromDb = services.find((s) => s.slug === slug);
+      const catalog = getServiceCatalogEntry(slug);
+      if (!fromDb && !catalog) return null;
+      return {
+        slug,
+        name: fromDb?.name ?? catalog!.name[loc],
+        description:
+          fromDb?.shortDescription ?? catalog!.shortDescription[loc] ?? "",
+        thumbnailImage: catalog?.thumbnailImage ?? null,
+        priceAmount: fromDb?.priceAmount ?? null,
+        priceCurrency: fromDb?.priceCurrency ?? "THB",
+      };
+    })
+    .filter((s): s is NonNullable<typeof s> => s != null)
+    .slice(0, 4);
 
-  const lifeEventTeasers = lifeEvents.map((event) => ({
-    id: event.id,
-    key: event.key,
-    title: loc === "th" && event.titleTh ? event.titleTh : event.titleEn,
-    description:
-      loc === "th" && event.descriptionTh
-        ? event.descriptionTh
-        : event.descriptionEn,
-    stepCount: event.steps.length,
-  }));
-
-  const featuredListings = [
-    ...featuredVehicles.map(mapFeaturedVehicle),
-    ...featuredProperties.map(mapFeaturedProperty),
-  ];
+  const categoryLabels = Object.fromEntries(
+    homeCategoryTiles.map((tile) => [tile.labelKey, t(`categories.${tile.labelKey}`)])
+  );
 
   return (
     <>
@@ -151,67 +118,113 @@ export default async function HomePage({
           breadcrumbListJsonLd([{ name: tCommon("home"), url: canonicalUrl(locale, "") }]),
         ]}
       />
-      <HeroSection
-        badge={tHero("badge")}
-        headline={tHero("headline")}
+
+      <PremiumHero
+        headlineBefore={tHero("headlineBefore")}
+        headlineHighlight={tHero("headlineHighlight")}
+        headlineAfter={tHero("headlineAfter")}
         subline={tHero("subline")}
+        trustItems={[
+          tHero("trust1"),
+          tHero("trust2"),
+          tHero("trust3"),
+          tHero("trust4"),
+        ]}
         primaryCta={{
           label: tHero("primaryCta"),
           href: "/services",
         }}
         secondaryCta={{
-          label: tHero("whatsappCta"),
-          href: whatsappHref,
+          label: tHero("lineCta"),
+          href: site.lineUrl,
           external: true,
         }}
-        askCta={{
-          label: tHero("askCta"),
-          prompt: t("goalsSection.conciergePrompt"),
+        booking={{
+          title: t("bookingWidget.title"),
+          subtitle: t("bookingWidget.subtitle"),
+          selectLabel: t("bookingWidget.selectLabel"),
+          selectPlaceholder: t("bookingWidget.selectPlaceholder"),
+          continueLabel: t("bookingWidget.continue"),
+          steps: [
+            t("bookingWidget.step1"),
+            t("bookingWidget.step2"),
+            t("bookingWidget.step3"),
+          ],
+          trustLabels: [
+            t("bookingWidget.trustQuick"),
+            t("bookingWidget.trustSecure"),
+            t("bookingWidget.trustConfirm"),
+          ],
         }}
+        services={widgetServices}
       />
-      <HomeGoalsSection
-        labels={{
-          title: t("goalsSection.title"),
-          subtitle: t("goalsSection.subtitle"),
-          popularGoals: t("goalsSection.popularGoals"),
-          lifeEvents: t("goalsSection.lifeEvents"),
-          marketplace: t("goalsSection.marketplace"),
-          viewAllGoals: t("goalsSection.viewAllGoals"),
-          viewJourney: t("goalsSection.viewJourney"),
-          viewAllVehicles: t("goalsSection.viewAllVehicles"),
-          viewAllProperties: t("goalsSection.viewAllProperties"),
-          conciergeLabel: t("goalsSection.conciergeLabel"),
-          conciergeHint: t("goalsSection.conciergeHint"),
-          conciergePrompt: t("goalsSection.conciergePrompt"),
-          stepsLabel: t("goalsSection.stepsLabel"),
-        }}
-        popularGoals={popularGoals}
-        lifeEvents={softLaunch.enabled && !softLaunch.showLifeEvents ? [] : lifeEventTeasers}
-        featuredListings={featuredListings}
-        isLoggedIn={false}
-        goalsHref={goalsHref}
+
+      <TrustBar
+        items={[
+          [t("trustBar.easyTitle"), t("trustBar.easyText")],
+          [t("trustBar.localTitle"), t("trustBar.localText")],
+          [t("trustBar.trustedTitle"), t("trustBar.trustedText")],
+          [t("trustBar.supportTitle"), t("trustBar.supportText")],
+        ]}
       />
-      <StatsBar
-        labels={{
-          happyClients: tSite("happyClients"),
-          yearsExperience: tSite("yearsExperience"),
-          successRate: tSite("successRate"),
-        }}
-      />
+
       <DisclaimerBanner text={tDisclaimer("text")} />
-      <ServiceGrid
-        services={displayServices}
+
+      <ServiceCategoryGrid
         title={t("servicesTitle")}
         subtitle={t("servicesSubtitle")}
-        maxItems={serviceSlugs.length}
-        showViewAll={true}
-        viewAllHref="/services"
         viewAllLabel={tCommon("viewAllServices")}
-        getBookHref={(slug) => `/book/${slug}`}
-        bookNowLabel={tServices("bookNow")}
-        detailsLabel={tServices("details")}
-        priceLabel={tServices("from")}
+        labels={categoryLabels}
       />
+
+      <WhyChooseStrip
+        title={tWhy("title")}
+        subtitle={tWhy("subtitle")}
+        items={[
+          { title: tWhy("easyOnlineTitle"), text: tWhy("easyOnlineText") },
+          { title: tWhy("trustedProsTitle"), text: tWhy("trustedProsText") },
+          { title: tWhy("multilingualTitle"), text: tWhy("multilingualText") },
+          { title: tWhy("localKnowledgeTitle"), text: tWhy("localKnowledgeText") },
+        ]}
+      />
+
+      <section className="bg-siam-surface/40 py-12 sm:py-14">
+        <div className="container mx-auto grid gap-8 px-4 lg:grid-cols-[1.4fr_0.9fr]">
+          <FeaturedServicesRow
+            title={t("featuredTitle")}
+            subtitle={t("featuredSubtitle")}
+            viewAllLabel={tCommon("viewAllServices")}
+            learnMoreLabel={tCommon("learnMoreLink")}
+            bookNowLabel={tServices("bookNow")}
+            fromLabel={tServices("from")}
+            services={featuredWithImages}
+          />
+          <div className="flex flex-col gap-4">
+            <BookingPromoPanel
+              title={t("promo.title")}
+              text={t("promo.text")}
+              ctaLabel={t("promo.cta")}
+              features={[
+                t("bookingWidget.trustQuick"),
+                t("bookingWidget.trustSecure"),
+                t("bookingWidget.trustConfirm"),
+              ]}
+            />
+            <TrackBookingPanel
+              title={t("track.title")}
+              text={t("track.text")}
+              ctaLabel={t("track.cta")}
+            />
+          </div>
+        </div>
+      </section>
+
+      <HomeTestimonials
+        title={tTestimonials("title")}
+        viewAllLabel={tCommon("learnMoreLink")}
+        reviews={GOOGLE_BUSINESS_REVIEWS}
+      />
+
       <CoverageSection
         title={tSeo("coverageTitle")}
         body={tSeo("coverageBody")}
@@ -219,26 +232,9 @@ export default async function HomePage({
         servicesLabel={tCommon("viewServices")}
         contactLabel={tCommon("contactUs")}
       />
-      <WhyChooseSection
-        title={tWhy("title")}
-        subtitle={tWhy("subtitle")}
-        bullets={[
-          { title: tWhy("fastTitle"), text: tWhy("fastText") },
-          { title: tWhy("expertTitle"), text: tWhy("expertText") },
-          { title: tWhy("transparentTitle"), text: tWhy("transparentText") },
-        ]}
-        iconLabels={[tWhy("dedicated"), tWhy("fastService"), tWhy("expertTeam"), tWhy("proResults")]}
-        ctaLabel={tCommon("aboutUs")}
-      />
-      <CTASection
-        title={t("ctaTitle")}
-        subtitle={t("ctaSubtitle")}
-        primaryLabel={tHero("primaryCta")}
-        primaryHref="/services"
-        secondaryLabel={tHero("whatsappCta")}
-        secondaryHref={whatsappHref}
-        secondaryExternal
-      />
+
+      <div className="h-16 md:hidden" aria-hidden />
+      <MobileBookBar label={tHero("primaryCta")} />
     </>
   );
 }

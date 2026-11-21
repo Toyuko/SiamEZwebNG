@@ -26,7 +26,7 @@ export function ServicesHero({
   searchLabels,
 }: ServicesHeroProps) {
   return (
-    <section className="relative bg-siam-blue py-16 sm:py-20 md:py-24 lg:py-28">
+    <section className="relative overflow-hidden bg-hero-gradient py-12 sm:py-16 md:py-20">
       <div
         className="absolute inset-0 opacity-20"
         style={{
@@ -37,8 +37,9 @@ export function ServicesHero({
           backgroundSize: "50px 50px",
         }}
       />
+      <div className="pointer-events-none absolute -right-16 top-0 h-56 w-56 rounded-full bg-siam-yellow/15 blur-3xl" />
       <div className="container relative mx-auto px-4 text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
+        <h1 className="text-3xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
           {title}
         </h1>
         {description && (

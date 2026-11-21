@@ -5,21 +5,25 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-siam-md text-sm font-semibold transition-all duration-premium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-siam-blue text-white hover:bg-siam-blue-light focus-visible:ring-siam-blue",
-        primary: "bg-siam-yellow text-siam-blue-dark hover:bg-siam-yellow-light focus-visible:ring-siam-yellow",
-        outline: "border-2 border-siam-blue text-siam-blue bg-transparent hover:bg-siam-blue/10 focus-visible:ring-siam-blue",
+        default: "bg-siam-blue text-white hover:bg-siam-blue-light focus-visible:ring-siam-blue shadow-soft",
+        primary:
+          "bg-siam-yellow text-siam-navy hover:bg-siam-yellow-light focus-visible:ring-siam-yellow shadow-soft hover:shadow-card",
+        outline:
+          "border-2 border-siam-blue text-siam-blue bg-transparent hover:bg-siam-blue/10 focus-visible:ring-siam-blue",
         secondary: "bg-siam-gray text-white hover:bg-siam-gray-light focus-visible:ring-siam-gray",
-        ghost: "hover:bg-siam-gray/10 focus-visible:ring-siam-gray",
+        ghost: "hover:bg-siam-surface focus-visible:ring-siam-blue",
         link: "text-siam-blue underline-offset-4 hover:underline",
+        navy: "bg-siam-navy text-white hover:bg-siam-blue-mid focus-visible:ring-siam-navy",
       },
       size: {
         sm: "h-9 px-3",
         default: "h-10 px-4",
         lg: "h-12 px-6 text-base",
+        xl: "h-14 px-8 text-base sm:text-lg",
         icon: "h-10 w-10",
       },
     },

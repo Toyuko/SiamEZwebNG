@@ -1,12 +1,18 @@
 import { resolvePublicSiteUrl } from "@/config/site-url";
 
+const PHONE_DISPLAY = "+66 64 343 8768";
+const PHONE_DIGITS = PHONE_DISPLAY.replace(/\D/g, "");
+
 export const site = {
   name: "SiamEZ",
   tagline: "Making life in Thailand EZ",
   description: "Professional help for your life in Thailand. From visas to relocations, our team handles the complexities so you can focus on enjoying the Land of Smiles.",
   url: resolvePublicSiteUrl(),
   email: "inquiries@siam-ez.com",
-  phone: "+66 64 343 8768",
+  phone: PHONE_DISPLAY,
+  phoneDigits: PHONE_DIGITS,
+  /** Canonical WhatsApp deep link (wa.me). Prefer this over ad-hoc URLs. */
+  whatsappUrl: `https://wa.me/${PHONE_DIGITS}`,
   line: "@siamez",
   lineUrl: "https://lin.ee/AHqaAXi",
   address: {
@@ -54,17 +60,34 @@ export type PublicNavEntry =
     };
 
 /**
- * Soft-launch public navigation.
- * Freelancer directory is included when softLaunch.showFreelancers is enabled
- * so web and mobile stay aligned.
+ * Premium public navigation — conversion-focused top bar.
+ * Marketplace / secondary routes live under Services & About dropdowns
+ * so existing routes remain reachable without cluttering the primary CTA path.
  */
 export const publicNav: PublicNavEntry[] = [
   { type: "link", labelKey: "home", href: "/", match: "exact" },
-  { type: "link", labelKey: "services", href: "/services", match: "prefix" },
-  { type: "link", labelKey: "sales", href: "/sales", match: "prefix" },
-  { type: "link", labelKey: "realEstate", href: "/real-estate", match: "prefix" },
-  { type: "link", labelKey: "freelancers", href: "/freelancers", match: "prefix" },
-  { type: "link", labelKey: "testimonials", href: "/testimonials", match: "exact" },
+  {
+    type: "group",
+    id: "services",
+    labelKey: "services",
+    items: [
+      { labelKey: "allServices", href: "/services", match: "prefix" },
+      { labelKey: "sales", href: "/sales", match: "prefix" },
+      { labelKey: "realEstate", href: "/real-estate", match: "prefix" },
+      { labelKey: "freelancers", href: "/freelancers", match: "prefix" },
+    ],
+  },
+  { type: "link", labelKey: "booking", href: "/services", match: "exact" },
+  {
+    type: "group",
+    id: "about",
+    labelKey: "aboutUs",
+    items: [
+      { labelKey: "about", href: "/about", match: "exact" },
+      { labelKey: "testimonials", href: "/testimonials", match: "exact" },
+      { labelKey: "gallery", href: "/gallery", match: "exact" },
+    ],
+  },
   { type: "link", labelKey: "contact", href: "/contact", match: "exact" },
 ];
 

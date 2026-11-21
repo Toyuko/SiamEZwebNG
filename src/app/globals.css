@@ -41,45 +41,56 @@
  * Prefer utility classes (bg-siam-blue, text-muted, border-border) over hard-coded hex.
  */
 
-/* Brand – shared across light / dark / night */
+/* Brand – shared across light / dark / night (Premium SiamEZ palette) */
 :root,
 [data-theme="light"],
 [data-theme="dark"],
 [data-theme="night"] {
-  --siam-blue: #2c54c6;
-  --siam-blue-light: #3d5fce;
-  --siam-blue-dark: #2344b0;
-  --siam-blue-bright: #5b76e0;
-  --siam-yellow: #ffce2d;
-  --siam-yellow-light: #ffd84d;
-  --siam-yellow-dark: #e6b828;
+  --siam-navy: #061a5c;
+  --siam-blue: #0754e8;
+  --siam-blue-light: #1676ff;
+  --siam-blue-dark: #061a5c;
+  --siam-blue-bright: #0875ff;
+  --siam-blue-mid: #0535b5;
+  --siam-yellow: #ffd600;
+  --siam-yellow-light: #ffea00;
+  --siam-yellow-dark: #ffb800;
+  --siam-surface: #eef5ff;
+  --siam-surface-pale: #dceaff;
+  --siam-ink: #101c55;
+  --siam-ink-muted: #52648a;
 
   /* Shared geometry & feedback */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --shadow-soft: 0 4px 24px rgb(6 26 92 / 0.08);
+  --shadow-card: 0 8px 28px rgb(6 26 92 / 0.1);
+  --gradient-hero: linear-gradient(135deg, #0535b5 0%, #0754e8 45%, #0875ff 100%);
+  --gradient-gold: linear-gradient(135deg, #ffea00 0%, #ffd600 50%, #ffb800 100%);
   --ring: var(--siam-blue);
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
+  --success: #16a34a;
 }
 
 /* Light (default) */
 :root,
 [data-theme="light"] {
   --background: #ffffff;
-  --foreground: #1f2937;
-  --muted: #6b7280;
+  --foreground: #101c55;
+  --muted: #52648a;
   --card: #ffffff;
-  --card-foreground: #1f2937;
-  --border: #e5e7eb;
-  --header-bg: #ffffff;
-  --header-border: #e5e7eb;
-  --header-text: #374151;
-  --header-text-muted: #6b7280;
+  --card-foreground: #101c55;
+  --border: #dceaff;
+  --header-bg: #061a5c;
+  --header-border: rgb(255 255 255 / 0.12);
+  --header-text: #ffffff;
+  --header-text-muted: rgb(255 255 255 / 0.72);
   --input: #ffffff;
-  --input-border: #d1d5db;
-  --overlay: rgb(0 0 0 / 0.5);
+  --input-border: #c5d8f5;
+  --overlay: rgb(6 26 92 / 0.5);
 }
 
 /* Dark – neutral dark */
@@ -154,5 +165,19 @@ body {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide,
+  .job-feed-enter,
+  .tracking-step-enter,
+  .animate-fade-in,
+  .animate-fade-in-up,
+  .animate-fade-in-scale,
+  .animate-slide-in-right {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

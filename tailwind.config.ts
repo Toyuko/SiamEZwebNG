@@ -29,18 +29,28 @@ const config: Config = {
           DEFAULT: "var(--destructive)",
           foreground: "var(--destructive-foreground)",
         },
-        // Brand – preserved siam.blue / siam.yellow (CSS var single source)
+        // Brand – Premium SiamEZ palette (CSS var single source)
         siam: {
+          navy: "var(--siam-navy)",
           blue: {
             DEFAULT: "var(--siam-blue)",
             light: "var(--siam-blue-light)",
             dark: "var(--siam-blue-dark)",
             bright: "var(--siam-blue-bright)",
+            mid: "var(--siam-blue-mid)",
           },
           yellow: {
             DEFAULT: "var(--siam-yellow)",
             light: "var(--siam-yellow-light)",
             dark: "var(--siam-yellow-dark)",
+          },
+          surface: {
+            DEFAULT: "var(--siam-surface)",
+            pale: "var(--siam-surface-pale)",
+          },
+          ink: {
+            DEFAULT: "var(--siam-ink)",
+            muted: "var(--siam-ink-muted)",
           },
           gray: {
             DEFAULT: "#374151",
@@ -56,6 +66,23 @@ const config: Config = {
       fontSize: {
         "display-lg": ["clamp(2.25rem, 5vw, 3.5rem)", { lineHeight: "1.15" }],
         "display-md": ["clamp(1.875rem, 4vw, 2.5rem)", { lineHeight: "1.2" }],
+      },
+      borderRadius: {
+        "siam-sm": "var(--radius-sm)",
+        "siam-md": "var(--radius-md)",
+        "siam-lg": "var(--radius-lg)",
+        "siam-xl": "var(--radius-xl)",
+      },
+      boxShadow: {
+        soft: "var(--shadow-soft)",
+        card: "var(--shadow-card)",
+      },
+      backgroundImage: {
+        "hero-gradient": "var(--gradient-hero)",
+        "gold-gradient": "var(--gradient-gold)",
+      },
+      transitionDuration: {
+        premium: "200ms",
       },
       keyframes: {
         "fade-in": {
