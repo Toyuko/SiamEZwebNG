@@ -58,7 +58,7 @@ export function HomeGoalsSection({
   popularGoals,
   lifeEvents,
   featuredListings,
-  isLoggedIn,
+  isLoggedIn: _isLoggedIn,
   goalsHref,
 }: Props) {
   const vehicles = featuredListings.filter((l) => l.kind === "vehicle").slice(0, 3);
