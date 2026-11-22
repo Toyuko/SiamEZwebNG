@@ -156,6 +156,11 @@ model User {
   licenceUploadRequestsSold      LicenceUploadRequest[]     @relation("LicenceUploadSalesRep")
   licenceUploadRequestsReceived  LicenceUploadRequest[]     @relation("LicenceUploadCustomer")
   licenceUploadEvents            LicenceUploadEvent[]       @relation("LicenceUploadEventActor")
+
+  @@index([role, createdAt])
+  @@index([role, updatedAt])
+  @@index([phone])
+  @@index([active, role])
 }
 
 enum FreelancerVerificationStatus {
@@ -597,6 +602,13 @@ model Case {
   @@index([leadSource])
   @@index([status, scheduledAt])
   @@index([province, scheduledAt])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([userId, createdAt])
+  @@index([serviceId, status])
+  @@index([status, createdAt])
+  @@index([status, updatedAt])
+  @@index([showOnCalendar, scheduledAt])
 }
 
 /// Draft of a job-intake form. The unguessable token in the URL is the only access control.
@@ -784,6 +796,7 @@ model Payment {
   @@index([status, submittedAt])
   @@index([caseId, status])
   @@index([method, status])
+  @@index([invoiceId, status])
 }
 
 // ----- Documents -----
@@ -803,6 +816,10 @@ model Document {
   uploader       User?   @relation("DocumentUploader", fields: [uploadedBy], references: [id], onDelete: SetNull)
   paymentProof   Payment? @relation("PaymentProof")
   financialReceipt FinancialTransaction? @relation("FinancialReceipt")
+
+  @@index([caseId, createdAt])
+  @@index([createdAt])
+  @@index([uploadedBy])
 }
 
 // ----- Staff assignments -----
@@ -818,6 +835,7 @@ model StaffAssignment {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([caseId, userId])
+  @@index([userId])
   @@map("staff_assignments")
 }
 
@@ -834,6 +852,8 @@ model CaseNote {
   case Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([caseId, createdAt])
+  @@index([userId])
   @@map("case_notes")
 }
 
@@ -933,6 +953,11 @@ model Invoice {
   revisions InvoiceRevision[]
   licenceApplication LicenceApplication?
 
+  @@index([status, dueDate])
+  @@index([status, createdAt])
+  @@index([caseId, status])
+  @@index([userId])
+  @@index([createdAt])
   @@map("invoices")
 }
 

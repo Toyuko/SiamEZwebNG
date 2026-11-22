@@ -148,7 +148,7 @@ async function searchCustomers(query: string): Promise<AssistantFact> {
   });
   if (caseHit) {
     return fact(`Found case ${caseHit.caseNumber}.`, [`Customer: ${customerLabel(caseHit.user, caseHit.guestName)}`], {
-      links: [{ href: `/admin/cases/${caseHit.id}`, label: caseHit.caseNumber }],
+      links: [{ href: `/admin/work-center/${caseHit.id}`, label: caseHit.caseNumber }],
       context: {
         lastCaseId: caseHit.id,
         lastCaseNumber: caseHit.caseNumber,
@@ -298,7 +298,7 @@ async function summarizeCase(caseId: string): Promise<AssistantFact> {
   return fact(`Guest booking ${row.caseNumber}`, [
     `${customerLabel(row.user, row.guestName)} has no customer account, so I cannot build a full history from a user record.`,
   ], {
-    links: [{ href: `/admin/cases/${row.id}`, label: row.caseNumber }],
+    links: [{ href: `/admin/work-center/${row.id}`, label: row.caseNumber }],
     context: { lastCaseId: row.id, lastCaseNumber: row.caseNumber, lastCustomerName: row.guestName },
   });
 }
@@ -347,7 +347,7 @@ async function bookings(when: "today" | "tomorrow"): Promise<AssistantFact> {
     const whenLabel = row.scheduleTimeTbd ? "time not set" : formatWhen(row.scheduledAt);
     return `${whenLabel} · ${row.caseNumber} · ${customerLabel(row.user, row.guestName)} · ${row.service?.name ?? row.otherServiceName ?? "service"} · ${row.status}`;
   }), {
-    links: rows.slice(0, 8).map((row) => ({ href: `/admin/cases/${row.id}`, label: row.caseNumber })),
+    links: rows.slice(0, 8).map((row) => ({ href: `/admin/work-center/${row.id}`, label: row.caseNumber })),
   });
 }
 
@@ -369,7 +369,7 @@ async function unconfirmedBookings(): Promise<AssistantFact> {
   if (rows.length === 0) return fact("No unconfirmed bookings.", ["Nothing is currently new or under review."]);
   return fact(`${rows.length} booking${rows.length === 1 ? "" : "s"} not yet confirmed.`, rows.map((row) =>
     `${row.caseNumber} · ${customerLabel(row.user, row.guestName)} · ${row.service?.name ?? "service"} · ${row.status} · ${formatWhen(row.scheduledAt)}`
-  ), { links: rows.slice(0, 8).map((row) => ({ href: `/admin/cases/${row.id}`, label: row.caseNumber })) });
+  ), { links: rows.slice(0, 8).map((row) => ({ href: `/admin/work-center/${row.id}`, label: row.caseNumber })) });
 }
 
 async function freeSlot(when: "today" | "tomorrow"): Promise<AssistantFact> {
@@ -454,7 +454,7 @@ async function outstandingPayments(): Promise<AssistantFact> {
   return fact(
     `Outstanding balances: ${formatSatang(total)} across ${rows.length} invoice${rows.length === 1 ? "" : "s"}.`,
     lines,
-    { links: shown.slice(0, 8).map((row) => ({ href: `/admin/cases/${row.caseId}`, label: row.caseNumber })) }
+    { links: shown.slice(0, 8).map((row) => ({ href: `/admin/work-center/${row.caseId}`, label: row.caseNumber })) }
   );
 }
 
@@ -664,7 +664,7 @@ async function unassignedCases(): Promise<AssistantFact> {
   if (rows.length === 0) return fact("Every open booking has a staff assignment.", []);
   return fact(`${rows.length} open booking${rows.length === 1 ? "" : "s"} without a staff assignment.`, rows.map((row) =>
     `${row.caseNumber} · ${customerLabel(row.user, row.guestName)} · ${row.service?.name ?? "service"} · ${row.status}`
-  ), { links: rows.slice(0, 8).map((row) => ({ href: `/admin/cases/${row.id}`, label: row.caseNumber })) });
+  ), { links: rows.slice(0, 8).map((row) => ({ href: `/admin/work-center/${row.id}`, label: row.caseNumber })) });
 }
 
 async function missingDocuments(): Promise<AssistantFact> {
@@ -687,7 +687,7 @@ async function missingDocuments(): Promise<AssistantFact> {
   if (gaps.length === 0) return fact("No open booking has a checklist item still missing.", ["Cases without a checklist are not counted."]);
   return fact(`${gaps.length} booking${gaps.length === 1 ? "" : "s"} still missing named documents.`, gaps.slice(0, 20).map(({ row, missing }) =>
     `${row.caseNumber} · ${customerLabel(row.user, row.guestName)} · missing ${missing.join(", ")}`
-  ), { links: gaps.slice(0, 8).map(({ row }) => ({ href: `/admin/cases/${row.id}`, label: row.caseNumber })) });
+  ), { links: gaps.slice(0, 8).map(({ row }) => ({ href: `/admin/work-center/${row.id}`, label: row.caseNumber })) });
 }
 
 async function openQuotes(): Promise<AssistantFact> {
@@ -889,7 +889,7 @@ async function documentReview(query: string | null, context: BackofficeContext):
   }
   const review = reviewExtractedDocuments(extracted);
   return fact(`Document check for ${row.caseNumber}.`, review.lines, {
-    links: [{ href: `/admin/cases/${row.id}`, label: row.caseNumber }],
+    links: [{ href: `/admin/work-center/${row.id}`, label: row.caseNumber }],
     context: { lastCaseId: row.id, lastCaseNumber: row.caseNumber },
   });
 }

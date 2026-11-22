@@ -40,11 +40,19 @@ const STATUS_OPTIONS: { value: CaseStatus; label: string }[] = [
   { value: "refunded", label: "Refunded" },
 ];
 
+type LeanUser = {
+  id: string;
+  name: string | null;
+  email: string;
+  phone?: string | null;
+  role?: User["role"];
+};
+
 type CaseWithRelations = Case & {
-  user: User | null;
+  user: LeanUser | null;
   service: { id: string; name: string; priceAmount: number | null; slug?: string } | null;
   quotes: Quote[];
-  staffAssignments: (StaffAssignment & { user: User })[];
+  staffAssignments: (StaffAssignment & { user: LeanUser })[];
   caseNotes: (CaseNote & { user: { name: string | null; email: string } })[];
   documents: { id: string; name: string; documentType: string | null }[];
   payments: Payment[];

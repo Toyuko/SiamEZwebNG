@@ -71,7 +71,7 @@ export default async function FinancialsPayablesPage({
                 <td className="px-3 py-2">
                   {r.caseId && r.caseNumber ? (
                     <Link
-                      href={`/admin/cases/${r.caseId}`}
+                      href={`/admin/work-center/${r.caseId}`}
                       className="text-teal-700 hover:underline dark:text-teal-300"
                     >
                       {r.caseNumber}

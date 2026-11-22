@@ -6,7 +6,6 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 import {
   LayoutDashboard,
-  FolderOpen,
   Users,
   Calendar,
   BarChart3,
@@ -58,17 +57,15 @@ type NavGroup = {
 const topNav: NavItem[] = [
   { label: "dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "aiAssistant", href: "/admin/assistant", icon: Sparkles },
+  { label: "workCenter", href: "/admin/work-center", icon: Briefcase },
 ];
 
 const allNavGroups: NavGroup[] = [
   {
     id: "operations",
     label: "groupOperations",
-    icon: Briefcase,
+    icon: ClipboardList,
     items: [
-      { label: "cases", href: "/admin/cases", icon: FolderOpen },
-      { label: "serviceJobs", href: "/admin/service-jobs", icon: Briefcase },
-      { label: "jobList", href: "/admin/jobs", icon: ClipboardList },
       { label: "calendar", href: "/admin/calendar", icon: Calendar },
       { label: "followUps", href: "/admin/followups", icon: Bell },
       { label: "driverLicenseFollowups", href: "/admin/driver-license-followups", icon: ClipboardList },
@@ -175,6 +172,9 @@ function isItemActive(
   }
   if (baseHref === "/admin/service-jobs") {
     return pathname === "/admin/service-jobs" && !isMarketplaceJobs;
+  }
+  if (baseHref === "/admin/work-center") {
+    return pathname === "/admin/work-center" || pathname.startsWith("/admin/work-center/");
   }
   if (baseHref === "/admin/jobs/new") {
     return pathname === "/admin/jobs/new" || pathname.startsWith("/admin/jobs/new/");

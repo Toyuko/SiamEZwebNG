@@ -21,8 +21,31 @@ export async function searchAdmin(query: string): Promise<AdminSearchGroup[]> {
   const q = query.trim();
   if (q.length < 2) return [];
 
-  const [cases, clients, invoices, companies] = await Promise.all([
-    prisma.case.findMany({
+  // Prefer indexed exact / prefix paths for reference numbers and emails before ILIKE scans.
+  const looksLikeEmail = q.includes("@");
+  const looksLikeRef = /^[A-Za-z0-9-]{3,}$/.test(q) && !looksLikeEmail;
+  const qUpper = q.toUpperCase();
+
+  let cases = looksLikeRef
+    ? await prisma.case.findMany({
+        where: {
+          OR: [{ caseNumber: qUpper }, { caseNumber: { startsWith: qUpper } }],
+        },
+        take: 6,
+        orderBy: { updatedAt: "desc" },
+        select: {
+          id: true,
+          caseNumber: true,
+          status: true,
+          service: { select: { name: true } },
+          user: { select: { name: true, email: true } },
+          guestName: true,
+        },
+      })
+    : [];
+
+  if (cases.length < 6) {
+    const extra = await prisma.case.findMany({
       where: {
         OR: [
           { caseNumber: { contains: q, mode: "insensitive" } },
@@ -31,8 +54,9 @@ export async function searchAdmin(query: string): Promise<AdminSearchGroup[]> {
           { user: { name: { contains: q, mode: "insensitive" } } },
           { user: { email: { contains: q, mode: "insensitive" } } },
         ],
+        ...(cases.length ? { id: { notIn: cases.map((c) => c.id) } } : {}),
       },
-      take: 6,
+      take: 6 - cases.length,
       orderBy: { updatedAt: "desc" },
       select: {
         id: true,
@@ -42,39 +66,75 @@ export async function searchAdmin(query: string): Promise<AdminSearchGroup[]> {
         user: { select: { name: true, email: true } },
         guestName: true,
       },
-    }),
+    });
+    cases = [...cases, ...extra];
+  }
+
+  const [clients, invoices, companies] = await Promise.all([
     prisma.user.findMany({
       where: {
         role: "customer",
-        OR: [
-          { name: { contains: q, mode: "insensitive" } },
-          { email: { contains: q, mode: "insensitive" } },
-          { phone: { contains: q, mode: "insensitive" } },
-        ],
+        OR: looksLikeEmail
+          ? [
+              { email: { equals: q, mode: "insensitive" } },
+              { email: { startsWith: q, mode: "insensitive" } },
+            ]
+          : [
+              { name: { contains: q, mode: "insensitive" } },
+              { email: { contains: q, mode: "insensitive" } },
+              { phone: { contains: q, mode: "insensitive" } },
+            ],
       },
       take: 6,
       orderBy: { updatedAt: "desc" },
       select: { id: true, name: true, email: true },
     }),
-    prisma.invoice.findMany({
-      where: {
-        OR: [
-          { invoiceNumber: { contains: q, mode: "insensitive" } },
-          { case: { caseNumber: { contains: q, mode: "insensitive" } } },
-          { user: { name: { contains: q, mode: "insensitive" } } },
-          { user: { email: { contains: q, mode: "insensitive" } } },
-        ],
-      },
-      take: 6,
-      orderBy: { updatedAt: "desc" },
-      select: {
-        id: true,
-        invoiceNumber: true,
-        status: true,
-        amount: true,
-        case: { select: { caseNumber: true } },
-      },
-    }),
+    (async () => {
+      let rows = looksLikeRef
+        ? await prisma.invoice.findMany({
+            where: {
+              OR: [
+                { invoiceNumber: qUpper },
+                { invoiceNumber: { startsWith: qUpper } },
+                { case: { caseNumber: qUpper } },
+              ],
+            },
+            take: 6,
+            orderBy: { updatedAt: "desc" },
+            select: {
+              id: true,
+              invoiceNumber: true,
+              status: true,
+              amount: true,
+              case: { select: { caseNumber: true } },
+            },
+          })
+        : [];
+      if (rows.length < 6) {
+        const extra = await prisma.invoice.findMany({
+          where: {
+            OR: [
+              { invoiceNumber: { contains: q, mode: "insensitive" } },
+              { case: { caseNumber: { contains: q, mode: "insensitive" } } },
+              { user: { name: { contains: q, mode: "insensitive" } } },
+              { user: { email: { contains: q, mode: "insensitive" } } },
+            ],
+            ...(rows.length ? { id: { notIn: rows.map((r) => r.id) } } : {}),
+          },
+          take: 6 - rows.length,
+          orderBy: { updatedAt: "desc" },
+          select: {
+            id: true,
+            invoiceNumber: true,
+            status: true,
+            amount: true,
+            case: { select: { caseNumber: true } },
+          },
+        });
+        rows = [...rows, ...extra];
+      }
+      return rows;
+    })(),
     prisma.company.findMany({
       where: {
         OR: [

@@ -279,7 +279,7 @@ export function FollowUpDetailClient({
                 <p>
                   Case:{" "}
                   <Link
-                    href={`/admin/cases/${followUp.case.id}`}
+                    href={`/admin/work-center/${followUp.case.id}`}
                     className="text-siam-blue hover:underline"
                   >
                     {followUp.case.caseNumber}

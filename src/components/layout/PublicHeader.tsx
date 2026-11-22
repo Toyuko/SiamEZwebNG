@@ -2,7 +2,7 @@
 
 import { Link, usePathname } from "@/i18n/navigation";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Menu,
   X,
@@ -76,14 +76,34 @@ function visiblePublicNav() {
 export function PublicHeader({ user = null }: PublicHeaderProps) {
   const [open, setOpen] = useState(false);
   const [mobileGroups, setMobileGroups] = useState<Record<string, boolean>>({});
+  // Hydrate session on the client so the public layout does not await auth() on every request.
+  const [sessionUser, setSessionUser] = useState<SessionUser | null>(user);
   const t = useTranslations("nav");
   const tHero = useTranslations("hero");
   const pathname = usePathname();
   const locale = useLocale();
-  const accountHref = accountHome(user?.role);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/auth/session", { credentials: "same-origin" });
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as { user?: SessionUser | null };
+        if (!cancelled) setSessionUser(data.user ?? null);
+      } catch {
+        // Keep anonymous header if session probe fails.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const accountHref = accountHome(sessionUser?.role);
   const secondaryHref =
-    user?.role === "freelancer" ? "/portal/freelancer-profile" : "/portal/cases";
-  const secondaryLabel = user?.role === "freelancer" ? t("publicProfile") : t("myCases");
+    sessionUser?.role === "freelancer" ? "/portal/freelancer-profile" : "/portal/cases";
+  const secondaryLabel = sessionUser?.role === "freelancer" ? t("publicProfile") : t("myCases");
 
   const toggleMobileGroup = (id: string, currentlyOpen: boolean) => {
     setMobileGroups((prev) => ({ ...prev, [id]: !currentlyOpen }));
@@ -213,7 +233,7 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
             ))}
           </div>
 
-          {user ? (
+          {sessionUser ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild className="hidden sm:flex">
                 <button
@@ -221,7 +241,7 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-sm font-semibold text-white hover:bg-white/25"
                   aria-label="User menu"
                 >
-                  {user.name?.[0]?.toUpperCase() ?? user.email[0].toUpperCase()}
+                  {sessionUser.name?.[0]?.toUpperCase() ?? sessionUser.email[0].toUpperCase()}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -369,7 +389,7 @@ export function PublicHeader({ user = null }: PublicHeaderProps) {
             ))}
           </div>
 
-          {user ? (
+          {sessionUser ? (
             <>
               <Link
                 href={accountHref}

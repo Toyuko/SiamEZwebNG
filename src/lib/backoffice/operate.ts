@@ -434,7 +434,7 @@ export async function executeWorkTool(
       assigneeId: stringOrNull(payload.assigneeId),
       deadlineKey: stringOrNull(payload.deadlineKey),
     });
-    return { summary: `Created job ${created.caseNumber}.`, href: `/admin/cases/${created.id}`, entityType: "case", entityId: created.id };
+    return { summary: `Created job ${created.caseNumber}.`, href: `/admin/work-center/${created.id}`, entityType: "case", entityId: created.id };
   }
   if (toolName === "create_invoice") {
     const invoice = await createDraftInvoice({
@@ -464,7 +464,7 @@ export async function executeWorkTool(
     const allowed = ["new", "under_review", "confirmed", "awaiting_payment", "pending_docs", "in_progress", "completed", "cancelled"];
     if (!allowed.includes(status)) throw new BackofficeError("That status is not one the assistant can set.", 400);
     const booking = await prisma.case.update({ where: { id: String(payload.caseId) }, data: { status: status as CaseStatus } });
-    return { summary: `${booking.caseNumber} is now ${booking.status}.`, href: `/admin/cases/${booking.id}`, entityType: "case", entityId: booking.id };
+    return { summary: `${booking.caseNumber} is now ${booking.status}.`, href: `/admin/work-center/${booking.id}`, entityType: "case", entityId: booking.id };
   }
   if (toolName === "assign_case") {
     await prisma.staffAssignment.upsert({
@@ -503,7 +503,7 @@ export async function executeWorkTool(
     });
     return {
       summary: `Created ${created.caseNumber}. ${invoiceNote}\n\nDraft message, not sent:\n${message}`,
-      href: `/admin/cases/${created.id}`,
+      href: `/admin/work-center/${created.id}`,
       entityType: "case",
       entityId: created.id,
     };

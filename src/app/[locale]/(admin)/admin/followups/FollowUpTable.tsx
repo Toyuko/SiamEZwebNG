@@ -179,7 +179,7 @@ export function FollowUpTable({
                     {row.case ? (
                       <div className="text-xs">
                         <Link
-                          href={`/admin/cases/${row.case.id}`}
+                          href={`/admin/work-center/${row.case.id}`}
                           className="text-siam-blue hover:underline"
                         >
                           {row.case.caseNumber}

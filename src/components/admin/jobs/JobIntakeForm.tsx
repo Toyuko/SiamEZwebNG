@@ -606,7 +606,7 @@ export function JobIntakeForm({
           )}
           {access === "admin" && (
             <Button asChild variant="secondary" className="min-h-11">
-              <Link href={`/admin/jobs/${created.id}`}>View Job</Link>
+              <Link href={`/admin/work-center/${created.id}`}>View Work</Link>
             </Button>
           )}
         </div>

@@ -167,7 +167,7 @@ export function DriverLicenseRenewalDetailClient({ renewal }: { renewal: Detail 
                   <dd>
                     {renewal.case ? (
                       <Link
-                        href={`/admin/cases/${renewal.case.id}`}
+                        href={`/admin/work-center/${renewal.case.id}`}
                         className="text-siam-blue hover:underline"
                       >
                         {renewal.case.caseNumber}

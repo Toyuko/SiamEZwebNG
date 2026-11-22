@@ -180,7 +180,7 @@ export function QuotesPageClient({
                       <td className="py-3 pr-3">
                         {q.caseId && q.caseNumber ? (
                           <Link
-                            href={`/admin/cases/${q.caseId}`}
+                            href={`/admin/work-center/${q.caseId}`}
                             className="text-siam-blue hover:underline"
                           >
                             {q.caseNumber}

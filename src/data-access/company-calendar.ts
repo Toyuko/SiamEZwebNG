@@ -268,7 +268,7 @@ export async function loadCompanyCalendar(input: {
       where,
       select: calendarSelect,
       orderBy: { scheduledAt: "asc" },
-      take: searching ? 80 : 400,
+      take: searching ? 80 : 250,
     }),
     prisma.case.findMany({
       where: { scheduledAt: null, status: { in: ACTIVE_UNSCHEDULED }, showOnCalendar: true },

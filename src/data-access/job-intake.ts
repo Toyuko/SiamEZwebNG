@@ -1060,25 +1060,57 @@ export async function listJobs(filters: {
 
   const needsPaymentScan = filters.paymentStatus === "partial" || filters.paymentStatus === "paid";
   const orderBy = [{ scheduledAt: "asc" as const }, { createdAt: "desc" as const }];
-  const rows = needsPaymentScan
-    ? await prisma.case.findMany({ where, include: jobInclude, orderBy, take: 400 })
-    : await prisma.case.findMany({
-        where,
-        include: jobInclude,
-        orderBy,
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      });
-  let views = rows.map(toJobView);
+
   if (needsPaymentScan) {
-    views = views.filter((job) => job.paymentStatus === filters.paymentStatus);
+    // Lean scan: payment standing only, then hydrate the current page with full includes.
+    const lean = await prisma.case.findMany({
+      where,
+      select: {
+        id: true,
+        invoices: { select: { amount: true } },
+        payments: { where: { status: "approved" }, select: { amount: true } },
+      },
+      orderBy,
+      take: 2000,
+    });
+    const matchingIds = lean
+      .filter((row) => {
+        const totalSatang = row.invoices.reduce((sum, inv) => sum + inv.amount, 0);
+        const paidSatang = row.payments.reduce((sum, p) => sum + p.amount, 0);
+        return paymentStanding(totalSatang, paidSatang) === filters.paymentStatus;
+      })
+      .map((row) => row.id);
+    const total = matchingIds.length;
+    const pageIds = matchingIds.slice((page - 1) * pageSize, page * pageSize);
+    const rows =
+      pageIds.length === 0
+        ? []
+        : await prisma.case.findMany({
+            where: { id: { in: pageIds } },
+            include: jobInclude,
+          });
+    const byId = new Map(rows.map((row) => [row.id, row]));
+    const ordered = pageIds.map((id) => byId.get(id)).filter(Boolean) as typeof rows;
+    return {
+      jobs: ordered.map(toJobView),
+      total,
+      page,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    };
   }
-  const total = needsPaymentScan
-    ? views.length
-    : await prisma.case.count({ where });
-  const paged = needsPaymentScan ? views.slice((page - 1) * pageSize, page * pageSize) : views;
+
+  const [rows, total] = await Promise.all([
+    prisma.case.findMany({
+      where,
+      include: jobInclude,
+      orderBy,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.case.count({ where }),
+  ]);
   return {
-    jobs: paged,
+    jobs: rows.map(toJobView),
     total,
     page,
     totalPages: Math.max(1, Math.ceil(total / pageSize)),

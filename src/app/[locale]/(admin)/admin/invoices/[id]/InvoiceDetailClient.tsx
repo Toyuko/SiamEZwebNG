@@ -275,7 +275,7 @@ export function InvoiceDetailClient({ invoice }: { invoice: InvoiceDetail }) {
               </a>
             </Button>
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/admin/cases/${invoice.case.id}`}>Open case</Link>
+              <Link href={`/admin/work-center/${invoice.case.id}`}>Open work</Link>
             </Button>
           </div>
         </CardContent>

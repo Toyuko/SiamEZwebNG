@@ -77,7 +77,7 @@ export function InvoiceTable({
             >
               <td className="px-4 py-3 font-mono text-siam-blue">{inv.id.slice(0, 8)}…</td>
               <td className="px-4 py-3">
-                <Link href={`/admin/cases/${inv.case.id}`} className="text-siam-blue hover:underline">
+                <Link href={`/admin/work-center/${inv.case.id}`} className="text-siam-blue hover:underline">
                   {inv.case.caseNumber}
                 </Link>
               </td>
@@ -106,7 +106,7 @@ export function InvoiceTable({
                   >
                     PDF
                   </a>
-                  <Link href={`/admin/cases/${inv.case.id}`} className="text-siam-blue hover:underline">
+                  <Link href={`/admin/work-center/${inv.case.id}`} className="text-siam-blue hover:underline">
                     Case
                   </Link>
                 </div>

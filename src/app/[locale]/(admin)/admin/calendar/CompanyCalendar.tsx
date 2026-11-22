@@ -3054,7 +3054,7 @@ function JobPopover({
         </dl>
         {error && <p className="mt-2 text-sm text-red-700" role="alert">{error}</p>}
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <Link href={`/admin/jobs/${job.caseId}`} className="inline-flex h-11 items-center justify-center rounded-lg border text-sm font-medium">Open job</Link>
+          <Link href={`/admin/work-center/${job.caseId}`} className="inline-flex h-11 items-center justify-center rounded-lg border text-sm font-medium">Open work</Link>
           <Link href={`/admin/jobs/${job.caseId}`} className="inline-flex h-11 items-center justify-center rounded-lg border text-sm font-medium">Edit</Link>
           <button type="button" className="h-11 rounded-lg border text-sm font-medium" onClick={() => setEditing((open) => !open)}>Reschedule</button>
           {job.invoiceId ? (

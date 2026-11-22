@@ -121,7 +121,7 @@ export default async function SalespersonProfilePage({
                     <td className="px-3 py-2">{d.closedAt ? bangkokDateKey(d.closedAt) : "—"}</td>
                     <td className="px-3 py-2">{d.customerName}</td>
                     <td className="px-3 py-2">
-                      <Link href={`/admin/cases/${d.caseId}`} className="text-teal-700 hover:underline dark:text-teal-300">
+                      <Link href={`/admin/work-center/${d.caseId}`} className="text-teal-700 hover:underline dark:text-teal-300">
                         {d.serviceName}
                       </Link>
                       <span className="ml-2 text-xs text-gray-400">{d.caseNumber}</span>

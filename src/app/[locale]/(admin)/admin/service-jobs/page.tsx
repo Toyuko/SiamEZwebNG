@@ -1,23 +1,16 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { getServiceJobs, getServices, getClientsForPicker, getStaffUsers, getFreelancerJobsAdmin } from "@/actions/admin";
-import { ServiceJobsTable } from "./ServiceJobsTable";
-import { ServiceJobsFilter } from "./ServiceJobsFilter";
+import { redirect } from "next/navigation";
+import { getServices, getFreelancerJobsAdmin } from "@/actions/admin";
 import { ServiceJobsPageClient } from "./ServiceJobsPageClient";
 import { MarketplaceJobsTable } from "./MarketplaceJobsTable";
 import { MarketplaceJobsFilter } from "./MarketplaceJobsFilter";
 import type { JobStatus } from "@prisma/client";
 
-type CaseStatus =
-  | "new"
-  | "under_review"
-  | "quoted"
-  | "awaiting_payment"
-  | "paid"
-  | "in_progress"
-  | "pending_docs"
-  | "completed"
-  | "cancelled";
+export const dynamic = "force-dynamic";
 
+/** Internal Service Jobs list is consolidated into Work Center.
+ * Marketplace freelancer jobs remain on this route with ?source=freelancer.
+ */
 export default async function AdminServiceJobsPage({
   searchParams,
 }: {
@@ -32,127 +25,68 @@ export default async function AdminServiceJobsPage({
   }>;
 }) {
   const params = await searchParams;
-  const isMarketplace = params.source === "freelancer";
-  const search = params.search ?? undefined;
-  const page = Number(params.page) || 1;
 
-  const services = await getServices();
-
-  if (isMarketplace) {
-    const jobStatus =
-      params.status && params.status !== "all"
-        ? (params.status as JobStatus)
-        : undefined;
-
-    const { jobs, total, totalPages } = await getFreelancerJobsAdmin({
-      search,
-      page,
-      status: jobStatus,
-    });
-
-    const clients = await getClientsForPicker();
-
-    return (
-      <div>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Freelancer Jobs
-            </h1>
-            <p className="mt-1 text-gray-600 dark:text-gray-400">
-              Marketplace jobs dispatched to the freelancer portal. Auto-approval runs after 1
-              hour when enabled.
-            </p>
-          </div>
-          <ServiceJobsPageClient
-            services={services}
-            clients={clients}
-            staffUsers={[]}
-            marketplaceOnly
-          />
-        </div>
-
-        <MarketplaceJobsFilter searchDefault={search} statusDefault={params.status ?? "all"} />
-
-        <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-          Showing {total} marketplace job{total !== 1 ? "s" : ""}
-        </p>
-
-        <Card className="mt-4">
-          <CardContent className="p-0">
-            <MarketplaceJobsTable
-              jobs={jobs}
-              total={total}
-              page={page}
-              totalPages={totalPages}
-              searchParams={params}
-            />
-          </CardContent>
-        </Card>
-      </div>
-    );
+  if (params.source !== "freelancer") {
+    const qs = new URLSearchParams();
+    if (params.search) qs.set("search", params.search);
+    if (params.serviceId) qs.set("serviceId", params.serviceId);
+    if (params.dateFrom) qs.set("dateFrom", params.dateFrom);
+    if (params.dateTo) qs.set("dateTo", params.dateTo);
+    if (params.page) qs.set("page", params.page);
+    if (params.status === "awaiting_payment") qs.set("tab", "awaiting_payment");
+    else if (params.status === "completed") qs.set("tab", "completed");
+    else if (params.status === "cancelled") qs.set("tab", "cancelled");
+    else if (params.status === "in_progress") qs.set("tab", "in_progress");
+    else if (params.status === "pending_docs") qs.set("tab", "awaiting_customer");
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    redirect(`/admin/work-center${suffix}`);
   }
 
-  const status = (params.status && params.status !== "all"
-    ? params.status
-    : undefined) as CaseStatus | undefined;
-  const serviceId = params.serviceId ?? undefined;
-  const dateFrom = params.dateFrom ?? undefined;
-  const dateTo = params.dateTo ?? undefined;
+  const search = params.search ?? undefined;
+  const page = Number(params.page) || 1;
+  const services = await getServices();
+  const jobStatus =
+    params.status && params.status !== "all" ? (params.status as JobStatus) : undefined;
 
-  const [{ jobs, total, totalPages }, clients, staffUsers] = await Promise.all([
-    getServiceJobs({
-      search,
-      status: status ?? "all",
-      serviceId,
-      dateFrom,
-      dateTo,
-      page,
-    }),
-    getClientsForPicker(),
-    getStaffUsers(),
-  ]);
+  const { jobs, total, totalPages } = await getFreelancerJobsAdmin({
+    search,
+    page,
+    status: jobStatus,
+  });
 
   return (
-    <div>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Service Jobs Management
+          <h1 className="text-xl font-bold tracking-tight text-siam-ink sm:text-2xl">
+            Freelancer Jobs
           </h1>
-          <p className="mt-1 text-gray-600 dark:text-gray-400">
-            Create and manage internal service jobs. Assign staff and track status.
+          <p className="mt-1 text-sm text-siam-ink-muted">
+            Marketplace assignments for freelancers (separate from internal Work Center).
           </p>
         </div>
         <ServiceJobsPageClient
           services={services}
-          clients={clients}
-          staffUsers={staffUsers}
+          clients={[]}
+          staffUsers={[]}
+          marketplaceOnly
         />
       </div>
 
-      <ServiceJobsFilter
-        searchDefault={search}
-        statusDefault={params.status ?? "all"}
-        serviceIdDefault={serviceId}
-        dateFromDefault={dateFrom}
-        dateToDefault={dateTo}
-        services={services}
-      />
+      <MarketplaceJobsFilter searchDefault={search} statusDefault={params.status} />
 
-      <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-        Showing {total} internal job{total !== 1 ? "s" : ""}
-      </p>
-
-      <Card className="mt-4">
-        <CardContent className="p-0">
-          <ServiceJobsTable
+      <Card>
+        <CardContent className="pt-6">
+          <MarketplaceJobsTable
             jobs={jobs}
             total={total}
             page={page}
             totalPages={totalPages}
-            searchParams={params}
-            staffUsers={staffUsers}
+            searchParams={{
+              search,
+              status: params.status,
+              page: params.page,
+            }}
           />
         </CardContent>
       </Card>

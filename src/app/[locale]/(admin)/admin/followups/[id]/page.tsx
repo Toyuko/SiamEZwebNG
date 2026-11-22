@@ -21,14 +21,14 @@ export default async function AdminFollowUpDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [followUp, staff, services, clients] = await Promise.all([
-    adminGetFollowUp(id),
+  const followUp = await adminGetFollowUp(id);
+  if (!followUp) notFound();
+
+  const [staff, services, clients] = await Promise.all([
     getStaffUsers(),
     getServices(),
-    getClientsForPicker(),
+    getClientsForPicker({ includeIds: [followUp.clientId] }),
   ]);
-
-  if (!followUp) notFound();
 
   return (
     <FollowUpDetailClient

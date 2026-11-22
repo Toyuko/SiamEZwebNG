@@ -705,14 +705,52 @@ export async function getClients(options?: { search?: string; page?: number }) {
   return { clients, total, page, totalPages: Math.ceil(total / ITEMS_PER_PAGE) };
 }
 
-/** All customers for admin job-creation pickers (id/name/email only). */
-export async function getClientsForPicker() {
+const CLIENT_PICKER_DEFAULT_LIMIT = 100;
+const CLIENT_PICKER_MAX_LIMIT = 250;
+
+/** Recent / matched customers for admin pickers (id/name/email only). Never unbounded. */
+export async function getClientsForPicker(options?: {
+  search?: string;
+  limit?: number;
+  includeIds?: string[];
+}) {
   await ensureStaffAccess();
-  return prisma.user.findMany({
-    where: { role: "customer" },
+  const limit = Math.min(
+    Math.max(1, options?.limit ?? CLIENT_PICKER_DEFAULT_LIMIT),
+    CLIENT_PICKER_MAX_LIMIT
+  );
+  const search = options?.search?.trim();
+  const where = {
+    role: "customer" as const,
+    ...(search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" as const } },
+            { email: { contains: search, mode: "insensitive" as const } },
+            { phone: { contains: search, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
+
+  const clients = await prisma.user.findMany({
+    where,
     select: { id: true, name: true, email: true },
-    orderBy: [{ name: "asc" }, { email: "asc" }],
+    orderBy: search
+      ? [{ name: "asc" }, { email: "asc" }]
+      : [{ updatedAt: "desc" }, { name: "asc" }],
+    take: limit,
   });
+
+  const includeIds = (options?.includeIds ?? []).filter(Boolean);
+  const missingIds = includeIds.filter((id) => !clients.some((c) => c.id === id));
+  if (missingIds.length === 0) return clients;
+
+  const extras = await prisma.user.findMany({
+    where: { id: { in: missingIds }, role: "customer" },
+    select: { id: true, name: true, email: true },
+  });
+  return [...extras, ...clients];
 }
 
 export async function getClientById(id: string) {
@@ -720,9 +758,17 @@ export async function getClientById(id: string) {
   return prisma.user.findUnique({
     where: { id },
     include: {
-      casesAsClient: { include: { service: true } },
-      invoices: { include: { case: { select: { caseNumber: true } } } },
-      documents: true,
+      casesAsClient: {
+        include: { service: { select: { id: true, name: true, slug: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      },
+      invoices: {
+        include: { case: { select: { caseNumber: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      },
+      documents: { orderBy: { createdAt: "desc" }, take: 50 },
     },
   });
 }
@@ -866,12 +912,13 @@ export async function getCases(options?: {
   else where.status = { notIn: ["completed", "cancelled"] as CaseStatus[] };
   if (options?.serviceId) where.serviceId = options.serviceId;
   if (options?.search) {
+    const q = options.search.trim();
     where.OR = [
-      { caseNumber: { contains: options.search } },
-      { user: { name: { contains: options.search } } },
-      { user: { email: { contains: options.search } } },
-      { guestName: { contains: options.search } },
-      { guestEmail: { contains: options.search } },
+      { caseNumber: { contains: q, mode: "insensitive" } },
+      { user: { name: { contains: q, mode: "insensitive" } } },
+      { user: { email: { contains: q, mode: "insensitive" } } },
+      { guestName: { contains: q, mode: "insensitive" } },
+      { guestEmail: { contains: q, mode: "insensitive" } },
     ];
   }
 
@@ -904,23 +951,36 @@ export async function getCaseSelectOptions() {
 
 export async function getCaseById(id: string) {
   await ensureStaffAccess();
+  const userSelect = {
+    id: true,
+    name: true,
+    email: true,
+    phone: true,
+    role: true,
+  } as const;
   return prisma.case.findUnique({
     where: { id },
     include: {
-      user: true,
+      user: { select: userSelect },
       service: true,
-      staffAssignments: { include: { user: true } },
+      staffAssignments: { include: { user: { select: userSelect } } },
       caseNotes: {
         include: { user: { select: { id: true, name: true, email: true } } },
         orderBy: { createdAt: "desc" },
+        take: 100,
       },
-      documents: { orderBy: { createdAt: "desc" } },
-      payments: { orderBy: { createdAt: "desc" } },
-      invoices: { include: { quote: true }, orderBy: { createdAt: "desc" } },
-      quotes: { orderBy: { createdAt: "desc" } },
+      documents: { orderBy: { createdAt: "desc" }, take: 100 },
+      payments: { orderBy: { createdAt: "desc" }, take: 50 },
+      invoices: {
+        include: { quote: true },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      },
+      quotes: { orderBy: { createdAt: "desc" }, take: 20 },
       events: {
         include: { staff: { select: { name: true } } },
         orderBy: { start: "asc" },
+        take: 50,
       },
     },
   });

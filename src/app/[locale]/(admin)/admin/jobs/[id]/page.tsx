@@ -22,7 +22,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
     <div className="mx-auto w-full max-w-lg">
       <div className="mb-4 flex flex-wrap gap-2">
         <Button asChild variant="outline" size="sm" className="min-h-11">
-          <Link href="/admin/jobs">All jobs</Link>
+          <Link href="/admin/work-center">Work Center</Link>
         </Button>
         {job.invoiceId && (
           <Button asChild size="sm" className="min-h-11">

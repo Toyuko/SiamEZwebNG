@@ -123,7 +123,7 @@ export function QuoteDetailClient({ quote }: { quote: QuoteDetail }) {
       try {
         const result = await adminConvertQuoteToBooking(quote.id);
         if (result.caseId) {
-          router.push(`/admin/cases/${result.caseId}`);
+          router.push(`/admin/work-center/${result.caseId}`);
         } else {
           router.refresh();
         }
@@ -155,7 +155,7 @@ export function QuoteDetailClient({ quote }: { quote: QuoteDetail }) {
               Convert to booking
             </Button>
           ) : (
-            <Link href={`/admin/cases/${quote.case.id}`}>
+            <Link href={`/admin/work-center/${quote.case.id}`}>
               <Button type="button" variant="outline">
                 Open case {quote.case.caseNumber}
               </Button>

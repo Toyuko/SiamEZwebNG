@@ -14,4 +14,5 @@ export const prisma =
     },
   });
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+// Reuse across hot reloads (dev) and warm serverless isolates (prod).
+globalForPrisma.prisma = prisma;

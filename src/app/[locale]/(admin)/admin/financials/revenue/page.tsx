@@ -145,7 +145,7 @@ export default async function FinancialsRevenuePage({
                   <td className="px-3 py-2">{customer}</td>
                   <td className="px-3 py-2">
                     <Link
-                      href={`/admin/cases/${p.case.id}`}
+                      href={`/admin/work-center/${p.case.id}`}
                       className="text-teal-700 hover:underline dark:text-teal-300"
                     >
                       {p.case.caseNumber}
@@ -183,7 +183,7 @@ export default async function FinancialsRevenuePage({
                 <td className="px-3 py-2">
                   {r.case ? (
                     <Link
-                      href={`/admin/cases/${r.case.id}`}
+                      href={`/admin/work-center/${r.case.id}`}
                       className="text-teal-700 hover:underline dark:text-teal-300"
                     >
                       {r.case.caseNumber}

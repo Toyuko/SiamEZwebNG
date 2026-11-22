@@ -110,7 +110,7 @@ export default async function AdminClientProfilePage({
                 {client.casesAsClient.slice(0, 10).map((c) => (
                   <li key={c.id} className="flex justify-between gap-3">
                     <Link
-                      href={`/admin/cases/${c.id}`}
+                      href={`/admin/work-center/${c.id}`}
                       className="text-siam-blue hover:underline"
                     >
                       {c.caseNumber}

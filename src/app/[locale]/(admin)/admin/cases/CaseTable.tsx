@@ -87,7 +87,7 @@ export function CaseTable({
               </td>
               <td className="px-4 py-3">
                 <Link
-                  href={`/admin/cases/${c.id}`}
+                  href={`/admin/work-center/${c.id}`}
                   className="text-siam-blue hover:underline"
                 >
                   View

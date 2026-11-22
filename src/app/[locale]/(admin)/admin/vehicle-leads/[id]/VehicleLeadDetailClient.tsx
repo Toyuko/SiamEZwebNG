@@ -160,7 +160,7 @@ export function VehicleLeadDetailClient({
         </div>
         {lead.case ? (
           <Button asChild>
-            <Link href={`/admin/cases/${lead.case.id}`}>Booking {lead.case.caseNumber}</Link>
+            <Link href={`/admin/work-center/${lead.case.id}`}>Booking {lead.case.caseNumber}</Link>
           </Button>
         ) : (
           <Button

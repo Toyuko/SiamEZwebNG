@@ -16,14 +16,15 @@ export function RecentCasesTable({ cases }: { cases: DashboardRecentCase[] }) {
     <section className="rounded-2xl border border-[#DCE6F5] bg-white shadow-soft">
       <div className="flex items-center justify-between gap-3 border-b border-[#DCE6F5] px-5 py-4">
         <div>
-          <h2 className="text-base font-semibold text-siam-ink">Recent Cases</h2>
-          <p className="text-xs text-siam-ink-muted">Latest case activity</p>
+          <h2 className="text-base font-semibold text-siam-ink">Recent Work</h2>
+          <p className="text-xs text-siam-ink-muted">Latest customer work activity</p>
         </div>
         <Link
-          href="/admin/cases"
+          href="/admin/work-center"
+          prefetch
           className="text-sm font-semibold text-siam-blue hover:underline"
         >
-          View All Cases →
+          Open Work Center →
         </Link>
       </div>
 
@@ -46,7 +47,8 @@ export function RecentCasesTable({ cases }: { cases: DashboardRecentCase[] }) {
                 <tr key={c.id} className="transition-colors hover:bg-siam-surface/50">
                   <td className="px-5 py-3">
                     <Link
-                      href={`/admin/cases/${c.id}`}
+                      href={`/admin/work-center/${c.id}`}
+                      prefetch
                       className="font-semibold text-siam-blue hover:underline"
                     >
                       {c.caseNumber}

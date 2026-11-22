@@ -114,7 +114,7 @@ export default async function FinancialTransactionsPage({
               <td className="px-3 py-2">
                 {r.case ? (
                   <Link
-                    href={`/admin/cases/${r.case.id}`}
+                    href={`/admin/work-center/${r.case.id}`}
                     className="text-teal-700 hover:underline dark:text-teal-300"
                   >
                     {r.case.caseNumber}

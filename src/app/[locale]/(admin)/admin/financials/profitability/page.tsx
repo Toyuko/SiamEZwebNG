@@ -145,7 +145,7 @@ export default async function FinancialsProfitabilityPage({
               <tr key={r.caseId} className="hover:bg-gray-50 dark:hover:bg-gray-900/40">
                 <td className="px-3 py-2">
                   <Link
-                    href={`/admin/cases/${r.caseId}`}
+                    href={`/admin/work-center/${r.caseId}`}
                     className="text-teal-700 hover:underline dark:text-teal-300"
                   >
                     {r.caseNumber}

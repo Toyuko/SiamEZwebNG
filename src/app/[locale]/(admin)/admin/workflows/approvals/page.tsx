@@ -60,7 +60,7 @@ export default async function AdminWorkflowApprovalsPage() {
                       <p className="text-xs text-gray-500">
                         Linked case:{" "}
                         <Link
-                          href={`/admin/cases/${item.run.linkedCase.id}`}
+                          href={`/admin/work-center/${item.run.linkedCase.id}`}
                           className="text-siam-blue hover:underline"
                         >
                           {item.run.linkedCase.caseNumber}

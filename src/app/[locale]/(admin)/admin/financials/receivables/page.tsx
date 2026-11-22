@@ -51,7 +51,7 @@ export default async function FinancialsReceivablesPage() {
               <td className="px-3 py-2">{r.customerName}</td>
               <td className="px-3 py-2">
                 <Link
-                  href={`/admin/cases/${r.caseId}`}
+                  href={`/admin/work-center/${r.caseId}`}
                   className="text-teal-700 hover:underline dark:text-teal-300"
                 >
                   {r.caseNumber}

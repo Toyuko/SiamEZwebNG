@@ -39,6 +39,11 @@ const nextConfig: NextConfig = {
       { source: "/thailicense.html", destination: "/en/services/driver-license", permanent: true },
       { source: "/en/thailicense.html", destination: "/en/services/driver-license", permanent: true },
       { source: "/th/thailicense.html", destination: "/th/services/driver-license", permanent: true },
+      // Work Center consolidation — preserve bookmarks to legacy Cases / Jobs lists
+      { source: "/:locale/admin/cases", destination: "/:locale/admin/work-center", permanent: false },
+      { source: "/:locale/admin/cases/:id", destination: "/:locale/admin/work-center/:id", permanent: false },
+      { source: "/:locale/admin/jobs", destination: "/:locale/admin/work-center", permanent: false },
+      { source: "/:locale/admin/service-jobs/:id", destination: "/:locale/admin/work-center/:id", permanent: false },
       {
         source: "/",
         has: [{ type: "host", value: "www.siam-ez.com" }],

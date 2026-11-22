@@ -93,7 +93,7 @@ function linksFor(statement: FinanceStatement): AssistantFact["links"] {
   for (const line of statement.lines) {
     if (!line.caseId || !line.caseNumber || seen.has(line.caseId)) continue;
     seen.add(line.caseId);
-    links.push({ href: `/admin/cases/${line.caseId}`, label: line.caseNumber });
+    links.push({ href: `/admin/work-center/${line.caseId}`, label: line.caseNumber });
     if (links.length >= 8) break;
   }
   return links;

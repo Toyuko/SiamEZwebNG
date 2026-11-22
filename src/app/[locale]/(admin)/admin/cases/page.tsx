@@ -1,49 +1,31 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { getCases, getServices } from "@/actions/admin";
-import { AdminPageShell } from "@/components/admin/AdminPageShell";
-import { CaseTable } from "./CaseTable";
-import { CaseFilter } from "./CaseFilter";
-import { CaseSearch } from "./CaseSearch";
+import { redirect } from "next/navigation";
 
-export default async function AdminCasesPage({
+export const dynamic = "force-dynamic";
+
+/** Legacy Cases list — consolidated into Work Center. */
+export default async function AdminCasesRedirect({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; serviceId?: string; search?: string; page?: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const params = await searchParams;
-  const status =
-    params.status && params.status !== "all"
-      ? (params.status as "new" | "under_review" | "quoted" | "awaiting_payment" | "paid" | "in_progress" | "pending_docs" | "completed" | "cancelled")
-      : undefined;
-  const serviceId = params.serviceId ?? undefined;
-  const search = params.search ?? undefined;
-  const page = Number(params.page) || 1;
-
-  const [{ cases, total, totalPages }, services] = await Promise.all([
-    getCases({ status: status ?? "all", serviceId, search, page }),
-    getServices(),
-  ]);
-
-  return (
-    <AdminPageShell
-      title="Cases & Bookings"
-      description="Search, filter, and manage cases — status, clients, documents, and assignments."
-    >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:flex-wrap">
-        <CaseFilter statusDefault={params.status ?? "all"} serviceIdDefault={params.serviceId} services={services} />
-        <CaseSearch defaultValue={search} status={params.status} serviceId={params.serviceId} />
-      </div>
-      <Card className="overflow-hidden rounded-2xl border-[#DCE6F5] shadow-soft">
-        <CardContent className="p-0">
-          <CaseTable
-            cases={cases}
-            total={total}
-            page={page}
-            totalPages={totalPages}
-            searchParams={params}
-          />
-        </CardContent>
-      </Card>
-    </AdminPageShell>
-  );
+  const qs = new URLSearchParams();
+  if (params.status) {
+    if (params.status === "awaiting_payment" || params.status === "awaiting_initial_payment") {
+      qs.set("tab", "awaiting_payment");
+    } else if (params.status === "pending_docs") {
+      qs.set("tab", "awaiting_customer");
+    } else if (params.status === "in_progress" || params.status === "confirmed") {
+      qs.set("tab", "in_progress");
+    } else if (params.status === "completed") {
+      qs.set("tab", "completed");
+    } else if (params.status === "cancelled") {
+      qs.set("tab", "cancelled");
+    }
+  }
+  if (params.search) qs.set("search", params.search);
+  if (params.serviceId) qs.set("serviceId", params.serviceId);
+  if (params.page) qs.set("page", params.page);
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  redirect(`/admin/work-center${suffix}`);
 }

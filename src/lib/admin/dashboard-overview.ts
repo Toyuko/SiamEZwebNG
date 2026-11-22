@@ -1,10 +1,9 @@
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 import type { CaseStatus, InvoiceStatus } from "@prisma/client";
-import { Prisma } from "@prisma/client";
 import { getDriverLicenseRenewalStats } from "@/lib/driver-license-renewal/service";
 import { todayInBangkok, toUtcDateOnly } from "@/lib/driver-license-renewal/dates";
 import { softLaunch } from "@/config/soft-launch";
-import { missingRequiredDocuments } from "@/lib/backoffice/documents";
 
 const CLOSED_CASES: CaseStatus[] = ["completed", "cancelled", "refunded"];
 const OPEN_INVOICE: InvoiceStatus[] = ["unpaid", "pending_verification", "draft"];
@@ -263,7 +262,7 @@ function buildActionItems(input: {
   return items.sort((a, b) => a.priority - b.priority || b.count - a.count);
 }
 
-export async function getDashboardOverview() {
+async function loadDashboardOverview() {
   const today = toUtcDateOnly(todayInBangkok());
   const now = new Date();
 
@@ -273,7 +272,7 @@ export async function getDashboardOverview() {
     dlStats,
     overdueInvoices,
     pendingAppointments,
-    docCases,
+    missingDocuments,
     followUpsDue,
     pendingFreelancerApprovals,
     pendingCompanyVerifications,
@@ -294,17 +293,8 @@ export async function getDashboardOverview() {
         scheduledAt: { gte: now },
       },
     }),
-    prisma.case.findMany({
-      where: {
-        status: { in: ["pending_docs", "in_progress", "paid", "under_review"] },
-        documentsRequired: { not: Prisma.DbNull },
-      },
-      select: {
-        documentsRequired: true,
-        documents: { select: { name: true, documentType: true } },
-      },
-      take: 80,
-    }),
+    // Count by workflow status instead of loading cases + documents into Node.
+    prisma.case.count({ where: { status: "pending_docs" } }),
     prisma.followUp.count({
       where: {
         status: { in: ["PENDING", "DUE", "IN_PROGRESS"] },
@@ -323,10 +313,6 @@ export async function getDashboardOverview() {
       ? Promise.resolve(0)
       : prisma.adCampaign.count({ where: { status: "PENDING" } }),
   ]);
-
-  const missingDocuments = docCases.filter(
-    (row) => missingRequiredDocuments(row.documentsRequired, row.documents).length > 0
-  ).length;
 
   const actionRequired = buildActionItems({
     overdueInvoices,
@@ -348,3 +334,9 @@ export async function getDashboardOverview() {
     dlSummary: toDlSummary(dlStats),
   };
 }
+
+/** Org-wide KPIs — short TTL so navigation feels instant without stale ops data. */
+export const getDashboardOverview = unstable_cache(loadDashboardOverview, ["admin-dashboard-overview"], {
+  revalidate: 30,
+  tags: ["admin-dashboard"],
+});

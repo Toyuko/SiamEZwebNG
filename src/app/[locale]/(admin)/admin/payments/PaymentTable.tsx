@@ -171,7 +171,7 @@ export function PaymentTable({
                 >
                   <td className="px-4 py-4">
                     <Link
-                      href={`/admin/cases/${caseId}`}
+                      href={`/admin/work-center/${caseId}`}
                       className="font-medium text-siam-blue hover:underline"
                     >
                       {p.invoice.case.caseNumber}
@@ -207,14 +207,14 @@ export function PaymentTable({
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-2">
                       <Link
-                        href={`/admin/cases/${caseId}`}
+                        href={`/admin/work-center/${caseId}`}
                         className="rounded-lg p-1.5 text-siam-blue hover:bg-blue-50 dark:hover:bg-blue-950/30"
                         aria-label="View case"
                       >
                         <Eye className="h-4 w-4" />
                       </Link>
                       <Link
-                        href={`/admin/cases/${caseId}`}
+                        href={`/admin/work-center/${caseId}`}
                         className="rounded-lg p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/20"
                         aria-label="Edit case"
                       >

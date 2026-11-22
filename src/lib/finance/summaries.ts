@@ -75,31 +75,31 @@ export async function getFinancialSummary(range: DateRange): Promise<BusinessFin
 }
 
 export async function getAccountsReceivableTotal(): Promise<number> {
-  const invoices = await prisma.invoice.findMany({
-    where: {
-      status: { in: ["unpaid", "pending_verification"] },
-    },
-    include: {
-      payments: { where: { status: "approved" }, select: { amount: true } },
-    },
-  });
-  return sumSatang(
-    invoices.map((inv) => {
-      const paid = sumSatang(inv.payments.map((p) => p.amount));
-      return Math.max(0, inv.amount - paid);
-    })
-  );
+  // Aggregate in SQL instead of loading every open invoice + payments into Node.
+  const rows = await prisma.$queryRaw<Array<{ total: bigint | number | null }>>`
+    SELECT COALESCE(SUM(GREATEST(0, i.amount - COALESCE(p.paid, 0))), 0) AS total
+    FROM invoices i
+    LEFT JOIN (
+      SELECT invoice_id, SUM(amount) AS paid
+      FROM "Payment"
+      WHERE status = 'approved'
+      GROUP BY invoice_id
+    ) p ON p.invoice_id = i.id
+    WHERE i.status IN ('unpaid', 'pending_verification')
+  `;
+  const total = rows[0]?.total ?? 0;
+  return typeof total === "bigint" ? Number(total) : Number(total);
 }
 
 export async function getAccountsPayableTotal(): Promise<number> {
-  const rows = await prisma.financialTransaction.findMany({
+  const agg = await prisma.financialTransaction.aggregate({
     where: {
       paymentStatus: { in: ["UNPAID", "APPROVED"] },
       type: { in: ["STAFF_PAYMENT", "CASE_EXPENSE", "OPERATING_EXPENSE", "OTHER_EXPENSE"] },
     },
-    select: { amount: true },
+    _sum: { amount: true },
   });
-  return sumSatang(rows.map((r) => r.amount));
+  return agg._sum.amount ?? 0;
 }
 
 export type MonthlySeriesPoint = {
@@ -340,15 +340,24 @@ export type ReceivableRow = {
   currency: string;
 };
 
-export async function listReceivables(): Promise<ReceivableRow[]> {
+export async function listReceivables(options?: {
+  limit?: number;
+}): Promise<ReceivableRow[]> {
+  // Only open invoices — paid rows were loaded previously then filtered away.
+  const limit = Math.min(Math.max(1, options?.limit ?? 500), 2000);
   const invoices = await prisma.invoice.findMany({
-    where: { status: { in: ["unpaid", "pending_verification", "paid"] } },
-    include: {
+    where: { status: { in: ["unpaid", "pending_verification"] } },
+    select: {
+      id: true,
+      amount: true,
+      dueDate: true,
+      currency: true,
       user: { select: { name: true, email: true } },
       case: { select: { id: true, caseNumber: true, guestName: true, guestEmail: true } },
       payments: { where: { status: "approved" }, select: { amount: true } },
     },
-    orderBy: { dueDate: "asc" },
+    orderBy: [{ dueDate: "asc" }, { createdAt: "asc" }],
+    take: limit,
   });
 
   const now = new Date();
@@ -376,8 +385,7 @@ export async function listReceivables(): Promise<ReceivableRow[]> {
         currency: inv.currency,
       };
     })
-    .filter((r) => r.status !== "PAID" || r.outstanding > 0)
-    .filter((r) => r.outstanding > 0 || r.status === "PAID");
+    .filter((r) => r.outstanding > 0);
 }
 
 export type PayableRow = {
