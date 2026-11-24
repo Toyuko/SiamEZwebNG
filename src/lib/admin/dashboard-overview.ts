@@ -38,7 +38,8 @@ export type DashboardRecentCase = {
   id: string;
   caseNumber: string;
   status: string;
-  updatedAt: Date;
+  /** ISO string — Dates don't survive `unstable_cache` JSON round-trips. */
+  updatedAt: string;
   serviceName: string | null;
   clientName: string;
 };
@@ -96,7 +97,7 @@ export async function getDashboardRecentCases(limit = 5): Promise<DashboardRecen
     id: row.id,
     caseNumber: row.caseNumber,
     status: row.status,
-    updatedAt: row.updatedAt,
+    updatedAt: row.updatedAt.toISOString(),
     serviceName: row.service?.name ?? null,
     clientName:
       row.user?.name ?? row.user?.email ?? row.guestName ?? row.guestEmail ?? "Guest",
@@ -336,7 +337,7 @@ async function loadDashboardOverview() {
 }
 
 /** Org-wide KPIs — short TTL so navigation feels instant without stale ops data. */
-export const getDashboardOverview = unstable_cache(loadDashboardOverview, ["admin-dashboard-overview"], {
+export const getDashboardOverview = unstable_cache(loadDashboardOverview, ["admin-dashboard-overview-v2"], {
   revalidate: 30,
   tags: ["admin-dashboard"],
 });

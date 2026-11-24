@@ -2,7 +2,9 @@ import { Link } from "@/i18n/navigation";
 import { CaseStatusBadge } from "@/components/admin/CaseStatusBadge";
 import type { DashboardRecentCase } from "@/lib/admin/dashboard-overview";
 
-function formatUpdated(date: Date) {
+function formatUpdated(value: string | Date) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
