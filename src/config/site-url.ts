@@ -1,22 +1,34 @@
 /**
  * Canonical public origin for SiamEZ.
  *
- * Production: https://siam-ez.com
+ * Temporary production host while siam-ez.com is unavailable:
+ *   https://siam-e-zweb-ng.vercel.app
  * Preview: the current Vercel deployment URL
  * Development: http://localhost:3000
  *
  * Prefer NEXT_PUBLIC_SITE_URL when set. Do not scatter production hosts
  * through the app — import from here instead.
+ *
+ * When siam-ez.com DNS is restored and points at this Vercel project, flip
+ * PRODUCTION_SITE_* back to the custom domain and set
+ * CANONICAL_ALIAS_REDIRECT=true so vercel.app aliases 308 onto it.
  */
 
-export const PRODUCTION_SITE_HOST = "siam-ez.com";
+export const PRODUCTION_SITE_HOST = "siam-e-zweb-ng.vercel.app";
+export const PRODUCTION_SITE_ORIGIN = "https://siam-e-zweb-ng.vercel.app";
+
+/** Custom domain (temporarily offline as the public origin). */
+export const CUSTOM_SITE_HOST = "siam-ez.com";
 export const WWW_SITE_HOST = "www.siam-ez.com";
-export const PRODUCTION_SITE_ORIGIN = "https://siam-ez.com";
 export const LOCAL_SITE_ORIGIN = "http://localhost:3000";
 
-/** Exact Vercel production aliases that should 308 to the custom domain. */
-export const LEGACY_VERCEL_PRODUCTION_HOSTS = [
-  "siam-e-zweb-ng.vercel.app",
+/**
+ * Non-canonical production hosts that should 308 onto PRODUCTION_SITE_ORIGIN
+ * when they still reach this Vercel project.
+ */
+export const SECONDARY_PRODUCTION_HOSTS = [
+  CUSTOM_SITE_HOST,
+  WWW_SITE_HOST,
   "siam-e-zweb-ng-toyukos-projects.vercel.app",
 ] as const;
 
@@ -95,65 +107,27 @@ function isInternalPath(pathname: string): boolean {
   );
 }
 
-function customProductionDomainIsAttached(env: SiteUrlEnv): boolean {
-  const productionHost = hostnameOf(
-    firstDefined(env.VERCEL_PROJECT_PRODUCTION_URL, env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL) ??
-      ""
-  );
-  return productionHost === PRODUCTION_SITE_HOST || productionHost === WWW_SITE_HOST;
-}
-
-function isTruthyEnvFlag(value: string | undefined): boolean {
-  const normalized = value?.trim().toLowerCase();
-  return normalized === "1" || normalized === "true" || normalized === "yes";
-}
-
 /**
- * Vercel can list siam-ez.com as the project production URL before DNS
- * actually points at this app. Require an explicit opt-in before bouncing
- * vercel.app traffic onto that hostname, or customers land on the old PHP host.
- */
-function canonicalAliasRedirectsEnabled(env: SiteUrlEnv): boolean {
-  return (
-    customProductionDomainIsAttached(env) &&
-    isTruthyEnvFlag(firstDefined(env.CANONICAL_ALIAS_REDIRECT))
-  );
-}
-
-/**
- * Path-preserving 308 target when the request host is www or a retired
- * production Vercel alias. Returns null when no redirect should occur.
+ * Path-preserving 308 target when the request host is a secondary production
+ * alias (custom domain, www, or team vercel.app). Returns null when no
+ * redirect should occur.
  *
  * API / webhook / cron paths are never redirected so existing provider
- * endpoints on the Vercel alias keep working until they are updated.
- *
- * Legacy Vercel-host redirects only fire after `siam-ez.com` is attached as
- * the project's production domain *and* `CANONICAL_ALIAS_REDIRECT=true` is
- * set — otherwise we would send live traffic to the previous PHP site still
- * hosted on that hostname.
+ * endpoints on any attached host keep working until they are updated.
  */
 export function getCanonicalHostRedirect(
   hostHeader: string,
   pathname: string,
   search = "",
-  env: SiteUrlEnv = process.env
+  _env: SiteUrlEnv = process.env
 ): string | null {
   if (isInternalPath(pathname)) return null;
 
   const host = hostnameOf(hostHeader);
   if (!host || host === PRODUCTION_SITE_HOST) return null;
 
-  const destination = `${PRODUCTION_SITE_ORIGIN}${pathname}${search}`;
-
-  if (host === WWW_SITE_HOST) {
-    return destination;
-  }
-
-  if (
-    (LEGACY_VERCEL_PRODUCTION_HOSTS as readonly string[]).includes(host) &&
-    canonicalAliasRedirectsEnabled(env)
-  ) {
-    return destination;
+  if ((SECONDARY_PRODUCTION_HOSTS as readonly string[]).includes(host)) {
+    return `${PRODUCTION_SITE_ORIGIN}${pathname}${search}`;
   }
 
   return null;

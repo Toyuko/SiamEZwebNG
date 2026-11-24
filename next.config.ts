@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
     // without the paid add-on; serve originals from /public instead.
     unoptimized: true,
     remotePatterns: [
+      { protocol: "https", hostname: "siam-e-zweb-ng.vercel.app", pathname: "/**" },
       { protocol: "https", hostname: "siam-ez.com", pathname: "/**" },
       { protocol: "https", hostname: "www.siam-ez.com", pathname: "/**" },
       { protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/**" },
@@ -44,17 +45,30 @@ const nextConfig: NextConfig = {
       { source: "/:locale/admin/cases/:id", destination: "/:locale/admin/work-center/:id", permanent: false },
       { source: "/:locale/admin/jobs", destination: "/:locale/admin/work-center", permanent: false },
       { source: "/:locale/admin/service-jobs/:id", destination: "/:locale/admin/work-center/:id", permanent: false },
+      // Temporary canonical host while siam-ez.com is unavailable.
       {
         source: "/",
         has: [{ type: "host", value: "www.siam-ez.com" }],
-        destination: "https://siam-ez.com/",
-        permanent: true,
+        destination: "https://siam-e-zweb-ng.vercel.app/",
+        permanent: false,
       },
       {
         source: "/:path*",
         has: [{ type: "host", value: "www.siam-ez.com" }],
-        destination: "https://siam-ez.com/:path*",
-        permanent: true,
+        destination: "https://siam-e-zweb-ng.vercel.app/:path*",
+        permanent: false,
+      },
+      {
+        source: "/",
+        has: [{ type: "host", value: "siam-ez.com" }],
+        destination: "https://siam-e-zweb-ng.vercel.app/",
+        permanent: false,
+      },
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "siam-ez.com" }],
+        destination: "https://siam-e-zweb-ng.vercel.app/:path*",
+        permanent: false,
       },
     ];
   },

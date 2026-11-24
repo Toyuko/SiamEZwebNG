@@ -78,12 +78,9 @@ Pushes to `main` deploy to **production**; other branches get **preview** URLs.
 
 1. Connect this repo in the Vercel dashboard if it is not already linked.
 2. Set env vars: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `NEXT_PUBLIC_SITE_URL`, Stripe keys, `CRON_SECRET`, etc. (see `.env.example`).
-   Production values: `AUTH_URL=https://siam-ez.com` and `NEXT_PUBLIC_SITE_URL=https://siam-ez.com`.
+   Temporary production (while `siam-ez.com` is unavailable): `AUTH_URL=https://siam-e-zweb-ng.vercel.app` and `NEXT_PUBLIC_SITE_URL=https://siam-e-zweb-ng.vercel.app`. Public site: https://siam-e-zweb-ng.vercel.app/
 3. Build uses `npm run vercel-build` (`prisma migrate deploy` then `next build`).
-4. Attach custom domains `siam-ez.com` (apex) and `www.siam-ez.com` (redirect to apex). Then at the DNS provider currently using `ns1.nsraidth1.com` / `ns2.nsraidth1.com`, point traffic at Vercel:
-   - Apex `A` records: `216.198.79.1` and `64.29.17.1` (or `76.76.21.21`)
-   - `www` `CNAME`: `eddc1d013818290e.vercel-dns-017.com.`
-   HTTPS is provisioned automatically after DNS verifies. Coordinate this cutover with a production deploy so `siam-ez.com` serves this app, not the previous Apache host.
+4. Custom domains `siam-ez.com` / `www.siam-ez.com` remain attached on the Vercel project; while they are down or not serving this app, the app treats `siam-e-zweb-ng.vercel.app` as canonical and 308s those hosts onto it when they do reach Vercel. After DNS cutover, flip `AUTH_URL` / `NEXT_PUBLIC_SITE_URL` / `PRODUCTION_SITE_*` in `src/config/site-url.ts` back to `https://siam-ez.com`.
 5. Optional: run seed once (e.g. from CI or locally against prod DB).
 
 If you see **two deployments per push**, disable automatic Git deployments in Vercel → Project → **Settings → Git** (use either native Git hooks or the GitHub Action, not both).

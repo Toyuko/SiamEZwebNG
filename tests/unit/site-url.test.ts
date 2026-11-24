@@ -9,7 +9,9 @@ import {
 describe("resolvePublicSiteUrl", () => {
   it("uses NEXT_PUBLIC_SITE_URL when set", () => {
     expect(
-      resolvePublicSiteUrl({ NEXT_PUBLIC_SITE_URL: "https://siam-ez.com/" })
+      resolvePublicSiteUrl({
+        NEXT_PUBLIC_SITE_URL: "https://siam-e-zweb-ng.vercel.app/",
+      })
     ).toBe(PRODUCTION_SITE_ORIGIN);
   });
 
@@ -41,80 +43,51 @@ describe("resolvePublicSiteUrl", () => {
 });
 
 describe("getCanonicalHostRedirect", () => {
-  const attached = { VERCEL_PROJECT_PRODUCTION_URL: "siam-ez.com" };
-  const aliasesLive = { ...attached, CANONICAL_ALIAS_REDIRECT: "true" };
-
-  it("redirects www to the apex host and preserves path + query", () => {
+  it("redirects www to the temporary vercel.app host and preserves path + query", () => {
     expect(
       getCanonicalHostRedirect("www.siam-ez.com", "/en/services", "?utm=ads")
-    ).toBe("https://siam-ez.com/en/services?utm=ads");
+    ).toBe("https://siam-e-zweb-ng.vercel.app/en/services?utm=ads");
   });
 
-  it("redirects the retired Vercel production alias after DNS cutover is opted in", () => {
+  it("redirects the custom domain onto the temporary vercel.app host", () => {
     expect(
-      getCanonicalHostRedirect(
-        "siam-e-zweb-ng.vercel.app",
-        "/en/services/driver-license",
-        "",
-        aliasesLive
-      )
-    ).toBe("https://siam-ez.com/en/services/driver-license");
+      getCanonicalHostRedirect("siam-ez.com", "/en/services/driver-license")
+    ).toBe("https://siam-e-zweb-ng.vercel.app/en/services/driver-license");
   });
 
-  it("redirects the team production alias after DNS cutover is opted in", () => {
+  it("redirects the team production alias onto the canonical vercel.app host", () => {
     expect(
       getCanonicalHostRedirect(
         "siam-e-zweb-ng-toyukos-projects.vercel.app",
-        "/th/contact",
-        "",
-        aliasesLive
+        "/th/contact"
       )
-    ).toBe("https://siam-ez.com/th/contact");
-  });
-
-  it("does not redirect the Vercel alias when the custom domain is only attached in Vercel", () => {
-    expect(
-      getCanonicalHostRedirect("siam-e-zweb-ng.vercel.app", "/en/vehicle/sell", "?source=line", attached)
-    ).toBeNull();
-  });
-
-  it("does not redirect the Vercel alias before siam-ez.com is the production domain", () => {
-    expect(
-      getCanonicalHostRedirect(
-        "siam-e-zweb-ng.vercel.app",
-        "/en",
-        "",
-        { VERCEL_PROJECT_PRODUCTION_URL: "siam-e-zweb-ng.vercel.app", CANONICAL_ALIAS_REDIRECT: "true" }
-      )
-    ).toBeNull();
+    ).toBe("https://siam-e-zweb-ng.vercel.app/th/contact");
   });
 
   it("does not redirect preview deployments", () => {
     expect(
       getCanonicalHostRedirect(
         "siam-e-zweb-ng-git-feat-toyukos-projects.vercel.app",
-        "/en",
-        "",
-        aliasesLive
+        "/en"
       )
     ).toBeNull();
   });
 
   it("does not redirect API, webhook, or cron paths", () => {
     expect(
-      getCanonicalHostRedirect("www.siam-ez.com", "/api/stripe/webhook", "", aliasesLive)
+      getCanonicalHostRedirect("www.siam-ez.com", "/api/stripe/webhook")
     ).toBeNull();
     expect(
       getCanonicalHostRedirect(
-        "siam-e-zweb-ng.vercel.app",
-        "/api/cron/jobs/auto-approve",
-        "",
-        aliasesLive
+        "siam-ez.com",
+        "/api/cron/jobs/auto-approve"
       )
     ).toBeNull();
   });
 
-  it("does not redirect the canonical apex host", () => {
-    expect(getCanonicalHostRedirect("siam-ez.com", "/en", "", attached)).toBeNull();
+  it("does not redirect the canonical production host", () => {
+    expect(
+      getCanonicalHostRedirect("siam-e-zweb-ng.vercel.app", "/en")
+    ).toBeNull();
   });
 });

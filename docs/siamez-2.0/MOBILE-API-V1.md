@@ -103,4 +103,4 @@ Reply may include `journey`, `goalChange`, `explanations`, and `reason` on recom
 | GET | `/auth/{provider}?redirect_uri=` | Mobile OAuth start (unlocalized) |
 | POST | `/api/auth/oauth/exchange` | Code → Bearer JWT |
 
-**Canonical site origin for mobile:** `https://siam-ez.com` (`EXPO_PUBLIC_API_URL` / `EXPO_PUBLIC_WEB_BASE_URL`).
+**Canonical site origin for mobile:** `https://siam-e-zweb-ng.vercel.app` (temporary while `siam-ez.com` is unavailable; `EXPO_PUBLIC_API_URL` / `EXPO_PUBLIC_WEB_BASE_URL`).

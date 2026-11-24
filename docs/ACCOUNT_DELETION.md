@@ -9,13 +9,13 @@ SiamEZ provides a public, login-free account deletion URL for Google Play Consol
 Enter this in Google Play Console:
 
 ```
-https://siam-ez.com/en/delete-account
+https://siam-e-zweb-ng.vercel.app/en/delete-account
 ```
 
 Thai locale (optional alternate):
 
 ```
-https://siam-ez.com/th/delete-account
+https://siam-e-zweb-ng.vercel.app/th/delete-account
 ```
 
 Local development: `http://localhost:3000/en/delete-account`
@@ -117,7 +117,7 @@ Staff/admin accounts cannot self-delete via this flow.
 | `RESEND_API_KEY` | For email | Existing email stack |
 | `EMAIL_FROM` | For email | Verified domain sender |
 | `EMAIL_OPS_TO` | Optional | Extra ops inboxes for deletion alerts |
-| `NEXT_PUBLIC_SITE_URL` / production domain | Yes | Public deletion URL base |
+| `NEXT_PUBLIC_SITE_URL` / production domain (`https://siam-e-zweb-ng.vercel.app`) | Yes | Public deletion URL base |
 
 ## Database
 

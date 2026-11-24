@@ -662,7 +662,7 @@ export async function sendDriverLicenseRenewalReminderEmail(input: {
       "If you would like SiamEZ to assist you with your driver's license renewal, please contact us."
     ),
     paragraph(
-      `SiamEZ — Thailand Driver's License Services<br/>Phone: ${escapeHtml(site.phone)} · LINE: ${escapeHtml(site.line)} · <a href="${escapeHtml(site.url)}" style="color:${EMAIL_BRAND.blue};">siam-ez.com</a>`
+      `SiamEZ — Thailand Driver's License Services<br/>Phone: ${escapeHtml(site.phone)} · LINE: ${escapeHtml(site.line)} · <a href="${escapeHtml(site.url)}" style="color:${EMAIL_BRAND.blue};">${escapeHtml(site.url.replace(/^https?:\/\//, ""))}</a>`
     ),
     ctaButton(portalUrl("/contact"), "Contact SiamEZ"),
   ];
@@ -679,7 +679,7 @@ export async function sendDriverLicenseRenewalReminderEmail(input: {
     ]),
     paragraph("หากต้องการให้ SiamEZ ช่วยดำเนินการต่ออายุใบขับขี่ กรุณาติดต่อเรา"),
     paragraph(
-      `SiamEZ — บริการใบขับขี่ไทย<br/>โทร: ${escapeHtml(site.phone)} · LINE: ${escapeHtml(site.line)} · <a href="${escapeHtml(site.url)}" style="color:${EMAIL_BRAND.blue};">siam-ez.com</a>`
+      `SiamEZ — บริการใบขับขี่ไทย<br/>โทร: ${escapeHtml(site.phone)} · LINE: ${escapeHtml(site.line)} · <a href="${escapeHtml(site.url)}" style="color:${EMAIL_BRAND.blue};">${escapeHtml(site.url.replace(/^https?:\/\//, ""))}</a>`
     ),
     ctaButton(portalUrl("/contact"), "ติดต่อ SiamEZ"),
   ];
@@ -738,7 +738,7 @@ export async function sendFollowUpReminderEmail(input: {
         paragraph(`Hello ${escapeHtml(input.customerName)},`),
         `<div style="margin:0;font-size:15px;line-height:1.55;color:#334155;white-space:pre-wrap;">${escapeHtml(input.emailBody.trim())}</div>`,
         paragraph(
-          `SiamEZ<br/>Phone: ${escapeHtml(site.phone)} · LINE: ${escapeHtml(site.line)} · <a href="${escapeHtml(site.url)}" style="color:#2c54c6;">https://siam-ez.com</a>`
+          `SiamEZ<br/>Phone: ${escapeHtml(site.phone)} · LINE: ${escapeHtml(site.line)} · <a href="${escapeHtml(site.url)}" style="color:#2c54c6;">${escapeHtml(site.url)}</a>`
         ),
       ].join(""),
     });
@@ -766,7 +766,7 @@ export async function sendFollowUpReminderEmail(input: {
       : "",
     paragraph("If you need assistance, please contact us."),
     paragraph(
-      `SiamEZ<br/>Phone: ${escapeHtml(site.phone)} · LINE: ${escapeHtml(site.line)} · <a href="${escapeHtml(site.url)}" style="color:#2c54c6;">https://siam-ez.com</a>`
+      `SiamEZ<br/>Phone: ${escapeHtml(site.phone)} · LINE: ${escapeHtml(site.line)} · <a href="${escapeHtml(site.url)}" style="color:#2c54c6;">${escapeHtml(site.url)}</a>`
     ),
     ctaButton(portalUrl("/contact"), "Contact SiamEZ"),
   ];
